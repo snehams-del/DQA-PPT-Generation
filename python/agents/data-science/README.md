@@ -122,7 +122,7 @@ The key features of the Data Science Multi-Agent include:
     *   You will find the datasets inside 'data-science/data_science/utils/data/'.
         Make sure you are still in the working directory (`agents/data-science`). To load the test and train tables into BigQuery, run the following commands:
         ```bash
-        python3 data_science/utils/create_bq_table.py
+        poetry run python data_science/utils/create_bq_table.py
         ```
 
 
@@ -136,7 +136,7 @@ The key features of the Data Science Multi-Agent include:
     `data-science/data_science/utils/reference_guide_RAG.py` by running the below command from the working directory:
 
     ```bash
-    python3 data_science/utils/reference_guide_RAG.py
+    poetry run python data_science/utils/reference_guide_RAG.py
     ```
 
 
