@@ -1,0 +1,9 @@
+[project]
+name = "python-tutor"
+version = "0.1.0"
+description = "Python programming tutor using ADK"
+authors = [{ name = "Megan O'Keefe" }, { name = "Amit Maraj" }]
+license = "Apache-2.0"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = ["google-adk==1.2.1"]
