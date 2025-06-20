@@ -27,46 +27,9 @@ The key features of the Image Scoring Agent include:
 ### Agent architecture:
 
 This diagram shows the detailed architecture of the agents and tools used to implement this workflow.
+
 <img src="image_scoring_architecture.png" alt="Image Scoring Architecture" width="800"/>
 
-## Sub-Agents and Workflow
-
-The Image Scoring Agent implements a sequential workflow using the following sub-agents:
-
-1. **Prompt Generation Agent** (`prompt_agent.py`)
-   * Primary responsibility: Creates optimized prompts for Imagen based on input text descriptions
-   * Uses Gemini model to generate prompts that comply with policies
-   * Outputs prompts that are stored in session state for image generation
-
-2. **Image Generation Agent** (`imagen_agent.py`)
-   * Primary responsibility: Generates images using Imagen 3.0 based on the prompts
-   * Configures image generation parameters (aspect ratio, safety filters, etc.)
-   * Saves generated images to Google Cloud Storage (GCS)
-   * Stores image artifacts and GCS URIs in session state
-
-3. **Scoring Agent** (`scoring_agent.py`)
-   * Primary responsibility: Evaluates generated images against policy rules
-   * Loads policy rules from `policy.json`
-   * Analyzes images and assigns scores (0-5) for each policy criterion
-   * Computes total score and stores it in session state
-   * Provides detailed scoring feedback for each policy rule
-
-4. **Checker Agent** (`checker_agent.py`)
-   * Primary responsibility: Evaluates if the generated image meets quality thresholds
-   * Manages iteration count and maximum iteration limits
-   * Compares total score against configured threshold (default: 10)
-   * Controls workflow termination based on score or iteration limits
-
-
-### Workflow Sequence
-1. The workflow starts with the Prompt Generation Agent creating an optimized prompt
-2. The Image Generation Agent uses this prompt to create an image with Imagen 3.0
-3. The Scoring Agent evaluates the generated image against policy rules
-4. The Checker Agent determines if the score meets the threshold
-5. If the score is below threshold and max iterations not reached, the process repeats
-6. The workflow terminates when either:
-   * The image score meets or exceeds the threshold
-   * The maximum number of iterations is reached
 
 ## Setup and Installation
 
@@ -92,7 +55,7 @@ The Image Scoring Agent implements a sequential workflow using the following sub
     ```bash
     # Clone this repository.
     git clone https://github.com/google/adk-samples.git
-    cd adk-samples/agents/image_scoring
+    cd adk-samples/python/agents/image-scoring
     # Install the package and dependencies.
     poetry install --with deployment
     ```
@@ -183,7 +146,7 @@ poetry run python3 deployment/deploy.py --delete --resource_id=${AGENT_ENGINE_ID
 
 ## Evaluating the Deployment
 
-For running tests and evaluation, install the extra dependencies:
+For running evaluation, install the extra dependencies:
 
 ```bash
 poetry install --with dev
@@ -197,8 +160,8 @@ poetry run pytest eval
 ```
 
 `eval` is a demonstration of how to evaluate the agent, using the
-`AgentEvaluator` in ADK. It sends a couple requests to the agent and expects
-that the agent's responses match a pre-defined response reasonably well.
+`AgentEvaluator` in ADK. It sends a sample request to the image_scoring agent
+and displays if it has passed
 
 ## Customization
 
@@ -208,3 +171,42 @@ The Image Scoring Agent can be customized to better suit your requirements. For 
 2.  **Image Generation Parameters:** Adjust the Imagen parameters to control image generation quality and characteristics.
 3.  **Evaluation Metrics:** Add or modify evaluation metrics to assess different aspects of the generated images.
 4.  **Iteration Strategy:** Customize the iteration process to optimize for specific aspects of image quality or policy compliance. 
+
+## Sub-Agents and Workflow
+
+The Image Scoring Agent implements a sequential workflow using the following sub-agents:
+
+1. **Prompt Generation Agent** (`prompt_agent.py`)
+   * Primary responsibility: Creates optimized prompts for Imagen based on input text descriptions
+   * Uses Gemini model to generate prompts that comply with policies
+   * Outputs prompts that are stored in session state for image generation
+
+2. **Image Generation Agent** (`imagen_agent.py`)
+   * Primary responsibility: Generates images using Imagen 3.0 based on the prompts
+   * Configures image generation parameters (aspect ratio, safety filters, etc.)
+   * Saves generated images to Google Cloud Storage (GCS)
+   * Stores image artifacts and GCS URIs in session state
+
+3. **Scoring Agent** (`scoring_agent.py`)
+   * Primary responsibility: Evaluates generated images against policy rules
+   * Loads policy rules from `policy.json`
+   * Analyzes images and assigns scores (0-5) for each policy criterion
+   * Computes total score and stores it in session state
+   * Provides detailed scoring feedback for each policy rule
+
+4. **Checker Agent** (`checker_agent.py`)
+   * Primary responsibility: Evaluates if the generated image meets quality thresholds
+   * Manages iteration count and maximum iteration limits
+   * Compares total score against configured threshold (default: 10)
+   * Controls workflow termination based on score or iteration limits
+
+
+### Workflow Sequence
+1. The workflow starts with the Prompt Generation Agent creating an optimized prompt
+2. The Image Generation Agent uses this prompt to create an image with Imagen 3.0
+3. The Scoring Agent evaluates the generated image against policy rules
+4. The Checker Agent determines if the score meets the threshold
+5. If the score is below threshold and max iterations not reached, the process repeats
+6. The workflow terminates when either:
+   * The image score meets or exceeds the threshold
+   * The maximum number of iterations is reached
