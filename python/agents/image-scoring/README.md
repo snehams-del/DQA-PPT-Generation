@@ -151,30 +151,6 @@ blank. Here are some example requests you may ask the Image Scoring Agent to pro
 *   ` a peaceful mountain landscape at sunset`
 *   `a cat riding a bicycle  `
 
-**Programmatic Access**
-
-Below is an example of interacting with the agent using Python:
-
-```python
-import dotenv
-dotenv.load_dotenv()  # May skip if you have exported environment variables.
-from google.adk.runners import InMemoryRunner
-from google.genai.types import Part, UserContent
-from image_scoring.agent import root_agent
-
-user_input = "a peaceful mountain landscape at sunset"
-
-runner = InMemoryRunner(agent=root_agent)
-session = runner.session_service.create_session(
-    app_name=runner.app_name, user_id="test_user"
-)
-content = UserContent(parts=[Part(text=user_input)])
-for event in runner.run(
-    user_id=session.user_id, session_id=session.id, new_message=content
-):
-    for part in event.content.parts:
-        print(part.text)
-```
 
 
 ## Deployment

@@ -1,8 +1,8 @@
 import datetime, uuid
 from zoneinfo import ZoneInfo
-from .sub_agents.prompt import image_generation_prompt_agent as image_prompt
-from .sub_agents.image import image_generation_agent as image_gen
-from .sub_agents.scoring import scoring_images_prompt as scoring_prompt
+from .sub_agents.prompt import image_generation_prompt_agent 
+from .sub_agents.image import image_generation_agent 
+from .sub_agents.scoring import scoring_images_prompt 
 from .checker_agent import checker_agent_instance
 from google.adk.agents import SequentialAgent, LoopAgent
 from google.adk.agents.callback_context import CallbackContext
@@ -31,10 +31,16 @@ def set_session(callback_context: CallbackContext):
 
 image_generation_scoring_agent = SequentialAgent(
     name="image_generation_scoring_agent",
+
     description=(
-        "Analyzes a news article and creates the image generation prompt, generates the relevant images with imagen3 and scores the images."
+        """
+        Analyzes a input text and creates the image generation prompt, generates the relevant images with imagen3 and scores the images."
+        1. Invoke the image_generation_prompt_agent agent to generate the prompt for generating images
+        2. Invoke the image_generation_agent agent to generate the images
+        3. Invoke the scoring_images_prompt agent to score the images
+            """
     ),
-    sub_agents=[image_prompt, image_gen, scoring_prompt],
+    sub_agents=[image_generation_prompt_agent, image_generation_agent, scoring_images_prompt],
 )
 
 
