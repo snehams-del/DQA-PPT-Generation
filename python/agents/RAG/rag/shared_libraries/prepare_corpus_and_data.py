@@ -19,6 +19,8 @@ import os
 from dotenv import load_dotenv, set_key
 import requests
 import tempfile
+import argparse
+from urllib.parse import urlparse
 
 # Load environment variables from .env file
 load_dotenv()
@@ -35,12 +37,14 @@ if not LOCATION:
     raise ValueError(
         "GOOGLE_CLOUD_LOCATION environment variable not set. Please set it in your .env file."
     )
-CORPUS_DISPLAY_NAME = "Alphabet_10K_2024_corpus"
-CORPUS_DESCRIPTION = "Corpus containing Alphabet's 10-K 2024 document"
-PDF_URL = "https://abc.xyz/assets/77/51/9841ad5c4fbe85b4440c47a4df8d/goog-10-k-2024.pdf"
-PDF_FILENAME = "goog-10-k-2024.pdf"
 ENV_FILE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
 
+# Default corpus metadata. Can be overridden via CLI.
+CORPUS_DISPLAY_NAME = "Alphabet_10K_2024_corpus"
+CORPUS_DESCRIPTION = "Corpus containing documentation files"
+
+# Default single-file example (kept for backwards compatibility).
+DEFAULT_PDF_URL = "https://abc.xyz/assets/77/51/9841ad5c4fbe85b4440c47a4df8d/goog-10-k-2024.pdf"
 
 # --- Start of the script ---
 def initialize_vertex_ai():
@@ -72,7 +76,7 @@ def create_or_get_corpus():
   return corpus
 
 
-def download_pdf_from_url(url, output_path):
+def download_pdf_from_url(url: str, output_path: str):
   """Downloads a PDF file from the specified URL."""
   print(f"Downloading PDF from {url}...")
   response = requests.get(url, stream=True)
@@ -86,7 +90,7 @@ def download_pdf_from_url(url, output_path):
   return output_path
 
 
-def upload_pdf_to_corpus(corpus_name, pdf_path, display_name, description):
+def upload_pdf_to_corpus(corpus_name: str, pdf_path: str, display_name: str, description: str):
   """Uploads a PDF file to the specified corpus."""
   print(f"Uploading {display_name} to corpus...")
   try:
@@ -117,30 +121,106 @@ def list_corpus_files(corpus_name):
   for file in files:
     print(f"File: {file.display_name} - {file.name}")
 
+def _create_temp_dir() -> tempfile.TemporaryDirectory:
+  """Creates and returns a TemporaryDirectory instance."""
+  return tempfile.TemporaryDirectory()
+
+
+def _filename_from_url(url: str) -> str:
+  """Derives a filename from the last path component of the URL."""
+  parsed = urlparse(url)
+  return os.path.basename(parsed.path) or "downloaded_file.pdf"
+
+
+# -----------------------------------------------------------------------------
+# Entry-point
+# -----------------------------------------------------------------------------
 
 def main():
+  """Entry-point for CLI/Script.
+
+  Supports uploading multiple files to an existing or newly created RAG corpus.
+  Files can be provided via URLs (they will be downloaded first) or local file
+  paths. If no files are provided, the script falls back to a default single
+  PDF example for backwards compatibility.
+  """
+
+  global CORPUS_DISPLAY_NAME, CORPUS_DESCRIPTION  # declare globals before use
+
+  parser = argparse.ArgumentParser(description="Prepare corpus and upload PDF files to Vertex AI RAG")
+  parser.add_argument(
+      "--pdf_urls",
+      nargs="*",
+      help="One or more PDF URLs to download and upload.",
+  )
+  parser.add_argument(
+      "--pdf_files",
+      nargs="*",
+      help="One or more local PDF file paths to upload.",
+  )
+  parser.add_argument(
+      "--corpus_display_name",
+      default=CORPUS_DISPLAY_NAME,
+      help=f"Display name for the corpus (default: {CORPUS_DISPLAY_NAME}).",
+  )
+  parser.add_argument(
+      "--corpus_description",
+      default=CORPUS_DESCRIPTION,
+      help="Description for the corpus.",
+  )
+
+  args = parser.parse_args()
+
+  # Update global metadata if the user provided overrides.
+  CORPUS_DISPLAY_NAME = args.corpus_display_name
+  CORPUS_DESCRIPTION = args.corpus_description
+
+  pdf_urls = args.pdf_urls or []
+  pdf_files = args.pdf_files or []
+
+  # Fallback to default example when no input is provided.
+  if not pdf_urls and not pdf_files:
+    pdf_urls.append(DEFAULT_PDF_URL)
+
   initialize_vertex_ai()
   corpus = create_or_get_corpus()
 
-  # Update the .env file with the corpus name
+  # Ensure the .env file contains the correct corpus name so the retrieval
+  # agent can reference it later.
   update_env_file(corpus.name, ENV_FILE_PATH)
-  
-  # Create a temporary directory to store the downloaded PDF
-  with tempfile.TemporaryDirectory() as temp_dir:
-    pdf_path = os.path.join(temp_dir, PDF_FILENAME)
-    
-    # Download the PDF from the URL
-    download_pdf_from_url(PDF_URL, pdf_path)
-    
-    # Upload the PDF to the corpus
-    upload_pdf_to_corpus(
-        corpus_name=corpus.name,
-        pdf_path=pdf_path,
-        display_name=PDF_FILENAME,
-        description="Alphabet's 10-K 2024 document"
-    )
-  
-  # List all files in the corpus
+
+  # Handle URL downloads inside a temporary directory to avoid cluttering the
+  # workspace.
+  with _create_temp_dir() as temp_dir:
+    # First process URLs.
+    for url in pdf_urls:
+      try:
+        filename = _filename_from_url(url)
+        pdf_path = os.path.join(temp_dir, filename)
+        download_pdf_from_url(url, pdf_path)
+        upload_pdf_to_corpus(
+            corpus_name=corpus.name,
+            pdf_path=pdf_path,
+            display_name=filename,
+            description=f"Uploaded from URL: {url}",
+        )
+      except Exception as exc:
+        print(f"❌ Skipped {url}: {exc}")
+
+    # Next process local files.
+    for file_path in pdf_files:
+      if not os.path.isfile(file_path):
+        print(f"❌ File not found: {file_path}. Skipping.")
+        continue
+      filename = os.path.basename(file_path)
+      upload_pdf_to_corpus(
+          corpus_name=corpus.name,
+          pdf_path=file_path,
+          display_name=filename,
+          description="Uploaded from local filesystem.",
+      )
+
+  # Finally, show the corpus contents to the user.
   list_corpus_files(corpus_name=corpus.name)
 
 if __name__ == "__main__":

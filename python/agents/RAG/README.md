@@ -82,6 +82,17 @@ This diagram outlines the agent's workflow, designed to provide informed and con
 
 The `rag/shared_libraries/prepare_corpus_and_data.py` script helps you set up a RAG corpus and upload an initial document. By default, it downloads Alphabet's 2024 10-K PDF and uploads it to a new corpus.
 
+> **New in v0.2** – You can now upload **multiple files at once**!  The script accepts `--pdf_urls` and `--pdf_files` command-line flags, allowing you to mix remote URLs and local file paths in a single invocation.
+
+```bash
+# Example: create (or reuse) a corpus and upload three PDFs – two remote and one local.
+python rag/shared_libraries/prepare_corpus_and_data.py \
+  --pdf_urls https://example.com/handbook.pdf https://example.com/guide.pdf \
+  --pdf_files ./docs/internal_policy.pdf
+```
+
+If no files are supplied, the script defaults to the single Alphabet 10-K example for backwards-compatibility.
+
 1.  **Authenticate with your Google Cloud account:**
     ```bash
     gcloud auth application-default login
@@ -102,6 +113,13 @@ The `rag/shared_libraries/prepare_corpus_and_data.py` script helps you set up a 
         ```
         This will create a corpus named `Alphabet_10K_2024_corpus` (if it doesn't exist) and upload the PDF `goog-10-k-2024.pdf` downloaded from the URL specified in the script.
 
+        You can also pass one or more URLs directly (without editing the script):
+
+        ```bash
+        python rag/shared_libraries/prepare_corpus_and_data.py \
+          --pdf_urls "https://path/to/first.pdf" "https://path/to/second.pdf"
+        ```
+
     *   **To upload a different PDF from a URL:**
         a. Open the `rag/shared_libraries/prepare_corpus_and_data.py` file.
         b. Modify the following variables at the top of the script:
@@ -116,7 +134,7 @@ The `rag/shared_libraries/prepare_corpus_and_data.py` script helps you set up a 
            ```
         c. Run the script:
            ```bash
-           python rag/shared_libraries/prepare_corpus_and_data.py
+           python rag/shared_libraries/prepare_corpus_and_data.py --pdf_urls "https://path/to/your/document.pdf"
            ```
 
     *   **To upload a local PDF file:**
@@ -149,7 +167,7 @@ The `rag/shared_libraries/prepare_corpus_and_data.py` script helps you set up a 
            ```
         d. Run the script:
            ```bash
-           python rag/shared_libraries/prepare_corpus_and_data.py
+           python rag/shared_libraries/prepare_corpus_and_data.py --pdf_files /path/to/your/local/file.pdf /another/file.pdf
            ```
 
 More details about managing data in Vertex RAG Engine can be found in the
