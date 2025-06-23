@@ -1,4 +1,3 @@
-import os
 from datetime import datetime
 from google import genai
 from google.genai import types
@@ -8,9 +7,7 @@ from .... import config
 
 
 client = genai.Client(
-    vertexai=True,
-    project=os.environ["GOOGLE_CLOUD_PROJECT"],
-    location=os.environ["GOOGLE_CLOUD_LOCATION"],
+    vertexai=True
 )
 
 
