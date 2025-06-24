@@ -24,11 +24,11 @@ The key features of the Image Scoring Agent include:
 | **Components**  | Tools: Imagen, Image Evaluation Tools |
 | **Vertical**  | Horizontal |
 
-### Agent architecture:
+### Agent architecture:  
 
-This diagram shows the detailed architecture of the agents and tools used to implement this workflow.
+This diagram shows the detailed architecture of the agents and tools used to implement this workflow.  
 
-<img src="image_scoring_architecture.png" alt="Image Scoring Architecture" width="800"/>
+<img src="image_scoring_architecture.png" alt="Image Scoring Architecture" width="800"/>  
 
 
 ## Setup and Installation
@@ -111,7 +111,7 @@ You may open the URL, select "image_scoring" in the top-left drop-down menu, and
 a chatbot interface will appear on the right. The conversation is initially
 blank. Here are some example requests you may ask the Image Scoring Agent to process:
 
-*   ` a peaceful mountain landscape at sunset`
+*   `a peaceful mountain landscape at sunset`
 *   `a cat riding a bicycle  `
 
 
