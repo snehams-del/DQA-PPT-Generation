@@ -1,28 +1,45 @@
-python/agents/academic-research/CODEOWNERS: Antonio Gulli <gulli@google.com>
-python/agents/auto-insurance-agent/CODEOWNERS: David Rush <davidrush@google.com>
-python/agents/brand-search-optimization/CODEOWNERS: Nikhil Kulkarni <nikhilkul@google.com>
-python/agents/customer-service/CODEOWNERS: Christos Aniftos <aniftos@google.com>
-python/agents/data-science/CODEOWNERS: Meltem Subasioglu <msubasioglu@google.com>
-python/agents/financial-advisor/CODEOWNERS: Antonio Gulli <gulli@google.com>
-python/agents/fomc-research/CODEOWNERS: Mike Styer <styer@google.com>
-python/agents/gemini-fullstack/CODEOWNERS: Amit Dutta <amitdutta@google.com>
-python/agents/gemini-fullstack/CODEOWNERS: Deepak Moonat <dmoonat@google.com>
-python/agents/gemini-fullstack/CODEOWNERS: Elia Secchi <eliasecchi@google.com>
-python/agents/gemini-fullstack/CODEOWNERS: Erwin Huizenga <erwinh@google.com>
-python/agents/gemini-fullstack/CODEOWNERS: Lavi Nigam <lavinigam@google.com>
-python/agents/llm-auditor/CODEOWNERS: Chun-Sung Ferng <csferng@google.com>
-python/agents/llm-auditor/CODEOWNERS: Cyrus Rashtchian <cyroid@google.com>
-python/agents/llm-auditor/CODEOWNERS: Da-Cheng Juan <dacheng@google.com>
-python/agents/llm-auditor/CODEOWNERS: Ivan Kuznetsov <ivanku@google.com>
-python/agents/marketing-agency/CODEOWNERS: Antonio Gulli <gulli@google.com>
-python/agents/personalized-shopping/CODEOWNERS: Yiwen Song <yiwensong@google.com>
-python/agents/RAG/CODEOWNERS: Hangfei Lin <hangfei@google.com>
-python/agents/RAG/CODEOWNERS: Chouaieb Nemri <nemri@google.com>
-python/agents/software-bug-assistant/CODEOWNERS: Jack Wotherspoon <jackwoth@google.com>
-python/agents/travel-concierge/CODEOWNERS: Gary Ng <gkcng@google.com>
-python/agents/travel-concierge/CODEOWNERS: Arun Santhanagopalan <asanthan@google.com>
-python/agents/travel-concierge/CODEOWNERS: Renee Zhang <xiaolizhang@google.com>
-python/agents/travel-concierge/CODEOWNERS: Anisha Kaul <anishasjkaul@google.com>
-python/agents/travel-concierge/CODEOWNERS: Duncan Renfrow-Symon <drenfrowsymon@google.com>
-java/agents/software-bug-assistant/CODEOWNERS: Megan O'Keefe <mokeefe@google.com>
-java/agents/time-series-forecasting/CODEOWNERS: Megan O'Keefe <mokeefe@google.com>
+# Agent Academic Research
+/python/agents/academic-research/ gulli@google.com
+
+# Auto Insurance Agent
+/python/agents/auto-insurance-agent/ davidrush@google.com
+
+# Brand Search Optimization
+/python/agents/brand-search-optimization/ nikhilkul@google.com
+
+# Customer Service
+/python/agents/customer-service/ aniftos@google.com
+
+# Data Science
+/python/agents/data-science/ msubasioglu@google.com
+
+# Financial Advisor
+/python/agents/financial-advisor/ gulli@google.com
+
+# FOMC Research
+/python/agents/fomc-research/ styer@google.com
+
+# Gemini Fullstack
+/python/agents/gemini-fullstack/ amitdutta@google.com dmoonat@google.com eliasecchi@google.com erwinh@google.com lavinigam@google.com
+
+# LLM Auditor
+/python/agents/llm-auditor/ csferng@google.com cyroid@google.com dacheng@google.com ivanku@google.com
+
+# Marketing Agency
+/python/agents/marketing-agency/ gulli@google.com
+
+# Personalized Shopping
+/python/agents/personalized-shopping/ yiwensong@google.com
+
+# RAG
+/python/agents/RAG/ hangfei@google.com nemri@google.com
+
+# Software Bug Assistant
+/python/agents/software-bug-assistant/ jackwoth@google.com
+/java/agents/software-bug-assistant/ mokeefe@google.com
+
+# Travel Concierge
+/python/agents/travel-concierge/ gkcng@google.com asanthan@google.com xiaolizhang@google.com anishasjkaul@google.com drenfrowsymon@google.com
+
+# Time Series Forecasting
+/java/agents/time-series-forecasting/ mokeefe@google.com
