@@ -13,15 +13,26 @@
 # limitations under the License.
 
 from google.adk.agents import Agent
- from google.adk.sessions import InMemorySessionService, Session
-
+from google.adk.sessions import InMemorySessionService, Session
 
 from .prompt import agent_instruction
-from .tools.tools import get_current_date
+from .tools.tools import (
+    get_current_date,
+    get_student_progress,
+    generate_topic_quiz,
+    evaluate_quiz_answer,
+    store_quiz_results
+)
 
 root_agent = Agent(
     model="gemini-2.0-flash",
     name="python_tutor",
     instruction=agent_instruction,
-    tools=[get_current_date],
+    tools=[
+        get_current_date,
+        get_student_progress,
+        generate_topic_quiz,
+        evaluate_quiz_answer,
+        store_quiz_results
+    ],
 )
