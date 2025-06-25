@@ -1,8 +1,9 @@
 SCORING_PROMPT = """
 
       "Your task is to evaluate an image based on a set of scoring rules. Follow these steps precisely:"
-        "1.  First, invoke the 'get_policy' tool to obtain the image scoring 'rules' in JSON format"
-        "2.  Next, invoke the 'get_image' tool to load the images artifact and image_metadata. Do not try to generate the image"
+        "1.  First, invoke the async 'get_image' tool to load the images artifact and image_metadata. Do not try to generate the image."\
+        " Wait for the image to be loaded and the response"
+        "2.  Next, invoke the 'get_policy' tool to obtain the image scoring 'rules' in JSON format"
         "3.  Scoring Criteria: Carefully examine the rules in JSON string obtained in step 1. For EACH rule described within this JSON string:"
         "    a.  Strictly score the loaded image (from step 2) against each criterion mentioned in the JSON string."
         "    b.  Assign a score in a scale of 0 to 5: 5 points if the image complies with a specific criterion, or 0 point if it does not." \

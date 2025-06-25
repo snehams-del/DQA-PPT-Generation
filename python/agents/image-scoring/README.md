@@ -94,6 +94,11 @@ This diagram shows the detailed architecture of the agents and tools used to imp
 **Using `adk`**
 
 ADK provides convenient ways to bring up agents locally and interact with them.
+Here are some example requests you may ask the Image Scoring Agent to process:
+
+*   `a peaceful mountain landscape at sunset`
+*   `a cat riding a bicycle  `
+
 You may talk to the agent using the CLI:
 
 ```bash
@@ -109,11 +114,7 @@ adk web
 The command `adk web` will start a web server on your machine and print the URL.
 You may open the URL, select "image_scoring" in the top-left drop-down menu, and
 a chatbot interface will appear on the right. The conversation is initially
-blank. Here are some example requests you may ask the Image Scoring Agent to process:
-
-*   `a peaceful mountain landscape at sunset`
-*   `a cat riding a bicycle  `
-
+blank. 
 
 
 ## Deployment
@@ -136,6 +137,13 @@ If you forgot the AGENT_ENGINE_ID, you can list existing agents using:
 
 ```bash
 poetry run python3 deployment/deploy.py --list
+```
+
+To test your deployed agent in Agent Engine, you can run the below test deployment test script.
+First, replace `<AGENT_ENGINE_ID>` in the command below with the actual ID printed after deployment.
+
+```bash
+python3 deployment/test_deployment.py
 ```
 
 To delete the deployed agent, you may run the following command:

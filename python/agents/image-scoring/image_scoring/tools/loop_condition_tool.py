@@ -16,7 +16,7 @@ def check_condition_and_escalate_tool(tool_context: ToolContext) -> dict:
     max_iterations = config.MAX_ITERATIONS
 
     # Get the condition result set by the sequential agent from state
-    total_score = tool_context.state.get("total_score", False)
+    total_score = tool_context.state.get("total_score", 50)
 
     condition_met = total_score > config.SCORE_THRESHOLD
 

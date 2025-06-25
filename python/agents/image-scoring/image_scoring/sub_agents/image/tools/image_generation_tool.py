@@ -11,7 +11,7 @@ client = genai.Client(
 )
 
 
-def generate_images(imagen_prompt: str, tool_context: ToolContext):
+async def generate_images(imagen_prompt: str, tool_context: ToolContext):
 
     try:
 
@@ -41,7 +41,7 @@ def generate_images(imagen_prompt: str, tool_context: ToolContext):
                     data=image_bytes, mime_type="image/png"
                 )
 
-                tool_context.save_artifact(artifact_name, report_artifact)
+                await tool_context.save_artifact(artifact_name, report_artifact)
                 print(f"Image also saved as ADK artifact: {artifact_name}")
 
                 return {
