@@ -169,7 +169,7 @@ poetry run pytest eval
 
 `eval` is a demonstration of how to evaluate the agent, using the
 `AgentEvaluator` in ADK. It sends a sample request to the image_scoring agent
-and displays if it has passed
+and checks if the tool usage is as expected.
 
 ## Customization
 
