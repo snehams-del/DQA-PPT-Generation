@@ -1,4 +1,0 @@
-google-genai
-google-cloud-aiplatform 
-google-cloud-storage
-google-adk
