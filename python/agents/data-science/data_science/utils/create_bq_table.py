@@ -87,7 +87,7 @@ def main():
     if not project_id:
         raise ValueError("BQ_PROJECT_ID environment variable not set.")
 
-    dataset_name = "forecasting_sticker_sales"
+    dataset_name = os.getenv("BQ_DATASET_ID")
     train_csv_filepath = "data_science/utils/data/train.csv"
     test_csv_filepath = "data_science/utils/data/test.csv"
 
