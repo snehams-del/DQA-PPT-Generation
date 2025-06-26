@@ -127,7 +127,7 @@ poetry run python3 deployment/deploy.py --list
 ```
 
 To test your deployed agent in Agent Engine, you can run the below test deployment test script.
-First, replace `<AGENT_ENGINE_ID>` in the code with the actual ID printed after deployment.
+First, replace `<AGENT_ENGINE_ID>` in the .env post the deployment.
 
 ```bash
 python3 deployment/test_deployment.py
