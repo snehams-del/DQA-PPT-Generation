@@ -64,24 +64,11 @@ This diagram shows the detailed architecture of the agents and tools used to imp
 
     *   Set up Google Cloud credentials.
 
-        *   You may set the following environment variables in your shell, or in
-            a `.env` file instead.
+        *   There is a `.env-example` file included in the repository. Update this file
+            with the values appropriate to your project, and save it as `.env`. The values
+            in this file will be read into the environment of your application.
 
-        ```bash
-        export GOOGLE_GENAI_USE_VERTEXAI=true
-        export GOOGLE_CLOUD_PROJECT=<your-project-id>
-        export GOOGLE_CLOUD_LOCATION=<your-project-location>
-        export GOOGLE_CLOUD_STORAGE_BUCKET=<your-storage-bucket>  # Only required for deployment on Agent Engine
-        ```
-        *  Configuration (`config.py`)
-        The agent's behavior is controlled by the following configuration parameters:
-        `GCS_BUCKET_NAME`: Storage bucket for generated images
-        `SCORE_THRESHOLD`: Minimum score required for image acceptance (default: 10)
-        `MAX_ITERATIONS`: Maximum number of generation attempts (default: 2)
-        `IMAGEN_MODEL`: Imagen model version for image generation
-        `GENAI_MODEL`: Gemini model version for prompt generation and scoring
-
-    ```python
+       
     *   Authenticate your GCloud account.
 
         ```bash
