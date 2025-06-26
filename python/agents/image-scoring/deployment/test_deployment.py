@@ -1,8 +1,8 @@
-import dotenv
+import dotenv, os
 dotenv.load_dotenv()  # May skip if you have exported environment variables.
 from vertexai import agent_engines
 
-agent_engine_id = "AGENT_ENGINE_ID"
+agent_engine_id = os.getenv("AGENT_ENGINE_ID")
 user_input = "cat riding  a bicycle"
 
 agent_engine = agent_engines.get(agent_engine_id)
