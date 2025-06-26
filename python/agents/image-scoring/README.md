@@ -136,6 +136,7 @@ python3 deployment/test_deployment.py
 To delete the deployed agent, you may run the following command:
 
 ```bash
+export AGENT_ENGINE_ID=<AGENT_ENGINE_ID>
 poetry run python3 deployment/deploy.py --delete --resource_id=${AGENT_ENGINE_ID}
 ```
 
