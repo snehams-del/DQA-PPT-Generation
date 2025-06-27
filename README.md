@@ -26,13 +26,16 @@ To learn more, check out the [ADK Documentation](https://google.github.io/adk-do
 │   │   ├── data-science
 │   │   ├── financial-advisor
 │   │   ├── fomc-research
-│   │   ├── llm-auditor
-│   │   ├── marketing-agency
-│   │   ├── personalized-shopping
-│   │   ├── RAG
-│   │   ├── README.md
-│   │   └── travel-concierge
-│   └── README.md
+│   │   ├── gemini-fullstack
+│   │   ├── image-scoring
+│   │   ├── llm-auditor
+│   │   ├── marketing-agency
+│   │   ├── personalized-shopping
+│   │   ├── RAG
+│   │   ├── README.md
+│   │   ├── software-bug-assistant  
+│   │   └── travel-concierge
+│   └── README.md
 └── README.md
 ```
 
