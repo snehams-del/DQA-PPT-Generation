@@ -1,0 +1,5 @@
+{
+    "pylint.path": ["/usr/bin/gpylint", "-f", "msvs"]
+}
+
+
