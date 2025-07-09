@@ -32,8 +32,9 @@ from .chase_sql import chase_constants
 # environment. See the `data_agent` README for more details.
 data_project = os.getenv("BQ_DATA_PROJECT_ID", None)
 compute_project = os.getenv("BQ_COMPUTE_PROJECT_ID", None)
+vertex_project = os.getenv("GOOGLE_CLOUD_PROJECT", None)
 location = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
-llm_client = Client(vertexai=True, project=compute_project, location=location)
+llm_client = Client(vertexai=True, project=vertex_project, location=location)
 
 MAX_NUM_ROWS = 80
 
