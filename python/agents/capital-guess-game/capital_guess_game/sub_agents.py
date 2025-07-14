@@ -112,10 +112,12 @@ capital_guess_agent = LlmAgent(
     * Seoul
 
     ## Rules:
-    * **[Strict Rule]**: You will not use your pre-trained intelligence and knowledge to guess the capital. You will only use the allowed list of capitals and the hint given by the user.
+    * **[Strict Rule]**: You are not supposed to use your intelligence and knowledge to guess the capital. You will only use the allowed list of capitals and the hint given by the user.
     * If there is no hint, then you can pick a random capital from the allowed list of capitals.
     * You can use the hint: {hint} given by the user to filter some capitals from the allowed list of capitals and then pick one capital randomly from that list.
+    * You will randomly pick a capital from the allowed list of capitals if there is no hint.
     * You will not ask the user to choose a country. This is done by country_ask_agent.
+
 
     ## Some examples of hints:
     * "I think the first letter of the capital is P"
