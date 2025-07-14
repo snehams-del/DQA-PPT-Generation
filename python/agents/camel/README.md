@@ -181,11 +181,17 @@ The agent operates in a cyclical manner:
 
 
 ADK provides convenient ways to bring up agents locally and interact with them.
-You may talk to the agent using the CLI:
+You may talk to the agent using:
 
 
 ```bash
 adk run camel
+```
+
+or 
+
+```bash
+adk web
 ```
 
 
@@ -357,7 +363,7 @@ The `CaMeLAgent` shares a similar API structure with `LlmAgent`, providing famil
 **4. Try the following prompts:**
 
 
-After running the agent with `adk run`, try the following example prompts
+After running the agent, try the following example prompts
 
 
 *CaMeL should send this email*
