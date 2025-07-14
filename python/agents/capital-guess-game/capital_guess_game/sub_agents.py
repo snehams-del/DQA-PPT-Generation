@@ -134,12 +134,9 @@ capital_guess_agent = LlmAgent(
 )
 
 
-class GameplayAgent(BaseAgent):
-    def __init__(self, name: str, sub_agents: list[LlmAgent], after_agent_callback: Optional[Any]):
-        super().__init__(name=name, after_agent_callback=after_agent_callback, sub_agents=sub_agents)
-
+class GameplayAgent(LlmAgent):
     @override
-    async def _run_async_impl(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
+    async def run_async(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
 
         logger.info(f"\n\n $$$$$$$$$$$$$$$\nStarting GameplayAgent execution for agent: {self.name}")
         
@@ -160,7 +157,7 @@ class GameplayAgent(BaseAgent):
             logger.info(f"User message is a completion message. Workflow stage set to completed.")
             yield Event(
                 invocation_id=ctx.invocation_id,
-                author="gameplay_workflow_agent",
+                author="capital_guess_workflow_agent",
                 content={"parts": [
                     {"function_call": {"name": "transfer_to_agent", "args": {"agent_name": "game_arcade_agent"}}},
                     {"text": "Okay I will end the game now. Thank you for playing!"}
@@ -185,28 +182,43 @@ class GameplayAgent(BaseAgent):
                 logger.info(f"User is satisfied with agent's answer. Setting workflow stage to completed.")
                 yield Event(
                     invocation_id=ctx.invocation_id,
-                    author="gameplay_workflow_agent",
+                    author="capital_guess_workflow_agent",
                     content={"parts": [
-                        {"function_call": {"name": "transfer_to_agent", "args": {"agent_name": "game_arcade_agent"}}},
                         {"text": "I am a champ, I got the capital right. This was fun. Thank you!"}
                     ]},
                     actions=EventActions(
-                        transfer_to_agent="game_arcade_agent",
                         state_delta={
                             "workflow_stage": "completed",
                             "country": "",
                             "hint": "",
                             "user_input": ""
                         }
-                    ) # Optional hint for orchestration
+                    ) 
                 )
+
+                yield Event(
+                    invocation_id=ctx.invocation_id,
+                    author="game_arcade_agent",
+                    content={"parts": [
+                        {"text": "Transferring control to the root agent!"},
+                    ]},
+                )
+                
+                logger.info(f"Yielding events of root agent!")
+
+                async for event in ctx.agent.parent_agent.run_async(ctx):
+                    yield event
+
+                logger.info(f"Yielded all events of root agent!")
                 return
+
+
             else:
                 # Game goes on
                 logger.info(f"User is not satisfied with agent's answer. Setting workflow stage to guess_capital and hint to user's input.")
                 yield Event(
                     invocation_id=ctx.invocation_id,
-                    author="gameplay_workflow_agent",
+                    author="capital_guess_workflow_agent",
                     actions=EventActions(
                         state_delta={
                             "workflow_stage": "guess_capital",
@@ -226,7 +238,7 @@ class GameplayAgent(BaseAgent):
             # Set the workflow stage to process_country
             yield Event(
                 invocation_id=ctx.invocation_id,
-                author="gameplay_workflow_agent",
+                author="capital_guess_workflow_agent",
                 actions=EventActions(
                     state_delta={
                         "workflow_stage": "process_country",
@@ -247,7 +259,7 @@ class GameplayAgent(BaseAgent):
             logger.info(f"User has given the input for a country. Setting user_input in state.")
             yield Event(
                 invocation_id=ctx.invocation_id,
-                author="gameplay_workflow_agent",
+                author="capital_guess_workflow_agent",
                 actions=EventActions(
                     state_delta={
                         "user_input": user_message
@@ -264,7 +276,7 @@ class GameplayAgent(BaseAgent):
                 logger.info(f"Country was not set. Setting workflow stage to ask_country and user_input to empty string.")
                 yield Event(
                     invocation_id=ctx.invocation_id,
-                    author="gameplay_workflow_agent",
+                    author="capital_guess_workflow_agent",
                     content={"parts": [{"text": "Please choose a country from this list only: france, germany, india, usa, japan."}]},
                     actions=EventActions(
                         state_delta={
@@ -280,7 +292,7 @@ class GameplayAgent(BaseAgent):
                 logger.info(f"Country was set. Setting workflow stage to guess_capital and user_input to empty string.")
                 yield Event(
                     invocation_id=ctx.invocation_id,
-                    author="gameplay_workflow_agent",
+                    author="capital_guess_workflow_agent",
                     actions=EventActions(
                         state_delta={
                             "workflow_stage": "guess_capital",
@@ -300,7 +312,7 @@ class GameplayAgent(BaseAgent):
             # Set the workflow stage to validate_capital
             yield Event(
                 invocation_id=ctx.invocation_id,
-                author="gameplay_workflow_agent",
+                author="capital_guess_workflow_agent",
                 content={"parts": [{"text": "Do you think my guess is correct?"}]},
                 actions=EventActions(
                         state_delta={
@@ -320,7 +332,7 @@ class GameplayAgent(BaseAgent):
             logger.warning(f"Completed workflow stage. Ending the game.")
             yield Event(
                         invocation_id=ctx.invocation_id,
-                        author="gameplay_workflow_agent",
+                        author="capital_guess_workflow_agent",
                         content={"parts": [
                             {"function_call": {"name": "transfer_to_agent", "args": {"agent_name": "game_arcade_agent"}}},
                         ]},
@@ -336,8 +348,8 @@ class GameplayAgent(BaseAgent):
             return
 
 
-gameplay_workflow_agent = GameplayAgent(
-    name="gameplay_workflow_agent",
+capital_guess_workflow_agent = GameplayAgent(
+    name="capital_guess_workflow_agent",
     sub_agents=[country_ask_agent, country_process_agent, capital_guess_agent],
     after_agent_callback=after_agent_cb
 )

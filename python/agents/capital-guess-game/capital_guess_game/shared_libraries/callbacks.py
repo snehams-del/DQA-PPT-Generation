@@ -108,7 +108,21 @@ def after_agent_cb(callback_context: CallbackContext) -> Optional[types.Content]
     """Inspects/modifies the LLM request or skips the call."""
     agent_name = callback_context.agent_name
     logger.info(f"\n##############\n After agent call for agent: {agent_name} , [Timestamp] {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    return None
+
+    workflow_stage = callback_context.state["workflow_stage"]
+    if workflow_stage == "completed":
+        logger.info(f"Agent: {agent_name} - Workflow stage is completed. Sending control back to game_arcade_agent.")
+        return types.Content(
+            role="model",
+            parts=[
+                types.Part(text=f"Game is finished. We will go back to game_arcade_agent."), 
+                types.Part(function_call={"name": "transfer_to_agent", "args": {"agent_name": "game_arcade_agent"}})
+            ]
+        )
+    else:
+        logger.info(f"Agent: {agent_name} - Workflow stage is not completed. Will continue with the workflow.")
+        return None
+    
 
 
 def before_model_cb(
@@ -129,8 +143,8 @@ def before_model_cb(
                 content=types.Content(
                     role="model",
                     parts=[
-                        types.Part(text=f"Game is finished. We will go back to onesync agent."),
-                        types.Part(function_call={"name": "transfer_to_agent", "args": {"agent_name": "onesync_agent"}}),
+                        types.Part(text=f"Game is finished. We will go back to game_arcade_agent."),
+                        types.Part(function_call={"name": "transfer_to_agent", "args": {"agent_name": "game_arcade_agent"}}),
                         
                     ],
                 )
@@ -141,7 +155,7 @@ def before_model_cb(
                 content=types.Content(
                     role="model",
                     parts=[
-                        types.Part(function_call={"name": "transfer_to_agent", "args": {"agent_name": "gameplay_agent"}}),
+                        types.Part(function_call={"name": "transfer_to_agent", "args": {"agent_name": "capital_guess_workflow_agent"}}),
                     ],
                 )
             )
