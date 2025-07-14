@@ -416,14 +416,6 @@ class CaMeLInterpreter(BaseAgent):
       self, ctx: InvocationContext
   ) -> AsyncGenerator[Event, None]:
 
-    yield Event(
-        author=self.name,
-        content=types.Content(
-            role=self.name,
-            parts=[types.Part(text=" ")],
-        ),
-    )
-
     if "p_llm_code" not in ctx.session.state:
       # If the p_llm_code is not in the session state, then the PLLM agent did
       # not generate any code. This is an error and we should escalate.
@@ -437,7 +429,7 @@ class CaMeLInterpreter(BaseAgent):
       yield Event(
           author=self.name,
           content=types.Content(
-              role="user",
+              role=self.name,
               parts=[types.Part(text="ERROR: PLLM did not generate any code.")],
           ),
       )
@@ -459,7 +451,14 @@ class CaMeLInterpreter(BaseAgent):
     ctx.session.state.update(dict(dependencies=dependencies))
 
     # Print the results.
-    print(f"Interpreter output: {printed_output}", end="\n\n")
+    if printed_output:
+      yield Event(
+            author=self.name,
+            content=types.Content(
+                role=self.name,
+                parts=[types.Part(text=printed_output)],
+            ),
+        )
 
     # 3. Add additional messages to the conversation based on the eval result.
     if error is not None:
@@ -471,7 +470,7 @@ class CaMeLInterpreter(BaseAgent):
       yield Event(
           author=self.name,
           content=types.Content(
-              role="user",
+              role=self.name,
               parts=[types.Part(text=f"CODE ERROR: {error_reason}")],
           ),
       )
