@@ -4,17 +4,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Commands
 
-### Python Development (using Poetry or uv)
+### Python Development
 
 **Package Management:**
 ```bash
-# Poetry
-poetry install
-poetry run <command>
-
-# uv (preferred for newer agents)
+# uv (preferred for newer agents like software-bug-assistant, gemini-fullstack)
 uv sync
 uv run <command>
+
+# Poetry (used by older agents like RAG, data-science)
+poetry install
+poetry run <command>
 ```
 
 **Running Agents:**
@@ -22,46 +22,49 @@ uv run <command>
 # CLI mode (from agent directory)
 adk run .
 
-# Web UI mode (from agent directory)
+# Web UI mode (from agent directory)  
 adk web
 
 # API server mode (for fullstack agents)
 adk api_server app --allow_origins="*"
+
+# Web playground mode
+adk web --port 8501
 ```
 
 **Linting and Formatting:**
 ```bash
-# Modern Python (ruff + mypy + codespell)
+# Modern Python stack (preferred)
 ruff check . --diff
 ruff format . --check --diff
 mypy .
 codespell
 
-# Legacy tools (some agents)
+# Legacy tools (some older agents)
 black .
-pyink .
 pylint .
 flake8 .
 ```
 
 **Testing:**
 ```bash
-# Run tests
+# Standard testing
 pytest
 pytest -vv -s
 pytest --cov
 
-# Run specific test file
+# Run specific test file or pattern
 pytest tests/test_agents.py
+pytest tests/unit/
 ```
 
 **Evaluation:**
 ```bash
-# Run agent evaluation
+# Run agent evaluation with test data
 adk eval <agent_name> eval/data/eval_data.evalset.json --config_file_path eval/data/test_config.json
 ```
 
-### Java Development (using Maven)
+### Java Development
 
 **Building:**
 ```bash
@@ -76,22 +79,23 @@ mvn test
 
 **Running Agents:**
 ```bash
-# Execute main class
+# Execute main class directly
 mvn exec:java
 
-# ADK Dev UI
+# ADK Dev UI with custom port
 mvn compile exec:java -Dexec.args="--server.port=8080"
 ```
 
-### Fullstack Development (gemini-fullstack)
+### Fullstack Development (gemini-fullstack only)
 
 **Using Makefile:**
 ```bash
-make install        # Install all dependencies
-make dev           # Run both frontend and backend
-make dev-backend   # Run backend only
-make dev-frontend  # Run frontend only
-make lint          # Run all linting
+make install        # Install all dependencies (uv + npm)
+make dev           # Run both frontend and backend concurrently
+make dev-backend   # Backend only: adk api_server
+make dev-frontend  # Frontend only: npm run dev
+make playground    # Web UI: adk web --port 8501
+make lint          # Full linting suite
 ```
 
 ## Repository Architecture
@@ -107,42 +111,42 @@ This repository contains **Agent Development Kit (ADK) samples** demonstrating v
 ### Agent Categories
 
 **Business Intelligence & Analytics:**
-- `data-science/` - Multi-agent system for data analysis
-- `time-series-forecasting/` - BigQuery ML forecasting
+- `data-science/` - Multi-agent system for data analysis via NL2SQL and NL2Python
+- `time-series-forecasting/` - BigQuery ML forecasting models
 - `brand-search-optimization/` - E-commerce product enhancement
 
 **Financial Services:**
-- `financial-advisor/` - Educational financial content
-- `fomc-research/` - Market event analysis
+- `financial-advisor/` - Educational financial content with specialized sub-agents
+- `fomc-research/` - Market event analysis with workflow orchestration
 - `auto-insurance-agent/` - Insurance management
 
 **Customer Service & Support:**
-- `customer-service/` - Home & garden support
-- `software-bug-assistant/` - IT bug resolution
-- `travel-concierge/` - Travel planning
+- `customer-service/` - Home & garden support with session management
+- `software-bug-assistant/` - IT bug resolution (Python + Java implementations)
+- `travel-concierge/` - Travel planning with booking integration
 
 **Content & Research:**
-- `academic-research/` - Publication discovery
-- `RAG/` - Document-based Q&A
-- `llm-auditor/` - Content verification
-- `gemini-fullstack/` - Advanced fullstack research
+- `academic-research/` - Publication discovery with specialized search agents
+- `RAG/` - Document-based Q&A using Vertex AI RAG Engine
+- `llm-auditor/` - Content verification with critic/reviser pattern
+- `gemini-fullstack/` - Advanced fullstack research with React frontend
 
 ### Agent Architecture Patterns
 
 **Single Agent Pattern:**
-- Direct tool integration
-- Simple conversational flow
-- Examples: `personalized-shopping`, `RAG`
+- Direct tool integration with focused functionality
+- Simple conversational flow, minimal routing logic
+- Examples: `RAG` (Vertex AI RAG retrieval), `auto-insurance-agent`
 
 **Multi-Agent Pattern:**
-- Router agent with specialized sub-agents
-- Hierarchical structures with division of labor
-- Examples: `data-science`, `financial-advisor`, `marketing-agency`
+- Router agent coordinating specialized sub-agents in `sub_agents/` directories
+- Division of labor with domain-specific expertise
+- Examples: `data-science` (analytics/bigquery/bqml), `financial-advisor` (risk/trading/execution analysts)
 
 **Workflow Pattern:**
-- Sequential task execution
-- Human-in-the-loop capabilities
-- Examples: `gemini-fullstack`, `fomc-research`
+- Sequential task execution with state management
+- Human-in-the-loop capabilities and callback systems
+- Examples: `fomc-research` (research→extract→summarize→analyze), `customer-service` (session tracking)
 
 ### Directory Structure
 
@@ -183,19 +187,19 @@ agent-name/
 ## Key Technologies
 
 ### Core Frameworks
-- **Google ADK** - Primary agent framework (Python 1.0.0+, Java 0.1.0)
-- **Vertex AI** - Google Cloud AI platform integration
-- **Gemini Models** - LLM integration via Vertex AI
+- **Google ADK** - Primary agent framework (Python 1.3.0+, Java 0.1.0)
+- **Vertex AI** - Google Cloud AI platform integration with Gemini models
+- **MCP (Model Context Protocol)** - Tool definition standard for external integrations
 
 ### Data and Integration
-- **BigQuery** - Data warehousing and ML
-- **PostgreSQL** - Relational database with vector extensions
-- **MCP (Model Context Protocol)** - Tool definition standard
+- **BigQuery** - Data warehousing, ML models, and NL2SQL capabilities
+- **Vertex AI RAG Engine** - Retrieval-augmented generation for document Q&A
+- **PostgreSQL** - Relational database with vector extensions (some agents)
 
 ### Development Tools
-- **Python**: Poetry/uv for dependencies, ruff/mypy for linting
-- **Java**: Maven for build management, JUnit for testing
-- **Frontend**: React 19 + TypeScript + Vite (fullstack examples)
+- **Python**: uv/Poetry for dependencies, ruff/mypy/codespell for linting
+- **Java**: Maven for build management, JDK 17+ required
+- **Frontend**: React 19 + TypeScript + Vite (gemini-fullstack)
 
 ## Working with Agents
 
@@ -228,9 +232,10 @@ agent-name/
 
 ## Important Notes
 
-- **Python versions**: 3.10-3.13 supported (varies by agent)
-- **Java version**: JDK 17+ required
-- **Google Cloud**: Most agents require GCP project and Vertex AI access
+- **Python versions**: Minimum 3.9+ (newer agents prefer 3.11+)
+- **Java version**: JDK 17+ required for all Java agents
+- **Google Cloud**: Most agents require GCP project with Vertex AI API enabled
 - **Naming convention**: Directory names use hyphens, Python modules use underscores
-- **Dependencies**: Each agent has its own pyproject.toml/pom.xml configuration
-- **Environment**: `.env` files are required but not committed (use `.env.example`)
+- **Dependencies**: Each agent has independent pyproject.toml/pom.xml - check agent-specific versions
+- **Environment**: Copy `.env.example` to `.env` and configure before running agents
+- **ADK versions**: Python agents use ADK 1.0.0-1.3.0, Java agents use 0.1.0
