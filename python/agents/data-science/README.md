@@ -39,12 +39,12 @@ The key features of the Data Science Multi-Agent include:
 
 *   **Google Cloud Account:** You need a Google Cloud account with BigQuery enabled.
 *   **Python 3.12+:** Ensure you have Python 3.12 or a later version installed.
-*   **Poetry:** Install Poetry by following the instructions on the official Poetry website: [https://python-poetry.org/docs/](https://python-poetry.org/docs/)
+*   **uv:** Install uv by following the instructions on the official uv website: [https://docs.astral.sh/uv/getting-started/installation/](https://docs.astral.sh/uv/getting-started/installation/)
 *   **Git:** Ensure you have git installed. If not, you can download it from [https://git-scm.com/](https://git-scm.com/) and follow the [installation guide](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git).
 
 
 
-### Project Setup with Poetry
+### Project Setup with uv
 
 1.  **Clone the Repository:**
 
@@ -53,32 +53,20 @@ The key features of the Data Science Multi-Agent include:
     cd adk-samples/python/agents/data-science
     ```
 
-2.  **Install Dependencies with Poetry:**
+2.  **Install Dependencies with uv:**
 
     ```bash
-    poetry install
+    uv sync
     ```
 
-    This command reads the `pyproject.toml` file and installs all the necessary dependencies into a virtual environment managed by Poetry.
+    This command reads the `pyproject.toml` file and installs all the necessary dependencies into a virtual environment managed by uv.
 
-3.  **Activate the Poetry Shell:**
+3.  **Activate the uv Shell:**
 
     ```bash
-    poetry env activate
+    source .venv/bin/activate
     ```
 
-    This activates the virtual environment, allowing you to run commands within the project's environment. To make sure the environment is active, use for example
-
-    ```bash
-    $> poetry env list
-       data-science-FAlhSuLn-py3.13 (Activated)
-    ```
-
-    If the above command did not activate the environment for you, you can also activate it through
-
-     ```bash
-    source $(poetry env info --path)/bin/activate
-    ```
 
 4.  **Set up Environment Variables:**
     Rename the file ".env.example" to ".env"
@@ -177,12 +165,12 @@ from the working directory:
 1.  Run agent in CLI:
 
     ```bash
-    poetry run adk run data_science
+    uv run adk run data_science
     ```
 
 2.  Run agent with ADK Web UI:
     ```bash
-    poetry run adk web
+    uv run adk web
     ```
     Select the data_science from the dropdown
 
@@ -232,9 +220,9 @@ Here's a quick example of how a user might interact with the Data Science Multi-
 ## Testing and Evaluation
 
 To run the test and evaluation code, you need a few additional dependencies. Run
-the following Poetry command from the `agents/data-science` directory to install them:
+the following uv command from the `agents/data-science` directory to install them:
 ```bash
-poetry install --with=dev
+uv sync
 ```
 
 ### Running Evaluations
@@ -245,12 +233,12 @@ Evaluation tests assess the overall performance and capabilities of the agent in
 **Run Evaluation Tests:**
 
     ```bash
-    poetry run pytest eval
+    uv run pytest eval
     ```
 
 
 - This command executes all test files within the `eval/` directory.
-- `poetry run` ensures that pytest runs within the project's virtual environment.
+- `uv run` ensures that pytest runs within the project's virtual environment.
 
 
 
@@ -267,11 +255,11 @@ Tests assess the overall executability of the agents.
 **Run Tests:**
 
     ```bash
-    poetry run pytest tests
+    uv run pytest tests
     ```
 
 - This command executes all test files within the `tests/` directory.
-- `poetry run` ensures that pytest runs within the project's virtual environment.
+- `uv run` ensures that pytest runs within the project's virtual environment.
 
 
 
@@ -305,7 +293,7 @@ Next, you need to create a `.whl` file for your agent. From the `data-science`
 directory, run this command:
 
 ```bash
-poetry build --format=wheel --output=deployment
+uv build --format=wheel --out-dir deployment
 ```
 
 This will create a file named `data_science-0.1-py3-none-any.whl` in the
