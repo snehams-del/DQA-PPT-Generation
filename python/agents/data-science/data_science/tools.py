@@ -21,27 +21,36 @@
 from google.adk.tools import ToolContext
 from google.adk.tools.agent_tool import AgentTool
 
-from .sub_agents import ds_agent, db_agent
+from .sub_agents import alloydb_agent, bigquery_agent, ds_agent
 
 
-async def call_db_agent(
+async def call_bigquery_agent(
     question: str,
     tool_context: ToolContext,
 ):
-    """Tool to call database (nl2sql) agent."""
-    print(
-        "\n call_db_agent.use_database:"
-        f' {tool_context.state["all_db_settings"]["use_database"]}'
-    )
+    """Tool to call bigquery database (nl2sql) agent."""
 
-    agent_tool = AgentTool(agent=db_agent)
+    agent_tool = AgentTool(agent=bigquery_agent)
 
-    db_agent_output = await agent_tool.run_async(
+    bigquery_agent_output = await agent_tool.run_async(
         args={"request": question}, tool_context=tool_context
     )
-    tool_context.state["db_agent_output"] = db_agent_output
-    return db_agent_output
+    tool_context.state["bigquery_agent_output"] = bigquery_agent_output
+    return bigquery_agent_output
 
+async def call_alloydb_agent(
+    question: str,
+    tool_context: ToolContext,
+):
+    """Tool to call alloydb database (nl2sql) agent."""
+
+    agent_tool = AgentTool(agent=alloydb_agent)
+
+    alloydb_agent_output = await agent_tool.run_async(
+        args={"request": question}, tool_context=tool_context
+    )
+    tool_context.state["bigquery_agent_output"] = alloydb_agent_output
+    return alloydb_agent_output
 
 async def call_ds_agent(
     question: str,

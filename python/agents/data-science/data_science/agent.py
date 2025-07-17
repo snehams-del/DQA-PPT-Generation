@@ -20,50 +20,66 @@
 import os
 from datetime import date
 
-from google.genai import types
-
-from google.adk.agents import Agent
+from google.adk.agents import LlmAgent
 from google.adk.agents.callback_context import CallbackContext
 from google.adk.tools import load_artifacts
+from google.adk.tools.agent_tool import AgentTool
+from google.genai import types
 
-from .sub_agents import bqml_agent
-from .sub_agents.bigquery.tools import (
-    get_database_settings as get_bq_database_settings,
-)
 from .prompts import return_instructions_root
-from .tools import call_db_agent, call_ds_agent
+#from .sub_agents import bqml_agent
+from .sub_agents import alloydb_agent, bigquery_agent
+from .sub_agents.alloydb.tools import \
+    get_database_settings as get_alloydb_database_settings
+#from .sub_agents import ds_agent
+from .sub_agents.bigquery.tools import \
+    get_database_settings as get_bq_database_settings
+
+#from .tools import call_alloydb_agent, call_bigquery_agent, call_ds_agent
 
 date_today = date.today()
 
 
-def setup_before_agent_call(callback_context: CallbackContext):
-    """Setup the agent."""
+def init_database_settings(callback_context: CallbackContext):
+    """Initialize database settings on first use."""
 
-    # setting up database settings in session.state
-    if "database_settings" not in callback_context.state:
-        db_settings = dict()
-        db_settings["use_database"] = "BigQuery"
-        callback_context.state["all_db_settings"] = db_settings
+    if "database_settings" in callback_context.state:
+        return
 
-    # setting up schema in instruction
-    if callback_context.state["all_db_settings"]["use_database"] == "BigQuery":
-        callback_context.state["database_settings"] = get_bq_database_settings()
-        schema = callback_context.state["database_settings"]["bq_ddl_schema"]
+    db_settings = {
+        "bigquery": get_bq_database_settings(),
+        "alloydb": get_alloydb_database_settings()
+    }
+    bq_schema = db_settings["bigquery"]["schema"]
+    alloydb_schema = db_settings["alloydb"]["schema"]
 
-        callback_context._invocation_context.agent.instruction = (
-            return_instructions_root()
-            + f"""
+    callback_context.state["database_settings"] = db_settings
 
-    --------- The BigQuery schema of the relevant data with a few sample rows. ---------
-    {schema}
+    callback_context._invocation_context.agent.instruction = (
+        return_instructions_root()
+        + f"""
+
+<SCHEMA DEFINITIONS>
+<BIGQUERY>
+--------- The BigQuery schema of the relevant database with a few sample rows. ---------
+{bq_schema}
+
+</BIGQUERY>
+
+<ALLOYDB>
+--------- The AlloyDB schema of the relevant database. ---------
+{alloydb_schema}
+
+</ALLOYDB>
+</SCHEMA DEFINITIONS>
 
     """
         )
 
 
-root_agent = Agent(
+root_agent = LlmAgent(
     model=os.getenv("ROOT_AGENT_MODEL"),
-    name="db_ds_multiagent",
+    name="data_science_root_agent",
     instruction=return_instructions_root(),
     global_instruction=(
         f"""
@@ -71,12 +87,24 @@ root_agent = Agent(
         Todays date: {date_today}
         """
     ),
-    sub_agents=[bqml_agent],
-    tools=[
-        call_db_agent,
-        call_ds_agent,
+    #sub_agents=[bqml_agent],
+    tools=[ # type: ignore
+        AgentTool(
+            agent=bigquery_agent,
+            skip_summarization=True,
+        ),
+        AgentTool(
+            agent = alloydb_agent,
+            skip_summarization=True,
+        ),
+#        AgentTool(
+#            name = "ds_tool",
+#            agent = ds_agent,
+#            output_key = "ds_agent_output",
+#            skip_summarization=True,
+#        ),
         load_artifacts,
     ],
-    before_agent_callback=setup_before_agent_call,
+    before_agent_callback=init_database_settings,
     generate_content_config=types.GenerateContentConfig(temperature=0.01),
 )

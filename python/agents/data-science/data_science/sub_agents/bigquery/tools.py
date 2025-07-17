@@ -85,7 +85,7 @@ def get_database_settings():
 def update_database_settings():
     """Update database settings."""
     global database_settings
-    ddl_schema = get_bigquery_schema(
+    schema = get_bigquery_schema(
         dataset_id=get_env_var("BQ_DATASET_ID"),
         data_project_id=get_env_var("BQ_DATA_PROJECT_ID"),
         client=get_bq_client(),
@@ -269,10 +269,10 @@ The database structure is defined by the following table schemas (possibly with 
 
    """
 
-    ddl_schema = tool_context.state["database_settings"]["bq_ddl_schema"]
+    schema = tool_context.state["database_settings"]["bigquery"]["schema"]
 
     prompt = prompt_template.format(
-        MAX_NUM_ROWS=MAX_NUM_ROWS, SCHEMA=ddl_schema, QUESTION=question
+        MAX_NUM_ROWS=MAX_NUM_ROWS, SCHEMA=schema, QUESTION=question
     )
 
     response = llm_client.models.generate_content(

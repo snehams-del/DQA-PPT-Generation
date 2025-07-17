@@ -12,53 +12,48 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Data Science Agent V2: generate nl2py and use code interpreter to run the code."""
+"""BigQuery ML Agent."""
 import os
+
+from data_science.sub_agents.bigquery.agent import bigquery_agent
+from data_science.sub_agents.bigquery.tools import \
+    get_database_settings as get_bq_database_settings
+from data_science.sub_agents.bqml.tools import (check_bq_models,
+                                                execute_bqml_code,
+                                                rag_response)
 from google.adk.agents import Agent
+from google.adk.agents.callback_context import CallbackContext
 from google.adk.tools import ToolContext
 from google.adk.tools.agent_tool import AgentTool
-from google.adk.agents.callback_context import CallbackContext
 
-
-from data_science.sub_agents.bqml.tools import (
-    check_bq_models,
-    execute_bqml_code,
-    rag_response,
-)
 from .prompts import return_instructions_bqml
-
-
-from data_science.sub_agents.bigquery.agent import database_agent as bq_db_agent
-from data_science.sub_agents.bigquery.tools import (
-    get_database_settings as get_bq_database_settings,
-)
 
 
 def setup_before_agent_call(callback_context: CallbackContext):
     """Setup the agent."""
 
+    if "database_settings" in callback_context.state:
+        return
+
     # setting up database settings in session.state
-    if "database_settings" not in callback_context.state:
-        db_settings = dict()
-        db_settings["use_database"] = "BigQuery"
-        callback_context.state["all_db_settings"] = db_settings
+    db_settings = {
+        "bigquery": get_bq_database_settings(),
+    }
+    callback_context.state["database_settings"] = db_settings
 
-    # setting up schema in instruction
-    if callback_context.state["all_db_settings"]["use_database"] == "BigQuery":
-        callback_context.state["database_settings"] = get_bq_database_settings()
-        schema = callback_context.state["database_settings"]["bq_ddl_schema"]
+    schema = callback_context.state["database_settings"]["bigquery"]["schema"]
 
-        callback_context._invocation_context.agent.instruction = (
-            return_instructions_bqml()
-            + f"""
+    callback_context._invocation_context.agent.instruction = (
+        return_instructions_bqml()
+        + f"""
 
    </BQML Reference for this query>
-    
+
     <The BigQuery schema of the relevant data with a few sample rows>
     {schema}
     </The BigQuery schema of the relevant data with a few sample rows>
     """
-        )
+    )
 
 
 async def call_db_agent(
@@ -66,17 +61,8 @@ async def call_db_agent(
     tool_context: ToolContext,
 ):
     """Tool to call database (nl2sql) agent."""
-    print(
-        "\n call_db_agent.use_database:"
-        f' {tool_context.state["all_db_settings"]["use_database"]}'
-    )
-    database_agent = (
-        bq_db_agent
-        if tool_context.state["all_db_settings"]["use_database"] == "BigQuery"
-        # else pg_db_agent
-        else None
-    )
-    agent_tool = AgentTool(agent=database_agent)
+
+    agent_tool = AgentTool(agent=bigquery_agent)
     db_agent_output = await agent_tool.run_async(
         args={"request": question}, tool_context=tool_context
     )

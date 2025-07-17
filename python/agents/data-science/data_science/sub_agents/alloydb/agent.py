@@ -21,10 +21,7 @@ from google.adk.agents.callback_context import CallbackContext
 from google.genai import types
 
 from . import tools
-from .chase_sql import chase_db_tools
-from .prompts import return_instructions_bigquery
-
-NL2SQL_METHOD = os.getenv("NL2SQL_METHOD", "BASELINE")
+from .prompts import return_instructions_alloydb
 
 
 def setup_before_agent_call(callback_context: CallbackContext) -> None:
@@ -35,18 +32,15 @@ def setup_before_agent_call(callback_context: CallbackContext) -> None:
             tools.get_database_settings()
 
 
-bigquery_agent = LlmAgent(
-    model=os.getenv("BIGQUERY_AGENT_MODEL"),
-    name="bigquery_agent",
-    instruction=return_instructions_bigquery(),
-    output_key = "bigquery_agent_output",
+alloydb_agent = LlmAgent(
+    model=os.getenv("ALLOYDB_AGENT_MODEL"),
+    name="alloydb_agent",
+    instruction=return_instructions_alloydb(),
+    output_key = "alloydb_agent_output",
     tools=[
-        (
-            chase_db_tools.initial_bq_nl2sql
-            if NL2SQL_METHOD == "CHASE"
-            else tools.initial_bq_nl2sql
-        ),
-        tools.run_bigquery_validation,
+        tools.initial_alloydb_nl2sql,
+        tools.run_alloydb_validation,
+        #tools.get_toolbox_toolset(),
     ],
     #before_agent_callback=setup_before_agent_call,
     generate_content_config=types.GenerateContentConfig(temperature=0.01),
