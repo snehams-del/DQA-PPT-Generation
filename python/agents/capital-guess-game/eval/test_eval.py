@@ -29,10 +29,19 @@ def load_env():
 
 
 @pytest.mark.asyncio
-async def test_all():
+async def test_happy_path():
     """Test the agent's basic ability on a few examples."""
     await AgentEvaluator.evaluate(
         "capital_guess_game",
-        str(pathlib.Path(__file__).parent / "data"),
+        str(pathlib.Path(__file__).parent / "data/capital_guess_game.test.json"),
+        num_runs=1,
+    )
+
+@pytest.mark.asyncio
+async def test_user_quits():
+    """Test the agent's basic ability on a few examples."""
+    await AgentEvaluator.evaluate(
+        "capital_guess_game",
+        str(pathlib.Path(__file__).parent / "data/capital_guess_game_quit.test.json"),
         num_runs=1,
     )
