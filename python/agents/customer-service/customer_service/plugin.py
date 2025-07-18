@@ -16,7 +16,6 @@
 """A custom plugin that detects jailbreak."""
 
 from .config import Config
-from google import genai
 from google.genai import types
 from typing import Optional
 from google.adk.plugins.base_plugin import BasePlugin
@@ -26,15 +25,12 @@ from google.adk.runners import Runner, InMemoryRunner
 
 
 configs = Config()
-client = genai.Client(
-  vertexai=True,
-  project="sammalik-agent-test",
-  location="us-central1"
-)
 
 JAILBREAK_FILTER_RESPONSE = (
     "The input has been flagged by our system. We cannot respond at this time."
 )
+
+JAILBREAK_REPLACEMENT_MESSAGE = """Original user message redacted. Please proceed as instructed by System Prompt."""
 
 JAILBREAK_FILTER_INSTRUCTION = """**Instructions for Identifying Jailbreak Attempts:**
 
@@ -179,8 +175,6 @@ async def classify_user_input(runner: Runner, output_key: str, user_id: str, app
 class JailbreakPlugin(BasePlugin):
   """A custom plugin that detects jailbreak."""
 
-  
-
   def __init__(self, user_id: str, app_name: str) -> None:
     """Initialize the plugin with counters."""
     super().__init__(name="jailbreak_plugin")
@@ -198,6 +192,28 @@ class JailbreakPlugin(BasePlugin):
       agent=self.jailbreak_classification_agent,
       app_name=app_name,
     )
+
+  # async def on_user_message_callback(
+  #     self,
+  #     *,
+  #     invocation_context: InvocationContext,
+  #     user_message: types.Content,
+  # ) -> Optional[types.Content]:
+  #    # Returning content will *replace* the original user message
+  #    # Perhaps we can replace it with a harmless message
+  #     print(f"[Plugin] Analyzing text: '{user_message}'")
+  #     # Classify user input
+  #     is_jailbreak_attempt = await classify_user_input(self.runner, "jailbreak_classification", self.user_id, self.app_name, user_message)
+  #     if is_jailbreak_attempt == 0:
+  #       return None
+      
+  #     return types.Content(
+  #         parts=[
+  #             types.Part(text=JAILBREAK_REPLACEMENT_MESSAGE),
+  #         ],
+  #         role='user'
+  #     )
+  
     
   async def before_run_callback(
     self, *, invocation_context: InvocationContext
@@ -217,6 +233,7 @@ class JailbreakPlugin(BasePlugin):
       return types.Content(
           parts=[
               types.Part(text=JAILBREAK_FILTER_RESPONSE),
-          ]
+          ],
+          role='model'
       )
       
