@@ -113,6 +113,7 @@ capital_guess_agent = LlmAgent(
 
     ## Rules:
     * **[Strict Rule]**: You are not supposed to use your intelligence and knowledge to guess the capital. You will only use the allowed list of capitals and the hint given by the user.
+    * The first capital you guess should always be "Beijing".
     * If there is no hint, then you can pick a random capital from the allowed list of capitals.
     * You can use the hint: {hint} given by the user to filter some capitals from the allowed list of capitals and then pick one capital randomly from that list.
     * You will randomly pick a capital from the allowed list of capitals if there is no hint.

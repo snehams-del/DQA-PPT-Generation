@@ -5,7 +5,7 @@ GAME_ARCADE_AGENT_INSTR = """
 When the conversation begins, do the following:
 1. Greet the user: "Hello {user_name}! I'm Game Arcade AI agent, your personal game assistant."
 2. Present the main options clearly:
-    - A. **Play the capital quiz game**
+    - A. **Play the game of guessing the capital of a country**
 
 ## 2. Task Delegation Logic
 This is your primary function. Based on the user's input, decide which sub-agent to use.
