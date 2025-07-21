@@ -430,7 +430,7 @@ class CaMeLInterpreter(BaseAgent):
           author=self.name,
           content=types.Content(
               role=self.name,
-              parts=[types.Part(text="ERROR: PLLM did not generate any code.")],
+              parts=[types.Part(text="The Privileged LLM did not generate any code; attempting to regenerate.")],
           ),
       )
       return
@@ -449,16 +449,6 @@ class CaMeLInterpreter(BaseAgent):
 
     ctx.session.state.update(dict(function_calls=ad_tool_calls))
     ctx.session.state.update(dict(dependencies=dependencies))
-
-    # Print the results.
-    if printed_output:
-      yield Event(
-            author=self.name,
-            content=types.Content(
-                role=self.name,
-                parts=[types.Part(text=printed_output)],
-            ),
-        )
 
     # 3. Add additional messages to the conversation based on the eval result.
     if error is not None:
@@ -480,7 +470,14 @@ class CaMeLInterpreter(BaseAgent):
       ctx.session.state.update(dict(eval_result=printed_output))
       # Remove the p_llm_code upon success to subsequent prompts aren't impacted.
       ctx.session.state.update(dict(p_llm_code=None))
-      yield Event(author=self.name, actions=EventActions(escalate=True))
+      yield Event(
+          author=self.name,
+          content=types.Content(
+              role=self.name,
+              parts=[types.Part(text=printed_output)],
+          ), 
+          actions=EventActions(escalate=True),
+      )
 
 
 class CaMeLAgent(BaseAgent):
@@ -566,23 +563,25 @@ class CaMeLAgent(BaseAgent):
       # Run the loop agent. This is the main loop of the agent.
       async for e in self.loop_agent.run_async(ctx):
         yield e
-      # Remove the PLLM code from the session state.
-      ctx.session.state.update(dict(p_llm_code=None))
+      # Remove the PLLM code and interpreter evaluation result from the session state.
+      if "eval_result" in ctx.session.state:
+        ctx.session.state.update(dict(eval_result=None))
+      if "p_llm_code" in ctx.session.state:
+        ctx.session.state.update(dict(p_llm_code=None))
     except security_policy.SecurityPolicyDeniedError as e:
-      yield Event(
-          author=self.name,
-          content=types.Content(
-              role="user",
-              parts=[
-                  types.Part(
-                      text=(
-                          "Execution stopped due to security policy"
-                          f" violation: {e}"
-                      )
-                  )
-              ],
-          ),
-      )
+        yield Event(
+            author=self.name,
+            content=types.Content(
+                parts=[
+                    types.Part(
+                        text=(
+                            "Execution stopped due to security policy"
+                            f" violation: {e}"
+                        )
+                    )
+                ],
+            ),
+        )
     except Exception as e:
       print(f"CaMeL agent failed: {e}", end="\n")
       raise e
