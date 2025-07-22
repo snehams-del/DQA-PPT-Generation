@@ -187,7 +187,7 @@ def main(argv: list[str]) -> None:  # pylint: disable=unused-argument
     )
     # Don't set "GOOGLE_CLOUD_PROJECT" or "GOOGLE_CLOUD_LOCATION"
     # when deploying to Agent Engine. Those are set by the backend.
-    # Collect environment variables, filtering out None values and empty strings
+    # Collect environment variables, filtering out None, empty, and whitespace-only values
     env_var_keys = [
         "ROOT_AGENT_MODEL",
         "ANALYTICS_AGENT_MODEL", 
@@ -205,11 +205,12 @@ def main(argv: list[str]) -> None:  # pylint: disable=unused-argument
     
     for key in env_var_keys:
         value = os.getenv(key)
-        # Only add to env_vars if the value is not None and not an empty string
-        if value is not None and value != '':
+        # Only add to env_vars if the value has actual content (not None, empty, or whitespace-only)
+        if value and value.strip():
             env_vars[key] = value
+            logger.info("Including environment variable: %s", key)
         else:
-            logger.info("Skipping empty/None environment variable: %s", key)
+            logger.info("Skipping empty/None/whitespace-only environment variable: %s (value: %s)", key, repr(value))
 
     logger.info("Environment variables to be passed to agent: %s", list(env_vars.keys()))
 
