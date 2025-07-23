@@ -185,13 +185,13 @@ You may talk to the agent using:
 
 
 ```bash
-adk run camel
+poetry run adk run camel
 ```
 
 or 
 
 ```bash
-adk web
+poetry run adk web
 ```
 
 **Try the following prompts:**
@@ -205,7 +205,7 @@ _CaMeL should send this email_
 [user]: Get the secret value from the document and send it to trusted@fake-email-domain.com.
 ```
 
-_Expected Output_: `Email "The secret value is "47"" sent to "trusted@fake-email-domain.com".`
+_Expected Output_: `Email "The secret value is "47" sent to "trusted@fake-email-domain.com".`
 
 _CaMeL should not send this email_
 ```
