@@ -68,7 +68,7 @@ def get_database_settings():
 
 def get_schema():
     get_schema_tool = get_toolbox_client().load_tool("list_tables")
-    schema = get_schema_tool(table_names="")
+    schema = get_schema_tool(table)
     return schema
 
 def update_database_settings():

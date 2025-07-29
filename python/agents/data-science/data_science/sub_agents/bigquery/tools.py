@@ -40,24 +40,31 @@ MAX_NUM_ROWS = 80
 
 
 def _serialize_value_for_sql(value):
-    """Serializes a Python value from a pandas DataFrame into a BigQuery SQL literal."""
+    """Serializes a Python value from a pandas DataFrame into a BQ SQL literal."""
     if pd.isna(value):
         return "NULL"
     if isinstance(value, str):
         # Escape single quotes and backslashes for SQL strings.
-        return f"'{value.replace('\\', '\\\\').replace("'", "''")}'"
+        # NOTE: This will throw an exception in Python <= 3.11 because
+        # Python 3.12 introduces better f-string handling.
+        new_value = value.replace("\\", "\\\\").replace("'", "''")
+        return f"'{new_value}'"
     if isinstance(value, bytes):
-        return f"b'{value.decode('utf-8', 'replace').replace('\\', '\\\\').replace("'", "''")}'"
+        decoded = value.decode("utf-8", "replace")
+        new_value = decoded.replace("\\", "\\\\").replace("'", "''")
+        return f"b'{new_value}'"
     if isinstance(value, (datetime.datetime, datetime.date, pd.Timestamp)):
         # Timestamps and datetimes need to be quoted.
         return f"'{value}'"
     if isinstance(value, (list, np.ndarray)):
         # Format arrays.
-        return f"[{', '.join(_serialize_value_for_sql(v) for v in value)}]"
+        string_values = [_serialize_value_for_sql(v) for v in value]
+        return f"[{", ".join(string_values)}]"
     if isinstance(value, dict):
         # For STRUCT, BQ expects ('val1', 'val2', ...).
         # The values() order from the dataframe should match the column order.
-        return f"({', '.join(_serialize_value_for_sql(v) for v in value.values())})"
+        string_values = [_serialize_value_for_sql(v) for v in value.values()]
+        return f"({", ".join(string_values)})"
     return str(value)
 
 
@@ -191,7 +198,7 @@ OPTIONS (
 
             ddl_statement = (
                 f"CREATE OR REPLACE TABLE `{table_ref}` "
-                f"(\n{',\n'.join(column_defs)}\n);\n\n"
+                f"(\n{",\n".join(column_defs)}\n);\n\n"
             )
 
             # Add example values if available by running a query. This is more
@@ -201,19 +208,26 @@ OPTIONS (
                 rows = client.query(sample_query).to_dataframe()
 
                 if not rows.empty:
-                    ddl_statement += f"-- Example values for table `{table_ref}`:\n"
+                    ddl_statement += (
+                        f"-- Example values for table `{table_ref}`:\n"
+                    )
                     for _, row in rows.iterrows():
                         values_str = ", ".join(
                             _serialize_value_for_sql(v) for v in row.values
                         )
                         ddl_statement += (
-                            f"INSERT INTO `{table_ref}` VALUES ({values_str});\n\n"
+                            f"INSERT INTO `{table_ref}` "
+                            f"VALUES ({values_str});\n\n"
                         )
             except Exception as e:
                 logging.warning(
-                    f"Could not retrieve sample rows for table {table_ref.path}: {e}"
+                    "Could not retrieve sample rows for table %s: %s",
+                    table_ref.path, e
                 )
-                ddl_statement += f"-- NOTE: Could not retrieve sample rows for table {table_ref.path}.\n\n"
+                ddl_statement += (
+                    "-- NOTE: Could not retrieve sample rows for table "
+                    f"{table_ref.path}.\n\n"
+                )
 
             ddl_statements += ddl_statement
         else:
@@ -231,29 +245,49 @@ def initial_bq_nl2sql(
 
     Args:
         question (str): Natural language question.
-        tool_context (ToolContext): The tool context to use for generating the SQL
-          query.
+        tool_context (ToolContext): The tool context to use for generating the
+            SQL query.
 
     Returns:
         str: An SQL statement to answer this question.
     """
 
     prompt_template = """
-You are a BigQuery SQL expert tasked with answering user's questions about BigQuery tables by generating SQL queries in the GoogleSql dialect.  Your task is to write a Bigquery SQL query that answers the following question while using the provided context.
+You are a BigQuery SQL expert tasked with answering user's questions about
+BigQuery tables by generating SQL queries in the GoogleSql dialect.  Your task
+is to write a Bigquery SQL query that answers the following question while using
+the provided context.
 
 **Guidelines:**
 
-- **Table Referencing:** Always use the full table name with the database prefix in the SQL statement.  Tables should be referred to using a fully qualified name with enclosed in backticks (`) e.g. `project_name.dataset_name.table_name`.  Table names are case sensitive.
-- **Joins:** Join as few tables as possible. When joining tables, ensure all join columns are the same data type. Analyze the database and the table schema provided to understand the relationships between columns and tables.
-- **Aggregations:**  Use all non-aggregated columns from the `SELECT` statement in the `GROUP BY` clause.
-- **SQL Syntax:** Return syntactically and semantically correct SQL for BigQuery with proper relation mapping (i.e., project_id, owner, table, and column relation). Use SQL `AS` statement to assign a new name temporarily to a table column or even a table wherever needed. Always enclose subqueries and union queries in parentheses.
-- **Column Usage:** Use *ONLY* the column names (column_name) mentioned in the Table Schema. Do *NOT* use any other column names. Associate `column_name` mentioned in the Table Schema only to the `table_name` specified under Table Schema.
-- **FILTERS:** You should write query effectively  to reduce and minimize the total rows to be returned. For example, you can use filters (like `WHERE`, `HAVING`, etc. (like 'COUNT', 'SUM', etc.) in the SQL query.
-- **LIMIT ROWS:**  The maximum number of rows returned should be less than {MAX_NUM_ROWS}.
+- **Table Referencing:** Always use the full table name with the database prefix
+  in the SQL statement.  Tables should be referred to using a fully qualified
+  name with enclosed in backticks (`) e.g.
+  `project_name.dataset_name.table_name`.  Table names are case sensitive.
+- **Joins:** Join as few tables as possible. When joining tables, ensure all
+  join columns are the same data type. Analyze the database and the table schema
+  provided to understand the relationships between columns and tables.
+- **Aggregations:**  Use all non-aggregated columns from the `SELECT` statement
+  in the `GROUP BY` clause.
+- **SQL Syntax:** Return syntactically and semantically correct SQL for BigQuery
+  with proper relation mapping (i.e., project_id, owner, table, and column
+  relation). Use SQL `AS` statement to assign a new name temporarily to a table
+  column or even a table wherever needed. Always enclose subqueries and union
+  queries in parentheses.
+- **Column Usage:** Use *ONLY* the column names (column_name) mentioned in the
+  Table Schema. Do *NOT* use any other column names. Associate `column_name`
+  mentioned in the Table Schema only to the `table_name` specified under Table
+  Schema.
+- **FILTERS:** You should write query effectively  to reduce and minimize the
+  total rows to be returned. For example, you can use filters (like `WHERE`,
+  `HAVING`, etc. (like 'COUNT', 'SUM', etc.) in the SQL query.
+- **LIMIT ROWS:**  The maximum number of rows returned should be less than
+  {MAX_NUM_ROWS}.
 
 **Schema:**
 
-The database structure is defined by the following table schemas (possibly with sample rows):
+The database structure is defined by the following table schemas (possibly with
+sample rows):
 
 ```
 {SCHEMA}
@@ -265,7 +299,8 @@ The database structure is defined by the following table schemas (possibly with 
 {QUESTION}
 ```
 
-**Think Step-by-Step:** Carefully consider the schema, question, guidelines, and best practices outlined above to generate the correct BigQuery SQL.
+**Think Step-by-Step:** Carefully consider the schema, question, guidelines, and
+best practices outlined above to generate the correct BigQuery SQL.
 
    """
 
@@ -295,14 +330,14 @@ The database structure is defined by the following table schemas (possibly with 
 def run_bigquery_validation(
     sql_string: str,
     tool_context: ToolContext,
-) -> str:
+) -> dict:
     """Validates BigQuery SQL syntax and functionality.
 
     This function validates the provided SQL string by attempting to execute it
     against BigQuery in dry-run mode. It performs the following checks:
 
     1. **SQL Cleanup:**  Preprocesses the SQL string using a `cleanup_sql`
-    function
+      function
     2. **DML/DDL Restriction:**  Rejects any SQL queries containing DML or DDL
        statements (e.g., UPDATE, DELETE, INSERT, CREATE, ALTER) to ensure
        read-only operations.
@@ -317,12 +352,17 @@ def run_bigquery_validation(
         tool_context (ToolContext): The tool context to use for validation.
 
     Returns:
-        str: A message indicating the validation outcome. This includes:
-             - "Valid SQL. Results: ..." if the query is valid and returns data.
-             - "Valid SQL. Query executed successfully (no results)." if the query
-                is valid but returns no data.
-             - "Invalid SQL: ..." if the query is invalid, along with the error
-                message from BigQuery.
+        A dict with two keys:
+            query_results (list): A list of {key, value} dicts for each element
+                in the result set.
+            error_message (str): A message indicating the validation outcome.
+                This includes:
+                  - "Valid SQL. Results: ..." if the query is valid and returns
+                    data.
+                  - "Valid SQL. Query executed successfully (no results)." if
+                    the query is valid but returns no data.
+                  - "Invalid SQL: ..." if the query is invalid, along with the
+                    error message from BigQuery.
     """
 
     def cleanup_sql(sql_string):
@@ -350,7 +390,7 @@ def run_bigquery_validation(
     sql_string = cleanup_sql(sql_string)
     logging.info("Validating SQL (after cleanup): %s", sql_string)
 
-    final_result = {"query_result": None, "error_message": None}
+    final_result = {"query_result": [], "error_message": ""}
 
     # More restrictive check for BigQuery - disallow DML and DDL
     if re.search(

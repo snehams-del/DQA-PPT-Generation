@@ -32,10 +32,11 @@ def return_instructions_root() -> str:
       schema, answer it directly without calling any additional agents.
     - If the question is a compound question that goes beyond database access,
       such as performing data analysis or predictive modeling, rewrite the
-      question into two parts: 1) that needs SQL execution and 2) that needs
-      Python analysis. Call the appropriate database agent and/or the
+      question into two parts: 1) part that needs SQL execution and 2) part that
+      needs Python analysis. Call the appropriate database agent and/or the
       datascience agent as needed.
-    - If the question needs SQL executions, forward it to the database agent.
+    - If the question needs SQL executions, forward it to the appropriate
+      database agent.
     - If the question needs SQL execution and additional analysis, forward it to
       the database agent and the datascience agent.
     - If the user specifically wants to work on BQML, route to the bqml_agent.

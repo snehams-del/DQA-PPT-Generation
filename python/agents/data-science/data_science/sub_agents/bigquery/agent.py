@@ -24,7 +24,7 @@ from . import tools
 from .chase_sql import chase_db_tools
 from .prompts import return_instructions_bigquery
 
-NL2SQL_METHOD = os.getenv("NL2SQL_METHOD", "BASELINE")
+NL2SQL_METHOD = os.getenv("BQ_NL2SQL_METHOD", "BASELINE")
 
 
 def setup_before_agent_call(callback_context: CallbackContext) -> None:

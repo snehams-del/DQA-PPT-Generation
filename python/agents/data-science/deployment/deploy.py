@@ -199,7 +199,7 @@ def main(argv: list[str]) -> None:  # pylint: disable=unused-argument
     env_vars["BQML_RAG_CORPUS_NAME"] = os.getenv("BQML_RAG_CORPUS_NAME")
     env_vars["CODE_INTERPRETER_EXTENSION_NAME"] = os.getenv(
         "CODE_INTERPRETER_EXTENSION_NAME")
-    env_vars["NL2SQL_METHOD"] = os.getenv("NL2SQL_METHOD")
+    env_vars["BQ_NL2SQL_METHOD"] = os.getenv("BQ_NL2SQL_METHOD")
 
     logger.info("Using PROJECT: %s", project_id)
     logger.info("Using LOCATION: %s", location)
