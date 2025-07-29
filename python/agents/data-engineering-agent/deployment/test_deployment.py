@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Test deployment of Academic Research Agent to Agent Engine."""
+"""Test deployment of Data Engineering Agent to Agent Engine."""
 
 import os
 

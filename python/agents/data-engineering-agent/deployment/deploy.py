@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Deployment script for Financial Advisor"""
+"""Deployment script for Data Engineering Agent"""
 
 import os
 
@@ -48,6 +48,8 @@ def create() -> None:
             "google-genai (>=1.5.0,<2.0.0)",
             "pydantic (>=2.10.6,<3.0.0)",
             "absl-py (>=2.2.1,<3.0.0)",
+            "google-cloud-bigquery (>=3.11.4)",
+            "google-cloud-dataform (>=0.4.0)",
         ],
         #        extra_packages=[""],
     )
