@@ -19,19 +19,4 @@ description: "A production-ready fullstack research agent that uses Gemini to st
 example_question: "A report on the latest Google I/O event"
 settings:
   deployment_targets: ["agent_engine", "cloud_run"]
-  tags: ["adk"]
-  commands:
-    override:
-      install: "uv sync --dev --extra jupyter && npm --prefix frontend install"
-    extra:
-      dev: 
-        command: 'make dev-backend & make dev-frontend'
-        description: "Start the ADK API server and React frontend development server simultaneously"
-      dev-backend:
-        command: 
-          agent_engine: 'uv run adk api_server app --allow_origins="*"'
-          cloud_run: 'ALLOW_ORIGINS="*" uv run uvicorn app.server:app --host 0.0.0.0 --port 8000 --reload'
-        description: "Start the ADK API server"
-      dev-frontend:
-        command: 'npm --prefix frontend run dev'
-        description: "Start the React frontend development server"
+  interactive_command: "dev"
