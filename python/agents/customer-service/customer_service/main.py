@@ -24,8 +24,8 @@ from google.genai import types
 from google import genai
 from .agent import root_agent
 import os
-from deepteam.attacks.multi_turn import LinearJailbreaking, SequentialJailbreak
-from deepteam.vulnerabilities import Toxicity
+from deepteam.attacks.multi_turn import LinearJailbreaking, SequentialJailbreak, TreeJailbreaking, BadLikertJudge, CrescendoJailbreaking
+from deepteam.vulnerabilities import Toxicity, IllegalActivity, PersonalSafety, Misinformation, Competition, Robustness
 from deepteam.red_teamer import RedTeamer
 from deepeval.models import DeepEvalBaseLLM
 
@@ -58,12 +58,12 @@ runner = InMemoryRunner(
     app_name=app_name,
 )
 
-class CustomGeminiFlash(DeepEvalBaseLLM):
+class CustomGemini(DeepEvalBaseLLM):
     def __init__(self):
         pass
 
     def load_model(self):
-        return client.models.get(model="gemini-2.0-flash")
+        return client.models.get(model="gemini-2.5-pro")
 
     def generate(self, prompt: str) -> str:
         response = client.models.generate_content(
@@ -76,7 +76,7 @@ class CustomGeminiFlash(DeepEvalBaseLLM):
         return self.generate(prompt)
 
     def get_model_name(self):
-        return "Gemini 2.5 Flash"
+        return "Gemini 2.5 Pro"
 
 async def run_agent(prompt: str, session_id: str, user_id: str) -> str: 
   """Runs the agent and returns it's final response"""
@@ -123,30 +123,34 @@ async def multiturn():
 
 async def eval():
   # The rest is the same as starting a regular ADK runner.
-  session = await runner.session_service.create_session(
-      user_id=user_id,
-      app_name=app_name,
-  )
 
   async def model_callback(input: str) -> str:
+    session = await runner.session_service.create_session(
+        user_id=user_id,
+        app_name=app_name,
+    )
     return await run_agent(input, session.id, user_id)
   
   red_teamer = RedTeamer(
-     simulator_model = CustomGeminiFlash(),
-     evaluation_model = CustomGeminiFlash(),
+     simulator_model = CustomGemini(),
+     evaluation_model = CustomGemini(),
   )
-        
-  # Attackes
-  sequential_jailbreak = SequentialJailbreak()
-  linear_jailbreaking = LinearJailbreaking()
-
-  # Vulnerabilities
-  toxicity = Toxicity(types=["profanity"])
 
   risk_assessment = red_teamer.red_team(
       model_callback=model_callback,
-      vulnerabilities=[toxicity],
-      attacks=[linear_jailbreaking],
+      vulnerabilities=[Toxicity(types=["profanity", "threats", "mockery"]),
+                       IllegalActivity(types=["violent crimes", "weapons", "non violent crimes"]), 
+                       PersonalSafety(types=["self-harm"]),
+                       Misinformation(types=["factual errors", "unsupported claims"]),
+                       Competition(types=["competitor mention", "discreditation"]),
+                       Robustness(types=["hijacking"])],
+      attacks=[SequentialJailbreak(), 
+               LinearJailbreaking(), 
+               BadLikertJudge(),
+               TreeJailbreaking(),
+               CrescendoJailbreaking()],
+      attacks_per_vulnerability_type=3,
+      ignore_errors=True
   )
    
 

@@ -47,6 +47,10 @@ configs = Config()
 # configure logging __name__
 logger = logging.getLogger(__name__)
 
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(name)s - %(message)s'
+)
 
 root_agent = Agent(
     model=configs.agent_settings.model,
