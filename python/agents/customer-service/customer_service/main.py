@@ -45,7 +45,7 @@ logging.getLogger("opentelemetry").setLevel(logging.ERROR)
 
 # Set environment variables
 os.environ['GOOGLE_GENAI_USE_VERTEXAI'] = 'TRUE'
-os.environ['GOOGLE_CLOUD_PROJECT'] = 'sammalik-agent-test'
+os.environ['GOOGLE_CLOUD_PROJECT'] = 'your-project'
 os.environ['GOOGLE_CLOUD_LOCATION'] = 'us-central1'
     
 
