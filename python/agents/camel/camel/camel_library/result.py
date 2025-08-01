@@ -12,11 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# This configuration file is used by goo.gle/agent-starter-pack to power remote templating.
-# It defines the template's properties, settings, and deployment options.
-base_template: "adk_base"
-description: "A production-ready fullstack research agent that uses Gemini to strategize, research, and synthesize comprehensive reports with human-in-the-loop collaboration"
-example_question: "A report on the latest Google I/O event"
-settings:
-  deployment_targets: ["agent_engine", "cloud_run"]
-  interactive_command: "dev"
+"""Module containing definitions for the result type.
+
+It works like Rust's Result type.
+"""
+
+import dataclasses
+from typing import Generic, TypeAlias, TypeVar
+
+_T = TypeVar("_T")
+_E = TypeVar("_E")
+
+
+@dataclasses.dataclass(frozen=True)
+class Ok(Generic[_T]):
+  value: _T
+
+
+@dataclasses.dataclass(frozen=True)
+class Error(Generic[_E]):
+  error: _E
+
+
+Result: TypeAlias = Ok[_T] | Error[_E]
