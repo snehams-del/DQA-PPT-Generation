@@ -77,6 +77,7 @@ class TestAgents(unittest.IsolatedAsyncioTestCase):
         query = "what countries exist in the train table?"
         response = self._run_agent(database_agent, query)
         print(response)
+        # self.assertIn("Canada", response)
         self.assertIsNotNone(response)
 
     @pytest.mark.ds_agent
@@ -109,3 +110,7 @@ class TestAgents(unittest.IsolatedAsyncioTestCase):
 
 if __name__ == "__main__":
     unittest.main()
+    # testagent = TestAgents
+    # testagent.setUp(testagent)
+    # testagent.test_root_agent_can_list_tools(testagent)
+    # testagent.test_db_agent_can_handle_env_query(testagent)
