@@ -30,6 +30,7 @@ To learn more, check out the [ADK Documentation](https://google.github.io/adk-do
 │   │   ├── gemini-fullstack
 │   │   ├── image-scoring
 │   │   ├── llm-auditor
+│   │   ├── machine-learning-engineering
 │   │   ├── marketing-agency
 │   │   ├── personalized-shopping
 │   │   ├── RAG

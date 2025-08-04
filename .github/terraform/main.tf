@@ -51,7 +51,7 @@ resource "google_iam_workload_identity_pool_provider" "github_provider" {
     "attribute.repository"       = "assertion.repository"
     "attribute.repository_owner" = "assertion.repository_owner"
   }
-  attribute_condition = "attribute.repository_owner == '${var.organization}' && attribute.repository == '${var.repo}'"
+  attribute_condition = "assertion.repository == '${var.repo}'"
   
   depends_on = [google_project_service.apis]
 }
