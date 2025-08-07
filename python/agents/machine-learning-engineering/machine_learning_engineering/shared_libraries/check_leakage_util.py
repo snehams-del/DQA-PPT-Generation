@@ -83,6 +83,7 @@ def update_extract_status(
     except:
         code_block = ""
         extract_status = False
+        leakage_status = "Unknown"
     extract_status_key = code_util.get_name_with_prefix_and_suffix(
         base_name="extract_status",
         prefix=prefix,
@@ -231,7 +232,10 @@ def get_data_leakage_checker_agent(
             check_data_leakage,
             prefix=prefix,
         ),
-        after_model_callback=replace_leakage_code,
+        after_model_callback=functools.partial(
+            replace_leakage_code,
+            prefix=prefix,
+        ),
         generate_content_config=types.GenerateContentConfig(
             temperature=0.0,
         ),
