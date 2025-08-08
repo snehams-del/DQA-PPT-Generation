@@ -93,12 +93,13 @@ def main():
     """Main function to load CSV files into BigQuery."""
     data_project_id = os.getenv("BQ_DATA_PROJECT_ID")
     compute_project_id = os.getenv("BQ_COMPUTE_PROJECT_ID")
+    dataset_name = os.getenv("BQ_DATASET_ID")
     if not data_project_id:
         raise ValueError("BQ_DATA_PROJECT_ID environment variable not set.")
     if not compute_project_id:
         raise ValueError("BQ_COMPUTE_PROJECT_ID environment variable not set.")
-
-    dataset_name = "forecasting_sticker_sales"
+    if not dataset_name:
+        raise ValueError("BQ_DATASET_ID environment variable not set.")
     train_csv_filepath = "data_science/utils/data/train.csv"
     test_csv_filepath = "data_science/utils/data/test.csv"
 
