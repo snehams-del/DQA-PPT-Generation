@@ -354,7 +354,7 @@ def run_bigquery_validation(
 
     # More restrictive check for BigQuery - disallow DML and DDL
     if re.search(
-        r"(?i)(update|delete|drop|insert|create|alter|truncate|merge)", sql_string
+        r"(?i)\b(update|delete|drop|insert|create|alter|truncate|merge)\b", sql_string
     ):
         final_result["error_message"] = (
             "Invalid SQL: Contains disallowed DML/DDL operations."
