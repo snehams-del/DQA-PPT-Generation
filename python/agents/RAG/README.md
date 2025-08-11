@@ -57,6 +57,8 @@ This diagram outlines the agent's workflow, designed to provide informed and con
 
     This command reads the `pyproject.toml` file and installs all the necessary dependencies into a virtual environment managed by Poetry.
 
+    **Note on Dependencies:** This agent uses the `VertexAiRagRetrieval` tool from the `google-adk` library. This tool requires the `llama-index` package, which is included as a dependency in the `pyproject.toml` file and will be installed automatically.
+
 3.  **Activate the Poetry Shell:**
 
     ```bash

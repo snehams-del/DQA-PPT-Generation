@@ -21,6 +21,7 @@ google-cloud-aiplatform = { extras = [
         "adk",
         "agent-engines",
 ], version = "^1.93.0" }
+# The VertexAiRagRetrieval tool from the google-adk library has a dependency on llama-index.
 llama-index = "^0.12"
 
 [tool.poetry.group.dev.dependencies]
