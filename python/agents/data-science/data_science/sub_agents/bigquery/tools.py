@@ -92,7 +92,7 @@ def update_database_settings():
         compute_project_id=get_env_var("BQ_COMPUTE_PROJECT_ID")
     )
     database_settings = {
-        "bq_project_id": get_env_var("BQ_DATA_PROJECT_ID"),
+        "bq_data_project_id": get_env_var("BQ_DATA_PROJECT_ID"),
         "bq_dataset_id": get_env_var("BQ_DATASET_ID"),
         "bq_ddl_schema": ddl_schema,
         # Include ChaseSQL-specific constants.
