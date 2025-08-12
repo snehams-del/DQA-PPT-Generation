@@ -293,6 +293,26 @@ other retrieval mechanism. This flexibility allows you to tailor the agent to
 your specific data sources and retrieval requirements.
 
 
+## Troubleshooting
+
+### Quota Exceeded Errors
+
+When running the `prepare_corpus_and_data.py` script, you may encounter an error related to API quotas, such as:
+
+```
+Error uploading file ...: 429 Quota exceeded for aiplatform.googleapis.com/online_prediction_requests_per_base_model with base model: textembedding-gecko.
+```
+
+This is especially common for new Google Cloud projects that have lower default quotas.
+
+**Solution:**
+
+You will need to request a quota increase for the model you are using.
+
+1.  Navigate to the **Quotas** page in the Google Cloud Console: [https://console.cloud.google.com/iam-admin/quotas](https://console.cloud.google.com/iam-admin/quotas)
+2.  Follow the instructions in the official documentation to request a quota increase: [https://cloud.google.com/vertex-ai/docs/quotas#request_a_quota_increase](https://cloud.google.com/vertex-ai/docs/quotas#request_a_quota_increase)
+
+
 ## Disclaimer
 
 This agent sample is provided for illustrative purposes only and is not intended for production use. It serves as a basic example of an agent and a foundational starting point for individuals or teams to develop their own agents.
