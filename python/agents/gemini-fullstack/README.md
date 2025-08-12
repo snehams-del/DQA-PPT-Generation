@@ -82,14 +82,14 @@ python -m venv .venv && source .venv/bin/activate # On Windows: .venv\Scripts\ac
 
 # Install the starter pack and create your project
 pip install --upgrade agent-starter-pack
-agent-starter-pack create my-fullstack-agent -a adk_gemini_fullstack
+agent-starter-pack create my-fullstack-agent -a adk@gemini-fullstack
 ```
 <details>
 <summary>⚡️ Alternative: Using uv</summary>
 
 If you have [`uv`](https://github.com/astral-sh/uv) installed, you can create and set up your project with a single command:
 ```bash
-uvx agent-starter-pack create my-fullstack-agent -a adk_gemini_fullstack
+uvx agent-starter-pack create my-fullstack-agent -a adk@gemini-fullstack
 ```
 This command handles creating the project without needing to pre-install the package into a virtual environment.
 </details>
@@ -142,6 +142,18 @@ This is the collaborative brainstorming phase.
 1.  **You provide a research topic.**
 2.  The agent generates a high-level research plan with several key goals (e.g., "Analyze the market impact," "Identify key competitors").
 3.  The plan is presented to **you**. You can approve it, or chat with the agent to add, remove, or change goals until you're satisfied. Nothing happens without your explicit approval.
+
+The plan will contains following tags as a signal to downstream agents,
+  - Research Plan Tags
+
+    - [RESEARCH]: Guides info gathering via search.
+    - [DELIVERABLE]: Guides creation of final outputs (e.g., tables, reports).
+  
+  - Plan Refinement Tags
+
+    - [MODIFIED]: Goal was updated.
+    - [NEW]: New goal added per user.
+    - [IMPLIED]: Deliverable proactively added by AI.
 
 ### Phase 2: Execute Autonomous Research
 
