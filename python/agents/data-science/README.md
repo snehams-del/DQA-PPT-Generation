@@ -55,6 +55,12 @@ The key features of the Data Science Multi-Agent include:
 
 2.  **Install Dependencies with Poetry:**
 
+    **Note for Linux users:** If you get an error related to `keyring` during the installation, you can disable it by running the following command:
+    ```bash
+    poetry config keyring.enabled false
+    ```
+    This is a one-time setup.
+
     ```bash
     poetry install
     ```
