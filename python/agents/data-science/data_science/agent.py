@@ -25,6 +25,11 @@ from google.adk.agents import LlmAgent
 from google.adk.agents.callback_context import CallbackContext
 from google.adk.tools import load_artifacts
 from google.genai import types
+from opentelemetry import trace
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import \
+    OTLPSpanExporter
+from opentelemetry.sdk import trace as trace_sdk
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 
 from .prompts import return_instructions_root
 from .sub_agents.alloydb.tools import \
@@ -32,6 +37,33 @@ from .sub_agents.alloydb.tools import \
 from .sub_agents.bigquery.tools import \
     get_database_settings as get_bq_database_settings
 from .tools import call_alloydb_agent, call_bigquery_agent, call_ds_agent
+
+# Configure Weave endpoint and authentication
+WANDB_BASE_URL = "https://trace.wandb.ai"
+PROJECT_ID = os.getenv("WANDB_PROJECT_ID")
+OTEL_EXPORTER_OTLP_ENDPOINT = f"{WANDB_BASE_URL}/otel/v1/traces"
+
+# Set up authentication
+WANDB_API_KEY = os.getenv("WANDB_API_KEY")
+AUTH = base64.b64encode(f"api:{WANDB_API_KEY}".encode()).decode()
+
+OTEL_EXPORTER_OTLP_HEADERS = {
+    "Authorization": f"Basic {AUTH}",
+    "project_id": PROJECT_ID,
+}
+
+# Create the OTLP span exporter with endpoint and headers
+exporter = OTLPSpanExporter(
+    endpoint=OTEL_EXPORTER_OTLP_ENDPOINT,
+    headers=OTEL_EXPORTER_OTLP_HEADERS,
+)
+
+# Create a tracer provider and add the exporter
+tracer_provider = trace_sdk.TracerProvider()
+tracer_provider.add_span_processor(SimpleSpanProcessor(exporter))
+
+# Set the global tracer provider BEFORE importing/using ADK
+trace.set_tracer_provider(tracer_provider)
 
 
 date_today = date.today()
