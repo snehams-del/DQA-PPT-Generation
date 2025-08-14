@@ -93,9 +93,10 @@ def initial_bq_nl2sql(
       str: An SQL statement to answer this question.
     """
     print("****** Running agent with ChaseSQL algorithm.")
-    ddl_schema = tool_context.state["database_settings"]["bq_ddl_schema"]
-    project = tool_context.state["database_settings"]["bq_data_project_id"]
-    db = tool_context.state["database_settings"]["bq_dataset_id"]
+    bq_settings = tool_context.state["database_settings"]["bigquery"]
+    ddl_schema = bq_settings["schema"]
+    project = bq_settings["data_project_id"]
+    db = bq_settings["dataset_id"]
     transpile_to_bigquery = tool_context.state["database_settings"][
         "transpile_to_bigquery"
     ]
