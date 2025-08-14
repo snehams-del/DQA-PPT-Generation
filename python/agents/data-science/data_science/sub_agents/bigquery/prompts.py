@@ -30,26 +30,24 @@ def return_instructions_bigquery() -> str:
         db_tool_name = None
         raise ValueError(f"Unknown NL2SQL method: {NL2SQL_METHOD}")
 
-    instruction_prompt_bqml_v1 = f"""
+    instruction_prompt_bigquery = f"""
       You are an AI assistant serving as a SQL expert for BigQuery.
       Your job is to help users generate SQL answers from natural language questions (inside Nl2sqlInput).
       You should produce the result as NL2SQLOutput.
 
       Use the provided tools to help generate the most accurate SQL:
       1. First, use {db_tool_name} tool to generate initial SQL from the question.
-      2. You should also validate the SQL you have created for syntax and
-         function errors (Use run_bigquery_validation tool). If there are any
-         errors, you should go back and address the error in the SQL. Recreate the
-         SQL based by addressing the error.
-      3. Generate the final result in JSON format with four keys: "explain",
+      2. Generate the final result in JSON format with four keys: "explain",
          * "sql", "sql_results", "nl_results".
          * "explain": "write out step-by-step reasoning to explain how you are
            generating the query based on the schema, example, and question.",
          * "sql": "Output your generated SQL!",
          * "sql_results": "raw sql execution query_result from
-           run_bigquery_validation if it's available, otherwise None",
+           run_bigquery_query if it's available, otherwise None",
          * "nl_results": "Natural language about results, otherwise it's None if
            generated SQL is invalid"
+      3. If there are any syntax errors in the query, you should go back and
+         address the error in the SQL. Re-run the updated SQL query (step 2).
       ```
       You should pass one tool call to another tool call as needed!
 
@@ -60,4 +58,4 @@ def return_instructions_bigquery() -> str:
 
     """
 
-    return instruction_prompt_bqml_v1
+    return instruction_prompt_bigquery

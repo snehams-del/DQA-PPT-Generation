@@ -36,7 +36,7 @@ def setup_before_agent_call(callback_context: CallbackContext) -> None:
 
 
 bigquery_agent = LlmAgent(
-    model=os.getenv("BIGQUERY_AGENT_MODEL"),
+    model=os.getenv("BIGQUERY_AGENT_MODEL",""),
     name="bigquery_agent",
     instruction=return_instructions_bigquery(),
     output_key = "bigquery_agent_output",
@@ -46,8 +46,8 @@ bigquery_agent = LlmAgent(
             if NL2SQL_METHOD == "CHASE"
             else tools.initial_bq_nl2sql
         ),
-        tools.run_bigquery_validation,
+        tools.run_bigquery_query,
     ],
-    #before_agent_callback=setup_before_agent_call,
+    before_agent_callback=setup_before_agent_call,
     generate_content_config=types.GenerateContentConfig(temperature=0.01),
 )

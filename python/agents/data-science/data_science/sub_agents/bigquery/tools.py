@@ -40,7 +40,7 @@ MAX_NUM_ROWS = 80
 
 
 def _serialize_value_for_sql(value):
-    """Serializes a Python value from a pandas DataFrame into a BQ SQL literal."""
+    """Serializes a Python value from a pandas DataFrame to a BQ SQL literal."""
     if pd.isna(value):
         return "NULL"
     if isinstance(value, str):
@@ -112,7 +112,7 @@ def get_bigquery_schema(dataset_id,
                         data_project_id,
                         client=None,
                         compute_project_id=None):
-    """Retrieves schema and generates DDL with example values for a BigQuery dataset.
+    """Retrieves schema and generates DDL with example values for a BQ dataset.
 
     Args:
         dataset_id (str): The ID of the BigQuery dataset (e.g., 'my_dataset').
@@ -203,31 +203,32 @@ OPTIONS (
 
             # Add example values if available by running a query. This is more
             # robust than list_rows, especially for BigLake tables like Iceberg.
-            try:
-                sample_query = f"SELECT * FROM `{table_ref}` LIMIT 5"
-                rows = client.query(sample_query).to_dataframe()
+            if False:
+                try:
+                    sample_query = f"SELECT * FROM `{table_ref}` LIMIT 5"
+                    rows = client.query(sample_query).to_dataframe()
 
-                if not rows.empty:
-                    ddl_statement += (
-                        f"-- Example values for table `{table_ref}`:\n"
-                    )
-                    for _, row in rows.iterrows():
-                        values_str = ", ".join(
-                            _serialize_value_for_sql(v) for v in row.values
-                        )
+                    if not rows.empty:
                         ddl_statement += (
-                            f"INSERT INTO `{table_ref}` "
-                            f"VALUES ({values_str});\n\n"
+                            f"-- Example values for table `{table_ref}`:\n"
                         )
-            except Exception as e:
-                logging.warning(
-                    "Could not retrieve sample rows for table %s: %s",
-                    table_ref.path, e
-                )
-                ddl_statement += (
-                    "-- NOTE: Could not retrieve sample rows for table "
-                    f"{table_ref.path}.\n\n"
-                )
+                        for _, row in rows.iterrows():
+                            values_str = ", ".join(
+                                _serialize_value_for_sql(v) for v in row.values
+                            )
+                            ddl_statement += (
+                                f"INSERT INTO `{table_ref}` "
+                                f"VALUES ({values_str});\n\n"
+                            )
+                except Exception as e:
+                    logging.warning(
+                        "Could not retrieve sample rows for table %s: %s",
+                        table_ref.path, e
+                    )
+                    ddl_statement += (
+                        "-- NOTE: Could not retrieve sample rows for table "
+                        f"{table_ref.path}.\n\n"
+                    )
 
             ddl_statements += ddl_statement
         else:
@@ -311,7 +312,7 @@ best practices outlined above to generate the correct BigQuery SQL.
     )
 
     response = llm_client.models.generate_content(
-        model=os.getenv("BASELINE_NL2SQL_MODEL"),
+        model=os.getenv("BASELINE_NL2SQL_MODEL",""),
         contents=prompt,
         config={"temperature": 0.1},
     )
@@ -327,25 +328,24 @@ best practices outlined above to generate the correct BigQuery SQL.
     return sql
 
 
-def run_bigquery_validation(
+def run_bigquery_query(
     sql_string: str,
     tool_context: ToolContext,
 ) -> dict:
-    """Validates BigQuery SQL syntax and functionality.
+    """Runs a BigQuery SQL query.
 
-    This function validates the provided SQL string by attempting to execute it
-    against BigQuery in dry-run mode. It performs the following checks:
+    This function validates the provided SQL string, then runs it against
+    BigQuery and returns the results.
+
+    It performs the following steps:
 
     1. **SQL Cleanup:**  Preprocesses the SQL string using a `cleanup_sql`
       function
     2. **DML/DDL Restriction:**  Rejects any SQL queries containing DML or DDL
        statements (e.g., UPDATE, DELETE, INSERT, CREATE, ALTER) to ensure
        read-only operations.
-    3. **Syntax and Execution:** Sends the cleaned SQL to BigQuery for validation.
-       If the query is syntactically correct and executable, it retrieves the
-       results.
-    4. **Result Analysis:**  Checks if the query produced any results. If so, it
-       formats the first few rows of the result set for inspection.
+    3. **Syntax and Execution:** Sends the cleaned SQL to BigQuery for
+       execution and retrieves the results.
 
     Args:
         sql_string (str): The SQL query string to validate.
@@ -355,14 +355,16 @@ def run_bigquery_validation(
         A dict with two keys:
             query_results (list): A list of {key, value} dicts for each element
                 in the result set.
-            error_message (str): A message indicating the validation outcome.
+            error_message (str): A message indicating the query outcome.
                 This includes:
                   - "Valid SQL. Results: ..." if the query is valid and returns
                     data.
-                  - "Valid SQL. Query executed successfully (no results)." if
+                  - "Query executed successfully (no results)." if
                     the query is valid but returns no data.
                   - "Invalid SQL: ..." if the query is invalid, along with the
                     error message from BigQuery.
+                  - "Query error: ..." if another error occurs, including any
+                  error message from BQ.
     """
 
     def cleanup_sql(sql_string):
@@ -394,7 +396,8 @@ def run_bigquery_validation(
 
     # More restrictive check for BigQuery - disallow DML and DDL
     if re.search(
-        r"(?i)\b(update|delete|drop|insert|create|alter|truncate|merge)\b", sql_string
+        r"(?i)\b(update|delete|drop|insert|create|alter|truncate|merge)\b",
+        sql_string
     ):
         final_result["error_message"] = (
             "Invalid SQL: Contains disallowed DML/DDL operations."
@@ -426,14 +429,14 @@ def run_bigquery_validation(
 
         else:
             final_result["error_message"] = (
-                "Valid SQL. Query executed successfully (no results)."
+                "Query executed successfully (no results)."
             )
 
     except (
         Exception
     ) as e:  # Catch generic exceptions from BigQuery  # pylint: disable=broad-exception-caught
-        final_result["error_message"] = f"Invalid SQL: {e}"
+        final_result["error_message"] = f"Query error: {e}"
 
-    print("\n run_bigquery_validation final_result: \n", final_result)
+    print("\n run_bigquery_query final_result: \n", final_result)
 
     return final_result

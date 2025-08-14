@@ -49,7 +49,7 @@ async def call_alloydb_agent(
     alloydb_agent_output = await agent_tool.run_async(
         args={"request": question}, tool_context=tool_context
     )
-    tool_context.state["bigquery_agent_output"] = alloydb_agent_output
+    tool_context.state["alloydb_agent_output"] = alloydb_agent_output
     return alloydb_agent_output
 
 async def call_ds_agent(
