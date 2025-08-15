@@ -18,6 +18,7 @@
 -- then, it use NL2Py to do further data analysis as needed
 """
 import base64
+import json
 import os
 from datetime import date
 
@@ -77,8 +78,16 @@ def init_database_settings(callback_context: CallbackContext):
 
     db_settings = {
         "bigquery": get_bq_database_settings(),
-        "alloydb": get_alloydb_database_settings()
+        "alloydb": get_alloydb_database_settings(),
+        "cross_dataset_relations": ""
     }
+
+    CROSS_DATASET_RELATIONS_DEFS = os.getenv("CROSS_DATASET_RELATIONS_DEFS",
+        "")
+    if CROSS_DATASET_RELATIONS_DEFS:
+        with open(CROSS_DATASET_RELATIONS_DEFS, "r", encoding="utf-8") as f:
+            db_settings["cross_dataset_relations"] = json.load(f)
+
     bq_schema = db_settings["bigquery"]["schema"]
     alloydb_schema = db_settings["alloydb"]["schema"]
     callback_context.state["database_settings"] = db_settings
@@ -99,6 +108,12 @@ def init_database_settings(callback_context: CallbackContext):
 {alloydb_schema}
 
 </ALLOYDB>
+
+<CROSS_DATASET_RELATIONS>
+--------- The cross dataset relations between BigQuery and AlloyDB. ---------
+{db_settings["cross_dataset_relations"]}
+
+</CROSS_DATASET_RELATIONS>
 </SCHEMA DEFINITIONS>
 
     """
