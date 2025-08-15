@@ -55,6 +55,12 @@ The key features of the Data Science Multi-Agent include:
 
 2.  **Install Dependencies with uv:**
 
+    **Note for Linux users:** If you get an error related to `keyring` during the installation, you can disable it by running the following command:
+    ```bash
+    poetry config keyring.enabled false
+    ```
+    This is a one-time setup.
+
     ```bash
     uv sync
     ```
@@ -232,9 +238,9 @@ Evaluation tests assess the overall performance and capabilities of the agent in
 
 **Run Evaluation Tests:**
 
-    ```bash
-    uv run pytest eval
-    ```
+```bash
+uv run pytest eval
+```
 
 
 - This command executes all test files within the `eval/` directory.
@@ -254,9 +260,9 @@ Tests assess the overall executability of the agents.
 
 **Run Tests:**
 
-    ```bash
-    uv run pytest tests
-    ```
+```bash
+uv run pytest tests
+```
 
 - This command executes all test files within the `tests/` directory.
 - `uv run` ensures that pytest runs within the project's virtual environment.

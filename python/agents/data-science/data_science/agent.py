@@ -81,7 +81,6 @@ def init_database_settings(callback_context: CallbackContext):
     }
     bq_schema = db_settings["bigquery"]["schema"]
     alloydb_schema = db_settings["alloydb"]["schema"]
-
     callback_context.state["database_settings"] = db_settings
 
     callback_context._invocation_context.agent.instruction = (

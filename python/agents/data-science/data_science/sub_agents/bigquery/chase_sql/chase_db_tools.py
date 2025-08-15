@@ -115,13 +115,13 @@ def initial_bq_nl2sql(
 
     if generate_sql_type == GenerateSQLType.DC.value:
         prompt = DC_PROMPT_TEMPLATE.format(
-            SCHEMA=ddl_schema,
+            SCHEMA=bq_schema_and_samples,
             QUESTION=question,
             BQ_DATA_PROJECT_ID=BQ_DATA_PROJECT_ID
         )
     elif generate_sql_type == GenerateSQLType.QP.value:
         prompt = QP_PROMPT_TEMPLATE.format(
-            SCHEMA=ddl_schema,
+            SCHEMA=bq_schema_and_samples,
             QUESTION=question,
             BQ_DATA_PROJECT_ID=BQ_DATA_PROJECT_ID
         )
@@ -146,7 +146,7 @@ def initial_bq_nl2sql(
         # pylint: disable=g-bad-todo
         # pylint: enable=g-bad-todo
         responses: str = translator.translate(
-            responses, ddl_schema=ddl_schema, db=db, catalog=project
+            responses, ddl_schema=bq_schema_and_samples, db=db, catalog=project
         )
 
     return responses
