@@ -59,14 +59,25 @@ The key features of the Data Science Multi-Agent include:
     uv sync
     ```
 
-    This command reads the `pyproject.toml` file and installs all the necessary dependencies into a virtual environment managed by uv.
+    This command reads the `pyproject.toml` file and installs all the necessary
+    dependencies into a virtual environment managed by uv. On the first run,
+    this command will also create a new virtual environment. By default, the
+    virtual environment will be created in a `.venv` directory inside
+    `adk-samples/python/agents/data-science`. If you already have a virtual
+    environment created, or you want to use a different location, you can use
+    the `--active` flag for `uv` commands, and/or change the
+    `UV_PROJECT_ENVIRONMENT` environment variable. See
+    [How to customize uv's virtual environment location](https://pydevtools.com/handbook/how-to/how-to-customize-uvs-virtual-environment-location/)
+    for more details.
 
-3.  **Activate the uv Shell:**
+2.  **Activate the uv Shell:**
+
+    If you are using the `uv` default virtual environment, you now need
+    to activate the environment.
 
     ```bash
     source .venv/bin/activate
     ```
-
 
 4.  **Set up Environment Variables:**
     Rename the file ".env.example" to ".env"
