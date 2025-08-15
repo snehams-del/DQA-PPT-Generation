@@ -44,22 +44,24 @@ def setup_before_agent_call(callback_context: CallbackContext) -> None:
 
 
 def store_results_in_context(
-    tool: BaseTool, args: Dict[str, Any], tool_context: ToolContext, tool_response: Dict
+    tool: BaseTool,
+    args: Dict[str, Any],
+    tool_context: ToolContext,
+    tool_response: Dict
 ) -> Optional[Dict]:
 
-  # We are setting a state for the data science agent to be able to use the sql
-  # query results as context
-  if tool.name == ADK_BUILTIN_BQ_EXECUTE_SQL_TOOL:
-    if tool_response["status"] == "SUCCESS":
-        tool_context.state["query_result"] = tool_response["rows"]
+    # We are setting a state for the data science agent to be able to use the
+    # sql query results as context
+    if tool.name == ADK_BUILTIN_BQ_EXECUTE_SQL_TOOL:
+        if tool_response["status"] == "SUCCESS":
+            tool_context.state["query_result"] = tool_response["rows"]
 
-  return None
+    return None
 
 
 bigquery_tool_filter = [ADK_BUILTIN_BQ_EXECUTE_SQL_TOOL]
 bigquery_tool_config = BigQueryToolConfig(
     write_mode=WriteMode.BLOCKED,
-    max_query_result_rows=80
 )
 bigquery_toolset = BigQueryToolset(
     tool_filter=bigquery_tool_filter,

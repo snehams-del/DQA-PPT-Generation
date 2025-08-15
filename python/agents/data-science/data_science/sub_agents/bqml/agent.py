@@ -16,8 +16,6 @@
 import os
 
 from data_science.sub_agents.bigquery.agent import bigquery_agent
-from data_science.sub_agents.bigquery.agent import \
-    database_agent as bq_db_agent
 from data_science.sub_agents.bigquery.tools import \
     get_database_settings as get_bq_database_settings
 from data_science.sub_agents.bqml.tools import check_bq_models, rag_response

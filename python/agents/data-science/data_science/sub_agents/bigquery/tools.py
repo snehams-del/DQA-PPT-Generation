@@ -108,12 +108,20 @@ def get_bigquery_schema_and_samples():
             for schema_field in table_info.schema
         ]
         table_ref = dataset_ref.table(table.table_id)
+        sample_values = []
         if False:
             sample_query = f"SELECT * FROM `{table_ref}` LIMIT 5"
-            sample_values = client.query(sample_query).to_dataframe().to_dict(orient="list")
+            sample_values = client.query(sample_query).to_dataframe().to_dict(
+                orient="list")
             for key in sample_values:
-                sample_values[key] = [_serialize_value_for_sql(v) for v in sample_values[key]]
-            tables_context[str(table_ref)] = {"table_schema": table_schema, "example_values": sample_values}
+                sample_values[key] = [
+                    _serialize_value_for_sql(v)
+                    for v in sample_values[key]
+                ]
+        tables_context[str(table_ref)] = {
+            "table_schema": table_schema,
+            "example_values": sample_values
+        }
 
     return tables_context
 

@@ -55,7 +55,7 @@ def return_instructions_bigquery() -> str:
 
       You should pass one tool call to another tool call as needed!
 
-      NOTE: you should ALWAYS USE THE TOOLS ({db_tool_name} AND
+      NOTE: you should ALWAYS USE THE TOOLS ({nl2sql_tool_name} AND
       {execute_sql_tool_name}) to generate SQL, not make up SQL WITHOUT CALLING
       TOOLS. Keep in mind that you are an orchestration agent, not a SQL expert,
       so use the tools to help you generate SQL, but do not make up SQL.
