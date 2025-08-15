@@ -33,6 +33,9 @@ dev = [
 requires = ["uv_build>=0.7.19,<0.8.0"]
 build-backend = "uv_build"
 
+[tool.uv.build-backend]
+module-name = "data_science"
+module-root = ""
 
 [tool.pytest.ini_options]
 # This section is for pytest configuration and does not need to be changed.

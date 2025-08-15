@@ -238,9 +238,9 @@ Evaluation tests assess the overall performance and capabilities of the agent in
 
 **Run Evaluation Tests:**
 
-    ```bash
-    uv run pytest eval
-    ```
+```bash
+uv run pytest eval
+```
 
 
 - This command executes all test files within the `eval/` directory.
@@ -260,9 +260,9 @@ Tests assess the overall executability of the agents.
 
 **Run Tests:**
 
-    ```bash
-    uv run pytest tests
-    ```
+```bash
+uv run pytest tests
+```
 
 - This command executes all test files within the `tests/` directory.
 - `uv run` ensures that pytest runs within the project's virtual environment.
