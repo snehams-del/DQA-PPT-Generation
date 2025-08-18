@@ -78,6 +78,9 @@ to implement this workflow.
     *   Install Poetry
         ```bash
         # Install the Poetry package and dependencies.
+        # Note for Linux users: If you get an error related to `keyring` during the installation, you can disable it by running the following command:
+        # poetry config keyring.enabled false
+        # This is a one-time setup.
         poetry install
         ```
 
