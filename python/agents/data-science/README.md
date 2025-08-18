@@ -304,7 +304,7 @@ Next, you need to create a `.whl` file for your agent. From the `data-science`
 directory, run this command:
 
 ```bash
-uv build --format=wheel --out-dir deployment
+uv build --wheel --out-dir deployment
 ```
 
 This will create a file named `data_science-0.1-py3-none-any.whl` in the
