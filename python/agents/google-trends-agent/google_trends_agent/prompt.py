@@ -17,11 +17,8 @@ from jinja2 import Environment, FileSystemLoader
 from datetime import datetime, timedelta
 
 
-def load_few_shot_examples(refresh_date_value: str) -> str:
+def load_few_shot_examples() -> str:
     """Loads and renders the Google Trends few-shot examples template.
-
-    Args:
-        refresh_date_value: The refresh date to use in the template (YYYY-MM-DD).
 
     Returns:
         str: The rendered template with populated values.
@@ -33,13 +30,8 @@ def load_few_shot_examples(refresh_date_value: str) -> str:
         env = Environment(loader=FileSystemLoader(template_dir))
         template = env.get_template("google_trends_few_shots.j2")
 
-        # Prepare template variables
-        template_vars = {
-            "refresh_date_value": refresh_date_value,
-        }
-
         # Render the template
-        rendered_template = template.render(**template_vars)
+        rendered_template = template.render()
         return rendered_template
 
     except Exception as e:
@@ -47,11 +39,8 @@ def load_few_shot_examples(refresh_date_value: str) -> str:
         raise
 
 
-def load_table_structure_prompt(refresh_date_value: str) -> str:
+def load_table_structure_prompt() -> str:
     """Loads and renders the Google Trends table structure and rules template.
-
-    Args:
-        refresh_date_value: The refresh date to use in the template (YYYY-MM-DD).
 
     Returns:
         str: The rendered template content.
@@ -63,13 +52,8 @@ def load_table_structure_prompt(refresh_date_value: str) -> str:
         env = Environment(loader=FileSystemLoader(template_dir))
         template = env.get_template("google_trends_table_structure.j2")
 
-        # Prepare template variables
-        template_vars = {
-            "refresh_date_value": refresh_date_value,
-        }
-
         # Render the template
-        return template.render(**template_vars)
+        return template.render()
 
     except Exception as e:
         print(f"Error loading table structure template: {str(e)}")
@@ -79,16 +63,9 @@ def load_table_structure_prompt(refresh_date_value: str) -> str:
 def load_agent_instructions():
     """Dynamically loads agent instructions and few-shot examples."""
     try:
-        # Calculate the default refresh date (3 days ago)
-        latest_refresh_date = (datetime.now() - timedelta(days=3)).strftime("%Y-%m-%d")
-
-        # Load prompts using the latest refresh date
-        table_structure_prompt = load_table_structure_prompt(
-            refresh_date_value=latest_refresh_date
-        )
-        few_shot_examples = load_few_shot_examples(
-            refresh_date_value=latest_refresh_date
-        )
+        # Load prompts
+        table_structure_prompt = load_table_structure_prompt()
+        few_shot_examples = load_few_shot_examples()
 
         # Combine prompts to form the full instruction
         full_instruction = f"{table_structure_prompt}\n\n{few_shot_examples}"

@@ -43,9 +43,8 @@ You will query one of the following tables. Choose the correct table based on th
 
 ### 2. Rules and Best Practices (MANDATORY)
 
-1.  **ALWAYS Filter by the Provided `refresh_date`:** This is the most important rule. You have been given a specific `refresh_date` in the "Input Parameters" section above. Your query **MUST** use this exact date string in the `WHERE` clause to avoid costly full table scans.
-    *   **Correct Pattern:** `WHERE refresh_date = '{{ refresh_date_value }}'`
-    *   **Forbidden Pattern:** Do **NOT** use `(SELECT MAX(refresh_date) ...)` in your query.
+1.  **ALWAYS Filter by `refresh_date` for the Latest Data:** This is the most important rule. To query the most recent data and avoid costly full table scans, your query **MUST** include a `WHERE` clause that filters `refresh_date` to the previous day.
+    *   **Correct Pattern:** `WHERE refresh_date = DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)`
 
 2.  **Table Selection Logic:**
     *   If the user asks for "top terms," "most popular," or "highest rank," use the appropriate Top Terms table based on the country.

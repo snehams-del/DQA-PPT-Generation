@@ -135,7 +135,7 @@ SELECT
 FROM
   `bigquery-public-data.google_trends.international_top_terms`
 WHERE
-  refresh_date = '2025-07-19'
+  refresh_date = DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)
   AND country_name = 'Canada'
   AND week IN (
     SELECT DISTINCT
@@ -143,7 +143,7 @@ WHERE
     FROM
       `bigquery-public-data.google_trends.international_top_terms`
     WHERE
-      refresh_date = '2025-07-19'
+      refresh_date = DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)
       AND country_name = 'Canada'
     ORDER BY
       week DESC
