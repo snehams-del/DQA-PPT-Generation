@@ -455,7 +455,7 @@ gcloud run deploy data-science-agent \
   --project $PROJECT_ID \
   --allow-unauthenticated \
   --add-cloudsql-instances $PROJECT_ID:us-central1:ds-agent-session-service \
-  --update-env-vars SERVE_WEB_INTERFACE=True,SESSION_SERVICE_URI="postgresql+pg8000://postgres:ds-agent-demo@postgres/?unix_sock=/cloudsql/$PROJECT_ID:us-central1:ds-agent-session-service/.s.PGSQL.5432",GOOGLE_CLOUD_PROJECT=qwiklabs-asl-02-111b5e486eb8 \
+  --update-env-vars SERVE_WEB_INTERFACE=True,SESSION_SERVICE_URI="postgresql+pg8000://postgres:ds-agent-demo@postgres/?unix_sock=/cloudsql/$PROJECT_ID:us-central1:ds-agent-session-service/.s.PGSQL.5432",GOOGLE_CLOUD_PROJECT=$PROJECT_ID \
   --region us-central1 
 ```
 
