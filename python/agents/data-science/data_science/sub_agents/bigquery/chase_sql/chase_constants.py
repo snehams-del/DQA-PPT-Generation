@@ -13,9 +13,14 @@
 # limitations under the License.
 
 """Constants used by the ChaseSQL algorithm."""
-import os
+
 from typing import Any
+
 import immutabledict
+
+from ....config import get_config
+
+config = get_config()
 
 
 # Parameters for ChaseSQL.
@@ -31,7 +36,7 @@ chase_sql_constants_dict: immutabledict.immutabledict[str, Any] = (
             # Number of candidates to generate.
             "number_of_candidates": 1,
             # Model to use for generation.
-            "model": os.getenv("CHASE_NL2SQL_MODEL"),
+            "model": config.chase_nl2sql_model,
             # Temperature for generation.
             "temperature": 0.5,
             # Type of SQL generation method.

@@ -14,10 +14,10 @@
 
 import os
 from pathlib import Path
-from dotenv import load_dotenv, set_key
-import vertexai
-from vertexai import rag
 
+import vertexai
+from dotenv import load_dotenv, set_key
+from vertexai import rag
 
 # Define the path to the .env file
 env_file_path = Path(__file__).parent.parent.parent / ".env"
@@ -37,10 +37,10 @@ paths = [
 
 
 # Initialize Vertex AI API once per session
-vertexai.init(project=PROJECT_ID, location="us-central1")
+vertexai.init(project=PROJECT_ID, location="us-east4")
 
 
-def create_RAG_corpus():
+def create_RAG_corpus() -> str:
     # Create RagCorpus
     # Configure embedding model, for example "text-embedding-005".
     embedding_model_config = rag.RagEmbeddingModelConfig(
@@ -58,13 +58,14 @@ def create_RAG_corpus():
         backend_config=backend_config,
     )
 
-    write_to_env(bqml_corpus.name)
+    corpus_name = bqml_corpus.name
+    if corpus_name:
+        write_to_env(corpus_name)
 
-    return bqml_corpus.name
+    return corpus_name or ""
 
 
-def ingest_files(corpus_name):
-
+def ingest_files(corpus_name: str) -> None:
     transformation_config = rag.TransformationConfig(
         chunking_config=rag.ChunkingConfig(
             chunk_size=512,
@@ -111,7 +112,7 @@ def rag_response(query: str) -> str:
     return str(response)
 
 
-def write_to_env(corpus_name):
+def write_to_env(corpus_name: str) -> None:
     """Writes the corpus name to the specified .env file.
 
     Args:

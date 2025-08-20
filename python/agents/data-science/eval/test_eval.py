@@ -22,12 +22,12 @@ pytest_plugins = ("pytest_asyncio",)
 
 
 @pytest.fixture(scope="session", autouse=True)
-def load_env():
+def load_env() -> None:
     load_dotenv(find_dotenv(".env"))
 
 
 @pytest.mark.asyncio
-async def test_eval_simple():
+async def test_eval_simple() -> None:
     """Test the agent's basic ability via a session file."""
     await AgentEvaluator.evaluate(
         "data_science",
