@@ -18,18 +18,17 @@ This module defines functions that return instruction prompts for the bigquery a
 These instructions guide the agent's behavior, workflow, and tool usage.
 """
 
-import os
-from data_science.utils.utils import get_env_var
+from ...config import get_config
+
+config = get_config()
 
 
 def return_instructions_bigquery() -> str:
-
-    NL2SQL_METHOD = os.getenv("NL2SQL_METHOD", "BASELINE")
-    if NL2SQL_METHOD == "BASELINE" or NL2SQL_METHOD == "CHASE":
+    if config.nl2sql_method == "BASELINE" or config.nl2sql_method == "CHASE":
         db_tool_name = "initial_bq_nl2sql"
     else:
         db_tool_name = None
-        raise ValueError(f"Unknown NL2SQL method: {NL2SQL_METHOD}")
+        raise ValueError(f"Unknown NL2SQL method: {config.nl2sql_method}")
 
     instruction_prompt_bigquery = f"""
       You are an AI assistant serving as a SQL expert for BigQuery.
@@ -44,13 +43,13 @@ def return_instructions_bigquery() -> str:
           "sql": "Output your generated SQL!",
           "sql_results": "raw sql execution query_result from execute_sql if it's available, otherwise None",
           "nl_results": "Natural language about results, otherwise it's None if generated SQL is invalid"
-      
+
       You should pass one tool call to another tool call as needed!
 
       NOTE: you should ALWAYS USE THE TOOL {db_tool_name} to generate SQL, not make up SQL WITHOUT CALLING TOOLS.
       Keep in mind that you are an orchestration agent, not a SQL expert, so use the tools to help you generate SQL, but do not make up SQL.
 
-      NOTE: you must ALWAYS PASS the project_id {get_env_var("BQ_COMPUTE_PROJECT_ID")} to the execute_sql tool. DO NOT pass any other project id.
+      NOTE: you must ALWAYS PASS the project_id {config.bq_compute_project_id} to the execute_sql tool. DO NOT pass any other project id.
 
     """
 

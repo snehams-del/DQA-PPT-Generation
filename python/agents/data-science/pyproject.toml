@@ -1,7 +1,11 @@
 [project]
 name = "data-science"
-version = "0.1.0"
-description = "Add your description here"
+version = "0.1"
+description = "Data Science and Data QnA Multi-Agent"
+authors = [
+    {name = "Meltem Subasioglu", email = "msubasioglu@google.com"}
+]
+license = {text = "Apache License 2.0"}
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -19,28 +23,29 @@ dependencies = [
     "numpy>=2.3.1",
 ]
 
-
 [project.optional-dependencies]
 dev = [
     "google-cloud-aiplatform[adk,agent-engines,evaluation]>=1.93.0",
     "pytest>=8.3.5",
     "pytest-asyncio>=0.26.0",
     "google-adk[eval]>=1.5.0",
+    "nest-asyncio>=1.6.0",
 ]
-
-
-[build-system]
-requires = ["uv_build>=0.7.19,<0.8.0"]
-build-backend = "uv_build"
-
-[tool.uv.build-backend]
-module-name = "data_science"
-module-root = ""
+jupyter = [
+    "jupyter~=1.0.0",
+]
+lint = [
+    "ruff>=0.4.6",
+    "mypy~=1.15.0",
+    "codespell~=2.2.0",
+    "types-pyyaml~=6.0.12.20240917",
+    "types-requests~=2.32.0.20240914",
+]
 
 [tool.pytest.ini_options]
 # This section is for pytest configuration and does not need to be changed.
 console_output_style = "progress"
-addopts = "-vv -s"
+addopts = "-vv -s --ignore=tests/test_deployment.py"
 #addopts = "-vv -s --pdb"
 testpaths = ["tests/"]
 log_level = "DEBUG"
@@ -54,3 +59,71 @@ filterwarnings = [
     # note the use of single quote below to denote "raw" strings in TOML
     #'ignore:function ham\(\) is deprecated:DeprecationWarning',
 ]
+pythonpath = "."
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+exclude = ["tests/load_test/load_test.py"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle
+    "F",   # pyflakes
+    "W",   # pycodestyle warnings
+    "I",   # isort
+    "C",  # flake8-comprehensions
+    "B",   # flake8-bugbear
+    "UP", # pyupgrade
+    "RUF", # ruff specific rules
+]
+ignore = ["E501", "C901"] # ignore line too long, too complex
+
+[tool.ruff.lint.isort]
+known-first-party = ["app", "frontend"]
+
+[tool.mypy]
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+no_implicit_optional = true
+check_untyped_defs = true
+disallow_subclassing_any = true
+warn_incomplete_stub = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_unreachable = true
+follow_imports = "silent"
+ignore_missing_imports = true
+explicit_package_bases = true
+disable_error_code = ["misc", "no-untyped-call", "no-any-return"]
+
+exclude = [".venv"]
+
+[tool.codespell]
+ignore-words-list = "rouge"
+skip = "./locust_env/*,uv.lock,.venv,./frontend,**/*.ipynb"
+
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["data_science"]
+
+# This configuration file is used by goo.gle/agent-starter-pack to power remote templating.
+# It defines the template's properties, settings, and deployment options.
+[tool.agent-starter-pack]
+base_template = "adk_base"
+description = "Multi-agent system for data analysis, integrating specialized agents for data retrieval, analytics, visualization, and ML tasks using BigQuery and BQML."
+example_question = "Tell me about the data you have access to!"
+
+[tool.agent-starter-pack.settings]
+agent_directory = "data_science"

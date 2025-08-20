@@ -21,17 +21,17 @@
 from google.adk.tools import ToolContext
 from google.adk.tools.agent_tool import AgentTool
 
-from .sub_agents import ds_agent, db_agent
+from .sub_agents import db_agent, ds_agent
 
 
 async def call_db_agent(
     question: str,
     tool_context: ToolContext,
-):
+) -> str:
     """Tool to call database (nl2sql) agent."""
     print(
         "\n call_db_agent.use_database:"
-        f' {tool_context.state["all_db_settings"]["use_database"]}'
+        f" {tool_context.state['all_db_settings']['use_database']}"
     )
 
     agent_tool = AgentTool(agent=db_agent)
@@ -46,7 +46,7 @@ async def call_db_agent(
 async def call_ds_agent(
     question: str,
     tool_context: ToolContext,
-):
+) -> str:
     """Tool to call data science (nl2py) agent."""
 
     if question == "N/A":
@@ -57,7 +57,7 @@ async def call_ds_agent(
     question_with_data = f"""
   Question to answer: {question}
 
-  Actual data to analyze prevoius quesiton is already in the following:
+  Actual data to analyze previous question is already in the following:
   {input_data}
 
   """

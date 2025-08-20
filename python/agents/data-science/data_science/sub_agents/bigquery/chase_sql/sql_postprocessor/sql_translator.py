@@ -26,7 +26,6 @@ from .correction_prompt_template import (
     CORRECTION_PROMPT_TEMPLATE_V1_0,
 )  # pylint: disable=g-importing-member
 
-
 ColumnSchemaType = tuple[str, str]
 AllColumnsSchemaType = list[ColumnSchemaType]
 TableSchemaType = tuple[str, AllColumnsSchemaType]
@@ -42,8 +41,8 @@ def _isinstance_list_of_str_tuples_lists(obj: Any) -> bool:
     """Checks if the object is a list of tuples or listsof strings."""
     return (
         isinstance(obj, list)
-        and all([isinstance(v, (tuple, list)) for v in obj])
-        and all([isinstance(v[0], str) and isinstance(v[1], str) for v in obj])
+        and all(isinstance(v, tuple | list) for v in obj)
+        and all(isinstance(v[0], str) and isinstance(v[1], str) for v in obj)
     )
 
 
@@ -54,17 +53,20 @@ def _isinstance_ddl_schema_type(obj: Any) -> bool:
         isinstance(obj, list)
         and all(
             # Every element is a tuple or list.
-            [isinstance(v, (tuple, list)) for v in obj]
+            isinstance(v, tuple | list)
+            for v in obj
         )
         and all(
             # First element is a string (table name) and
             # second element is a list (of tuples or lists).
-            [isinstance(v[0], str) and isinstance(v[1], list) for v in obj]
+            isinstance(v[0], str) and isinstance(v[1], list)
+            for v in obj
         )
         and all(
             # Every element of above list is a tuple or list of strings
             # (column name, column type)
-            [_isinstance_list_of_str_tuples_lists(v[1]) for v in obj]
+            _isinstance_list_of_str_tuples_lists(v[1])
+            for v in obj
         )
     )
     # pylint: enable=g-complex-comprehension
@@ -75,9 +77,9 @@ def _isinstance_sqlglot_schema_type(obj: Any) -> bool:
     # pylint: disable=g-complex-comprehension
     return (
         isinstance(obj, dict)
-        and all([isinstance(v, dict) for v in obj.values()])
-        and all([isinstance(c, str) for d in obj.values() for c, _ in d.items()])
-        and all([isinstance(t, str) for d in obj.values() for _, t in d.items()])
+        and all(isinstance(v, dict) for v in obj.values())
+        and all(isinstance(c, str) for d in obj.values() for c, _ in d.items())
+        and all(isinstance(t, str) for d in obj.values() for _, t in d.items())
     )
     # pylint: enable=g-complex-comprehension
 
@@ -154,7 +156,9 @@ class SqlTranslator:
         return sql_query
 
     @classmethod
-    def _extract_schema_from_ddl_statement(cls, ddl_statement: str) -> TableSchemaType:
+    def _extract_schema_from_ddl_statement(
+        cls, ddl_statement: str
+    ) -> TableSchemaType | tuple[None, None]:
         """Extracts the schema from a single DDL statement."""
         # Split the DDL statement into table name and columns.
         # Match the following pattern:
@@ -236,7 +240,9 @@ class SqlTranslator:
         column_types = sample["db_column_types"][1:]
         column_types = [col_types_map[col_type] for col_type in column_types]
         assert len(column_names) == len(column_types)
-        cols_and_types: list[tuple[str, str]] = list(zip(column_names, column_types))
+        cols_and_types: list[tuple[str, str]] = list(
+            zip(column_names, column_types, strict=False)
+        )
         tables_to_columns: dict[str, dict[str, str]] = {}
         for id_pos, table_id in enumerate(table_ids):
             if tables[table_id] in tables_to_columns.keys():
@@ -252,18 +258,18 @@ class SqlTranslator:
         """Returns the table parts from the table name."""
         table_parts = table_name.split(".")
         if len(table_parts) == 3:
-            return table_parts
+            return tuple(table_parts)  # type: ignore
         elif len(table_parts) == 2:
-            return None, *table_parts
+            return (None, table_parts[0], table_parts[1])
         elif len(table_parts) == 1:
-            return None, None, *table_parts
+            return (None, None, table_parts[0])
         else:
             raise ValueError(f"Invalid table name: {table_name}")
 
     @classmethod
     def format_schema(cls, schema: DDLSchemaType) -> SQLGlotSchemaType:
         """Formats the DDL schema for use in SQLGlot."""
-        schema_dict = {}
+        schema_dict: dict[str, Any] = {}
         catalog, db = None, None
         for table_name, columns in schema:
             catalog, db, table_name = cls._get_table_parts(table_name)
@@ -281,20 +287,20 @@ class SqlTranslator:
         cls, schema: str | SQLGlotSchemaType | BirdSampleType
     ) -> SQLGlotSchemaType:
         """Rewrites the schema for use in SQLGlot."""
-        schema_dict = None
+        schema_dict: SQLGlotSchemaType | None = None
         if schema:
             if isinstance(schema, str):
-                schema = cls.extract_schema_from_ddls(schema)
-                schema_dict = cls.format_schema(schema)
+                ddl_schema = cls.extract_schema_from_ddls(schema)
+                schema_dict = cls.format_schema(ddl_schema)
             elif _isinstance_sqlglot_schema_type(schema):
                 schema_dict = schema
             elif _isinstance_bird_sample_type(schema):
                 schema_dict = cls._get_schema_from_bird_sample(schema)
             elif _isinstance_ddl_schema_type(schema):
-                schema_dict = cls.format_schema(schema)
+                schema_dict = cls.format_schema(schema)  # type: ignore[arg-type]
             else:
                 raise TypeError(f"Unsupported schema type: {type(schema)}")
-        return schema_dict
+        return schema_dict or {}
 
     @classmethod
     def _check_for_errors(
@@ -376,7 +382,7 @@ class SqlTranslator:
             sql_query = self._apply_heuristics(sql_query)
         # Reformat the schema if provided. This will remove any comments and
         # `INSERT INTO` statements.
-        schema_dict = self.rewrite_schema_for_sqlglot(ddl_schema)
+        schema_dict = self.rewrite_schema_for_sqlglot(ddl_schema)  # type: ignore[arg-type]
         errors_and_sql: tuple[str | None, str] = self._check_for_errors(
             sql_query=sql_query,
             sql_dialect=self.OUTPUT_DIALECT,
@@ -385,7 +391,7 @@ class SqlTranslator:
             schema_dict=schema_dict,
         )
         errors, sql_query = errors_and_sql
-        responses = sql_query  # Default to the input SQL query after error check.
+        result = sql_query  # Default to the input SQL query after error check.
         if errors:
             print("Processing input errors")
             if schema_dict:
@@ -400,20 +406,21 @@ class SqlTranslator:
                 schema_insert=schema_insert,
             )
             requests: list[str] = [prompt for _ in range(number_of_candidates)]
-            responses: list[str] = self._model.call_parallel(
-                requests, parser_func=self._parse_response
+            response_list: list[str | None] = self._model.call_parallel(
+                requests,
+                parser_func=self._parse_response,  # type: ignore[arg-type]
             )
-            if responses:
+            if response_list:
                 # We only use the first response. Therefore the `number_of_candidates`
                 # parameter is not used.
                 # pylint: disable=g-bad-todo
                 # pylint: enable=g-bad-todo
                 # First, find the first non-None response.
-                responses = [r for r in responses if r is not None]
-                if responses:
+                valid_responses = [r for r in response_list if r is not None]
+                if valid_responses:
                     # Then, return the first non-None response.
-                    responses = responses[0]
-        return responses
+                    result = valid_responses[0]
+        return result
 
     def translate(
         self,
@@ -451,9 +458,7 @@ class SqlTranslator:
             read=self.INPUT_DIALECT,
             write=self.OUTPUT_DIALECT,
             error_level=sqlglot.ErrorLevel.IMMEDIATE,
-        )[
-            0
-        ]  # Transpile returns a list of strings.
+        )[0]  # Transpile returns a list of strings.
         print("****** sql_query after transpile:", sql_query)
         if self._tool_output_errors:
             sql_query = self._fix_errors(

@@ -90,7 +90,8 @@ jobs:
           workload_identity_provider: 'projects/628595556591/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
           create_credentials_file: true
           project_id: adk-devops
-      
+
+
       # --- RUN THE TEMPLATE GENERATION AND TESTING USING CONTAINER ---
       - name: ${{ matrix.task }} - ${{ matrix.agent_path }} (${{ matrix.deployment_target }})
         uses: docker://europe-west4-docker.pkg.dev/production-ai-template/starter-pack/e2e-tests

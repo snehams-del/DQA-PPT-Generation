@@ -14,9 +14,7 @@
 
 """Database Agent: get data from database (BigQuery) using NL2SQL."""
 
-import os
-
-from typing import Any, Dict, Optional
+from typing import Any
 
 from google.adk.agents import Agent
 from google.adk.agents.callback_context import CallbackContext
@@ -25,11 +23,12 @@ from google.adk.tools.bigquery import BigQueryToolset
 from google.adk.tools.bigquery.config import BigQueryToolConfig, WriteMode
 from google.genai import types
 
+from ...config import get_config
 from . import tools
 from .chase_sql import chase_db_tools
 from .prompts import return_instructions_bigquery
 
-NL2SQL_METHOD = os.getenv("NL2SQL_METHOD", "BASELINE")
+config = get_config()
 
 # BigQuery built-in tools in ADK
 # https://google.github.io/adk-docs/tools/built-in-tools/#bigquery
@@ -40,41 +39,37 @@ def setup_before_agent_call(callback_context: CallbackContext) -> None:
     """Setup the agent."""
 
     if "database_settings" not in callback_context.state:
-        callback_context.state["database_settings"] = \
-            tools.get_database_settings()
+        callback_context.state["database_settings"] = tools.get_database_settings()
 
 
 def store_results_in_context(
-    tool: BaseTool, args: Dict[str, Any], tool_context: ToolContext, tool_response: Dict
-) -> Optional[Dict]:
+    tool: BaseTool, args: dict[str, Any], tool_context: ToolContext, tool_response: dict
+) -> dict | None:
+    # We are setting a state for the data science agent to be able to use the sql
+    # query results as context
+    if tool.name == ADK_BUILTIN_BQ_EXECUTE_SQL_TOOL:
+        if tool_response["status"] == "SUCCESS":
+            tool_context.state["query_result"] = tool_response["rows"]
 
-  # We are setting a state for the data science agent to be able to use the sql
-  # query results as context 
-  if tool.name == ADK_BUILTIN_BQ_EXECUTE_SQL_TOOL:
-    if tool_response["status"] == "SUCCESS":
-        tool_context.state["query_result"] = tool_response["rows"]
-
-  return None
+    return None
 
 
 bigquery_tool_filter = [ADK_BUILTIN_BQ_EXECUTE_SQL_TOOL]
 bigquery_tool_config = BigQueryToolConfig(
-    write_mode=WriteMode.BLOCKED,
-    max_query_result_rows=80
+    write_mode=WriteMode.BLOCKED, max_query_result_rows=80
 )
 bigquery_toolset = BigQueryToolset(
-    tool_filter=bigquery_tool_filter,
-    bigquery_tool_config=bigquery_tool_config
+    tool_filter=bigquery_tool_filter, bigquery_tool_config=bigquery_tool_config
 )
 
 database_agent = Agent(
-    model=os.getenv("BIGQUERY_AGENT_MODEL"),
+    model=config.bigquery_agent_model,
     name="database_agent",
     instruction=return_instructions_bigquery(),
     tools=[
         (
             chase_db_tools.initial_bq_nl2sql
-            if NL2SQL_METHOD == "CHASE"
+            if config.nl2sql_method == "CHASE"
             else tools.initial_bq_nl2sql
         ),
         bigquery_toolset,

@@ -41,6 +41,8 @@ The key features of the Data Science Multi-Agent include:
 *   **Python 3.12+:** Ensure you have Python 3.12 or a later version installed.
 *   **uv:** Install uv by following the instructions on the official uv website: [https://docs.astral.sh/uv/getting-started/installation/](https://docs.astral.sh/uv/getting-started/installation/)
 *   **Git:** Ensure you have git installed. If not, you can download it from [https://git-scm.com/](https://git-scm.com/) and follow the [installation guide](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git).
+*   **Terraform** >= 1.0 installed ([installation guide](https://learn.hashicorp.com/tutorials/terraform/install-cli))
+*   **Google Cloud SDK** configured with authentication
 
 
 
@@ -53,7 +55,15 @@ The key features of the Data Science Multi-Agent include:
     cd adk-samples/python/agents/data-science
     ```
 
-2.  **Install Dependencies with uv:**
+2.  **Configure Google Cloud Project:**
+
+    ```bash
+    gcloud config set project YOUR_PROJECT_ID
+    ```
+    
+    Replace `YOUR_PROJECT_ID` with your actual Google Cloud project ID.
+
+3.  **Install Dependencies with uv:**
 
     ```bash
     uv sync
@@ -70,105 +80,55 @@ The key features of the Data Science Multi-Agent include:
     [How to customize uv's virtual environment location](https://pydevtools.com/handbook/how-to/how-to-customize-uvs-virtual-environment-location/)
     for more details.
 
-2.  **Activate the uv Shell:**
-
-    If you are using the `uv` default virtual environment, you now need
-    to activate the environment.
+4.  **Deploy Infrastructure with Terraform:**
 
     ```bash
-    source .venv/bin/activate
+    make deploy-infra
     ```
+    
+    **Advanced Configuration (Optional):** For custom configuration options, copy `infra/vars/env.tfvars.example` to `infra/vars/env.tfvars`, edit your settings, and use `terraform apply --var-file vars/env.tfvars`.
 
-4.  **Set up Environment Variables:**
-    Rename the file ".env.example" to ".env"
-    Fill the below values:
+    This will automatically provision all required GCP resources including:
+    - BigQuery dataset and tables with sample data
+    - Vertex AI RAG corpus for BQML documentation
+    - Code Interpreter extension
+    - Cloud Storage staging bucket
+    - Cloud Storage bucket for Terraform state management
+    - Required API enablement and IAM permissions
 
+    **For detailed Terraform configuration options and troubleshooting, see [infra/README.md](infra/README.md).**
+
+4.  **Environment Variables (Optional):**
+
+    The agent automatically detects your Google Cloud project and uses sensible defaults for all configuration. **No environment variables are required** if you're using the default setup.
+    
+    If you need to customize the configuration, you can create a `.env` file in the `/data_science` folder.
+
+    <details>
+    <summary>📋 Common customizable variables</summary>
+    
     ```bash
-    # Choose Model Backend: 0 -> ML Dev, 1 -> Vertex
-    GOOGLE_GENAI_USE_VERTEXAI=1
-
-    # ML Dev backend config. Fill if using Ml Dev backend.
-    GOOGLE_API_KEY='YOUR_VALUE_HERE'
-
-    # Vertex backend config
-    GOOGLE_CLOUD_PROJECT='YOUR_VALUE_HERE'
-    GOOGLE_CLOUD_LOCATION='YOUR_VALUE_HERE'
+    # Optional: Override auto-detected project
+    GOOGLE_CLOUD_PROJECT=your-project-id
+    
+    # Optional: Override auto-detected location  
+    GOOGLE_CLOUD_LOCATION=us-central1
+    
+    # Optional: Override auto-detected bucket
+    GOOGLE_CLOUD_STORAGE_BUCKET=your-bucket-name
+    
+    # Optional: Custom BigQuery dataset
+    BIGQUERY_DATASET_ID=your-dataset-name
     ```
+    </details>
 
-    Follow the following steps to set up the remaining environment variables.
-
-5.  **BigQuery Setup:**
-    These steps will load the sample data provided in this repository to BigQuery.
     For our sample use case, we are working on the Forecasting Sticker Sales data from Kaggle:
-
     _Walter Reade and Elizabeth Park. Forecasting Sticker Sales. https://kaggle.com/competitions/playground-series-s5e1, 2025. Kaggle._
 
-    *   First, set the BigQuery project IDs in the `.env` file. This can be the
-        same GCP Project you use for `GOOGLE_CLOUD_PROJECT`, but you can use
-        other BigQuery projects as well, as long as you have access permissions
-        to that project.
-        *   In some cases you may want to separate the BigQuery compute consumption from
-            BigQuery data storage. You can set `BQ_DATA_PROJECT_ID` to the project you use
-            for data storage, and `BQ_COMPUTE_PROJECT_ID` to the project you want
-            to use for compute.
-        *   Otherwise, you can set both `BQ_DATA_PROJECT_ID` and
-            `BQ_COMPUTE_PROJECT_ID` to the same project id.
 
-        If you have an existing BigQuery table you wish to
-        connect, specify the `BQ_DATASET_ID` in the `.env` file as well.
-        Make sure you leave `BQ_DATASET_ID='forecasting_sticker_sales'` if you
-        wish to use the sample data.
+## Development Workflow
 
-        Alternatively, you can set the variables from your terminal:
-
-        ```bash
-        export BQ_DATA_PROJECT_ID='YOUR-BQ-DATA-PROJECT-ID'
-        export BQ_COMPUTE_PROJECT_ID='YOUR-BQ-COMPUTE-PROJECT-ID'
-        export BQ_DATASET_ID='YOUR-DATASET-ID' # leave as 'forecasting_sticker_sales' if using sample data
-        ```
-
-        You can skip the upload steps if you are using your own data. We recommend not adding any production critical datasets to this sample agent.
-        If you wish to use the sample data, continue with the next step.
-
-    *   You will find the datasets inside 'data-science/data_science/utils/data/'.
-        Make sure you are still in the working directory (`agents/data-science`). To load the test and train tables into BigQuery, run the following commands:
-        ```bash
-        python3 data_science/utils/create_bq_table.py
-        ```
-
-
-6.  **BQML Setup:**
-    The BQML Agent uses the Vertex AI RAG Engine to query the full BigQuery ML Reference Guide.
-
-    Before running the setup, ensure your project ID is added in .env file: `"GOOGLE_CLOUD_PROJECT"`.
-    Leave the corpus name empty in the .env file: `BQML_RAG_CORPUS_NAME = ''`. The corpus name will be added automatically once it's created.
-
-    To set up the RAG Corpus for your project, run the methods `create_RAG_corpus()` and `ingest_files()` in
-    `data-science/data_science/utils/reference_guide_RAG.py` by running the below command from the working directory:
-
-    ```bash
-    python3 data_science/utils/reference_guide_RAG.py
-    ```
-
-
-7.  **Other Environment Variables:**
-
-    *   `NL2SQL_METHOD`: (Optional) Either `BASELINE` or `CHASE`. Sets the method for SQL Generation. Baseline uses Gemini off-the-shelf, whereas CHASE uses [CHASE-SQL](https://arxiv.org/abs/2410.01943)
-    *   `CODE_INTERPRETER_EXTENSION_NAME`: (Optional) The full resource name of
-        a pre-existing Code Interpreter extension in Vertex AI. If not provided,
-        a new extension will be created. (e.g.,
-        `projects/<YOUR_PROJECT_ID>/locations/<YOUR_LOCATION>/extensions/<YOUR_EXTENSION_ID>`).
-        Check the logs/terminal for the ID of the newly created Code Interpreter
-        Extension and provide the value in your environment variables to avoid
-        creating multiple extensions.
-
-    From the terminal:
-
-    ```bash
-    export CODE_INTERPRETER_EXTENSION_NAME='projects/<YOUR_PROJECT_ID>/locations/us-central1/extensions/<YOUR_EXTENSION_ID>'
-    ```
-
-## Running the Agent
+### Running the Agent Locally
 
 You can run the agent using the ADK command in your terminal.
 from the working directory:
@@ -184,6 +144,37 @@ from the working directory:
     uv run adk web
     ```
     Select the data_science from the dropdown
+
+### Code Quality and Testing
+
+The project includes a Makefile with common development tasks:
+
+**Install all dependencies (including dev dependencies):**
+```bash
+make install
+```
+
+**Run code quality checks:**
+```bash
+make lint
+```
+This runs codespell, ruff linting, formatting checks, and mypy type checking.
+
+**Run tests:**
+```bash
+make test
+```
+
+**Run evaluations:**
+```bash
+make eval
+```
+
+**Launch playground UI:**
+```bash
+make playground
+```
+This starts the ADK web interface on port 8501.
 
 
 
@@ -233,7 +224,7 @@ Here's a quick example of how a user might interact with the Data Science Multi-
 To run the test and evaluation code, you need a few additional dependencies. Run
 the following uv command from the `agents/data-science` directory to install them:
 ```bash
-uv sync
+uv sync --extra dev
 ```
 
 ### Running Evaluations
@@ -247,9 +238,92 @@ Evaluation tests assess the overall performance and capabilities of the agent in
 uv run pytest eval
 ```
 
-
 - This command executes all test files within the `eval/` directory.
 - `uv run` ensures that pytest runs within the project's virtual environment.
+
+
+## ☁️ Cloud Deployment
+
+Once you setup Terraform, you have multiple options for deploying this agent to Google Cloud. Choose the approach that best fits your needs.
+
+### Option 1: ADK Command Line Deployment
+
+The simplest way to deploy your agent is using the ADK command line tools directly:
+
+**Prerequisites:**
+- **[Google Cloud SDK](https://cloud.google.com/sdk/docs/install)** configured with authentication
+- **Google Cloud Project** with the **Vertex AI API** enabled
+- Terraform infrastructure already deployed (see Setup section above)
+
+**Deploy to Agent Engine:**
+```bash
+# From the project root directory
+uv run adk deploy agent_engine
+```
+
+After successful deployment, the command will output a resource ID. Save this for testing your deployed agent.
+
+**Deploy to Cloud Run:**
+```bash
+# From the project root directory  
+uv run adk deploy cloud_run
+```
+
+After successful deployment, the command will output a service URL where your agent is accessible.
+
+These commands will automatically package your agent and deploy it to the specified platform using your existing Google Cloud configuration.
+
+#### Testing Your Deployed Agent
+
+**For Agent Engine deployments:**
+Use the test script with your deployed resource ID:
+```bash
+uv run python tests/test_deployment.py --resource_id=YOUR_RESOURCE_ID --user_id=test_user
+```
+
+This will start an interactive session where you can test your deployed agent. Type 'quit' to exit.
+
+**For Cloud Run deployments:**
+Your agent will be available at the provided service URL and can be tested through the web interface or API calls.
+
+### Option 2: Agent Starter Pack (Full Project Template)
+
+If you prefer a complete project template with CI/CD and additional tooling, you can use the [Agent Starter Pack](https://goo.gle/agent-starter-pack):
+
+#### Step 1: Create Project from Template
+This command uses the Agent Starter Pack to create a new directory with all the necessary deployment code.
+```bash
+# Create and activate a virtual environment
+python -m venv .venv && source .venv/bin/activate # On Windows: .venv\Scripts\activate
+
+# Install the starter pack and create your project
+pip install --upgrade agent-starter-pack
+agent-starter-pack create my-data-science-agent -a adk@data-science
+```
+
+<details>
+<summary>⚡️ Alternative: Using uv</summary>
+
+If you have [`uv`](https://github.com/astral-sh/uv) installed, you can create and set up your project with a single command:
+```bash
+uvx agent-starter-pack create my-data-science-agent -a adk@data-science
+```
+This command handles creating the project without needing to pre-install the package into a virtual environment.
+</details>
+
+You'll be prompted to select a deployment option (Agent Engine or Cloud Run) and verify your Google Cloud credentials.
+
+#### Step 2: Deploy to Development Environment
+Navigate into your **newly created project folder**, then deploy to a development environment:
+```bash
+cd my-data-science-agent
+
+# Replace YOUR_DEV_PROJECT_ID with your actual Google Cloud Project ID
+gcloud config set project YOUR_DEV_PROJECT_ID
+make backend
+```
+
+For robust, **production-ready deployments** with automated CI/CD, please follow the detailed instructions in the **[Agent Starter Pack Development Guide](https://googlecloudplatform.github.io/agent-starter-pack/guide/development-guide.html#b-production-ready-deployment-with-ci-cd)**.
 
 
 
@@ -266,115 +340,11 @@ Tests assess the overall executability of the agents.
 **Run Tests:**
 
 ```bash
-uv run pytest tests
+uv run pytest tests/integration
 ```
 
 - This command executes all test files within the `tests/` directory.
 - `uv run` ensures that pytest runs within the project's virtual environment.
-
-
-
-## Deployment on Vertex AI Agent Engine
-
-To deploy the agent to Google Agent Engine, first follow
-[these steps](https://cloud.google.com/vertex-ai/generative-ai/docs/agent-engine/set-up)
-to set up your Google Cloud project for Agent Engine.
-
-You also need to give BigQuery User, BigQuery Data Viewer, and Vertex AI User
-permissions to the Reasoning Engine Service Agent. Run the following commands to
-grant the required permissions:
-
-```bash
-export RE_SA="service-${GOOGLE_CLOUD_PROJECT_NUMBER}@gcp-sa-aiplatform-re.iam.gserviceaccount.com"
-gcloud projects add-iam-policy-binding ${GOOGLE_CLOUD_PROJECT} \
-    --member="serviceAccount:${RE_SA}" \
-    --condition=None \
-    --role="roles/bigquery.user"
-gcloud projects add-iam-policy-binding ${GOOGLE_CLOUD_PROJECT} \
-    --member="serviceAccount:${RE_SA}" \
-    --condition=None \
-    --role="roles/bigquery.dataViewer"
-gcloud projects add-iam-policy-binding ${GOOGLE_CLOUD_PROJECT} \
-    --member="serviceAccount:${RE_SA}" \
-    --condition=None \
-    --role="roles/aiplatform.user"
-```
-
-Next, you need to create a `.whl` file for your agent. From the `data-science`
-directory, run this command:
-
-```bash
-uv build --wheel --out-dir deployment
-```
-
-This will create a file named `data_science-0.1-py3-none-any.whl` in the
-`deployment` directory.
-
-Then run the below command. This will create a staging bucket in your GCP project and deploy the agent to Vertex AI Agent Engine:
-
-```bash
-cd deployment/
-python3 deploy.py --create
-```
-
-When this command returns, if it succeeds it will print an AgentEngine resource
-name that looks something like this:
-```
-projects/************/locations/us-central1/reasoningEngines/7737333693403889664
-```
-The last sequence of digits is the AgentEngine resource ID.
-
-Once you have successfully deployed your agent, you can interact with it
-using the `test_deployment.py` script in the `deployment` directory. Store the
-agent's resource ID in an environment variable and run the following command:
-
-```bash
-export RESOURCE_ID=...
-export USER_ID=<any string>
-python test_deployment.py --resource_id=$RESOURCE_ID --user_id=$USER_ID
-```
-
-The session will look something like this:
-```
-Found agent with resource ID: ...
-Created session for user ID: ...
-Type 'quit' to exit.
-Input: Hello. What data do you have?
-Response: I have access to the train and test tables inside the forecasting_sticker_sales dataset.
-...
-```
-
-Note that this is *not* a full-featured, production-ready CLI; it is just intended to
-show how to use the Agent Engine API to interact with a deployed agent.
-
-The main part of the `test_deployment.py` script is approximately this code:
-
-```python
-from vertexai import agent_engines
-remote_agent = vertexai.agent_engines.get(RESOURCE_ID)
-session = remote_agent.create_session(user_id=USER_ID)
-while True:
-    user_input = input("Input: ")
-    if user_input == "quit":
-      break
-
-    for event in remote_agent.stream_query(
-        user_id=USER_ID,
-        session_id=session["id"],
-        message=user_input,
-    ):
-        parts = event["content"]["parts"]
-        for part in parts:
-            if "text" in part:
-                text_part = part["text"]
-                print(f"Response: {text_part}")
-```
-
-To delete the agent, run the following command (using the resource ID returned previously):
-```bash
-python3 deployment/deploy.py --delete --resource_id=RESOURCE_ID
-```
-
 
 
 ## Optimizing and Adjustment Tips

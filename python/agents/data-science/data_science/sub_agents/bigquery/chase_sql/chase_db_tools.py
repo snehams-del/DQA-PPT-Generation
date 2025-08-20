@@ -16,6 +16,8 @@
 
 import enum
 import os
+from collections.abc import Callable
+from typing import Any
 
 from google.adk.tools import ToolContext
 
@@ -41,7 +43,7 @@ class GenerateSQLType(enum.Enum):
     QP = "qp"
 
 
-def exception_wrapper(func):
+def exception_wrapper(func: Callable) -> Callable:
     """A decorator to catch exceptions in a function and return the exception as a string.
 
     Args:
@@ -51,11 +53,11 @@ def exception_wrapper(func):
        callable: The wrapped function.
     """
 
-    def wrapped_function(*args, **kwargs):
+    def wrapped_function(*args: Any, **kwargs: Any) -> str:
         try:
             return func(*args, **kwargs)
         except Exception as e:  # pylint: disable=broad-exception-caught
-            return f"Exception occurred in {func.__name__}: {str(e)}"
+            return f"Exception occurred in {func.__name__}: {e!s}"
 
     return wrapped_function
 
@@ -93,7 +95,9 @@ def initial_bq_nl2sql(
       str: An SQL statement to answer this question.
     """
     print("****** Running agent with ChaseSQL algorithm.")
-    bq_schema_and_samples = tool_context.state["database_settings"]["bq_schema_and_samples"]
+    bq_schema_and_samples = tool_context.state["database_settings"][
+        "bq_schema_and_samples"
+    ]
     project = tool_context.state["database_settings"]["bq_data_project_id"]
     db = tool_context.state["database_settings"]["bq_dataset_id"]
     transpile_to_bigquery = tool_context.state["database_settings"][
@@ -116,22 +120,22 @@ def initial_bq_nl2sql(
         prompt = DC_PROMPT_TEMPLATE.format(
             SCHEMA=bq_schema_and_samples,
             QUESTION=question,
-            BQ_DATA_PROJECT_ID=BQ_DATA_PROJECT_ID
+            BQ_DATA_PROJECT_ID=BQ_DATA_PROJECT_ID,
         )
     elif generate_sql_type == GenerateSQLType.QP.value:
         prompt = QP_PROMPT_TEMPLATE.format(
             SCHEMA=bq_schema_and_samples,
             QUESTION=question,
-            BQ_DATA_PROJECT_ID=BQ_DATA_PROJECT_ID
+            BQ_DATA_PROJECT_ID=BQ_DATA_PROJECT_ID,
         )
     else:
         raise ValueError(f"Unsupported generate_sql_type: {generate_sql_type}")
 
     model = GeminiModel(model_name=model, temperature=temperature)
     requests = [prompt for _ in range(number_of_candidates)]
-    responses = model.call_parallel(requests, parser_func=parse_response)
+    response_list = model.call_parallel(requests, parser_func=parse_response)
     # Take just the first response.
-    responses = responses[0]
+    responses = response_list[0]
 
     # If postprocessing of the SQL to transpile it to BigQuery is required,
     # then do it here.
@@ -144,7 +148,7 @@ def initial_bq_nl2sql(
         )
         # pylint: disable=g-bad-todo
         # pylint: enable=g-bad-todo
-        responses: str = translator.translate(
+        responses = translator.translate(
             responses, ddl_schema=bq_schema_and_samples, db=db, catalog=project
         )
 
