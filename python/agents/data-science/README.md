@@ -79,9 +79,20 @@ The key features of the Data Science Multi-Agent include:
     source .venv/bin/activate
     ```
 
+3.  **Configure Google Cloud Project:**
+
+    ```bash
+    gcloud config set project YOUR_PROJECT_ID
+    ```
+    
+    Replace `YOUR_PROJECT_ID` with your actual Google Cloud project ID.
+
 4.  **Set up Environment Variables:**
     Rename the file ".env.example" to ".env"
-    Fill the below values:
+    
+    **Note:** Many values now have smart defaults including auto-detection of your Google Cloud project from credentials.
+    
+    Fill the required values:
 
     ```bash
     # Choose Model Backend: 0 -> ML Dev, 1 -> Vertex
@@ -90,9 +101,9 @@ The key features of the Data Science Multi-Agent include:
     # ML Dev backend config. Fill if using Ml Dev backend.
     GOOGLE_API_KEY='YOUR_VALUE_HERE'
 
-    # Vertex backend config
-    GOOGLE_CLOUD_PROJECT='YOUR_VALUE_HERE'
-    GOOGLE_CLOUD_LOCATION='YOUR_VALUE_HERE'
+    # Vertex backend config (auto-detected if not specified)
+    GOOGLE_CLOUD_PROJECT='YOUR_VALUE_HERE'  # Optional: auto-detected from credentials
+    GOOGLE_CLOUD_LOCATION='YOUR_VALUE_HERE'  # Optional: defaults to us-central1
     ```
 
     Follow the following steps to set up the remaining environment variables.
@@ -140,8 +151,7 @@ The key features of the Data Science Multi-Agent include:
 6.  **BQML Setup:**
     The BQML Agent uses the Vertex AI RAG Engine to query the full BigQuery ML Reference Guide.
 
-    Before running the setup, ensure your project ID is added in .env file: `"GOOGLE_CLOUD_PROJECT"`.
-    Leave the corpus name empty in the .env file: `BQML_RAG_CORPUS_NAME = ''`. The corpus name will be added automatically once it's created.
+    **Note:** If you have an existing BQML or data-science RAG corpus, it will be auto-discovered. Otherwise, create a new one:
 
     To set up the RAG Corpus for your project, run the methods `create_RAG_corpus()` and `ingest_files()` in
     `data-science/data_science/utils/reference_guide_RAG.py` by running the below command from the working directory:
@@ -325,13 +335,13 @@ projects/************/locations/us-central1/reasoningEngines/7737333693403889664
 The last sequence of digits is the AgentEngine resource ID.
 
 Once you have successfully deployed your agent, you can interact with it
-using the `test_deployment.py` script in the `deployment` directory. Store the
+using the `test_deployment.py` script in the `tests` directory. Store the
 agent's resource ID in an environment variable and run the following command:
 
 ```bash
 export RESOURCE_ID=...
 export USER_ID=<any string>
-python test_deployment.py --resource_id=$RESOURCE_ID --user_id=$USER_ID
+python tests/test_deployment.py --resource_id=$RESOURCE_ID --user_id=$USER_ID
 ```
 
 The session will look something like this:

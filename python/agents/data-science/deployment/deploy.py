@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# type: ignore
+
 """Deployment script for Data Science agent."""
 
 import logging
@@ -19,12 +21,13 @@ import os
 
 import vertexai
 from absl import app, flags
-from data_science.agent import root_agent
 from dotenv import load_dotenv
 from google.api_core import exceptions as google_exceptions
 from google.cloud import storage
 from vertexai import agent_engines
 from vertexai.preview.reasoning_engines import AdkApp
+
+from data_science.agent import root_agent
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string("project_id", None, "GCP project ID.")
@@ -45,9 +48,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def setup_staging_bucket(
-    project_id: str, location: str, bucket_name: str
-) -> str:
+def setup_staging_bucket(project_id: str, location: str, bucket_name: str) -> str:
     """
     Checks if the staging bucket exists, creates it if not.
 
@@ -69,9 +70,7 @@ def setup_staging_bucket(
         if bucket:
             logger.info("Staging bucket gs://%s already exists.", bucket_name)
         else:
-            logger.info(
-                "Staging bucket gs://%s not found. Creating...", bucket_name
-            )
+            logger.info("Staging bucket gs://%s not found. Creating...", bucket_name)
             # Create the bucket if it doesn't exist
             new_bucket = storage_client.create_bucket(
                 bucket_name, project=project_id, location=location
@@ -82,9 +81,7 @@ def setup_staging_bucket(
                 location,
             )
             # Enable uniform bucket-level access for simplicity
-            new_bucket.iam_configuration.uniform_bucket_level_access_enabled = (
-                True
-            )
+            new_bucket.iam_configuration.uniform_bucket_level_access_enabled = True
             new_bucket.patch()
             logger.info(
                 "Enabled uniform bucket-level access for gs://%s.",
@@ -140,7 +137,7 @@ def create(env_vars: dict[str, str]) -> None:
         adk_app,
         requirements=[AGENT_WHL_FILE],
         extra_packages=[AGENT_WHL_FILE],
-        env_vars=env_vars
+        env_vars=env_vars,
     )
     logger.info("Created remote agent: %s", remote_agent.resource_name)
     print(f"\nSuccessfully created agent: {remote_agent.resource_name}")
@@ -159,9 +156,7 @@ def delete(resource_id: str) -> None:
         print(f"\nAgent{resource_id} not found.")
         print(f"\nAgent not found: {resource_id}")
     except Exception as e:
-        logger.error(
-            "An error occurred while deleting agent %s: %s", resource_id, e
-        )
+        logger.error("An error occurred while deleting agent %s: %s", resource_id, e)
         print(f"\nError deleting agent {resource_id}: {e}")
 
 
@@ -171,13 +166,9 @@ def main(argv: list[str]) -> None:  # pylint: disable=unused-argument
     env_vars = {}
 
     project_id = (
-        FLAGS.project_id
-        if FLAGS.project_id
-        else os.getenv("GOOGLE_CLOUD_PROJECT")
+        FLAGS.project_id if FLAGS.project_id else os.getenv("GOOGLE_CLOUD_PROJECT")
     )
-    location = (
-        FLAGS.location if FLAGS.location else os.getenv("GOOGLE_CLOUD_LOCATION")
-    )
+    location = FLAGS.location if FLAGS.location else os.getenv("GOOGLE_CLOUD_LOCATION")
     # Default bucket name convention if not provided
     default_bucket_name = f"{project_id}-adk-staging" if project_id else None
     bucket_name = (
@@ -198,7 +189,8 @@ def main(argv: list[str]) -> None:  # pylint: disable=unused-argument
     env_vars["BQ_COMPUTE_PROJECT_ID"] = os.getenv("BQ_COMPUTE_PROJECT_ID")
     env_vars["BQML_RAG_CORPUS_NAME"] = os.getenv("BQML_RAG_CORPUS_NAME")
     env_vars["CODE_INTERPRETER_EXTENSION_NAME"] = os.getenv(
-        "CODE_INTERPRETER_EXTENSION_NAME")
+        "CODE_INTERPRETER_EXTENSION_NAME"
+    )
     env_vars["NL2SQL_METHOD"] = os.getenv("NL2SQL_METHOD")
 
     logger.info("Using PROJECT: %s", project_id)
@@ -228,19 +220,15 @@ def main(argv: list[str]) -> None:  # pylint: disable=unused-argument
         print("\nError: You must specify either --create or --delete flag.")
         return
     if FLAGS.delete and not FLAGS.resource_id:
-        print(
-            "\nError: --resource_id is required when using the --delete flag."
-        )
+        print("\nError: --resource_id is required when using the --delete flag.")
         return
     # --- End Input Validation ---
 
     try:
         # Setup staging bucket
-        staging_bucket_uri=None
+        staging_bucket_uri = None
         if FLAGS.create:
-            staging_bucket_uri = setup_staging_bucket(
-                project_id, location, bucket_name
-            )
+            staging_bucket_uri = setup_staging_bucket(project_id, location, bucket_name)
 
         # Initialize Vertex AI *after* bucket setup and validation
         vertexai.init(
@@ -269,11 +257,8 @@ def main(argv: list[str]) -> None:  # pylint: disable=unused-argument
         )
     except Exception as e:
         print(f"\nAn unexpected error occurred: {e}")
-        logger.exception(
-            "Unhandled exception in main:"
-        )  # Log the full traceback
+        logger.exception("Unhandled exception in main:")  # Log the full traceback
 
 
 if __name__ == "__main__":
-
     app.run(main)
