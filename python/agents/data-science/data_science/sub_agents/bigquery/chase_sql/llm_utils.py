@@ -67,9 +67,9 @@ GEMINI_AVAILABLE_REGIONS = [
     "asia-northeast1",
     "asia-east1",
     "europe-west1",
+    "europe-west4",
     "asia-northeast3",
     "asia-south1",
-    "europe-west4",
     "asia-southeast1",
     "southamerica-east1",
 ]
