@@ -118,21 +118,18 @@ jobs:
             
 
             # Install dependencies and run tests
-            cd $AGENT_GENERATED_NAME && uv sync --dev
+            cd $AGENT_GENERATED_NAME && make install
 
             echo \"--- Current task: ${{ matrix.task }} ---\"
             
             if [ \"${{ matrix.task }}\" = \"lint\" ]; then
               echo \"--- Linting generated code ---\"
-              uv sync --dev --extra lint
-              uv run codespell
-              uv run ruff check . --diff
-              uv run ruff format . --check --diff
-              uv run mypy .
+              make lint
             elif [ \"${{ matrix.task }}\" = \"test\" ]; then
               echo \"--- Running tests ---\"
-              uv run pytest tests/unit
-              uv run pytest tests/integration
+              export AGENT_NAME=\"$DEPLOYMENT_TARGET-$AGENT_NAME\"
+              make deploy-infra
+              make test
             else
               echo \"--- Unknown task: ${{ matrix.task }} ---\"
               exit 1
