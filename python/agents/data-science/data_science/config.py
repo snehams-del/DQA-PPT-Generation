@@ -7,6 +7,7 @@ This module sets up default environment variables for the data science multi-age
 import os
 
 import google.auth
+import vertexai
 
 # To use AI Studio credentials instead of Vertex AI:
 # 1. Create a .env file in the project root with:
@@ -40,24 +41,33 @@ try:
 except Exception:
     project_id = None
 
+vertexai.init(project=project_id, location=DEFAULT_LOCATION)
+
 
 def discover_rag_corpus() -> str:
     """Discover RAG corpus by looking for BQML-related corpora."""
     try:
-        import vertexai
-        from vertexai import rag
+        from google.cloud.aiplatform import initializer
+        from google.cloud.aiplatform_v1 import ListRagCorporaRequest
+        from vertexai.rag.utils import _gapic_utils
 
-        if not project_id:
-            return ""
-
-        # Initialize Vertex AI
-        vertexai.init(project=project_id, location=DEFAULT_RAG_LOCATION)
-
-        # List available corpora
-        corpora = rag.list_corpora()
+        # List available corpora using underlying implementation
+        parent = initializer.global_config.common_location_path(
+            project=project_id, location=DEFAULT_RAG_LOCATION
+        )
+        request = ListRagCorporaRequest(
+            parent=parent,
+            page_size=None,
+            page_token=None,
+        )
+        client = _gapic_utils.create_rag_data_service_client()
+        try:
+            pager = client.list_rag_corpora(request=request)
+        except Exception as e:
+            raise RuntimeError("Failed in listing the RagCorpora due to: ", e) from e
 
         # Look for a corpus with 'bqml' or 'data-science' in the name
-        for corpus in corpora:
+        for corpus in pager:
             display_name = corpus.display_name.lower()
             if "bqml" in display_name or "data-science" in display_name:
                 return corpus.name

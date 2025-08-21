@@ -44,19 +44,17 @@ class TestAgents(unittest.IsolatedAsyncioTestCase):
         self.user_id = "test_user"
         self.session_id = self.session.id
 
-        self.runner = Runner(
+    def _run_agent(self, agent: Any, query: str) -> str:
+        """Helper method to run an agent and get the final response."""
+        runner = Runner(
             app_name="DataAgent",
-            agent=root_agent,
+            agent=agent,
             artifact_service=artifact_service,
             session_service=session_service,
         )
-
-    def _run_agent(self, agent: Any, query: str) -> str:
-        """Helper method to run an agent and get the final response."""
-        self.runner.agent = agent
         content = types.Content(role="user", parts=[types.Part(text=query)])
         events = list(
-            self.runner.run(
+            runner.run(
                 user_id=self.user_id, session_id=self.session_id, new_message=content
             )
         )
