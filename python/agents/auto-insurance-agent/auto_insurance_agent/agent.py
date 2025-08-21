@@ -32,7 +32,7 @@ roadside_agent = Agent(
     - Use the tool `roadsideAssistance` to create a tow request.
     - Tell them you have found a company nearby who can help. Provide them with the eta from the tow request. Include a made up name for a towing company in your reply. Tell them they will get a call back shortly.
     - Transfer back to the parent agent without saying anything else.""",
-    tools=[*roadsideAssistance.get_tools()]
+    tools=[roadsideAssistance]
 )
 
 # Membership sub-agent
@@ -48,7 +48,7 @@ membership_agent = Agent(
     - If everything looks good, use the tool `membership` to create a new member id.
     - Present the new member id back to them and tell them their membership card will be mailed to them. Then direct them to login to the website or download the mobile app to login and complete registration.
     - Transfer back to the parent agent without saying anything else.""",
-    tools=[*membership.get_tools()]
+    tools=[membership]
 )
 
 # Claims sub-agent
@@ -71,7 +71,7 @@ claims_agent = Agent(
         - Tell the member you've take the details and submitted an initial claim. Provide them with the claim id, and explain they should be contacted by phone shortly to continue the claims process. If they ask how long it will take to hear back, them them they should get a call within the hour.
         - If the user indicated their vehicle is damaged, tell them you've already begun the process of arranging a replacement vehicle while theirs is unavailable.
     - Transfer back to the parent agent without saying anything else.""",
-    tools=[*claims.get_tools()]
+    tools=[claims]
 )
 
 # Rewards sub-agent
@@ -87,7 +87,7 @@ rewards_agent = Agent(
     - Use the tool `rewards` to find nearby rewards.
     - Show the member the available rewards listed as bullet points.
     - Transfer back to the parent agent without saying anything else.""",
-    tools=[*rewards.get_tools()]
+    tools=[rewards]
 )
 
 # The main agent
@@ -106,6 +106,6 @@ root_agent = Agent(
     After the user's request has been answered by you or a child agent, ask if there's anything else you can do to help. 
     When the user doesn't need anything else, politely thank them for contacting Cymbal Auto Insurance.""",
     sub_agents=[membership_agent, roadside_agent, claims_agent, rewards_agent],
-    tools=[*membership.get_tools()],
+    tools=[membership],
     model="gemini-2.5-flash"
 )
