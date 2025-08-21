@@ -19,6 +19,8 @@ import vertexai
 from dotenv import load_dotenv, set_key
 from vertexai import rag
 
+from data_science.config import DEFAULT_RAG_LOCATION
+
 # Define the path to the .env file
 env_file_path = Path(__file__).parent.parent.parent / ".env"
 print(env_file_path)
@@ -37,7 +39,8 @@ paths = [
 
 
 # Initialize Vertex AI API once per session
-vertexai.init(project=PROJECT_ID, location="us-east4")
+# Using us-east4 as it has better feature availability for Vertex AI RAG
+vertexai.init(project=PROJECT_ID, location=DEFAULT_RAG_LOCATION)
 
 
 def create_RAG_corpus() -> str:

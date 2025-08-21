@@ -61,9 +61,6 @@ filterwarnings = [
 ]
 pythonpath = "."
 asyncio_default_fixture_loop_scope = "function"
-
-[tool.ruff]
-line-length = 88
 target-version = "py311"
 exclude = ["tests/load_test/load_test.py"]
 

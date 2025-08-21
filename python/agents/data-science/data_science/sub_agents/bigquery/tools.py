@@ -43,22 +43,27 @@ def _serialize_value_for_sql(value: Any) -> str:
     """Serializes a Python value from a pandas DataFrame into a BigQuery SQL literal."""
     if pd.isna(value):
         return "NULL"
-    if isinstance(value, str):
+    elif isinstance(value, str):
         # Escape single quotes and backslashes for SQL strings.
-        return f"'{value.replace(chr(92), chr(92) * 2).replace(chr(39), chr(39) * 2)}'"
-    if isinstance(value, bytes):
-        return f"b'{value.decode('utf-8', 'replace').replace(chr(92), chr(92) * 2).replace(chr(39), chr(39) * 2)}'"
-    if isinstance(value, datetime.datetime | datetime.date | pd.Timestamp):
-        # Timestamps and datetimes need to be quoted.
-        return f"'{value}'"
-    if isinstance(value, list | np.ndarray):  # type: ignore[unreachable]
+        escaped_value = value.replace("\\", "\\\\").replace("'", "''")
+        return f"'{escaped_value}'"
+    elif isinstance(value, bytes):
+        decoded_value = (
+            value.decode("utf-8", "replace").replace("\\", "\\\\").replace("'", "''")
+        )
+        return f"b'{decoded_value}'"
+    elif isinstance(value, list | np.ndarray):
         # Format arrays.
         return f"[{', '.join(_serialize_value_for_sql(v) for v in value)}]"
-    if isinstance(value, dict):
+    elif isinstance(value, dict):
         # For STRUCT, BQ expects ('val1', 'val2', ...).
         # The values() order from the dataframe should match the column order.
         return f"({', '.join(_serialize_value_for_sql(v) for v in value.values())})"
-    return str(value)
+    elif isinstance(value, datetime.datetime | datetime.date):
+        # Timestamps and datetimes need to be quoted.
+        return f"'{value}'"
+    else:
+        return str(value)
 
 
 database_settings: dict[str, Any] | None = None

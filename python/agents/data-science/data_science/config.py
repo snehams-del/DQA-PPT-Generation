@@ -14,6 +14,26 @@ import google.auth
 #    GOOGLE_API_KEY=PASTE_YOUR_ACTUAL_API_KEY_HERE
 # 2. This will override the default Vertex AI configuration
 
+# =============================================================================
+# DEFAULT CONFIGURATION VALUES
+# =============================================================================
+# Model configurations - update these values as needed
+DEFAULT_ROOT_AGENT_MODEL = "gemini-2.5-flash"
+DEFAULT_ANALYTICS_AGENT_MODEL = "gemini-2.5-flash"
+DEFAULT_BIGQUERY_AGENT_MODEL = "gemini-2.5-flash"
+DEFAULT_BASELINE_NL2SQL_MODEL = "gemini-2.5-flash"
+DEFAULT_CHASE_NL2SQL_MODEL = "gemini-2.5-flash"
+DEFAULT_BQML_AGENT_MODEL = "gemini-2.5-flash"
+
+# Location configurations
+# us-east4 is preferred for Vertex AI RAG as it has better feature availability
+DEFAULT_LOCATION = "us-central1"
+DEFAULT_RAG_LOCATION = "us-east4"
+
+# Other default values
+DEFAULT_NL2SQL_METHOD = "BASELINE"
+DEFAULT_AGENT_NAME = "data-science"
+
 # Auto-detect project from Google Cloud credentials
 try:
     _, project_id = google.auth.default()
@@ -31,7 +51,7 @@ def discover_rag_corpus() -> str:
             return ""
 
         # Initialize Vertex AI
-        vertexai.init(project=project_id, location="us-central1")
+        vertexai.init(project=project_id, location=DEFAULT_RAG_LOCATION)
 
         # List available corpora
         corpora = rag.list_corpora()
@@ -50,7 +70,7 @@ def discover_rag_corpus() -> str:
 
 # Set default environment variables for Google Cloud only
 os.environ.setdefault("GOOGLE_CLOUD_PROJECT", project_id or "")
-os.environ.setdefault("GOOGLE_CLOUD_LOCATION", "us-central1")
+os.environ.setdefault("GOOGLE_CLOUD_LOCATION", DEFAULT_LOCATION)
 os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "1")
 
 # Discovery for RAG corpus
@@ -73,24 +93,28 @@ def get_config():  # type: ignore[no-untyped-def]
 
     class ConfigDict:
         def __init__(self) -> None:
-            # Model configurations with defaults
-            self.root_agent_model = os.getenv("ROOT_AGENT_MODEL", "gemini-2.5-flash")
+            # Model configurations using centralized defaults
+            self.root_agent_model = os.getenv(
+                "ROOT_AGENT_MODEL", DEFAULT_ROOT_AGENT_MODEL
+            )
             self.analytics_agent_model = os.getenv(
-                "ANALYTICS_AGENT_MODEL", "gemini-2.5-flash"
+                "ANALYTICS_AGENT_MODEL", DEFAULT_ANALYTICS_AGENT_MODEL
             )
             self.bigquery_agent_model = os.getenv(
-                "BIGQUERY_AGENT_MODEL", "gemini-2.5-flash"
+                "BIGQUERY_AGENT_MODEL", DEFAULT_BIGQUERY_AGENT_MODEL
             )
             self.baseline_nl2sql_model = os.getenv(
-                "BASELINE_NL2SQL_MODEL", "gemini-2.5-flash"
+                "BASELINE_NL2SQL_MODEL", DEFAULT_BASELINE_NL2SQL_MODEL
             )
             self.chase_nl2sql_model = os.getenv(
-                "CHASE_NL2SQL_MODEL", "gemini-2.5-flash"
+                "CHASE_NL2SQL_MODEL", DEFAULT_CHASE_NL2SQL_MODEL
             )
-            self.bqml_agent_model = os.getenv("BQML_AGENT_MODEL", "gemini-2.5-flash")
+            self.bqml_agent_model = os.getenv(
+                "BQML_AGENT_MODEL", DEFAULT_BQML_AGENT_MODEL
+            )
 
             # BigQuery configurations with defaults
-            agent_name = os.getenv("AGENT_NAME", "data-science")
+            agent_name = os.getenv("AGENT_NAME", DEFAULT_AGENT_NAME)
             default_dataset_id = agent_name.replace("-", "_")
             self.bq_dataset_id = os.getenv("BQ_DATASET_ID", default_dataset_id)
             self.bq_data_project_id = os.getenv(
@@ -100,10 +124,10 @@ def get_config():  # type: ignore[no-untyped-def]
                 "BQ_COMPUTE_PROJECT_ID", os.getenv("GOOGLE_CLOUD_PROJECT", "")
             )
 
-            # Other configurations with defaults
-            self.nl2sql_method = os.getenv("NL2SQL_METHOD", "BASELINE")
+            # Other configurations using centralized defaults
+            self.nl2sql_method = os.getenv("NL2SQL_METHOD", DEFAULT_NL2SQL_METHOD)
             self.project_id = os.getenv("GOOGLE_CLOUD_PROJECT", "")
-            self.location = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
+            self.location = os.getenv("GOOGLE_CLOUD_LOCATION", DEFAULT_LOCATION)
             self.bqml_rag_corpus_name = os.getenv("BQML_RAG_CORPUS_NAME", "")
             self.code_interpreter_extension_name = os.getenv(
                 "CODE_INTERPRETER_EXTENSION_NAME", ""
