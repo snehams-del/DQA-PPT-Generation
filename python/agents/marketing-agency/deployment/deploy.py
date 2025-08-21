@@ -50,7 +50,7 @@ def create() -> None:
             "absl-py (>=2.2.1,<3.0.0)",
         ],
         extra_packages=[
-            "./marketing_agency"
+            "./marketing_agency",
         ],
     )
     print(f"Created remote agent: {remote_agent.resource_name}")
