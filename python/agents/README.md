@@ -48,6 +48,7 @@ Check out the agent samples below, organized by category:
 | [Travel Concierge](travel-concierge) | Travel Concierge, Digital Tasks Assistant                                                                                               |   Function tool (Python), Custom tool, Agent tool, Input and output schema, Updatable context, Dynamic instructions  | Conversational | Advanced | Multi Agent | Travel                        |
 | [Auto Insurance Agent](auto-insurance-agent) | Auto Insurance Agent to manage members, claims, rewards and roadside assistance.                                                                                              |   [Apigee](https://cloud.google.com/apigee/docs/api-platform/get-started/what-apigee), [Apigee API hub](https://cloud.google.com/apigee/docs/apihub/what-is-api-hub), Agent Tool  | Conversational | Easy | Multi Agent | Financial Services       
 | [Image Scoring](image-scoring) | Image scoring agent to generate images based on policies and score the generated images to measure policy compliance.  | Function tool (Python), Agent tool, Imagen, Loop Agent | Conversational | Easy       | Multi Agent  | Horizontal 
+| [Antom Payment](antom-payment) | Integrates Ant International's Antom payment APIs to enable payment and refund operations via standardized MCP tools. | MCP, Payment, Refund, External API | Conversational | Intermediate | Single Agent | Financial Services / Payments
 
 
 
