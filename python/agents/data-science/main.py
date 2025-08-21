@@ -13,9 +13,12 @@
 # limitations under the License.
 
 """
-This file sets up the FastAPI application for Data Science agent
-using get_fast_api_app() from ADK. It is used for Cloud Run deployment
-with standard gcloud run deploy command.
+This file initializes a FastAPI application for Data Science agent
+using get_fast_api_app() from ADK. Session service URI and a flag
+for a web interface configured via environment variables.
+It can then be run using Uvicorn, which listens on a port specified by
+the PORT environment variable or defaults to 8080.
+It is used for Cloud Run deployment with standard gcloud run deploy command.
 """
 
 import os
