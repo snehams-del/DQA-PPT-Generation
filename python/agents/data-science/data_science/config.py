@@ -44,51 +44,12 @@ except Exception:
 vertexai.init(project=project_id, location=DEFAULT_LOCATION)
 
 
-def discover_rag_corpus() -> str:
-    """Discover RAG corpus by looking for BQML-related corpora."""
-    try:
-        from google.cloud.aiplatform import initializer
-        from google.cloud.aiplatform_v1 import ListRagCorporaRequest
-        from vertexai.rag.utils import _gapic_utils
-
-        # List available corpora using underlying implementation
-        parent = initializer.global_config.common_location_path(
-            project=project_id, location=DEFAULT_RAG_LOCATION
-        )
-        request = ListRagCorporaRequest(
-            parent=parent,
-            page_size=None,
-            page_token=None,
-        )
-        client = _gapic_utils.create_rag_data_service_client()
-        try:
-            pager = client.list_rag_corpora(request=request)
-        except Exception as e:
-            raise RuntimeError("Failed in listing the RagCorpora due to: ", e) from e
-
-        # Look for a corpus with 'bqml' or 'data-science' in the name
-        for corpus in pager:
-            display_name = corpus.display_name.lower()
-            if "bqml" in display_name or "data-science" in display_name:
-                return corpus.name
-
-        return ""
-    except Exception:
-        # If anything goes wrong, return empty string
-        return ""
-
-
 # Set default environment variables for Google Cloud only
 os.environ.setdefault("GOOGLE_CLOUD_PROJECT", project_id or "")
 os.environ.setdefault("GOOGLE_CLOUD_LOCATION", DEFAULT_LOCATION)
 os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "1")
 
-# Discovery for RAG corpus
-_rag_corpus_name = ""
-if not os.environ.get("BQML_RAG_CORPUS_NAME"):
-    _rag_corpus_name = discover_rag_corpus()
-    if _rag_corpus_name:
-        os.environ.setdefault("BQML_RAG_CORPUS_NAME", _rag_corpus_name)
+# BQML RAG corpus should be set via environment variable BQML_RAG_CORPUS_NAME
 
 # Code Interpreter defaults
 os.environ.setdefault("CODE_INTERPRETER_EXTENSION_NAME", "")

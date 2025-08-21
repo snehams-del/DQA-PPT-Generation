@@ -458,7 +458,9 @@ class SqlTranslator:
             read=self.INPUT_DIALECT,
             write=self.OUTPUT_DIALECT,
             error_level=sqlglot.ErrorLevel.IMMEDIATE,
-        )[0]  # Transpile returns a list of strings.
+        )[
+            0
+        ]  # Transpile returns a list of strings.
         print("****** sql_query after transpile:", sql_query)
         if self._tool_output_errors:
             sql_query = self._fix_errors(

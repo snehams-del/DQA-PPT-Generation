@@ -36,6 +36,7 @@ jupyter = [
 ]
 lint = [
     "ruff>=0.4.6",
+    "black>=24.0.0",
     "mypy~=1.15.0",
     "codespell~=2.2.0",
     "types-pyyaml~=6.0.12.20240917",
@@ -63,6 +64,24 @@ pythonpath = "."
 asyncio_default_fixture_loop_scope = "function"
 target-version = "py312"
 exclude = ["tests/load_test/load_test.py"]
+
+[tool.black]
+line-length = 88
+target-version = ["py312"]
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
 
 [tool.ruff.lint]
 select = [
