@@ -94,7 +94,7 @@ def main(argv: list[str]) -> None:  # pylint: disable=unused-argument
         if user_input == "quit":
             break
 
-        for event in agent.query(  # type: ignore[attr-defined]
+        for event in agent.stream_query(  # type: ignore[attr-defined]
             user_id=FLAGS.user_id, session_id=session.id, query=user_input
         ):
             if "content" in event:

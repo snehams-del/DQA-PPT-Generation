@@ -190,20 +190,24 @@ def main(argv: list[str]) -> None:  # pylint: disable=unused-argument
     )
     # Don't set "GOOGLE_CLOUD_PROJECT" or "GOOGLE_CLOUD_LOCATION"
     # when deploying to Agent Engine. Those are set by the backend.
-    env_vars["ROOT_AGENT_MODEL"] = os.getenv("ROOT_AGENT_MODEL")
-    env_vars["ANALYTICS_AGENT_MODEL"] = os.getenv("ANALYTICS_AGENT_MODEL")
-    env_vars["BASELINE_NL2SQL_MODEL"] = os.getenv("BASELINE_NL2SQL_MODEL")
-    env_vars["BIGQUERY_AGENT_MODEL"] = os.getenv("BIGQUERY_AGENT_MODEL")
-    env_vars["BQML_AGENT_MODEL"] = os.getenv("BQML_AGENT_MODEL")
-    env_vars["CHASE_NL2SQL_MODEL"] = os.getenv("CHASE_NL2SQL_MODEL")
-    env_vars["BQ_DATASET_ID"] = os.getenv("BQ_DATASET_ID")
-    env_vars["BQ_DATA_PROJECT_ID"] = os.getenv("BQ_DATA_PROJECT_ID")
-    env_vars["BQ_COMPUTE_PROJECT_ID"] = os.getenv("BQ_COMPUTE_PROJECT_ID")
-    env_vars["BQML_RAG_CORPUS_NAME"] = os.getenv("BQML_RAG_CORPUS_NAME")
-    env_vars["CODE_INTERPRETER_EXTENSION_NAME"] = os.getenv(
-        "CODE_INTERPRETER_EXTENSION_NAME"
-    )
-    env_vars["NL2SQL_METHOD"] = os.getenv("NL2SQL_METHOD")
+    env_var_names = [
+        "ROOT_AGENT_MODEL",
+        "ANALYTICS_AGENT_MODEL", 
+        "BASELINE_NL2SQL_MODEL",
+        "BIGQUERY_AGENT_MODEL",
+        "BQML_AGENT_MODEL",
+        "CHASE_NL2SQL_MODEL",
+        "BQ_DATASET_ID",
+        "BQ_DATA_PROJECT_ID",
+        "BQ_COMPUTE_PROJECT_ID",
+        "BQML_RAG_CORPUS_NAME",
+        "CODE_INTERPRETER_EXTENSION_NAME",
+        "NL2SQL_METHOD",
+    ]
+    
+    for env_var in env_var_names:
+        if value := os.getenv(env_var):
+            env_vars[env_var] = value
 
     logger.info("Using PROJECT: %s", project_id)
     logger.info("Using LOCATION: %s", location)
@@ -269,7 +273,7 @@ def main(argv: list[str]) -> None:  # pylint: disable=unused-argument
         print(
             "Please ensure the agent wheel file exists in the 'deployment' "
             "directory and you have run the build script "
-            "(e.g., poetry build --format=wheel --output=deployment')."
+            "(e.g., uv build --wheel --out-dir deployment')."
         )
     except Exception as e:
         print(f"\nAn unexpected error occurred: {e}")

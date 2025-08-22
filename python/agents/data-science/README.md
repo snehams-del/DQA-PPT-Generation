@@ -324,7 +324,7 @@ Then run the below command. This will create a staging bucket in your GCP projec
 
 ```bash
 cd deployment/
-python3 deploy.py --create
+uv run deploy.py --create
 ```
 
 When this command returns, if it succeeds it will print an AgentEngine resource
