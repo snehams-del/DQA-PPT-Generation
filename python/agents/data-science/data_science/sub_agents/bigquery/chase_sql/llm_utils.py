@@ -73,9 +73,7 @@ GEMINI_AVAILABLE_REGIONS = [
     "asia-southeast1",
     "southamerica-east1",
 ]
-GEMINI_URL = (
-    "projects/{GCP_PROJECT}/locations/{region}/publishers/google/models/{model_name}"
-)
+GEMINI_URL = "projects/{GCP_PROJECT}/locations/{region}/publishers/google/models/{model_name}"
 
 aiplatform.init(
     project=GCP_PROJECT,
@@ -146,7 +144,9 @@ class GeminiModel:
                 model_name=self.model_name,
             )
         if cache_name is not None:
-            cached_content = caching.CachedContent(cached_content_name=cache_name)
+            cached_content = caching.CachedContent(
+                cached_content_name=cache_name
+            )
             self.model = GenerativeModel.from_cached_content(
                 cached_content=cached_content
             )
@@ -154,7 +154,9 @@ class GeminiModel:
             self.model = GenerativeModel(model_name=model_name)
 
     @retry(max_attempts=12, base_delay=2, backoff_factor=2)
-    def call(self, prompt: str, parser_func: Callable[[str], str] | None = None) -> str:
+    def call(
+        self, prompt: str, parser_func: Callable[[str], str] | None = None
+    ) -> str:
         """Calls the Gemini model with the given prompt.
 
         Args:
@@ -210,7 +212,9 @@ class GeminiModel:
                     retries += 1
                     if retries > max_retries:
                         return f"Error after retries: {e!s}"
-                    print(f"Retrying ({retries}/{max_retries}) for prompt {index}")
+                    print(
+                        f"Retrying ({retries}/{max_retries}) for prompt {index}"
+                    )
                     time.sleep(1)  # Small delay before retrying
             return f"Maximum retries exceeded for prompt {index}"
 

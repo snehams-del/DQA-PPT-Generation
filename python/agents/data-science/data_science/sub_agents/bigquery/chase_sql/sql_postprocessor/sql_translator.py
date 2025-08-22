@@ -135,7 +135,9 @@ class SqlTranslator:
         self._tool_output_errors: str | None = None
         self._temperature: float = temperature
         if isinstance(model, str):
-            self._model = GeminiModel(model_name=model, temperature=self._temperature)
+            self._model = GeminiModel(
+                model_name=model, temperature=self._temperature
+            )
         else:
             self._model = model
 
@@ -212,7 +214,9 @@ class SqlTranslator:
         schema = []
         for ddl_statement in ddl_statements:
             if ddl_statement:
-                ddl_statement = ddl_statement.strip() + ";"  # Add the semicolon back.
+                ddl_statement = (
+                    ddl_statement.strip() + ";"
+                )  # Add the semicolon back.
                 table_name, columns = cls._extract_schema_from_ddl_statement(
                     ddl_statement
                 )
@@ -250,11 +254,15 @@ class SqlTranslator:
                     dict([cols_and_types[id_pos]])
                 )
             else:
-                tables_to_columns[tables[table_id]] = dict([cols_and_types[id_pos]])
+                tables_to_columns[tables[table_id]] = dict(
+                    [cols_and_types[id_pos]]
+                )
         return tables_to_columns
 
     @classmethod
-    def _get_table_parts(cls, table_name: str) -> tuple[str | None, str | None, str]:
+    def _get_table_parts(
+        cls, table_name: str
+    ) -> tuple[str | None, str | None, str]:
         """Returns the table parts from the table name."""
         table_parts = table_name.split(".")
         if len(table_parts) == 3:
@@ -335,7 +343,9 @@ class SqlTranslator:
             )
             # Then add the database and catalog information for each table to the AST.
             for table in sql_query_ast.find_all(sqlglot.exp.Table):
-                table.set("catalog", sqlglot.exp.Identifier(this=catalog, quoted=True))
+                table.set(
+                    "catalog", sqlglot.exp.Identifier(this=catalog, quoted=True)
+                )
                 table.set("db", sqlglot.exp.Identifier(this=db, quoted=True))
             # Then, try to optimize the SQL query.
             sql_query_ast = sqlglot.optimizer.optimize(

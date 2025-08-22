@@ -55,7 +55,9 @@ class TestAgents(unittest.IsolatedAsyncioTestCase):
         content = types.Content(role="user", parts=[types.Part(text=query)])
         events = list(
             runner.run(
-                user_id=self.user_id, session_id=self.session_id, new_message=content
+                user_id=self.user_id,
+                session_id=self.session_id,
+                new_message=content,
             )
         )
 

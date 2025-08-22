@@ -28,11 +28,32 @@ jobs:
       - name: Create job matrix from changed files
         id: set-matrix
         run: |
+          # ===== EXCLUSION LIST =====
+          # Agents to exclude from auto linting and testing
+          EXCLUDED_AGENTS=(
+            "python/agents/data-science"
+          )
+          # ===========================
+          
           TEMP_JSON_FILE=$(mktemp)
           echo "[]" > "$TEMP_JSON_FILE"
 
           echo "${{ steps.changed_files.outputs.all_changed_files }}" | \
           grep -o 'python/agents/[^/]*' | \
+          {
+            while read -r dir; do
+              excluded=false
+              for excluded_agent in "${EXCLUDED_AGENTS[@]}"; do
+                if [[ "$dir" == "$excluded_agent" ]]; then
+                  excluded=true
+                  break
+                fi
+              done
+              if [[ "$excluded" == false ]]; then
+                echo "$dir"
+              fi
+            done
+          } | \
           sort -u | \
           while read -r dir; do
             if [ -f "$dir/pyproject.toml" ]; then
@@ -118,44 +139,17 @@ jobs:
             
 
             # Install dependencies and run tests
-            cd $AGENT_GENERATED_NAME
-            
-            # Check if make is available
-            if command -v make >/dev/null 2>&1; then
-              echo \"--- make command found, installing dependencies ---\"
-              make install
-            else
-              echo \"--- make command not found, skipping installation ---\"
-            fi
-
+            cd $AGENT_GENERATED_NAME && make install
             echo \"--- Current task: ${{ matrix.task }} ---\"
             
             if [ \"${{ matrix.task }}\" = \"lint\" ]; then
               echo \"--- Linting generated code ---\"
-              if command -v make >/dev/null 2>&1; then
-                make lint
-              else
-                echo \"--- make command not found, skipping lint ---\"
-              fi
+              make lint
             elif [ \"${{ matrix.task }}\" = \"test\" ]; then
               echo \"--- Running tests ---\"
               export AGENT_NAME=\"$DEPLOYMENT_TARGET-$AGENT_NAME\"
-              
-              # Deploy infrastructure
-              if command -v make >/dev/null 2>&1; then
-                echo \"--- Deploying infrastructure ---\"
-                make deploy-infra
-              else
-                echo \"--- make command not found, skipping infrastructure deployment ---\"
-              fi
-              
-              # Run tests
-              if command -v make >/dev/null 2>&1; then
-                echo \"--- Running test suite ---\"
-                make test
-              else
-                echo \"--- make command not found, skipping tests ---\"
-              fi
+              make deploy-infra
+              make test
             else
               echo \"--- Unknown task: ${{ matrix.task }} ---\"
               exit 1

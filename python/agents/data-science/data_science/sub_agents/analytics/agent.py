@@ -34,7 +34,9 @@ def get_extension_if_exists() -> str | None:
         for extension in extensions:
             if "Code Interpreter" in extension.gca_resource.display_name:
                 resource_name = extension.gca_resource.name
-                logger.info(f"Using code interpreter extension: {resource_name}")
+                logger.info(
+                    f"Using code interpreter extension: {resource_name}"
+                )
                 return resource_name
 
         logger.info("No code interpreter extension found")

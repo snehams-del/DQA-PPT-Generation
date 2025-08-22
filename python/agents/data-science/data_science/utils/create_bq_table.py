@@ -51,7 +51,9 @@ def load_csv_to_bigquery(
     )
 
     with open(csv_filepath, "rb") as source_file:
-        job = client.load_table_from_file(source_file, table_ref, job_config=job_config)
+        job = client.load_table_from_file(
+            source_file, table_ref, job_config=job_config
+        )
 
     job.result()  # Wait for the job to complete
 
@@ -77,7 +79,9 @@ def create_dataset_if_not_exists(
     except Exception:
         dataset = bigquery.Dataset(dataset_full_name)
         dataset.location = "US"  # Set the location (e.g., "US", "EU")
-        dataset = client.create_dataset(dataset, timeout=30)  # Make an API request.
+        dataset = client.create_dataset(
+            dataset, timeout=30
+        )  # Make an API request.
         print(f"Created dataset {dataset_full_name}")
 
 
@@ -99,15 +103,21 @@ def main() -> None:
 
     # Create the dataset if it doesn't exist
     print("Creating dataset.")
-    create_dataset_if_not_exists(compute_project_id, data_project_id, dataset_name)
+    create_dataset_if_not_exists(
+        compute_project_id, data_project_id, dataset_name
+    )
 
     # Load the train data
     print("Loading train table.")
-    load_csv_to_bigquery(data_project_id, dataset_name, "train", train_csv_filepath)
+    load_csv_to_bigquery(
+        data_project_id, dataset_name, "train", train_csv_filepath
+    )
 
     # Load the test data
     print("Loading test table.")
-    load_csv_to_bigquery(data_project_id, dataset_name, "test", test_csv_filepath)
+    load_csv_to_bigquery(
+        data_project_id, dataset_name, "test", test_csv_filepath
+    )
 
 
 if __name__ == "__main__":

@@ -51,7 +51,9 @@ def setup_before_agent_call(callback_context: CallbackContext) -> None:
     # setting up schema in instruction
     if callback_context.state["all_db_settings"]["use_database"] == "BigQuery":
         callback_context.state["database_settings"] = get_bq_database_settings()
-        schema = callback_context.state["database_settings"]["bq_schema_and_samples"]
+        schema = callback_context.state["database_settings"][
+            "bq_schema_and_samples"
+        ]
 
         # Update agent instruction dynamically
         agent = callback_context._invocation_context.agent

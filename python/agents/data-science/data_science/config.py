@@ -96,7 +96,9 @@ def get_config():  # type: ignore[no-untyped-def]
             )
 
             # Other configurations using centralized defaults
-            self.nl2sql_method = os.getenv("NL2SQL_METHOD", DEFAULT_NL2SQL_METHOD)
+            self.nl2sql_method = os.getenv(
+                "NL2SQL_METHOD", DEFAULT_NL2SQL_METHOD
+            )
             self.project_id = os.getenv("GOOGLE_CLOUD_PROJECT", "")
             self.location = os.getenv("GOOGLE_CLOUD_LOCATION", DEFAULT_LOCATION)
             self.bqml_rag_corpus_name = os.getenv("BQML_RAG_CORPUS_NAME", "")

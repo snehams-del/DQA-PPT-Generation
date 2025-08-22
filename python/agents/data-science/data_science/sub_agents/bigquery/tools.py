@@ -49,7 +49,9 @@ def _serialize_value_for_sql(value: Any) -> str:
         return f"'{escaped_value}'"
     elif isinstance(value, bytes):
         decoded_value = (
-            value.decode("utf-8", "replace").replace("\\", "\\\\").replace("'", "''")
+            value.decode("utf-8", "replace")
+            .replace("\\", "\\\\")
+            .replace("'", "''")
         )
         return f"b'{decoded_value}'"
     elif isinstance(value, list | np.ndarray):
@@ -125,7 +127,9 @@ def get_bigquery_schema_and_samples(
         ]
         table_ref = dataset_ref.table(table.table_id)
         sample_query = f"SELECT * FROM `{table_ref}` LIMIT 5"
-        sample_values = client.query(sample_query).to_dataframe().to_dict(orient="list")
+        sample_values = (
+            client.query(sample_query).to_dataframe().to_dict(orient="list")
+        )
         for key in sample_values:
             sample_values[key] = [
                 _serialize_value_for_sql(v) for v in sample_values[key]
@@ -189,7 +193,9 @@ The database structure is defined by the following table schemas (possibly with 
     ]
 
     prompt = prompt_template.format(
-        MAX_NUM_ROWS=MAX_NUM_ROWS, SCHEMA=bq_schema_and_samples, QUESTION=question
+        MAX_NUM_ROWS=MAX_NUM_ROWS,
+        SCHEMA=bq_schema_and_samples,
+        QUESTION=question,
     )
 
     response = llm_client.models.generate_content(
