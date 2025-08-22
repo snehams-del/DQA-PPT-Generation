@@ -28,48 +28,34 @@ jobs:
       - name: Create job matrix from changed files
         id: set-matrix
         run: |
-          # ===== EXCLUSION LIST =====
-          # Agents to exclude from auto linting and testing
-          EXCLUDED_AGENTS=(
-            "python/agents/data-science"
-          )
-          # ===========================
-          
           TEMP_JSON_FILE=$(mktemp)
           echo "[]" > "$TEMP_JSON_FILE"
 
           echo "${{ steps.changed_files.outputs.all_changed_files }}" | \
           grep -o 'python/agents/[^/]*' | \
-          {
-            while read -r dir; do
-              excluded=false
-              for excluded_agent in "${EXCLUDED_AGENTS[@]}"; do
-                if [[ "$dir" == "$excluded_agent" ]]; then
-                  excluded=true
-                  break
-                fi
-              done
-              if [[ "$excluded" == false ]]; then
-                echo "$dir"
-              fi
-            done
-          } | \
           sort -u | \
           while read -r dir; do
             if [ -f "$dir/pyproject.toml" ]; then
               # Check if the pyproject.toml contains [tool.agent-starter-pack] section
               if grep -q '\[tool\.agent-starter-pack\]' "$dir/pyproject.toml"; then
-                deployment_targets=$(yq eval '.tool.agent-starter-pack.settings.deployment_targets[]' "$dir/pyproject.toml" 2>/dev/null || echo "")
-                if [ -z "$deployment_targets" ]; then
-                  deployment_targets="agent_engine cloud_run"
-                fi
+                # Check auto_lint_test parameter (defaults to false if not specified)
+                auto_lint_test=$(yq eval '.tool.agent-starter-pack.settings.auto_lint_test // false' "$dir/pyproject.toml" 2>/dev/null)
                 
-                for target in $deployment_targets; do
-                  lint_task=$(jq -n --arg dir "$dir" --arg target "$target" '{agent_path: $dir, deployment_target: $target, task: "lint"}')
-                  test_task=$(jq -n --arg dir "$dir" --arg target "$target" '{agent_path: $dir, deployment_target: $target, task: "test"}')
+                if [ "$auto_lint_test" = "true" ]; then
+                  deployment_targets=$(yq eval '.tool.agent-starter-pack.settings.deployment_targets[]' "$dir/pyproject.toml" 2>/dev/null || echo "")
+                  if [ -z "$deployment_targets" ]; then
+                    deployment_targets="agent_engine cloud_run"
+                  fi
                   
-                  jq ". + [$lint_task, $test_task]" "$TEMP_JSON_FILE" > "$TEMP_JSON_FILE.tmp" && mv "$TEMP_JSON_FILE.tmp" "$TEMP_JSON_FILE"
-                done
+                  for target in $deployment_targets; do
+                    lint_task=$(jq -n --arg dir "$dir" --arg target "$target" '{agent_path: $dir, deployment_target: $target, task: "lint"}')
+                    test_task=$(jq -n --arg dir "$dir" --arg target "$target" '{agent_path: $dir, deployment_target: $target, task: "test"}')
+                    
+                    jq ". + [$lint_task, $test_task]" "$TEMP_JSON_FILE" > "$TEMP_JSON_FILE.tmp" && mv "$TEMP_JSON_FILE.tmp" "$TEMP_JSON_FILE"
+                  done
+                else
+                  echo "Skipping $dir due to auto_lint_test=false"
+                fi
               fi
             fi
           done
