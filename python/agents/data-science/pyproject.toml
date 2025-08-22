@@ -131,3 +131,12 @@ build-backend = "uv_build"
 module-name = "data_science"
 module-root = ""
 
+# This configuration file is used by goo.gle/agent-starter-pack to power remote templating.
+# It defines the template's properties, settings, and deployment options.
+[tool.agent-starter-pack]
+base_template = "adk_base"
+description = "Multi-agent system for data analysis, integrating specialized agents for data retrieval, analytics, visualization, and ML tasks using BigQuery and BQML."
+example_question = "Tell me about the data you have access to!"
+
+[tool.agent-starter-pack.settings]
+agent_directory = "data_science"
