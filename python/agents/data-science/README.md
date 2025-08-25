@@ -404,6 +404,78 @@ python3 deployment/deploy.py --delete --resource_id=RESOURCE_ID
     - including clear descriptions in your tables and columns help boost performance
     - if your database is large, try setting up a RAG pipeline for schema linking by storing your table schema details in a vector store
 
+## Deployment on Google Cloud Run
+
+These instructions walk through the process of deploying the Data Science agent to Google Cloud Run, including Cloud SQL for session storage.
+
+### Before you begin
+
+Deploying to Google Cloud Run requires:
+
+- A [Google Cloud project](https://cloud.google.com/resource-manager/docs/creating-managing-projects) with billing enabled.
+- `gcloud` CLI ([Installation instructions](https://cloud.google.com/sdk/docs/install))
+
+### 1 - Authenticate the Google Cloud CLI, and enable Google Cloud APIs.
+
+```
+gcloud auth login
+gcloud auth application-default login 
+
+export PROJECT_ID="<YOUR_PROJECT_ID>"
+gcloud config set project $PROJECT_ID
+
+gcloud services enable sqladmin.googleapis.com \
+   compute.googleapis.com \
+   cloudresourcemanager.googleapis.com \
+   servicenetworking.googleapis.com \
+   aiplatform.googleapis.com
+```
+
+### 2 - Create a Cloud SQL instance for the agent sessions service.
+
+```bash
+gcloud sql instances create ds-agent-session-service \
+   --database-version=POSTGRES_17 \
+   --tier=db-g1-small \
+   --region=us-central1 \
+   --edition=ENTERPRISE \
+   --root-password=ds-agent-demo
+```
+
+Once created, you can view your instance in the Cloud Console [here](https://console.cloud.google.com/sql/instances/ds-agent-session-service/overview).
+
+### 3 - Deploy the agent to Cloud Run
+Now we are ready to deploy the Data Science agent to Cloud Run! :rocket:
+
+```bash
+gcloud run deploy data-science-agent \
+  --source . \
+  --port 8080 \
+  --memory 2G \
+  --project $PROJECT_ID \
+  --allow-unauthenticated \
+  --add-cloudsql-instances $PROJECT_ID:us-central1:ds-agent-session-service \
+  --update-env-vars SERVE_WEB_INTERFACE=True,SESSION_SERVICE_URI="postgresql+pg8000://postgres:ds-agent-demo@postgres/?unix_sock=/cloudsql/$PROJECT_ID:us-central1:ds-agent-session-service/.s.PGSQL.5432",GOOGLE_CLOUD_PROJECT=$PROJECT_ID \
+  --region us-central1 
+```
+
+When this runs successfully, you should see:
+
+```bash
+Service [data-science-agent] revision [data-science-agent-00001-aaa] has been deployed and is serving 100 percent of traffic.
+```
+
+### 4 - Test the Cloud Run Deployment
+
+Open the Cloud Run Service URL outputted by the previous step.
+You should see the ADK Web UI for the Data Science Agent.
+
+### Clean up
+
+You can clean up this agent sample by:
+- Deleting the [Cloud Run Services](https://console.cloud.google.com/run).
+- Deleting the [Cloud SQL instance](https://console.cloud.google.com/sql/instances).
+
 
 ## Disclaimer
 

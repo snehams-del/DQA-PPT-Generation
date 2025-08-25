@@ -17,6 +17,7 @@ dependencies = [
     "pydantic>=2.11.3",
     "pandas>=2.3.0",
     "numpy>=2.3.1",
+    "pg8000>=1.31.2",
 ]
 
 
