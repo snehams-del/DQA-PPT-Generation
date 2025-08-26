@@ -172,7 +172,7 @@ Do you want me to proceed with creating the incident?
 
 ***Note: To showcase the dynamic identity in action, click on the top right section of the pop up and say “Not You” for system administrator. Instead, sign in using the user id/password created in the previous step***
 
-**Agengt:**
+**Agent:**
 >I have created the incident for you. The incident ID is xxx. A support agent will be in touch with you shortly. Can I help you with anything else?
 
 **User:**
