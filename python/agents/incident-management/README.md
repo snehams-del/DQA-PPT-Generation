@@ -154,11 +154,11 @@ Here's a quick example of how a user might interact with the agent:
 
 **Agent:**
 >I can help with that. I've summarized the incident details below:
-
-Short Description: Laptop crashing multiple times
-Description: My laptop has crashed multiple times today and I need help. This is urgent and should be addressed ASAP.
-Impact: 1 - High
-Urgency: 1 - High
+>
+>Short Description: Laptop crashing multiple times
+>Description: My laptop has crashed multiple times today and I need help. This is urgent and should be addressed ASAP.
+>Impact: 1 - High
+>Urgency: 1 - High
 
 Do you want me to proceed with creating the incident?
 
@@ -178,7 +178,7 @@ Do you want me to proceed with creating the incident?
 
 **Agent:**
 >Of course! Here are more details for Incident ID xxx
-Incident Number: xxxxx
-Description: My laptop has crashed multiple times today and I need help. This is urgent and should be addressed ASAP.
-Ticket Creator: **dynamic user identity**
-Time of Creation: xxxxx
+>Incident Number: xxxxx
+>Description: My laptop has crashed multiple times today and I need help. This is urgent and should be addressed ASAP.
+>Ticket Creator: **dynamic user identity**
+>Time of Creation: xxxxx
