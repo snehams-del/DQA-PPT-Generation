@@ -67,7 +67,7 @@ If you already have Application Integration and Integration Connectors provision
 
 Follow the instructions in this GCP Cloud Shell tutorial.
 
-[![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.png)](https://ssh.cloud.google.com/cloudshell/open?cloudshell_git_repo=https://github.com/GoogleCloudPlatform/application-integration-samples&cloudshell_git_branch=main&cloudshell_workspace=.&cloudshell_tutorial=adk-incident-management/docs/cloudshell-tutorial.md)
+[![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.png)](https://ssh.cloud.google.com/cloudshell/open?cloudshell_git_repo=https://github.com/GoogleCloudPlatform/application-integration-samples&cloudshell_git_branch=adk-sample&cloudshell_workspace=.&cloudshell_tutorial=src/adk-incident-management/docs/cloudshell-tutorial.md)
 
 ## Agent Setup
 
