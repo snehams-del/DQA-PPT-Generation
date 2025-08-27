@@ -60,7 +60,7 @@ A comprehensive data engineering agent.
 
 3.  **Configuration** 
 
-   Create a `.env` file in the project root directory: `cp env_example
+   Create a `.env` file in the project root directory: `cp .env.example
     .env`
 
    Edit the `.env` file with your configuration:
