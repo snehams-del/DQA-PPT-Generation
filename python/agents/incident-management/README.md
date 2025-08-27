@@ -100,22 +100,20 @@ Follow the instructions in this GCP Cloud Shell tutorial.
 
 You can run the agent locally using the `adk` command in your terminal:
 
-1.  To run the agent from the CLI:
+NOTE: Modify your ServiceNow application `Redirect URL` to point to your local host http://localhost:8080/dev-ui/ (including the trailing "/")
 
-    ```bash
-    adk run incident_management
-    ```
+To run the agent from the ADK web UI:
 
-2.  To run the agent from the ADK web UI:
-
-    ```bash
-    adk web
-    ```
-    Then select the `incident-management` from the dropdown.
+```bash
+adk web
+```
+Then select the `incident-management` from the dropdown.
 
 ## Deploying the Agent Remotely
 
 ### To Agent Engine
+
+NOTE: Modify your ServiceNow application `Redirect URL` to point to https://vertexaisearch.cloud.google.com/oauth-redirect
 
 The agent can also be deployed to [Vertex AI Agent Engine](https://cloud.google.com/vertex-ai/generative-ai/docs/agent-engine/overview) using the following
 commands:

@@ -21,11 +21,12 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 import vertexai
-from vertexai import agent_engines
-from vertexai.preview.reasoning_engines import AdkApp
-from auto_insurance_agent.agent import root_agent
 import logging
 import os
+
+from vertexai import agent_engines
+from vertexai.preview.reasoning_engines import AdkApp
+from incident_management.agent import root_agent
 from dotenv import set_key, load_dotenv
 
 load_dotenv()
@@ -42,7 +43,7 @@ ENV_FILE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".
 vertexai.init(
     project=GOOGLE_CLOUD_PROJECT,
     location=GOOGLE_CLOUD_LOCATION,
-    staging_bucket=STAGING_BUCKET,
+    staging_bucket=f"gs://{STAGING_BUCKET}"
 )
 
 # Function to update the .env file
@@ -65,7 +66,7 @@ logging.debug("deploying agent to agent engine:")
 
 remote_app = agent_engines.create(
     app,
-    display_name="auto_insurance_agent",
+    display_name="incident_management",
     requirements=[
         "google-cloud-aiplatform[adk,agent-engines]>=1.100.0,<2.0.0",
         "google-adk>=1.5.0,<2.0.0",

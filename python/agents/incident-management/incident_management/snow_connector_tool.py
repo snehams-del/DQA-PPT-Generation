@@ -14,6 +14,7 @@
 
 import os
 from dotenv import load_dotenv
+
 from google.adk.tools.application_integration_tool.application_integration_toolset import ApplicationIntegrationToolset
 from google.adk.tools.apihub_tool.clients.secret_client import SecretManagerClient
 from google.adk.auth import AuthCredential, AuthCredentialTypes, OAuth2Auth
@@ -22,6 +23,7 @@ from fastapi.openapi.models import OAuth2
 from fastapi.openapi.models import OAuthFlowAuthorizationCode
 from fastapi.openapi.models import OAuthFlows
 
+load_dotenv()
 
 SNOW_CONNECTION_PROJECT_ID=os.getenv("SNOW_CONNECTION_PROJECT_ID")
 SNOW_CONNECTION_REGION=os.getenv("SNOW_CONNECTION_REGION")
