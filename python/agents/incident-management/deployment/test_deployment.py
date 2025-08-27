@@ -63,6 +63,7 @@ load_dotenv()
 vertexai.init(
     project=os.getenv("GOOGLE_CLOUD_PROJECT"),
     location=os.getenv("GOOGLE_CLOUD_LOCATION"),
+    staging_bucket=f"gs://{os.getenv("GOOGLE_CLOUD_STORAGE_BUCKET")}"
 )
 
 session_service = VertexAiSessionService(project=os.getenv("GOOGLE_CLOUD_PROJECT"),location=os.getenv("GOOGLE_CLOUD_LOCATION"))
@@ -70,12 +71,13 @@ AGENT_ENGINE_ID = os.getenv("AGENT_ENGINE_ID")
 
 session = asyncio.run(session_service.create_session(
     app_name=AGENT_ENGINE_ID,
-    user_id="123",
-))
+    user_id="123")
+)
 
 agent_engine = agent_engines.get(AGENT_ENGINE_ID)
 
 print("Type 'quit' to exit.")
+
 while True:
     user_input = input("Input: ")
     if user_input == "quit":
@@ -84,6 +86,6 @@ while True:
     for event in agent_engine.stream_query(
         user_id="123", session_id=session.id, message=user_input
     ):
-        pretty_print_event(event)
+       pretty_print_event(event)
 
-asyncio.run(session_service.delete_session(session_id=session.id))
+asyncio.run(session_service.delete_session(app_name=AGENT_ENGINE_ID, user_id=123, session_id=session.id))

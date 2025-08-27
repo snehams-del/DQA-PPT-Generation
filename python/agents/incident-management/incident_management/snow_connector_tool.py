@@ -16,7 +16,6 @@ import os
 from dotenv import load_dotenv
 
 from google.adk.tools.application_integration_tool.application_integration_toolset import ApplicationIntegrationToolset
-from google.adk.tools.apihub_tool.clients.secret_client import SecretManagerClient
 from google.adk.auth import AuthCredential, AuthCredentialTypes, OAuth2Auth
 
 from fastapi.openapi.models import OAuth2
