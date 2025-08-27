@@ -52,7 +52,7 @@ A comprehensive data engineering agent.
     ```bash
     # Clone this repository.
     git clone https://github.com/google/adk-samples.git
-    cd adk-samples/python/agents/data-engineering-agent
+    cd adk-samples/python/agents/data-engineering
 
     # Install the package and dependencies.
     poetry install
