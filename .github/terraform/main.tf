@@ -24,7 +24,7 @@ resource "google_project_service" "apis" {
 
 resource "google_project_iam_member" "github_oidc_access" {
   project = var.project_id
-  role    = "roles/editor"
+  role    = "roles/owner"
   member  = "principalSet://iam.googleapis.com/projects/${data.google_project.project.number}/locations/global/workloadIdentityPools/${google_iam_workload_identity_pool.github_pool.workload_identity_pool_id}/attribute.repository/${var.repo}"
   
   depends_on = [google_project_service.apis]
@@ -51,7 +51,7 @@ resource "google_iam_workload_identity_pool_provider" "github_provider" {
     "attribute.repository"       = "assertion.repository"
     "attribute.repository_owner" = "assertion.repository_owner"
   }
-  attribute_condition = "attribute.repository_owner == '${var.organization}' && attribute.repository == '${var.repo}'"
+  attribute_condition = "assertion.repository == '${var.repo}'"
   
   depends_on = [google_project_service.apis]
 }

@@ -12,11 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# This configuration file is used by goo.gle/agent-starter-pack to power remote templating.
-# It defines the template's properties, settings, and deployment options.
-base_template: "adk_base"
-description: "A production-ready fullstack research agent that uses Gemini to strategize, research, and synthesize comprehensive reports with human-in-the-loop collaboration"
-example_question: "A report on the latest Google I/O event"
-settings:
-  deployment_targets: ["agent_engine", "cloud_run"]
-  interactive_command: "dev"
+from .agent import root_agent
+
+__all__ = ["root_agent"]
