@@ -255,7 +255,7 @@ def run_alloydb_query(
 
         if results:  # Check if query returned data
             final_result["query_result"] = results
-            tool_context.state["query_result"] = results
+            tool_context.state["alloydb_query_result"] = results
 
         else:
             final_result["error_message"] = (

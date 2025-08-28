@@ -54,7 +54,7 @@ def store_results_in_context(
     # sql query results as context
     if tool.name == ADK_BUILTIN_BQ_EXECUTE_SQL_TOOL:
         if tool_response["status"] == "SUCCESS":
-            tool_context.state["query_result"] = tool_response["rows"]
+            tool_context.state["bigquery_query_result"] = tool_response["rows"]
 
     return None
 

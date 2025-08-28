@@ -21,7 +21,7 @@
 from google.adk.tools import ToolContext
 from google.adk.tools.agent_tool import AgentTool
 
-from .sub_agents import alloydb_agent, bigquery_agent, ds_agent
+from .sub_agents import alloydb_agent, analytics_agent, bigquery_agent
 
 
 async def call_bigquery_agent(
@@ -52,29 +52,70 @@ async def call_alloydb_agent(
     tool_context.state["alloydb_agent_output"] = alloydb_agent_output
     return alloydb_agent_output
 
-async def call_ds_agent(
+async def call_analytics_agent(
     question: str,
     tool_context: ToolContext,
 ):
-    """Tool to call data science (nl2py) agent."""
+    """
+    This tool can generate Python code to process and analyze a dataset.
 
-    if question == "N/A":
-        return tool_context.state["db_agent_output"]
+    Some of the tasks it can do in Python include:
+    * Creating graphics for data visualization;
+    * Processing or filtering existing datasets;
+    * Combining datasets to create a joined dataset for further analysis.
 
-    input_data = tool_context.state["query_result"]
+    The Python modules available to it are:
+    * io
+    * math
+    * re
+    * matplotlib.pyplot
+    * numpy
+    * pandas
+
+    The tool DOES NOT have the ability to retrieve additional data from
+    a database. Only the data already retrieved will be analyzed.
+
+    Args:
+        question (str): Natural language question
+        tool_context (ToolContext): The tool context to use for generating the
+            SQL query.
+
+    Returns:
+        Response from the analytics agent.
+
+    """
+
+    #if question == "N/A":
+    #    return tool_context.state["db_agent_output"]
+
+    bigquery_data = ""
+    alloydb_data = ""
+
+    if "bigquery_query_result" in tool_context.state:
+        bigquery_data = tool_context.state["bigquery_query_result"]
+    if "alloydb_query_result" in tool_context.state:
+        alloydb_data = tool_context.state["alloydb_query_result"]
 
     question_with_data = f"""
   Question to answer: {question}
 
-  Actual data to analyze prevoius quesiton is already in the following:
-  {input_data}
+  Actual data to analyze this question is available in the following data
+  tables:
+
+  <BIGQUERY>
+  {bigquery_data}
+  </BIGQUERY>
+
+  <ALLOYDB>
+  {alloydb_data}
+  </ALLOYDB>
 
   """
 
-    agent_tool = AgentTool(agent=ds_agent)
+    agent_tool = AgentTool(agent=analytics_agent)
 
-    ds_agent_output = await agent_tool.run_async(
+    analytics_agent_output = await agent_tool.run_async(
         args={"request": question_with_data}, tool_context=tool_context
     )
-    tool_context.state["ds_agent_output"] = ds_agent_output
-    return ds_agent_output
+    tool_context.state["analytics_agent_output"] = analytics_agent_output
+    return analytics_agent_output

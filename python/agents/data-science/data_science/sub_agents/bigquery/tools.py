@@ -37,7 +37,7 @@ vertex_project = get_env_var("GOOGLE_CLOUD_PROJECT")
 location = get_env_var("GOOGLE_CLOUD_LOCATION")
 llm_client = Client(vertexai=True, project=vertex_project, location=location)
 
-MAX_NUM_ROWS = 80
+MAX_NUM_ROWS = 10000
 
 
 def _serialize_value_for_sql(value):
@@ -142,10 +142,10 @@ def initial_bq_nl2sql(
     """
 
     prompt_template = """
-You are a BigQuery SQL expert tasked with answering user's questions about
-BigQuery tables by generating SQL queries in the GoogleSql dialect.  Your task
-is to write a Bigquery SQL query that answers the following question while using
-the provided context.
+You are a BigQuery SQL expert tasked with generatling SQL in the Google SQL
+dialect based on the user's natural language question.
+Your task is to write a Bigquery SQL query that answers the following question
+while using the provided context.
 
 **Guidelines:**
 
