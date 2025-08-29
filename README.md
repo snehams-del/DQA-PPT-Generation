@@ -38,6 +38,7 @@ To learn more, check out the [ADK Documentation](https://google.github.io/adk-do
 │   │   ├── marketing-agency
 │   │   ├── personalized-shopping
 │   │   ├── RAG
+│   │   ├── safety-plugins
 │   │   ├── README.md
 │   │   ├── software-bug-assistant  
 │   │   └── travel-concierge
