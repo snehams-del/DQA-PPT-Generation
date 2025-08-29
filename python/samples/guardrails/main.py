@@ -17,7 +17,6 @@ async def main():
     input_guardrail = InputGuardrailPlugin()
     output_filter = OutputFilterPlugin()
 
-    # The final, recommended list of active plugins
     plugins = [
         input_guardrail, # This plugin contains both Layer 2 (Regex) and Layer 3 (LLM Judge)
         output_filter,   # This plugin is Layer 4
