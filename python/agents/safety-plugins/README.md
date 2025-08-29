@@ -99,6 +99,21 @@ If the API identifies any content violations based on the configured Model Armor
 
 ## Running the Agent
 
+**To use the plugins, please comment the code in `main.py`**
+```python
+ runner = InMemoryRunner(
+    agent=root_agent,
+    app_name=APP_NAME,
+    plugins=[
+        # LlmAsAJudge(),
+        # ModelArmorSafetyFilter(
+        #     project_id="YOUR_PROJECT_ID_HERE",
+        #     location_id="us-central1",
+        #     template_id="YOUR_TEMPLATE_ID_HERE",
+        # ),
+    ],
+    )
+```
 Navigate to the agent's directory and run the main file as a python module with
 ```bash
 # Navigate to correct directory.
