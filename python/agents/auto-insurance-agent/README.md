@@ -86,6 +86,12 @@ Follow the instructions in this GCP Cloud Shell tutorial.
 
 2.  Install the dependencies:
 
+    **Note for Linux users:** If you get an error related to `keyring` during the installation, you can disable it by running the following command:
+    ```bash
+    poetry config keyring.enabled false
+    ```
+    This is a one-time setup.
+
     ```bash
     poetry install
     ```
@@ -137,11 +143,7 @@ Created remote agent: projects/<PROJECT_NUMBER>/locations/<PROJECT_LOCATION>/rea
 
 For more information on deploying to Agent Engine, see [here](https://google.github.io/adk-docs/deploy/agent-engine/#install-vertex-ai-sdk).
 
-To test the remote agent, first set the following variable using the ID returned above e.g.
-```bash
-export AGENT_ENGINE_ID=projects/<PROJECT_NUMBER>/locations/<PROJECT_LOCATION>/reasoningEngines/<AGENT_ENGINE_ID>
-```
-then run:
+The deployment script adds the `AGENT_ENGINE_ID` to your `.env` file. To test the remote agent, simply run:
 ```bash
 python3 deployment/test_deployment.py
 ```

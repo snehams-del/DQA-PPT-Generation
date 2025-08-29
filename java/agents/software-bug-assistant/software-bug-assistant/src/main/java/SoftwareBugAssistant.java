@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.nio.charset.StandardCharsets;
+import java.util.Scanner;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.adk.agents.BaseAgent;
@@ -13,19 +15,57 @@ import com.google.adk.tools.BaseTool;
 import com.google.adk.tools.GoogleSearchTool;
 import com.google.adk.tools.mcp.McpToolset;
 import com.google.adk.tools.mcp.SseServerParameters;
+import com.google.adk.events.Event;
+import com.google.adk.runner.InMemoryRunner;
+import com.google.adk.sessions.Session;
+import com.google.genai.types.Content;
+import com.google.genai.types.Part;
+import io.reactivex.rxjava3.core.Flowable;
+
 
 public class SoftwareBugAssistant {
 
     private static final Logger logger = Logger.getLogger(SoftwareBugAssistant.class.getName());
 
     // --- Define Constants ---
-    private static final String MODEL_NAME = "gemini-2.0-flash";
+    private static final String MODEL_NAME = "gemini-2.5-flash";
+    private static String NAME = "SoftwareBugAssistant";
+    private static String USER_ID = "test-user";
 
-    // ROOT_AGENT needed for ADK Web UI. 
-    public static BaseAgent ROOT_AGENT = initAgent();
+    // ROOT_AGENT needed for ADK Web UI.
+    public static final BaseAgent ROOT_AGENT = initAgent();
+
+
+    public static void main(String[] args) {
+      InMemoryRunner runner = new InMemoryRunner(ROOT_AGENT);
+      Session session =
+          runner
+              .sessionService()
+              .createSession(NAME, USER_ID)
+              .blockingGet();
+
+      Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+        System.out.println("\nExiting SoftwareBugAssistant. Goodbye!");
+      }));
+
+      try (Scanner scanner = new Scanner(System.in, StandardCharsets.UTF_8)) {
+        while (true) {
+          System.out.print("\nYou > ");
+          String userInput = scanner.nextLine();
+          if ("quit".equalsIgnoreCase(userInput)) {
+            break;
+          }
+          Content userMsg = Content.fromParts(Part.fromText(userInput));
+          Flowable<Event> events = runner.runAsync(USER_ID, session.id(), userMsg);
+          System.out.print("\nAgent > ");
+          events.blockingForEach(event -> System.out.println(event.stringifyContent()));
+        }
+      }
+    }
+
 
     public static BaseAgent initAgent() {
-        // Set up MCP Toolbox connection to Cloud SQL 
+        // Set up MCP Toolbox connection to Cloud SQL
         try {
             String mcpServerUrl = System.getenv("MCP_TOOLBOX_URL");
             if (mcpServerUrl == null || mcpServerUrl.isEmpty()) {
@@ -48,7 +88,7 @@ public class SoftwareBugAssistant {
 
             // Add GoogleSearch tool - Workaround for https://github.com/google/adk-python/issues/134 
             LlmAgent googleSearchAgent = LlmAgent.builder()
-                    .model("gemini-2.0-flash")
+                    .model("gemini-2.5-flash")
                     .name("google_search_agent")
                     .description("Search Google Search")
                     .instruction("""
