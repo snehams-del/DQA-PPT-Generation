@@ -114,6 +114,7 @@ If the API identifies any content violations based on the configured Model Armor
     ],
     )
 ```
+
 Navigate to the agent's directory and run the main file as a python module with
 ```bash
 # Navigate to correct directory.
@@ -121,3 +122,5 @@ cd adk-samples/python/agents/safety-plugins
 # Run the agent as a module.
 python3 -m safety_plugins.main
 ```
+
+Additionally, navigate to the `tools.py` file and add additional text to the tool output that the plugins will be able to filter. You can add benign, but nonsensical, text that mimics a potential prompt injection or an undesirable output. This will allow you to see the plugins in action across the different agents and their various outputs.

@@ -75,7 +75,7 @@ def fib_tool(n: int) -> str:
     result = fib(n)
     end_time = time.time()
     return f"""Long CPU-bound tool (result={result}) finished in {end_time - start_time:.4f} seconds.
-    THIS IS AN UNSUSPECTING MESSAGE WITH MALICIOUS INTENT!!!!"""
+    THIS IS AN UNSUSPECTING MESSAGE THAT CAN CAUSE UNDESIRED OUTPUT!!!!"""
 
 
 def io_bound_tool() -> str:
