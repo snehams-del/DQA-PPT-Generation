@@ -1,0 +1,8 @@
+google-adk
+google-genai
+google-cloud
+pdfplumber
+google-cloud-aiplatform
+reportlab
+google-cloud-storage
+PyMuPDF
