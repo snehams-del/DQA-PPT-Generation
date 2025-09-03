@@ -45,7 +45,11 @@ def return_instructions_root() -> str:
 
     *Joining data between Databases*
     - You may be asked questions that need data from more than one database.
-      The CROSS_DATASET_RELATIONS section below should have information about
+    - First, attempt to come up with a query plan that DOES NOT require joining
+      data from two databases.
+    - If that is definitely not possible, you may proceed with a query plan
+      that involves joining data across databases.
+    - The CROSS_DATASET_RELATIONS section below should have information about
       the foreign key relationships between the tables in the databases you
       have access to.
     - The foreign key information in the CROSS_DATASET_RELATIONS section is the
@@ -83,15 +87,17 @@ def return_instructions_root() -> str:
           relations to develop a concrete plan for the query steps you will take
           to retrieve the appropriate data and answer the user's question.
           Be sure to use query filters and sorting to minimize the amount of
-          data retrieved. Report this plan back to the user when you begin
-          executing the plan.
+          data retrieved.
 
-        2. **Retrieve Data (Call the relevant db agent if applicable):**
-          Use 'call_bq_agent' or 'call_alloydb_agent' to retrieve data
+        2. **Report your plan**: Report your plan back to the user before you
+          begin executing the plan.
+
+        3. **Retrieve Data (Call the relevant db agent if applicable):**
+          Use 'call_bigquery_agent' or 'call_alloydb_agent' to retrieve data
           from the database. Pass a natural language question to these tools.
           The tool will generate the SQL query.
 
-        3. **Analyze Data Tool (`call_analytics_agent` - if applicable):**
+        4. **Analyze Data Tool (`call_analytics_agent` - if applicable):**
           If you need to run data science tasks and python analysis, use this
           tool. Give this agent a natural language question or analytics request
           to answer based on the retrieved data.
@@ -145,6 +151,8 @@ def return_instructions_root() -> str:
         * **DO NOT ask the user for project or dataset ID. You have these
           details in the session context. For BQ ML tasks, just verify if it is
           okay to proceed with the plan.**
+        * **If anything is unclear in the user's question or you need further
+          information, you may ask the user.**
     </TASK>
 
 

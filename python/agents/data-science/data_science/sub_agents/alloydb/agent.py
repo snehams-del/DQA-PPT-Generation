@@ -14,6 +14,7 @@
 
 """Database Agent: get data from database (BigQuery) using NL2SQL."""
 
+import logging
 import os
 
 from google.adk.agents import LlmAgent
@@ -23,9 +24,12 @@ from google.genai import types
 from . import tools
 from .prompts import return_instructions_alloydb
 
+logger = logging.getLogger(__name__)
+
 
 def setup_before_agent_call(callback_context: CallbackContext) -> None:
     """Setup the agent."""
+    logger.debug("setup_before_agent_call")
 
     if "database_settings" not in callback_context.state:
         callback_context.state["database_settings"] = \

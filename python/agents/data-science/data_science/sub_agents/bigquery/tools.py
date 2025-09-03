@@ -28,6 +28,8 @@ from google.genai import Client
 
 from .chase_sql import chase_constants
 
+logger = logging.getLogger(__name__)
+
 # Assume that `BQ_COMPUTE_PROJECT_ID` and `BQ_DATA_PROJECT_ID` are set in the
 # environment. See the `data_agent` README for more details.
 dataset_id=get_env_var("BQ_DATASET_ID")
@@ -126,11 +128,11 @@ def get_bigquery_schema_and_samples():
     return tables_context
 
 
-def initial_bq_nl2sql(
+def bigquery_nl2sql(
     question: str,
     tool_context: ToolContext,
 ) -> str:
-    """Generates an initial SQL query from a natural language question.
+    """Generates a SQL query from a natural language question.
 
     Args:
         question (str): Natural language question.
@@ -140,6 +142,7 @@ def initial_bq_nl2sql(
     Returns:
         str: An SQL statement to answer this question.
     """
+    logger.debug("bigquery_nl2sql - question: %s", question)
 
     prompt_template = """
 You are a BigQuery SQL expert tasked with generatling SQL in the Google SQL
@@ -209,7 +212,7 @@ best practices outlined above to generate the correct BigQuery SQL.
     if sql:
         sql = sql.replace("```sql", "").replace("```", "").strip()
 
-    print("\n sql:", sql)
+    logger.debug("bigquery_nl2sql - sql:\n%s", sql)
 
     tool_context.state["sql_query"] = sql
 

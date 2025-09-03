@@ -39,7 +39,7 @@ def return_instructions_analytics() -> str:
   **Code Execution:** All code snippets provided will be executed within the
    Colab environment.
 
-  **Statefulness:** All code snippets are executed and the variables stays in
+  **Statefulness:** All code snippets are executed and the variables stay in
   the environment. You NEVER need to re-initialize variables. You NEVER need to
   reload files. You NEVER need to re-import libraries.
 

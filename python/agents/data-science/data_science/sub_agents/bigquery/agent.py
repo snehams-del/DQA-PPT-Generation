@@ -14,6 +14,7 @@
 
 """Database Agent: get data from database (BigQuery) using NL2SQL."""
 
+import logging
 import os
 from typing import Any, Dict, Optional
 
@@ -27,6 +28,8 @@ from google.genai import types
 from . import tools
 from .chase_sql import chase_db_tools
 from .prompts import return_instructions_bigquery
+
+logger = logging.getLogger(__name__)
 
 NL2SQL_METHOD = os.getenv("NL2SQL_METHOD", "BASELINE")
 
@@ -76,7 +79,7 @@ bigquery_agent = LlmAgent(
         (
             chase_db_tools.initial_bq_nl2sql
             if NL2SQL_METHOD == "CHASE"
-            else tools.initial_bq_nl2sql
+            else tools.bigquery_nl2sql
         ),
         bigquery_toolset,
     ],

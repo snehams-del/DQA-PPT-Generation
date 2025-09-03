@@ -18,17 +18,21 @@
 -- then, it uses NL2Py to do further data analysis as needed
 """
 
+import logging
+
 from google.adk.tools import ToolContext
 from google.adk.tools.agent_tool import AgentTool
 
 from .sub_agents import alloydb_agent, analytics_agent, bigquery_agent
 
+logger = logging.getLogger(__name__)
 
 async def call_bigquery_agent(
     question: str,
     tool_context: ToolContext,
 ):
     """Tool to call bigquery database (nl2sql) agent."""
+    logger.debug("call_bigquery_agent: %s", question)
 
     agent_tool = AgentTool(agent=bigquery_agent)
 
@@ -43,6 +47,7 @@ async def call_alloydb_agent(
     tool_context: ToolContext,
 ):
     """Tool to call alloydb database (nl2sql) agent."""
+    logger.debug("call_alloydb_agent: %s", question)
 
     agent_tool = AgentTool(agent=alloydb_agent)
 
@@ -76,7 +81,7 @@ async def call_analytics_agent(
     a database. Only the data already retrieved will be analyzed.
 
     Args:
-        question (str): Natural language question
+        question (str): Natural language question or analytics request.
         tool_context (ToolContext): The tool context to use for generating the
             SQL query.
 
@@ -84,6 +89,7 @@ async def call_analytics_agent(
         Response from the analytics agent.
 
     """
+    logger.debug("call_analytics_agent: %s", question)
 
     #if question == "N/A":
     #    return tool_context.state["db_agent_output"]

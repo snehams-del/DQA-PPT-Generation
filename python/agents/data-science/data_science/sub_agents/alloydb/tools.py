@@ -26,7 +26,7 @@ from toolbox_core import ToolboxSyncClient
 ALLOYDB_TOOLSET = os.getenv("ALLOYDB_TOOLSET", "postgres-database-tools")
 ALLOYDB_SERVER_URL = os.getenv("ALLOYDB_SERVER_URL", "http://127.0.0.1:5000")
 
-MAX_NUM_ROWS = 80
+#MAX_NUM_ROWS = 80
 
 vertex_project = os.getenv("GOOGLE_CLOUD_PROJECT", None)
 location = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
@@ -36,7 +36,7 @@ database_settings = None
 toolbox_client = None
 toolbox_toolset = None
 
-logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 def get_toolbox_client():
     """Get MCP Toolbox client."""
@@ -122,8 +122,6 @@ following question while using the provided context.
 - **FILTERS:** You should write the query effectively  to reduce and minimize the
   total rows to be returned. For example, you can use filters (like `WHERE`,
   `HAVING`, etc. (like 'COUNT', 'SUM', etc.) in the SQL query.
-- **LIMIT ROWS:**  Always add a LIMIT clause to the query to make sure the
-  maximum number of rows returned is less than or equal to {MAX_NUM_ROWS}.
 
 **Schema:**
 
@@ -148,7 +146,8 @@ sample rows):
     schema = tool_context.state["database_settings"]["alloydb"]["schema"]
 
     prompt = prompt_template.format(
-        MAX_NUM_ROWS=MAX_NUM_ROWS, SCHEMA=schema, QUESTION=question
+#        MAX_NUM_ROWS=MAX_NUM_ROWS,
+        SCHEMA=schema, QUESTION=question
     )
 
     response = llm_client.models.generate_content(
@@ -161,7 +160,7 @@ sample rows):
     if sql:
         sql = sql.replace("```sql", "").replace("```", "").strip()
 
-    print("\n sql:", sql)
+    logger.debug("sql: %s", sql)
 
     tool_context.state["sql_query"] = sql
 
@@ -231,9 +230,9 @@ def run_alloydb_query(
         return sql_string
 
 
-    logging.info("Executing SQL: %s", sql_string)
+    logger.debug("Executing SQL: %s", sql_string)
     sql_string = cleanup_sql(sql_string)
-    logging.info("Validating SQL (after cleanup): %s", sql_string)
+    logger.debug("Validating SQL (after cleanup): %s", sql_string)
 
     final_result = {"query_result": "", "error_message": ""}
 
@@ -249,9 +248,9 @@ def run_alloydb_query(
 
     try:
         execute_sql_tool = get_toolbox_client().load_tool("execute_sql")
-        logging.info("Sending SQL query: %s", sql_string)
+        logger.debug("Sending SQL query: %s", sql_string)
         results = execute_sql_tool(sql_string)
-        logging.info("Received results: %s", results)
+        logger.debug("Received results: %s", results)
 
         if results:  # Check if query returned data
             final_result["query_result"] = results
@@ -268,6 +267,6 @@ def run_alloydb_query(
     ) as e:
         final_result["error_message"] = f"Query error: {e}"
 
-    print("\n run_alloydb_query final_result: \n", final_result)
+    logger.debug("run_alloydb_query final_result: %s", final_result)
 
     return final_result

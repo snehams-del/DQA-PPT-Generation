@@ -19,12 +19,13 @@
 """
 import base64
 import json
+import logging
 import os
 from datetime import date
 
 from google.adk.agents import LlmAgent
 from google.adk.agents.callback_context import CallbackContext
-from google.adk.tools import load_artifacts
+#from google.adk.tools import load_artifacts
 from google.genai import types
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import \
@@ -70,6 +71,11 @@ trace.set_tracer_provider(tracer_provider)
 
 date_today = date.today()
 
+# Set up logging
+# Note this level can be overridden by adk web on the command line;
+# e.g. running `adk web --log_level DEBUG` or `adk web -v`
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def init_database_settings(callback_context: CallbackContext):
     """Initialize database settings on first use."""
@@ -97,17 +103,33 @@ def init_database_settings(callback_context: CallbackContext):
         return_instructions_root()
         + f"""
 
-<SCHEMA DEFINITIONS>
+<DATASET DEFINITIONS>
 <BIGQUERY>
+<DESCRIPTION>
+This data warehouse is used to analyze everything to run the business better.
+It contains historical data from the AlloyDB database, enriched with other
+large-scale datasets. The data is somewhat denormalized (flattened) into wide
+tables to make querying faster and simpler.
+For multi-year data, it includes data for the year 2024-2025.
+</DESCRIPTION>
+<SCHEMA>
 --------- The BigQuery schema of the relevant database with a few sample rows. ---------
 {bq_schema}
-
+</SCHEMA>
 </BIGQUERY>
 
 <ALLOYDB>
+<DESCRIPTION>
+This database runs the airline's booking engine and flight management system. It
+needs to be fast, reliable, and consistent for tasks like selling a ticket,
+assigning a seat, or updating a flight's status.
+The schema is normalized to ensure data integrity and avoid redundancy.
+It only includes data from the year 2025.
+</DESCRIPTION>
+<SCHEMA>
 --------- The AlloyDB schema of the relevant database. ---------
 {alloydb_schema}
-
+</SCHEMA>
 </ALLOYDB>
 
 <CROSS_DATASET_RELATIONS>
@@ -136,7 +158,7 @@ root_agent = LlmAgent(
         call_bigquery_agent,
         call_alloydb_agent,
         call_analytics_agent,
-        load_artifacts,
+        #load_artifacts,
     ],
     before_agent_callback=init_database_settings,
     generate_content_config=types.GenerateContentConfig(temperature=0.01),
