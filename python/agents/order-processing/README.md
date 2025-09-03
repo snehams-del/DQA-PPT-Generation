@@ -122,6 +122,8 @@ Then select the `order-processing` from the dropdown.
 Create a service account and assign it `Vertex AI User` and `Application Integration Invoker` roles
 
 ```bash
+PROJECT_ID=<project_id>
+
 gcloud iam service-accounts create "adk-order-processing" --project "$PROJECT_ID"
 
 gcloud projects add-iam-policy-binding "$PROJECT_ID" \
