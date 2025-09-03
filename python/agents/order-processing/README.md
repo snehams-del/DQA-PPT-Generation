@@ -71,7 +71,7 @@ The assets and additional prerequisite instructions are available in the Applica
 
 If you already have Application Integration and Integration Connectors provisioned in your project, you can simply deploy the assets by following the quickstart below.
 
-### Quickstart: Deploy the API assets using Cloud Shell
+### Quickstart: Deploy the Application Integration assets using Cloud Shell
 
 Follow the instructions in this GCP Cloud Shell tutorial.
 
