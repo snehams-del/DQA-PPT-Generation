@@ -27,6 +27,7 @@ To learn more, check out the [ADK Documentation](https://google.github.io/adk-do
 │   │   ├── brand-search-optimization
 │   │   ├── camel
 │   │   ├── customer-service
+│   │   ├── data-engineering
 │   │   ├── data-science
 │   │   ├── financial-advisor
 │   │   ├── fomc-research
