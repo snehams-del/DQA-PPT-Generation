@@ -333,7 +333,7 @@ user_input = "Double check this: Earth is further away from the Sun than Mars."
 agent_engine = agent_engines.get(agent_engine_id)
 session = agent_engine.create_session(user_id="new_user")
 for event in agent_engine.stream_query(
-    user_id=session["user_id"], session_id=session["id"], message=user_input
+    user_id=session["userId"], session_id=session["id"], message=user_input
 ):
     for part in event["content"]["parts"]:
         print(part["text"])
