@@ -14,7 +14,7 @@ This agent sample showcases the art of the possible using the ADK and [Applicati
 |---|---|
 |   Interaction Type |   Conversational |
 |   Complexity |   Easy |
-|   Agent Type |   Multi Agent |
+|   Agent Type |   Single Agent |
 |   Components |   Tools, ApplicationIntegrationToolset |
 |   Vertical |   Order Management |
 

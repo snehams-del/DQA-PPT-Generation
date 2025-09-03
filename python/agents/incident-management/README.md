@@ -10,7 +10,7 @@ This agent sample showcases the utilization of dynamic identity propagation with
 |---|---|
 |   Interaction Type |   Conversational |
 |   Complexity |   Easy |
-|   Agent Type |   Multi Agent |
+|   Agent Type |   Single Agent |
 |   Components |   Tools, ApplicationIntegrationToolset |
 |   Vertical |   Customer Support |
 
