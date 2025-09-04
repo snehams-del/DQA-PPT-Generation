@@ -4,6 +4,15 @@
 
 The Google Trends Agent is an AI agent designed to surface the newest Google Trends in real-time. It can identify emerging topics, analyze their velocity, and provide insights into what is currently capturing the world's attention. This is useful for content creators, marketers, and analysts who need to stay ahead of the curve. For example, a marketer could use this agent as part of their workflow to design a marketing campaign based on a trend in a specific region or city that relates to the product or service they promote.
 
+## Disclaimer
+
+This agent has several important limitations to be aware of:
+
+- **Dataset Constraints**: The agent can only access data that exists in the [public Google Trends BigQuery dataset](https://support.google.com/trends/answer/12764470?hl=en), which contains only the top trending terms by region and time period.
+- **No Open-ended Searches**: You cannot ask for trends on specific topics (e.g., "trending terms about AI agents") if they aren't already ranked as top terms in the dataset.
+- **Regional Limitations**: Only regions included in the BigQuery dataset are available.
+
+
 ## Agent Architecture
 
 This diagram shows the detailed architecture of the agents and tools used to implement this workflow.
@@ -22,7 +31,7 @@ This agent is a sequential agent composed of two sub-agents that work together t
 | **Vertical** | Marketing & Analytics |
 
 -   **Core Logic:** The agent's main logic is defined in `google_trends_agent/agent.py`.
--   **Tools:** It utilizes tools to query the public [Google Trends dataset on BigQuery](https://cloud.google.com/bigquery/public-data/google-trends) to fetch trending data.
+-   **Tools:** It utilizes tools to query the public [Google Trends dataset on BigQuery](https://support.google.com/trends/answer/12764470?hl=en) to fetch trending data. You can explore querying the [Google Trends dataset](https://console.cloud.google.com/marketplace/product/bigquery-public-datasets/google-search-trends) in Google Cloud Console.
 -   **Dependencies:** Key dependencies include `google-cloud-aiplatform` for the ADK and agent engine deployment, `google-cloud-bigquery` and `pandas` for data handling.
 
 ## Setup and Installation
@@ -166,6 +175,7 @@ The top terms in Canada for the week of 2025-07-13 are:
 6.  blake wheeler
 7.  france vs germany
 8.  усик дюбуа
+
 
 ## Customization
 
