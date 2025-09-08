@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Test deployment of Pre-Auth-AI-Agent to Agent Engine."""
+"""Test deployment of Medical-Pre-Authorization-AI-Agent to Agent Engine."""
 
 import os
 

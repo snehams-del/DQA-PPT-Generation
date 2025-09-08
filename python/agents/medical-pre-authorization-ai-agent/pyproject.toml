@@ -1,5 +1,5 @@
 [project]
-name = "pre-auth-ai-agent"
+name = "medical-pre-authorization-ai-agent"
 version = "0.1.0"
 description = ""
 authors = [

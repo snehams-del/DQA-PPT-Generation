@@ -1,9 +1,9 @@
-# Pre-Auth-AI-Agent
+# Medical-Pre-Authorization-AI-Agent
 
 
 ## Overview
 
-The Pre-Auth AI Agent is an intelligent, automated workflow designed to streamline the medical pre-authorization process on Google Cloud. It leverages a multi-agent system to efficiently process a patient's request, from initial document submission to final report generation.
+The Medical Pre-Authorization AI Agent is an intelligent, automated workflow designed to streamline the medical pre-authorization process on Google Cloud. It leverages a multi-agent system to efficiently process a patient's request, from initial document submission to final report generation.
 
 ## How It Works
 The workflow is orchestrated by a primary Insurance Agent, built with Vertex AI Agent Builder and the ADK framework, which manages the end-to-end logic.
@@ -40,7 +40,7 @@ The key features of the Pre Auth AI Agent include:
 
 This diagram shows the detailed architecture of the agents and tools used
 to implement this workflow.
-<img src="pre-auth-ai-agent-architrecture.png" alt="Pre-Authurization Agent" width="800"/>
+<img src="pre-auth-ai-agent-architrecture.png" alt="Medical Pre-Authurization Agent" width="800"/>
 
 ## Setup and Installation
 
@@ -132,7 +132,7 @@ Hello! I'm a pre-authorization agent. I can help you process pre-authorization r
 
 ### Example Interaction
 
-Below is an example interaction with the Pre-Auth AI Agent. 
+Below is an example interaction with the Medical Pre-Authorization AI Agent. 
 
 ```
 User: Hello, how can you help me?
@@ -195,7 +195,7 @@ that the agent's responses match a pre-defined response reasonably well.
 
 ## Deployment
 
-The Pre-Auth AI Agent can be deployed to Vertex AI Agent Engine using the following
+The Medical Pre-Authorization AI Agent can be deployed to Vertex AI Agent Engine using the following
 commands:
 
 ```bash

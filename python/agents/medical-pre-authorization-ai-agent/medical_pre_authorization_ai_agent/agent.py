@@ -23,7 +23,7 @@ from .prompt import return_root_agent_instruction
 root_agent = Agent(
    model='gemini-2.5-flash',
    name='root_agent',
-   description=("As a pre-authorization agent, you process user pre-auth request for a treatment."),
+   description=("As a medical pre-authorization agent, you process user pre-auth request for a treatment."),
 
    instruction= return_root_agent_instruction(),
 
