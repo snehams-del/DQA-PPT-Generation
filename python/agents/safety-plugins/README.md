@@ -88,38 +88,25 @@ If the API identifies any content violations based on the configured Model Armor
         gcloud auth application-default login
         gcloud auth application-default set-quota-project $GOOGLE_CLOUD_PROJECT
         ```
-	* Please edit the environment variables in `main.py`.
-      ```python
-      os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "1"
-      os.environ["GOOGLE_CLOUD_PROJECT"] = "YOUR_PROJECT_ID_HERE"
-      os.environ["GOOGLE_CLOUD_LOCATION"] = "us-central1"
-      os.environ["GOOGLE_API_KEY"] = "YOUR_VALUE_HERE"
-      os.environ["MODEL_ARMOR_TEMPLATE_ID"] = "YOUR_TEMPLATE_ID_HERE"
-      ```
+
+	* Edit the environment variables in a local `.env` file in the `/safety_plugins` directory. Please refer to `.env.example` to define the required environment variables.
 
 ## Running the Agent
-
-**To use the plugins, please comment the code in `main.py`**
-```python
- runner = InMemoryRunner(
-    agent=root_agent,
-    app_name=APP_NAME,
-    plugins=[
-        # LlmAsAJudge(),
-        # ModelArmorSafetyFilter(
-        #     project_id="YOUR_PROJECT_ID_HERE",
-        #     location_id="us-central1",
-        #     template_id="YOUR_TEMPLATE_ID_HERE",
-        # ),
-    ],
-    )
-```
 
 Navigate to the agent's directory and run the main file as a python module with
 ```bash
 # Navigate to correct directory.
 cd adk-samples/python/agents/safety-plugins
-# Run the agent as a module.
+```
+
+To activate the plugins, use the `--plugin` flag. Optionals include `llm_judge` to activate the `LlmAsAJudge` safety plugin, `model_armor` to activate the `ModelArmorSafetyFilter` plugin, and `none` (default) to leave all safety filters off.
+
+```bash
+# LlmAsAJudge
+python3 -m safety_plugins.main --plugin llm_judge
+# Model Armor
+python3 -m safety_plugins.main --plugin model_armor
+# No safety filter.
 python3 -m safety_plugins.main
 ```
 
