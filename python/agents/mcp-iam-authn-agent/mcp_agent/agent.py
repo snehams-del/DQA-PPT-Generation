@@ -1,3 +1,17 @@
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from google.adk.agents.llm_agent import Agent
 from google.adk.tools.mcp_tool.mcp_toolset import MCPToolset
 from google.adk.tools.mcp_tool.mcp_session_manager import StreamableHTTPConnectionParams
@@ -40,17 +54,14 @@ logging_level = os.environ.get("LOGGING_LEVEL", "INFO").upper()
 logging.basicConfig(level=logging_level, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Making sure that there is always a valid token present
-# most optimized because the agent is called once per user interaction
+# Most optimized because the agent is called once per user interaction
 # as opposed to a tool or an LLM call based callback.
 def before_agent_cb(callback_context: CallbackContext) -> Optional[types.Content]:
-    # print(f"before_agent_cb => {callback_context.__dict__}")
-    # print(f"before_agent_cb _invocation_context => {callback_context._invocation_context.__dict__}")
     # We have only one tool set otherwise you can iterate.
     mcp_toolset = callback_context._invocation_context.agent.tools[0]
     if mcp_toolset._tool_set_name not in toolset_cache:
         toolset_cache[mcp_toolset._tool_set_name] = {}
     
-    #print(f"toolset_cache => {toolset_cache[mcp_toolset._tool_set_name]}")
     # The following means the token was never added to the toolset
     # The headers reset every time so cannot check for headers.
     if "token_expiration_time" not in toolset_cache[mcp_toolset._tool_set_name]:
@@ -58,8 +69,6 @@ def before_agent_cb(callback_context: CallbackContext) -> Optional[types.Content
         mcp_toolset._connection_params.headers = {}
         id_token = get_id_token(os.environ.get("MCP_AUDIENCE","http://localhost:8080"))
         mcp_toolset._connection_params.headers['X-Serverless-Authorization'] = f"Bearer {id_token}"
-        # print(f"printing id_token => {id_token}")
-        # logging.info(f"id_token => {id_token}")
         logging.debug(f"id_token => {id_token}")
         decoded_payload = jwt.decode(id_token, options={"verify_signature": False})
         logging.debug("Decoded Token:", decoded_payload)            
@@ -67,10 +76,10 @@ def before_agent_cb(callback_context: CallbackContext) -> Optional[types.Content
         toolset_cache[mcp_toolset._tool_set_name]["token_expiration_time"] = decoded_payload['exp']          
     else:
         # header is present but the token might be expired or about to expire within the next 15 minutes.
-        time_after_15_minutes = int(time.time()) + 15*60
-        logging.debug(f"Token expires at {toolset_cache[mcp_toolset._tool_set_name]['token_expiration_time']}, Time after 15 minutes = {time_after_15_minutes}")
+        time_after_threshold_minutes = int(time.time()) + int(os.environ.get("TOKEN_REFRESH_THRESHOLD_MINS","15"))*60
+        logging.debug(f"Token expires at {toolset_cache[mcp_toolset._tool_set_name]['token_expiration_time']}, Time after 15 minutes = {time_after_threshold_minutes}")
         # instead of decoding the token everytime - we are using the stored value to optimize
-        if time_after_15_minutes >= toolset_cache[mcp_toolset._tool_set_name]['token_expiration_time']:
+        if time_after_threshold_minutes >= toolset_cache[mcp_toolset._tool_set_name]['token_expiration_time']:
             logging.info(f"Getting a new token and updating the cache")
             id_token = get_id_token(os.environ.get("MCP_AUDIENCE","http://localhost:8080"))
             mcp_toolset._connection_params.headers = {}
@@ -80,7 +89,6 @@ def before_agent_cb(callback_context: CallbackContext) -> Optional[types.Content
             toolset_cache[mcp_toolset._tool_set_name]["prev_used_token"] = f"Bearer {id_token}"      
             toolset_cache[mcp_toolset._tool_set_name]["token_expiration_time"] = decoded_payload['exp']  
         else:
-            # print(f"Using a valid old token => {toolset_cache[mcp_toolset._tool_set_name]["prev_used_token"]}")
             logging.error("Using a valid old token")
             mcp_toolset._connection_params.headers = {}
             mcp_toolset._connection_params.headers['X-Serverless-Authorization'] = toolset_cache[mcp_toolset._tool_set_name]["prev_used_token"] 

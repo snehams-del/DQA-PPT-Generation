@@ -1,11 +1,15 @@
 ## No Code MCP Agent for any MCP server (Runs on Agentspace and Cloud Run).
 
-This is a prebuilt agent with the following features to operationalize your MCP servers within minutes and with security, access control and other features - 
+This is a prebuilt agent to operationalize your MCP servers within minutes and with security, access control and other features - 
 
 1. Connect to any MCP server running behind IAM authentication.
 2. Run the agent locally (for testing)
 3. Deploy the agent on [Vertex AI Agent Engine](https://cloud.google.com/vertex-ai/generative-ai/docs/agent-engine/overview) and Register and use on [Google Agentspace](https://cloud.google.com/products/agentspace).
 4. Deploy and run the agent on [Cloud Run](https://cloud.google.com/run) alongside your MCP Server
+
+Here's the salient architecture of the solution
+
+![alt](mcp-agent-wo-mktplace.svg)
 
 ### Introduction
 MCP servers on their own cannot be used without an agent. 
@@ -34,24 +38,24 @@ This No Code MCP Agent solves that!
 
 With No Code MCP Agent - 
 
-1. Customer deploy their MCP server on cloud run
-2. Protect the access with IAM Authentication
+1. Customer deploy their MCP server on Cloud Run as a service
+2. Protect the access with IAM Authentication.
 3. Clone this repository, install dependencies and
-    1. Run `./adk_agent_operations.sh local_run` - To Test a prebuilt agent locally
+    1. Run `./adk_agent_operations.sh local_run` - To test the prebuilt agent locally
     2. Run `./adk_agent_operations.sh agent_engine_deploy` - To deploy on Agent Engine
-    3. Run `./adk_agent_operations.sh agentspace_register` - To register the agent in Agentspace
+    3. Run `./adk_agent_operations.sh agentspace_register` - To register the Agent in Agentspace
     4. (Optionally) with `./adk_agent_operations.sh cloudrun_deploy` They can also deploy this agent on Cloud Run alongside their MCP server in case Agentspace is not part of their deployment roadmap.
 
 And that's it!
 
-They can start using their MCP server as a tool from Agentspace.
+They can start using their MCP server as a tool from Agentspace (Or optionally from Cloud Run, check below for more).
 
-### Detailed Instructions
+### Detailed Instructions (Avg. time required ~ 15 minutes)
 
 #### Prerequsites
 
 1. Your MCP server should be running with Streamable HTTP transport in Cloud run (We have provided a sample MCP server in case your MCP server is not ready yet).
-2. Make sure that it is protected with IAM authentication
+2. Make sure that it is protected with [IAM Authentication](https://cloud.google.com/run/docs/securing/managing-access)
 3. Clone this repository and install dependencies
 
 
@@ -93,31 +97,35 @@ If you just want to test using a sample MCP server that comes with this reposito
 ```bash
 
 cd sample_mcp_server/
-gcloud run deploy weather-mcp-service --region us-central1  --source .
+
+# Change region accordingly
+gcloud run deploy weather-mcp-service --region <YOUR-REGION>  --source .
 
 # Say N on allow unauthenticated invocations question.
 
 ```
 
-Create a service account and download the service account key for that account from IAM.
+Create a service account and download the service account key for that account from IAM. 
 
 Then goto the deployed service and select it. Go to permissions (right hand top corner). Add the service account created earlier with "Cloud Run Invoker" role.
 
+### Status Check
 
-At this point you have
+At this point you must have
 
 1. Repository set up
 2. Either the sample MCP server or your actual MCP server running in Cloud Run behind IAM Authentication.
 3. Make sure you have updated the environment variables in `SECTION - 1` in `mcp_agent/.env` file using your favorite editor.
 
-#### Local run
+### Local run
 
 🪧 **NOTE:**
-> This is optional but recommended to so as to test the agent locally once.
+> This is optional but recommended to so as to test the agent locally once. 
 
 Run the following command, in case you are missing the required environment variables, the script will prompt for you to update them (Check sample output 1). Else the agent should run locally (Check sample output 2).
 
 ```bash
+# Provide the service account key filename as `GOOGLE_APPLICATION_CREDENTIALS` in the env file (again this is only for local agent run).
 
 ./adk_agent_operations.sh local_run
 
@@ -184,10 +192,12 @@ INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
 ```
 </details>
 
+<br>
+
 Now test your agent locally on https://localhost:8000
 
 
-#### Agent engine deployment and Agentspace registration
+### Agent Engine deployment and Agentspace registration
 
 
 1. Create a Global Agentspace application and note down the application name.
@@ -212,7 +222,7 @@ Run the following commands
 Access your Agentspace application, Go to Integration, Copy and open "The link to your web app", open in new tab and goto Agents and access your agent.
 
 
-#### Running the prebuilt agent in Cloud Run (For Non Agentspace customers).
+### Running the prebuilt agent in Cloud Run (For Non Agentspace customers).
 
 If Agentspace is not where you / your customers want the agent to run, they can also run the Agent alongside the MCP server in Cloud Run itself.
 
@@ -261,12 +271,18 @@ Not only does this agent provide no code operationalization of your MCP server, 
 
 
 ### Conclusion
-🪧 **NOTE:**
-[Google Cloud Marketplace](https://console.cloud.google.com/marketplace) can now list your MCP servers. You can fill [this form](https://docs.google.com/forms/d/e/1FAIpQLSesllyRR-HvLFZthYA8Cv4nQRUTOthHGgs-76DY9o2IntUL3A/viewform) and get started with listing your MCP server there. This provides discoverability to your MCP server to your Google Cloud Customers. And then they can operationlize your MCP server within minutes using the no code Agent provided here.
 
-The prebuilt agent helps operationalize the MCP Server within minutes with only configuration changes. We have following the [following roadmap](#roadmap). Do let us know about your comments and watch this space for more updates.
+The prebuilt agent helps operationalize the MCP Server within minutes with only configuration changes. We have following the [following roadmap](#roadmap). Do let us know about your comments and watch this repository for more updates.
 
 #### Roadmap
 
-1. End to end authentication (Agentspace to Agent Engine to MCP to Underlying application)
-2. Accomodating multiple MCP servers
+1. Accomodating multiple MCP servers
+
+🪧 **NOTE:**
+
+[Google Cloud Marketplace](https://console.cloud.google.com/marketplace) can now list your MCP servers. You can fill [this form](https://docs.google.com/forms/d/e/1FAIpQLSesllyRR-HvLFZthYA8Cv4nQRUTOthHGgs-76DY9o2IntUL3A/viewform) and get started with listing your MCP server there. This provides discoverability to your MCP server to your Google Cloud Customers. And then they can operationlize your MCP server within minutes using the no code Agent provided here. This provides both the discovery and deployment for your MCP server to your customers.
+
+![alt](mcp-agent-with-mktplace.svg)
+
+
+
