@@ -17,7 +17,7 @@ import os
 import vertexai
 from absl import app, flags
 from dotenv import load_dotenv
-from medical_pre_authorization_ai_agent.agent import root_agent
+from medical_pre_authorization.agent import root_agent
 from vertexai import agent_engines
 from vertexai.preview.reasoning_engines import AdkApp
 
@@ -50,7 +50,7 @@ def create() -> None:
             "google-cloud-storage (>=2.19.0)",
             "pymupdf (>=1.26.4,<2.0.0)",
         ],
-        extra_packages=["./pre_auth_ai_agent"],
+        extra_packages=["./medical_pre_authorization"],
     )
     print(f"Created remote agent: {remote_agent.resource_name}")
 

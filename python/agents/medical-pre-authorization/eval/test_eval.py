@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Basic evalualtion for Pre-Auth-AI-Agent"""
+"""Basic evalualtion for Medical Pre-Authorization Agent."""
 
 import pathlib
 

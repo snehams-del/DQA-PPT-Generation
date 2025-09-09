@@ -3,7 +3,7 @@
 
 ## Overview
 
-The Medical Pre-Authorization AI Agent is an intelligent, automated workflow designed to streamline the medical pre-authorization process on Google Cloud. It leverages a multi-agent system to efficiently process a patient's request, from initial document submission to final report generation.
+The Medical Pre-Authorization Agent is an intelligent, automated workflow designed to streamline the medical pre-authorization process on Google Cloud. It leverages a multi-agent system to efficiently process a patient's request, from initial document submission to final report generation.
 
 ## How It Works
 The workflow is orchestrated by a primary Insurance Agent, built with Vertex AI Agent Builder and the ADK framework, which manages the end-to-end logic.
@@ -25,7 +25,7 @@ This automated solution transforms the complex pre-authorization process, levera
 
 ## Agent Details
 
-The key features of the Pre Auth AI Agent include:
+The key features of the Medical Pre-Authorization Agent include:
 
 | Feature | Description |
 | --- | --- |
@@ -66,7 +66,7 @@ to implement this workflow.
     ```bash
     # Clone this repository.
     git clone https://github.com/google/adk-samples.git
-    cd adk-samples/python/agents/pre-auth-ai-agent
+    cd adk-samples/python/agents/medical-pre-authorization
     # Install the package and dependencies.
     # Note for Linux users: If you get an error related to `keyring` during the installation, you can disable it by running the following command:
     # poetry config keyring.enabled false
@@ -104,7 +104,7 @@ ADK provides convenient ways to bring up agents locally and interact with them.
 You may talk to the agent using the CLI:
 
 ```bash
-adk run pre_auth_ai_agent
+adk run medical_pre_authorization
 ```
 
 Or on a web interface:
@@ -114,9 +114,9 @@ Or on a web interface:
 ```
 
 The command `adk web` will start a web server on your machine and print the URL.
-You may open the URL, select "pre_auth_ai_agent" in the top-left drop-down menu, and
+You may open the URL, select "medical_pre_authorization" in the top-left drop-down menu, and
 a chatbot interface will appear on the right. The conversation is initially
-blank. Here are some example requests you may ask the Pre-Auth AI Agent to verify:
+blank. Here are some example requests you may ask the Medical Pre-Authorization Agent to verify:
 
 ```
 Hello, who are you?
@@ -132,7 +132,7 @@ Hello! I'm a pre-authorization agent. I can help you process pre-authorization r
 
 ### Example Interaction
 
-Below is an example interaction with the Medical Pre-Authorization AI Agent. 
+Below is an example interaction with the Medical Pre-Authorization Agent. 
 
 ```
 User: Hello, how can you help me?
@@ -179,7 +179,7 @@ For running tests and evaluation, install the extra dependencies:
 poetry install --with dev
 ```
 
-Then the tests and evaluation can be run from the `pre-auth-ai-agent` directory using
+Then the tests and evaluation can be run from the `medical-pre-authorization` directory using
 the `pytest` module:
 
 ```bash
@@ -220,7 +220,7 @@ The output will be like:
 ```
 All remote agents:
 
-123456789 ("pre_auth_ai_agent")
+123456789 ("medical_pre_authorization")
 - Create time: 2025-05-12 12:35:34.245431+00:00
 - Update time: 2025-05-12 12:36:01.421432+00:00
 ```

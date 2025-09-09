@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Test cases for the Pre-Auth AI Agent"""
+"""Test cases for the Medical Pre-Auth Agent"""
 
 import textwrap
 
 import dotenv
 import pytest
-from pre_auth_ai_agent.agent import root_agent
+from medical_pre_authorization.agent import root_agent
 from google.adk.runners import InMemoryRunner
 from google.genai.types import Part, UserContent
 
