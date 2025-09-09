@@ -109,34 +109,6 @@ adk web
 ```
 Then select the `incident-management` from the dropdown.
 
-## Deploying the Agent Remotely
-
-### To Agent Engine
-
-NOTE: Modify your ServiceNow application `Redirect URL` to point to https://vertexaisearch.cloud.google.com/oauth-redirect
-
-The agent can also be deployed to [Vertex AI Agent Engine](https://cloud.google.com/vertex-ai/generative-ai/docs/agent-engine/overview) using the following
-commands:
-
-```bash
-poetry install --with deployment
-python3 deployment/deploy.py
-```
-
-When the deployment finishes, it will output the resource ID of the remote agent deployment, for example:
-```
-Created remote agent: projects/<PROJECT_NUMBER>/locations/<PROJECT_LOCATION>/reasoningEngines/<AGENT_ENGINE_ID>
-```
-
-For more information on deploying to Agent Engine, see [here](https://google.github.io/adk-docs/deploy/agent-engine/#install-vertex-ai-sdk).
-
-The deployment script adds the `AGENT_ENGINE_ID` to your `.env` file. To test the remote agent, simply run:
-```bash
-python3 deployment/test_deployment.py
-```
-
-You may then interact with the deployed agent from the shell. You can type `quit` at any point to exit.
-
 ## Example Interaction
 
 Here's a quick example of how a user might interact with the agent:
