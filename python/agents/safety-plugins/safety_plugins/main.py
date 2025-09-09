@@ -22,6 +22,9 @@ from google.adk import runners
 from google.adk.agents import llm_agent
 from google.genai import types
 
+# Load environment variables before loading the plugins.
+load_dotenv()
+
 from .plugins import agent_as_a_judge, model_armor
 from . import tools
 from . import prompts
@@ -33,7 +36,6 @@ LlmAsAJudge = agent_as_a_judge.LlmAsAJudge
 ModelArmorSafetyFilter = model_armor.ModelArmorSafetyFilterPlugin
 InMemoryRunner = runners.InMemoryRunner
 
-load_dotenv()
 
 USER_ID = "user"
 APP_NAME = "test_app_with_plugin"
