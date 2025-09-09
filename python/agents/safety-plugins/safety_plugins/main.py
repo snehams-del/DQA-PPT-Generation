@@ -15,9 +15,9 @@
 """Main file for the Guardian agent."""
 
 import asyncio
-import os
+from dotenv import load_dotenv
 
-from absl import app
+from absl import app, flags
 from google.adk import runners
 from google.adk.agents import llm_agent
 from google.genai import types
@@ -33,12 +33,7 @@ LlmAsAJudge = agent_as_a_judge.LlmAsAJudge
 ModelArmorSafetyFilter = model_armor.ModelArmorSafetyFilterPlugin
 InMemoryRunner = runners.InMemoryRunner
 
-
-os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "1"
-os.environ["GOOGLE_CLOUD_PROJECT"] = "YOUR_PROJECT_ID_HERE"
-os.environ["GOOGLE_CLOUD_LOCATION"] = "us-central1"
-os.environ["GOOGLE_API_KEY"] = "YOUR_VALUE_HERE"
-os.environ["MODEL_ARMOR_TEMPLATE_ID"] = "YOUR_TEMPLATE_ID_HERE"
+load_dotenv()
 
 USER_ID = "user"
 APP_NAME = "test_app_with_plugin"
@@ -59,21 +54,36 @@ root_agent = Agent(
     sub_agents=[sub_agent],
 )
 
+# Define the command-line flag using absl.flags.
+FLAGS = flags.FLAGS
+flags.DEFINE_enum(
+    "plugin",
+    "none",
+    ["llm_judge", "model_armor", "none"],
+    "Specify the safety plugin to enable.",
+)
+
 
 async def main():
     """Runs a multiturn conversation with the agent and the attached plugin."""
+    # You can now access the flag's value via FLAGS.plugin.
+    plugin_name = FLAGS.plugin
 
+    plugins = []
+    if plugin_name == "llm_judge":
+        plugins.append(LlmAsAJudge())
+        print("Using LlmAsAJudge plugin.")
+    elif plugin_name == "model_armor":
+        plugins.append(ModelArmorSafetyFilter())
+        print("Using ModelArmorSafetyFilter plugin.")
+    else:
+        print("No plugin activated.")
+
+    # Initialize plugins based on the command-line argument.
     runner = InMemoryRunner(
         agent=root_agent,
         app_name=APP_NAME,
-        plugins=[
-            # LlmAsAJudge(),
-            # ModelArmorSafetyFilter(
-            #     project_id="YOUR_PROJECT_ID_HERE",
-            #     location_id="us-central1",
-            #     template_id="YOUR_TEMPLATE_ID_HERE",
-            # ),
-        ],
+        plugins=plugins,
     )
     session = await runner.session_service.create_session(
         user_id=USER_ID,
