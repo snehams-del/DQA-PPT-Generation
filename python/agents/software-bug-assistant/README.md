@@ -522,7 +522,7 @@ gcloud run deploy toolbox \
     --service-account toolbox-identity \
     --region us-central1 \
     --set-secrets "/app/tools.yaml=tools:latest" \
-    --set-env-vars="PROJECT_ID=$PROJECT_ID,DB_USER=postgres,DB_PASS=admin" \
+    --set-env-vars="PROJECT_ID=$PROJECT_ID,DB_USER=${DB_USER},DB_PASS=${DB_PASS}" \
     --args="--tools-file=/app/tools.yaml","--address=0.0.0.0","--port=8080" \
     --allow-unauthenticated
 ```

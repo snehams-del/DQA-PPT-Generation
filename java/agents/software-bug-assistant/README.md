@@ -412,8 +412,8 @@ gcloud run deploy toolbox \
     --service-account toolbox-identity \
     --region us-central1 \
     --set-secrets "/app/tools.yaml=tools:latest" \
-    --args="--tools-file=/app/tools.yaml","--address=0.0.0.0","--port=8080"
-    --allow-unauthenticated 
+    --args="--tools-file=/app/tools.yaml","--address=0.0.0.0","--port=8080" \
+    --allow-unauthenticated
 ```
 
 Verify that the Toolbox is running by getting the Cloud Run logs: 
