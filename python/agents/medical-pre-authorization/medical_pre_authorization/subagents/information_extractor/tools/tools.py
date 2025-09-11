@@ -122,7 +122,7 @@ def extract_policy_information(policy_file: str, treatment_name: str) -> str:
     
 
     # Define the text part of the prompt
-    msg1_text1 = types.Part.from_text(text=f"""
+    prompt_text = types.Part.from_text(text=f"""
     You are an AI assistant specialized in analyzing insurance policy documents.
     Given the following insurance policy text, extract all details and clauses
     specifically related to the medical treatment named \"{treatment_name}"\.
@@ -139,7 +139,7 @@ def extract_policy_information(policy_file: str, treatment_name: str) -> str:
         types.Content(
             role="user",
             parts=[
-                msg1_text1
+                prompt_text
             ]
         ),
     ]
@@ -183,7 +183,7 @@ def extract_medical_details(medical_report_file: str, treatment_name: str) -> st
 
 
     # Define the text part of the prompt
-    msg1_text1 = types.Part.from_text(text="""You are an AI assistant specialized in analyzing medical reports. 
+    prompt_text = types.Part.from_text(text="""You are an AI assistant specialized in analyzing medical reports. 
     Given the following medical report txt, extract and summarize all relevant medical details specifically 
     related to the treatment named \"{treatment_name}\". Include information about diagnosis, treatment plans, 
     medications, procedures, and patient outcomes. If \"{treatment_name}\" is not explicitly mentioned or no
@@ -197,7 +197,7 @@ def extract_medical_details(medical_report_file: str, treatment_name: str) -> st
         types.Content(
             role="user",
             parts=[
-                msg1_text1
+                prompt_text
             ]
         ),
     ]

@@ -59,3 +59,4 @@ async def test_happy_path():
     # The answer in the input is wrong, so we expect the agent to provided a
     # revised answer, and the correct answer should mention research.
     assert "pre-authorization agent" in response.lower()
+    

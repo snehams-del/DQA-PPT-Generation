@@ -1,4 +1,4 @@
-# Medical-Pre-Authorization-AI-Agent
+# Medical-Pre-Authorization Agent
 
 
 ## Overview
@@ -46,14 +46,14 @@ to implement this workflow.
 
 1.  **Prerequisites**
 
-    *   Python 3.11+
-    *   Poetry
-        *   For dependency management and packaging. Please follow the
-            instructions on the official
-            [Poetry website](https://python-poetry.org/docs/) for installation.
+    *   Python 3.12
+    *   uv
+        *   An extremely fast Python package installer and resolver for 
+        dependency management. Please follow the instructions on the official 
+        [uv website](https://astral.sh/uv) for installation.
 
         ```bash
-        pip install poetry
+        pip install uv
         ```
 
     * A project on Google Cloud Platform
@@ -67,19 +67,19 @@ to implement this workflow.
     # Clone this repository.
     git clone https://github.com/google/adk-samples.git
     cd adk-samples/python/agents/medical-pre-authorization
-    # Install the package and dependencies.
-    # Note for Linux users: If you get an error related to `keyring` during the installation, you can disable it by running the following command:
-    # poetry config keyring.enabled false
-    # This is a one-time setup.
-    poetry install
+
+    # Create a virtual environment and sync dependencies.
+    uv venv
+    uv sync
     ```
 
 3.  **Configuration**
 
     *   Set up Google Cloud credentials.
 
-        *   You may set the following environment variables in your shell, or in
-            a `.env` file instead.
+        *   Copy the `.env.example` file to `.env` and fill in the required
+            environment variables. You may also set these environment
+            variables in your shell instead.
 
         ```bash
         export GOOGLE_GENAI_USE_VERTEXAI=true
@@ -121,7 +121,6 @@ blank. Here are some example requests you may ask the Medical Pre-Authorization 
 ```
 Hello, who are you?
 ```
-
 Sampled responses of these requrests are shown below in the [Example
 Interaction](#example-interaction) section.
 
@@ -199,8 +198,10 @@ The Medical Pre-Authorization AI Agent can be deployed to Vertex AI Agent Engine
 commands:
 
 ```bash
-poetry install --with deployment
-python3 deployment/deploy.py --create
+uv sync
+uv pip install -e ".[deployment]"
+
+uv run python deployment/deploy.py --create
 ```
 
 When the deployment finishes, it will print a line like this:

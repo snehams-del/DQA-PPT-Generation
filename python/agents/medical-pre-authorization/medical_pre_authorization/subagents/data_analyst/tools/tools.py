@@ -79,3 +79,4 @@ def store_pdf(pdf_text: str) -> str:
     finally:
         if pdf_buffer:
             pdf_buffer.close() 
+            

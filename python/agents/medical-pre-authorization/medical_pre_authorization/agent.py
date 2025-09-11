@@ -18,14 +18,15 @@ from google.adk.tools.agent_tool import AgentTool
 
 from .subagents.data_analyst import data_analyst
 from .subagents.information_extractor import information_extractor
-from .prompt import return_root_agent_instruction
+from .prompt import AGENT_INSTRUCTION
 
 root_agent = Agent(
    model='gemini-2.5-flash',
    name='root_agent',
-   description=("As a medical pre-authorization agent, you process user pre-auth request for a treatment."),
+   description="""As a medical pre-authorization agent, you process user 
+   pre-auth request for a treatment.""",
 
-   instruction= return_root_agent_instruction(),
+   instruction= AGENT_INSTRUCTION,
 
    generate_content_config=types.GenerateContentConfig(temperature=0.2),
 
