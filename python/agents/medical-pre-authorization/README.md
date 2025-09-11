@@ -121,7 +121,7 @@ blank. Here are some example requests you may ask the Medical Pre-Authorization 
 ```
 Hello, who are you?
 ```
-Sampled responses of these requrests are shown below in the [Example
+Sampled responses of these requests are shown below in the [Example
 Interaction](#example-interaction) section.
 
 ```
