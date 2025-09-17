@@ -225,9 +225,9 @@ All remote agents:
 
 You may interact with the deployed agent using the `test_deployment.py` script
 ```bash
-$ export USER_ID=<any string>
-$ export AGENT_ENGINE_ID=<AGENT_ENGINE_ID>
-$ uv run python3 deployment/test_deployment.py --resource_id=${AGENT_ENGINE_ID} --user_id=${USER_ID}
+export USER_ID=<any string>
+export AGENT_ENGINE_ID=<AGENT_ENGINE_ID>
+uv run --extra deployment deployment/test_deployment.py --resource_id=${AGENT_ENGINE_ID} --user_id=${USER_ID}
 Found agent with resource ID: ...
 Created session for user ID: ...
 Type 'quit' to exit.
