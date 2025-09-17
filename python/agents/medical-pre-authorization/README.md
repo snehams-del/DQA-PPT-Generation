@@ -50,11 +50,7 @@ to implement this workflow.
     *   uv
         *   An extremely fast Python package installer and resolver for 
         dependency management. Please follow the instructions on the official 
-        [uv website](https://astral.sh/uv) for installation.
-
-        ```bash
-        pip install uv
-        ```
+        [uv website](https://docs.astral.sh/uv/getting-started/installation/) for installation.
 
     * A project on Google Cloud Platform
     * Google Cloud CLI
@@ -67,6 +63,10 @@ to implement this workflow.
     # Clone this repository.
     git clone https://github.com/google/adk-samples.git
     cd adk-samples/python/agents/medical-pre-authorization
+
+    # Verify if uv is installed correctly
+    uv --version
+
 
     # Create a virtual environment and sync dependencies.
     uv venv
@@ -104,16 +104,16 @@ ADK provides convenient ways to bring up agents locally and interact with them.
 You may talk to the agent using the CLI:
 
 ```bash
-adk run medical_pre_authorization
+uv run adk run medical_pre_authorization
 ```
 
 Or on a web interface:
 
 ```bash
- adk web
+uv run adk web
 ```
 
-The command `adk web` will start a web server on your machine and print the URL.
+The command `uv run adk web` will start a web server on your machine and print the URL.
 You may open the URL, select "medical_pre_authorization" in the top-left drop-down menu, and
 a chatbot interface will appear on the right. The conversation is initially
 blank. Here are some example requests you may ask the Medical Pre-Authorization Agent to verify:
@@ -175,15 +175,15 @@ Agent: You're welcome! If you have any more questions or need assistance with fu
 For running tests and evaluation, install the extra dependencies:
 
 ```bash
-poetry install --with dev
+uv pip install -e .[dev]
 ```
 
 Then the tests and evaluation can be run from the `medical-pre-authorization` directory using
 the `pytest` module:
 
 ```bash
-python3 -m pytest tests
-python3 -m pytest eval
+uv run python3 -m pytest tests
+uv run python3 -m pytest eval
 ```
 
 `tests` runs the agent on a sample request, and makes sure that every component
@@ -198,10 +198,7 @@ The Medical Pre-Authorization AI Agent can be deployed to Vertex AI Agent Engine
 commands:
 
 ```bash
-uv sync
-uv pip install -e ".[deployment]"
-
-uv run python deployment/deploy.py --create
+uv run --extra deployment deployment/deploy.py --create
 ```
 
 When the deployment finishes, it will print a line like this:
@@ -213,7 +210,7 @@ Created remote agent: projects/<PROJECT_NUMBER>/locations/<PROJECT_LOCATION>/rea
 If you forgot the AGENT_ENGINE_ID, you can list existing agents using:
 
 ```bash
-python3 deployment/deploy.py --list
+uv run python3 deployment/deploy.py --list
 ```
 
 The output will be like:
@@ -229,7 +226,8 @@ All remote agents:
 You may interact with the deployed agent using the `test_deployment.py` script
 ```bash
 $ export USER_ID=<any string>
-$ python3 deployment/test_deployment.py --resource_id=${AGENT_ENGINE_ID} --user_id=${USER_ID}
+$ export AGENT_ENGINE_ID=<AGENT_ENGINE_ID>
+$ uv run python3 deployment/test_deployment.py --resource_id=${AGENT_ENGINE_ID} --user_id=${USER_ID}
 Found agent with resource ID: ...
 Created session for user ID: ...
 Type 'quit' to exit.
@@ -240,7 +238,7 @@ Response: Hello! I'm a pre-authorization agent. I can help you process pre-autho
 To delete the deployed agent, you may run the following command:
 
 ```bash
-python3 deployment/deploy.py --delete --resource_id=${AGENT_ENGINE_ID}
+uv run python3 deployment/deploy.py --delete --resource_id=${AGENT_ENGINE_ID}
 ```
 ## Disclaimer
 
