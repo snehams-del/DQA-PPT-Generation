@@ -1,34 +1,32 @@
 [project]
-name = "gemini-fullstack"
+name = "blogger-agent"
 version = "0.1.0"
-description = ""
-authors = [
-    {name = "Amit Dutta", email = "amitdutta@google.com"},
-    {name = "Deepak Moonat", email = "dmoonat@google.com"},
-    {name = "Elia Secchi", email = "eliasecchi@google.com"},
-    {name = "Erwin Huizenga", email = "erwinh@google.com"},
-    {name = "Lavi Nigam", email = "lavinigam@google.com"},
-]
+description = "AI-driven agent designed to facilitate the exploration of the blogger agent landscape"
+authors = [{ name = "Pier Paolo Ippolito", email = "pierippolito@google.com" }]
+license = "Apache-2.0"
+readme = "README.md"
 dependencies = [
-    "google-adk>=1.8.0",
+    "google-cloud-aiplatform[adk,agent-engines]>=1.93.0",
+    "google-genai>=1.9.0",
+    "pydantic>=2.10.6",
+    "python-dotenv>=1.0.1",
+    "google-adk>=1.0.0",
 ]
-
 requires-python = ">=3.10,<3.13"
 
 [dependency-groups]
 dev = [
     "pytest~=8.3.2",
     "pytest-asyncio~=0.23.7",
+    "google-adk[eval]>=1.0.0",
     "nest-asyncio>=1.6.0",
     "agent-starter-pack>=0.14.1",
 ]
-
-[project.optional-dependencies]
-
-jupyter = [
-    "jupyter~=1.0.0",
+deployment = [
+    "absl-py~=2.2.1",
 ]
 
+[project.optional-dependencies]
 lint = [
     "ruff>=0.4.6",
     "mypy~=1.15.0",
@@ -43,19 +41,19 @@ target-version = "py310"
 
 [tool.ruff.lint]
 select = [
-    "E",   # pycodestyle
-    "F",   # pyflakes
-    "W",   # pycodestyle warnings
-    "I",   # isort
-    "C",  # flake8-comprehensions
-    "B",   # flake8-bugbear
+    "E", # pycodestyle
+    "F", # pyflakes
+    "W", # pycodestyle warnings
+    "I", # isort
+    "C", # flake8-comprehensions
+    "B", # flake8-bugbear
     "UP", # pyupgrade
     "RUF", # ruff specific rules
 ]
 ignore = ["E501", "C901"] # ignore line too long, too complex
 
 [tool.ruff.lint.isort]
-known-first-party = ["app", "frontend"]
+known-first-party = ["blogger_agent"]
 
 [tool.mypy]
 disallow_untyped_calls = true
@@ -72,33 +70,25 @@ follow_imports = "silent"
 ignore_missing_imports = true
 explicit_package_bases = true
 disable_error_code = ["misc", "no-untyped-call", "no-any-return"]
-
 exclude = [".venv"]
 
 [tool.codespell]
 ignore-words-list = "rouge"
 skip = "./locust_env/*,uv.lock,.venv,./frontend,**/*.ipynb"
 
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-
 [tool.pytest.ini_options]
 pythonpath = "."
 asyncio_default_fixture_loop_scope = "function"
 
-[tool.hatch.build.targets.wheel]
-packages = ["app","frontend"]
+[build-system]
+requires = ["uv_build>=0.8.14,<0.9.0"]
+build-backend = "uv_build"
 
-# This configuration file is used by goo.gle/agent-starter-pack to power remote templating.
-# It defines the template's properties, settings, and deployment options.
+[tool.uv.build-backend]
+module-root = ""
+
 [tool.agent-starter-pack]
-base_template = "adk_base"
-description = "A production-ready fullstack research agent that uses Gemini to strategize, research, and synthesize comprehensive reports with human-in-the-loop collaboration"
-example_question = "A report on the latest Google I/O event"
+example_question = "Write an article about Nano Banana"
 
 [tool.agent-starter-pack.settings]
-deployment_targets = ["agent_engine", "cloud_run"]
-interactive_command = "dev"
+agent_directory = "blogger_agent"
