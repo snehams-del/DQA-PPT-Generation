@@ -210,7 +210,7 @@ Created remote agent: projects/<PROJECT_NUMBER>/locations/<PROJECT_LOCATION>/rea
 If you forgot the AGENT_ENGINE_ID, you can list existing agents using:
 
 ```bash
-uv run python3 deployment/deploy.py --list
+uv run --extra deployment deployment/deploy.py --list
 ```
 
 The output will be like:
