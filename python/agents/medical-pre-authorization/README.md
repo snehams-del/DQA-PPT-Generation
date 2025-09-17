@@ -67,7 +67,7 @@ to implement this workflow.
     # Verify if uv is installed correctly
     uv --version
 
-    #  Sync dependencies.
+    # Sync dependencies.
     uv sync
     ```
 
@@ -170,12 +170,6 @@ Agent: You're welcome! If you have any more questions or need assistance with fu
 
 ## Running Tests
 
-For running tests and evaluation, install the extra dependencies:
-
-```bash
-uv pip install -e .[dev]
-```
-
 Then the tests and evaluation can be run from the `medical-pre-authorization` directory using
 the `pytest` module:
 
@@ -226,6 +220,10 @@ You may interact with the deployed agent using the `test_deployment.py` script
 export USER_ID=<any string>
 export AGENT_ENGINE_ID=<AGENT_ENGINE_ID>
 uv run --extra deployment deployment/test_deployment.py --resource_id=${AGENT_ENGINE_ID} --user_id=${USER_ID}
+```
+
+The output will be like:
+```bash
 Found agent with resource ID: ...
 Created session for user ID: ...
 Type 'quit' to exit.
