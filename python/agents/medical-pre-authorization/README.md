@@ -67,9 +67,7 @@ to implement this workflow.
     # Verify if uv is installed correctly
     uv --version
 
-
-    # Create a virtual environment and sync dependencies.
-    uv venv
+    #  Sync dependencies.
     uv sync
     ```
 
