@@ -182,8 +182,8 @@ Then the tests and evaluation can be run from the `medical-pre-authorization` di
 the `pytest` module:
 
 ```bash
-uv run python3 -m pytest tests
-uv run python3 -m pytest eval
+uv run --extra dev pytest tests
+uv run --extra dev pytest eval
 ```
 
 `tests` runs the agent on a sample request, and makes sure that every component
