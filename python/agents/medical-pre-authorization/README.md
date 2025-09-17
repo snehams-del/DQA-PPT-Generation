@@ -238,7 +238,7 @@ Response: Hello! I'm a pre-authorization agent. I can help you process pre-autho
 To delete the deployed agent, you may run the following command:
 
 ```bash
-uv run python3 deployment/deploy.py --delete --resource_id=${AGENT_ENGINE_ID}
+uv run --extra deployment deployment/deploy.py --delete --resource_id=${AGENT_ENGINE_ID}
 ```
 ## Disclaimer
 
