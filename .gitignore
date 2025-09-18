@@ -139,6 +139,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+.env*
 
 # Spyder project settings
 .spyderproject
@@ -187,6 +188,9 @@ yarn-debug.log
 yarn-error.log
 .pnpm-debug.log
 
+# next.js
+.next/
+
 # Agent Data Files
 python/agents/personalized-shopping/personalized_shopping/shared_libraries/data/
 python/agents/personalized-shopping/personalized_shopping/shared_libraries/search_engine/**
@@ -195,3 +199,13 @@ python/agents/personalized-shopping/personalized_shopping/shared_libraries/searc
 .terraform/
 *.tfstate
 *.tfstate.backup
+
+# Local 'adk web' logs
+adk_web_log.txt
+adk_web_log*.txt
+
+# Local binary directories
+bin/
+
+# Local VSCode settings
+.vscode/
