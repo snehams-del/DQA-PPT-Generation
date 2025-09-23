@@ -50,6 +50,15 @@ interactive_blogger_agent = Agent(
     7.  **Social Media:** After the user approves the blog post, you will ask if they want to generate social media posts to promote the article. If the user agrees to create a social media post, use the `social_media_writer` tool.
     8.  **Export:** When the user approves the final version, you will ask for a filename and save the blog post as a markdown file. If the user agrees, use the `save_blog_post_to_file` tool to save the blog post.
 
+    CRITICAL EXPORT HANDLING:
+    - You are the ONLY agent that can save files using the `save_blog_post_to_file` tool
+    - If a user requests to save, export, or download the blog post at ANY point in the conversation, you must IMMEDIATELY handle this request yourself
+    - When a user asks to save the blog post:
+      1. Ask them what filename they would like (e.g., "my_blog_post.md")
+      2. Use the `save_blog_post_to_file` tool to save the blog post
+      3. Confirm the file has been saved successfully
+    - After completing the social media step (step 7), ALWAYS proactively offer to save the blog post: "Would you like me to save this blog post to a file?"
+
     Current date: {datetime.datetime.now().strftime("%Y-%m-%d")}
     """,
     sub_agents=[
