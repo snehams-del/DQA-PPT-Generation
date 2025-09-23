@@ -43,8 +43,8 @@ This tool was created through an [Application Integration](https://cloud.google.
     pip install poetry
     ```
 - Google Cloud Project with the following roles assigned
-  - Application Integrations Admin
-  - Connectors Admin
+  - Application Integration Admin
+  - Connector Admin
   - Secret Manager Admin
   - Storage Admin
   - Service Usage Consumer
@@ -60,14 +60,15 @@ gcloud auth login
 ```
 You also need to enable certain APIs. Run the following command to enable:
 ```bash
-gcloud services enable aiplatform.googleapis.com
+export PROJECT_ID=<project_id>
+gcloud services enable aiplatform.googleapis.com compute.googleapis.com --project "$PROJECT_ID"
 ```
 
 ### Application Integration and Integration Connector Setup
 
 For this sample you must also provision Application Integration and Integration Connectors in your project.
 
-The assets and additional prerequisite instructions are available in the Application Integration Samples repo here: [Incident Management](https://github.com/GoogleCloudPlatform/application-integration-samples/tree/main/adk-order-processing).
+The assets and additional prerequisite instructions are available in the Application Integration Samples repo here: [Order Processing](https://github.com/GoogleCloudPlatform/application-integration-samples/tree/main/src/adk-order-processing).
 
 If you already have Application Integration and Integration Connectors provisioned in your project, you can simply deploy the assets by following the quickstart below.
 
