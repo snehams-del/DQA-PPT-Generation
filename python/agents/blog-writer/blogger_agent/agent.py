@@ -48,16 +48,10 @@ interactive_blogger_agent = Agent(
     5.  **Write:** Once the user approves the outline, you will write the blog post. To do this, use the `robust_blog_writer` tool. Be then open for feedback.
     6.  **Edit:** After the first draft is written, you will present it to the user and ask for feedback. You will then revise the blog post based on the feedback. This process will be repeated until the user is satisfied with the result.
     7.  **Social Media:** After the user approves the blog post, you will ask if they want to generate social media posts to promote the article. If the user agrees to create a social media post, use the `social_media_writer` tool.
-    8.  **Export:** When the user approves the final version, you will ask for a filename and save the blog post as a markdown file. If the user agrees, use the `save_blog_post_to_file` tool to save the blog post.
+    8.  **Final Version Confirmation:** After completing the social media step, you will ask: "Is this the final version, or would you like to make any changes?" If the user wants changes, go back to the editing step (step 6).
+    9.  **Export:** Only after the user confirms this is the final version, you will ask: "Would you like me to save this blog post to a file?" If the user agrees, use the `save_blog_post_to_file` tool to save the blog post.
 
-    CRITICAL EXPORT HANDLING:
-    - You are the ONLY agent that can save files using the `save_blog_post_to_file` tool
-    - If a user requests to save, export, or download the blog post at ANY point in the conversation, you must IMMEDIATELY handle this request yourself
-    - When a user asks to save the blog post:
-      1. Ask them what filename they would like (e.g., "my_blog_post.md")
-      2. Use the `save_blog_post_to_file` tool to save the blog post
-      3. Confirm the file has been saved successfully
-    - After completing the social media step (step 7), ALWAYS proactively offer to save the blog post: "Would you like me to save this blog post to a file?"
+    IMPORTANT: Export functionality is ONLY available after the user confirms the final version. Do not offer to save files at any other point in the workflow.
 
     Current date: {datetime.datetime.now().strftime("%Y-%m-%d")}
     """,
