@@ -161,58 +161,15 @@ set up the data sources to be used with the agent.
     For AlloyDB NL2SQL generation the agent will always use  Gemini, so the
     value of `NL2SQL_METHOD` will not affect the AlloyDB sub-agent.
 
-## Sample Datasets
+## Database Setup
 
-The Data Science agent includes two different sample datasets that showcase
-different aspects of its capabilities.
+This sample has two alternate data sets that can be used. The
+`ticket_sales_history` dataset only uses BigQuery, so if you plan to use
+that dataset, you can skip the AlloyDB setup steps below.
 
-1. *Forecasting Sticker Sales Dataset*
-
-    ***NOTE:** This dataset uses BigQuery only. Make sure to follow the steps in the
-    [BigQuery Setup](#bigquery-setup) section below to setup and configure the
-    agent to access BigQuery.*
-
-    The dataset contains two tables, `train` and `test`, to enable forecasting
-    and BQML analytics queries.
-
-    You will find this sample dataset in the
-    `data-science/data_science/utils/data/` directory. To load this dataset into
-    BigQuery, make sure you are still in the working directory
-    (`agents/data-science`). Then run the following commands:
-    ```bash
-    python3 data_science/utils/create_bq_table.py
-    ```
-
-    Set the following environment variable in your `.env` file to use this dataset:
-    ```
-    BQ_DATASET_ID='forecasting_sticker_sales'`
-    ```
-    Dataset source: _Walter Reade and Elizabeth Park. Forecasting Sticker Sales.
-    https://kaggle.com/competitions/playground-series-s5e1, 2025. Kaggle._
-
-1. *Cymbal Airlines Flights Dataset*
-
-    ***NOTE:** This dataset uses both BigQuery and AlloyDB (via the MCP Toolbox for
-    Databases). Follow the steps in the [BigQuery Setup](#bigquery-setup)
-    section and the [AlloyDB Setup](#alloydb-setup) section below to setup both
-    databases and configure the agent for database access.*
-
-    After setting up AlloyDB, follow these steps to initialize the Cymbal
-    Airlines flights dataset.
-
-    1.  While connected using `psql`, create a database and switch to it:
-
-        ```bash
-        CREATE DATABASE flights_dataset;
-        \c flights_dataset
-        ```
-
-    1. Populate data into database:
-
-        ```bash
-        python init_flights_dataset.py
-        ```
-
+The `cymbal_flights` dataset uses both BigQuery and AlloyDb. If you plan to
+use that dataset, you should follow the instructions below for both BigQuery
+and AlloyDB.
 
 ### <a name="bigquery-setup">BigQuery Setup</a>
 
@@ -231,7 +188,6 @@ If you have an existing BigQuery table you wish to connect, specify the
 according to the choice of sample dataset (see above).
 
 We recommend not adding any production critical datasets to this sample agent.
-
 
 ### <a name="alloydb-setup">AlloyDB Setup</a>
 
@@ -318,9 +274,111 @@ allow your ADK Agent to access the AlloyDB cluster.
 [install-psql]: https://www.timescale.com/blog/how-to-install-psql-on-mac-ubuntu-debian-windows/
 [install-alloydb-auth-proxy]: https://cloud.google.com/alloydb/docs/auth-proxy/connect#install
 
+## Sample Datasets
+
+The Data Science agent includes two different sample datasets that showcase
+different aspects of its capabilities.
+
+### Forecasting Sticker Sales Dataset ###
+
+***NOTE:** This dataset uses BigQuery only. Make sure to follow the steps in the
+[BigQuery Setup](#bigquery-setup) section to setup and configure the
+agent to access BigQuery.*
+
+The dataset contains two tables, `train` and `test`, to enable forecasting
+and BQML analytics queries.
+
+You will find this sample dataset in the
+`data-science/data_science/utils/data/` directory. To load this dataset into
+BigQuery, make sure you are still in the working directory
+(`agents/data-science`). Then run the following commands:
+```bash
+python3 data_science/utils/create_bq_table.py
+```
+
+Set the following environment variable in your `.env` file to use this dataset:
+```
+BQ_DATASET_ID='forecasting_sticker_sales'`
+```
+Dataset source: _Walter Reade and Elizabeth Park. Forecasting Sticker Sales.
+https://kaggle.com/competitions/playground-series-s5e1, 2025. Kaggle._
+
+### Cymbal Airlines Flights Dataset ###
+
+***NOTE:** This dataset uses both BigQuery and AlloyDB (via the MCP Toolbox for
+Databases). Follow the steps in the [BigQuery Setup](#bigquery-setup)
+section and the [AlloyDB Setup](#alloydb-setup) section below to setup both
+databases and configure the agent for database access.*
+
+After setting up AlloyDB, follow these steps to initialize the Cymbal
+Airlines flights dataset.
+
+#### Load data into AlloyDB ####
+
+1. Set up the correct environment variables (these should also be set in the
+`.env` file):
+    ```bash
+    # If you change the name of the dataset, change it here.
+    export ALLOYDB_DATABASE=flights_dataset
+    export ALLOYDB_HOSTNAME=<your AlloyDB hostname>
+    export ALLOYDB_PORT=<your AlloyDB port>
+    export ALLOYDB_USER=<your AlloyDB user>
+    ```
+
+1.  Connect to your database using `psql:
+    ```bash
+    psql -h $ALLOYDB_HOSTNAME -p $ALLOYDB_PORT -U $ALLOYDB_USER -d $ALLOYDB_DATABASE
+    ```
+
+1. Run this command in `psql` (Note that if you changed the name of the database
+above, you will also need to change it here).
+    ```sql
+    CREATE DATABASE flights_dataset;
+    ```
+    Then type `<CTRL>-D` to exit `psql`.
+
+1. Run this command from the `data-science/flights_dataset` directory to
+populate data into the database:
+
+    ```bash
+    psql -h $ALLOYDB_HOSTNAME -p $ALLOYDB_PORT -U $ALLOYDB_USER -d $ALLOYDB_DATABASE \
+        -f flights_dataset_alloydb.sql
+    ```
+#### Load data into BigQuery ####
+
+1. Configure the environment variables as directed in the BigQuery Setup section below.
+Also export the BigQuery dataset id for this sample dataset:
+
+    ```bash
+    export BQ_DATASET_ID=flights_dataset
+    ```
+
+1. Run this command to create a new BigQuery dataset:
+    ```bash
+    bq mk --location $GOOGLE_CLOUD_LOCATION --dataset $BQ_DATA_PROJECT_ID:$BQ_DATASET_ID
+    ```
+1. Run these commands from the `data-science/flights_dataset` directory to load the
+data into BigQuery:
+
+    ```bash
+    bq --project_id=$BQ_DATA_PROJECT_ID --location=$GOOGLE_CLOUD_LOCATION \
+        load --source_format=CSV --autodetect --skip_leading_rows=1 --replace \
+        $BQ_DATASET_ID.flight_history flight_history_table.csv
+    bq --project_id=$BQ_DATA_PROJECT_ID --location=$GOOGLE_CLOUD_LOCATION \
+        load --source_format=CSV --autodetect --skip_leading_rows=1 \
+        --allow_quoted_newlines --replace \
+        $BQ_DATASET_ID.cymbalair_policies cymbalair_policies_table.csv
+    bq --project_id=$BQ_DATA_PROJECT_ID --location=$GOOGLE_CLOUD_LOCATION \
+        load --source_format=CSV --autodetect --skip_leading_rows=1 --replace \
+        $BQ_DATASET_ID.ticket_sales_history ticket_sales_history_table.csv
+    ```
+
+
+
 #### MCP Toolkit for Databases Setup
 
-Set up [MCP Toolbox for Databases][mcp-toolbox]
+To use this dataset, you also need to set up the [MCP Toolbox for Databases][mcp-toolbox].
+For initial setup, you can run the toolbox locally by following these steps:
 
 1. Download the latest version of Toolbox as a binary:
 
@@ -473,6 +531,8 @@ uv run pytest tests
 
 ## Deployment on Vertex AI Agent Engine
 
+### Initial Setup
+
 To deploy the agent to Google Agent Engine, first follow
 [these steps](https://cloud.google.com/vertex-ai/generative-ai/docs/agent-engine/set-up)
 to set up your Google Cloud project for Agent Engine.
@@ -496,6 +556,30 @@ gcloud projects add-iam-policy-binding ${GOOGLE_CLOUD_PROJECT} \
     --condition=None \
     --role="roles/aiplatform.user"
 ```
+
+### Deployment Steps
+
+#### MCP Toolbox Deployment
+
+1. Follow the [Cloud Run deployment instructions](deploy-mcp-toolbox) in the MCP
+Toolbox Documentation to deploy the MCP Toolbox for Databases to Cloud Run.
+Take note of these important points during the setup.
+
+    * Be sure to use the `toolbox-alloydb.yaml` file from this repo in the setup steps.
+    * Use the same project for the Toolbox deployment as you used for the AlloyDB
+        database setup.
+
+1. When the MCP Toolbox is deployed, you should be able to run the following command
+to get a URL for the deployed Toolbox instance:
+    ```bash
+    gcloud run services describe toolbox --format 'value(status.url)'
+    ```
+
+1. Set the value of `MCP_TOOLBOX_URL` in your `.env` file to that URL.
+
+[deploy-mcp-toolbox]: https://googleapis.github.io/genai-toolbox/how-to/deploy_toolbox/
+
+#### Agent Deployment
 
 Next, you need to create a `.whl` file for your agent. From the `data-science`
 directory, run this command:
@@ -644,7 +728,7 @@ Deploying to Google Cloud Run requires:
 
 ```
 gcloud auth login
-gcloud auth application-default login 
+gcloud auth application-default login
 
 export PROJECT_ID="<YOUR_PROJECT_ID>"
 gcloud config set project $PROJECT_ID
@@ -681,7 +765,7 @@ gcloud run deploy data-science-agent \
   --allow-unauthenticated \
   --add-cloudsql-instances $PROJECT_ID:us-central1:ds-agent-session-service \
   --update-env-vars SERVE_WEB_INTERFACE=True,SESSION_SERVICE_URI="postgresql+pg8000://postgres:ds-agent-demo@postgres/?unix_sock=/cloudsql/$PROJECT_ID:us-central1:ds-agent-session-service/.s.PGSQL.5432",GOOGLE_CLOUD_PROJECT=$PROJECT_ID \
-  --region us-central1 
+  --region us-central1
 ```
 
 When this runs successfully, you should see:
