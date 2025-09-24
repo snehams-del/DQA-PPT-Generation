@@ -42,124 +42,158 @@ from .tools import (call_alloydb_agent, call_analytics_agent,
                     call_bigquery_agent)
 
 # Configure Weave endpoint and authentication
-WANDB_BASE_URL = "https://trace.wandb.ai"
-PROJECT_ID = os.getenv("WANDB_PROJECT_ID")
-OTEL_EXPORTER_OTLP_ENDPOINT = f"{WANDB_BASE_URL}/otel/v1/traces"
+_WANDB_BASE_URL = "https://trace.wandb.ai"
+_WANDB_PROJECT_ID = os.getenv("WANDB_PROJECT_ID")
+_OTEL_EXPORTER_OTLP_ENDPOINT = f"{_WANDB_BASE_URL}/otel/v1/traces"
 
 # Set up authentication
-WANDB_API_KEY = os.getenv("WANDB_API_KEY")
-AUTH = base64.b64encode(f"api:{WANDB_API_KEY}".encode()).decode()
+_WANDB_API_KEY = os.getenv("WANDB_API_KEY")
+_WANDB_AUTH = base64.b64encode(f"api:{_WANDB_API_KEY}".encode()).decode()
 
-OTEL_EXPORTER_OTLP_HEADERS = {
-    "Authorization": f"Basic {AUTH}",
-    "project_id": PROJECT_ID,
+_OTEL_EXPORTER_OTLP_HEADERS = {
+    "Authorization": f"Basic {_WANDB_AUTH}",
+    "project_id": _WANDB_PROJECT_ID,
 }
 
 # Create the OTLP span exporter with endpoint and headers
 exporter = OTLPSpanExporter(
-    endpoint=OTEL_EXPORTER_OTLP_ENDPOINT,
-    headers=OTEL_EXPORTER_OTLP_HEADERS,
+    endpoint=_OTEL_EXPORTER_OTLP_ENDPOINT,
+    headers=_OTEL_EXPORTER_OTLP_HEADERS,
 )
 
 # Create a tracer provider and add the exporter
-tracer_provider = trace_sdk.TracerProvider()
-tracer_provider.add_span_processor(SimpleSpanProcessor(exporter))
+_tracer_provider = trace_sdk.TracerProvider()
+_tracer_provider.add_span_processor(SimpleSpanProcessor(exporter))
 
 # Set the global tracer provider BEFORE importing/using ADK
-trace.set_tracer_provider(tracer_provider)
-
-
-date_today = date.today()
+trace.set_tracer_provider(_tracer_provider)
 
 # Set up logging
 # Note this level can be overridden by adk web on the command line;
 # e.g. running `adk web --log_level DEBUG` or `adk web -v`
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
-def init_database_settings(callback_context: CallbackContext):
-    """Initialize database settings on first use."""
+# Initialize module-level config variables
+_dataset_config = {}
+_database_settings = {}
+_supported_dataset_types = ["bigquery","alloydb"]
+_required_dataset_config_params = ["name","description"]
 
-    if "database_settings" in callback_context.state:
-        return
+def load_dataset_config():
+    """Load the dataset configurations for the agent from the config file"""
 
-    db_settings = {
-        "bigquery": get_bq_database_settings(),
-        "alloydb": get_alloydb_database_settings(),
-        "cross_dataset_relations": ""
-    }
+    dataset_config_file = os.getenv("DATASET_CONFIG_FILE","")
+    if not dataset_config_file:
+        _logger.fatal("DATASET_CONFIG_FILE env var not set")
 
-    CROSS_DATASET_RELATIONS_DEFS = os.getenv("CROSS_DATASET_RELATIONS_DEFS",
-        "")
-    if CROSS_DATASET_RELATIONS_DEFS:
-        with open(CROSS_DATASET_RELATIONS_DEFS, "r", encoding="utf-8") as f:
-            db_settings["cross_dataset_relations"] = json.load(f)
+    with open(dataset_config_file, "r", encoding="utf-8") as f:
+        dataset_config = json.load(f)
 
-    bq_schema = db_settings["bigquery"]["schema"]
-    alloydb_schema = db_settings["alloydb"]["schema"]
-    callback_context.state["database_settings"] = db_settings
+    if "datasets" not in dataset_config:
+        _logger.fatal("No 'datasets' entry in dataset config")
 
-    callback_context._invocation_context.agent.instruction = (
-        return_instructions_root()
-        + f"""
+    for dataset in dataset_config["datasets"]:
+        if "type" not in dataset:
+            _logger.fatal("Missing dataset type")
+        if dataset["type"] not in _supported_dataset_types:
+            _logger.fatal("Dataset type '%s' not supported", dataset["type"])
 
-<DATASET DEFINITIONS>
-<BIGQUERY>
+        for p in _required_dataset_config_params:
+            if p not in dataset:
+                _logger.fatal(
+                    "Missing required param '%s' from %s dataset config",
+                    p, dataset["type"])
+
+    return dataset_config
+
+def get_database_settings(db_type: str) -> dict:
+    """Wrapper function to get database settings by type"""
+    assert(db_type in _supported_dataset_types)
+    if db_type == "bigquery":
+        return get_bq_database_settings()
+    else:
+        return get_alloydb_database_settings()
+
+def init_database_settings(dataset_config: dict) -> dict:
+    """Initializes the database settings for the configured datasets"""
+    db_settings = {}
+    for dataset in dataset_config["datasets"]:
+        db_settings[dataset["type"]] = get_database_settings(dataset["type"])
+    return db_settings
+
+def get_dataset_definitions_for_instructions() -> str:
+    """Returns the dataset definitions instructions block"""
+
+    dataset_definitions = """
+<DATASETS>
+"""
+    for dataset in _dataset_config["datasets"]:
+        dataset_type = dataset["type"]
+        dataset_definitions += f"""
+<{dataset_type.upper()}>
 <DESCRIPTION>
-This data warehouse is used to analyze everything to run the business better.
-It contains historical data from the AlloyDB database, enriched with other
-large-scale datasets. The data is somewhat denormalized (flattened) into wide
-tables to make querying faster and simpler.
-For multi-year data, it includes data for the year 2024-2025.
+{dataset["description"]}
 </DESCRIPTION>
 <SCHEMA>
---------- The BigQuery schema of the relevant database with a few sample rows. ---------
-{bq_schema}
+--------- The schema of the relevant database with a few sample rows. --------
+{_database_settings[dataset_type]["schema"]}
 </SCHEMA>
-</BIGQUERY>
+</{dataset_type.upper()}>
 
-<ALLOYDB>
-<DESCRIPTION>
-This database runs the airline's booking engine and flight management system. It
-needs to be fast, reliable, and consistent for tasks like selling a ticket,
-assigning a seat, or updating a flight's status.
-The schema is normalized to ensure data integrity and avoid redundancy.
-It only includes data from the year 2025.
-</DESCRIPTION>
-<SCHEMA>
---------- The AlloyDB schema of the relevant database. ---------
-{alloydb_schema}
-</SCHEMA>
-</ALLOYDB>
+"""
+    dataset_definitions += """
+</DATASETS>
+"""
 
+    if "cross_dataset_relations" in _dataset_config:
+        dataset_definitions += f"""
 <CROSS_DATASET_RELATIONS>
---------- The cross dataset relations between BigQuery and AlloyDB. ---------
-{db_settings["cross_dataset_relations"]}
-
+--------- The cross dataset relations between the configured datasets. ---------
+{_dataset_config["cross_dataset_relations"]}
 </CROSS_DATASET_RELATIONS>
-</SCHEMA DEFINITIONS>
+"""
 
-    """
-        )
+    return dataset_definitions
+
+def load_database_settings_in_context(callback_context: CallbackContext):
+    """Load database settings into the callback context on first use."""
+    if "database_settings" not in callback_context.state:
+        callback_context.state["database_settings"] = _database_settings
 
 
-root_agent = LlmAgent(
-    model=os.getenv("ROOT_AGENT_MODEL", ""),
-    name="data_science_root_agent",
-    instruction=return_instructions_root(),
-    global_instruction=(
-        f"""
-        You are a Data Science and Data Analytics Multi Agent System.
-        Todays date: {date_today}
-        """
-    ),
-    #sub_agents=[bqml_agent],
-    tools=[ # type: ignore
-        call_bigquery_agent,
-        call_alloydb_agent,
-        call_analytics_agent,
-        #load_artifacts,
-    ],
-    before_agent_callback=init_database_settings,
-    generate_content_config=types.GenerateContentConfig(temperature=0.01),
-)
+def get_root_agent() -> LlmAgent:
+    tools = [call_analytics_agent]
+    for dataset in _dataset_config["datasets"]:
+        if dataset["type"] == "bigquery":
+            tools.append(call_bigquery_agent)
+        elif dataset["type"] == "alloydb":
+            tools.append(call_alloydb_agent)
+
+    agent = LlmAgent(
+        model=os.getenv("ROOT_AGENT_MODEL", ""),
+        name="data_science_root_agent",
+        instruction=return_instructions_root() +
+            get_dataset_definitions_for_instructions(),
+        global_instruction=(
+            f"""
+            You are a Data Science and Data Analytics Multi Agent System.
+            Todays date: {date.today()}
+            """
+        ),
+        #sub_agents=[bqml_agent],
+        tools=tools, # type: ignore
+        before_agent_callback=load_database_settings_in_context,
+        generate_content_config=types.GenerateContentConfig(temperature=0.01),
+    )
+
+    return agent
+
+
+# Initialize dataset configurations and database info before the agent starts
+_dataset_config = load_dataset_config()
+_database_settings = init_database_settings(_dataset_config)
+
+
+# Fetch the root agent
+root_agent = get_root_agent()

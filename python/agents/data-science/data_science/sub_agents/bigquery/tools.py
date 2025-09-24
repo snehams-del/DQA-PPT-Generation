@@ -145,7 +145,7 @@ def bigquery_nl2sql(
     logger.debug("bigquery_nl2sql - question: %s", question)
 
     prompt_template = """
-You are a BigQuery SQL expert tasked with generatling SQL in the Google SQL
+You are a BigQuery SQL expert tasked with generating SQL in the Google SQL
 dialect based on the user's natural language question.
 Your task is to write a Bigquery SQL query that answers the following question
 while using the provided context.
