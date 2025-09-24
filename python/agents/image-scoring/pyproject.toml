@@ -89,6 +89,12 @@ module-root = ""
 
 [tool.pytest.ini_options]
 pythonpath = "."
+addopts = "-vv -s --ignore=tests/test_deployment.py"
+testpaths = ["tests/"]
+log_level = "DEBUG"
+log_cli = true
+log_auto_indent = true
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
 asyncio_default_fixture_loop_scope = "function"
 
 # This configuration file is used by goo.gle/agent-starter-pack to power remote templating.
