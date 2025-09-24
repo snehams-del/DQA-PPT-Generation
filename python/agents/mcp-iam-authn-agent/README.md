@@ -34,9 +34,9 @@ That leaves them with option 2. But that has various barriers to entry
 3. Managing and securing access
 4. Managing performance, reliability and costs
 
-This burdens the users or their users with lot of heavy lifting.
+This burdens the users or their users with a lot of heavy lifting.
 And their MCP servers are either not used by their users
-(creating a big feature gap against the compitition)
+(creating a big feature gap against the competition)
  or the MCP servers are used insecurely (option 1)
 
 This No Code MCP Agent solves that!
@@ -62,7 +62,7 @@ They can start using their MCP server as a tool from Agentspace
 
 ### Detailed Instructions (Avg. time required ~ 15 minutes)
 
-#### Prerequsites
+#### Prerequisites
 
 1. Your MCP server should be running with Streamable HTTP transport in Cloud run (We have provided a sample MCP server in case your MCP server is not ready yet).
 2. Make sure that it is protected with [IAM Authentication](https://cloud.google.com/run/docs/securing/managing-access)
@@ -85,7 +85,7 @@ pip install -r mcp_agent/requirements.txt
 . .venv/bin/activate
 
 ```
-4. Create Environment file needed for subsequent operations.
+4. Create an environment file needed for subsequent operations.
 
     Go ahead and run the script that creates the environment file.
 
@@ -135,7 +135,7 @@ At this point you must have
 ### Local run
 
 🪧 **NOTE:**
-> This is optional but recommended to so as to test the agent locally once.
+> This is optional but recommended so as to test the agent locally once.
 
 Run the following command, in case you are missing the required
  environment variables, the script will prompt for you to update
@@ -297,7 +297,7 @@ The prebuilt agent helps operationalize the MCP Server within minutes with only 
 
 #### Roadmap
 
-1. Accomodating multiple MCP servers
+1. Accommodating multiple MCP servers
 
 🪧 **NOTE:**
 
@@ -305,7 +305,7 @@ The prebuilt agent helps operationalize the MCP Server within minutes with only 
  can now list your MCP servers. You can fill [this form](https://docs.google.com/forms/d/e/1FAIpQLSesllyRR-HvLFZthYA8Cv4nQRUTOthHGgs-76DY9o2IntUL3A/viewform)
   and get started with listing your MCP server there.
   This provides discoverability to your MCP server to
-   your Google Cloud users. And then they can operationlize
+   your Google Cloud users. And then they can operationalize
     your MCP server within minutes using the no code Agent
      provided here. This provides both the discovery
       and deployment for your MCP server to your users.

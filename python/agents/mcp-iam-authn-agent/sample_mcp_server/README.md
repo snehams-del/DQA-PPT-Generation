@@ -1,6 +1,8 @@
 # Weather Data Server
 
-This is a sample Model Context Protocol (MCP) server that provides random weather data via four distinct tools. It's built using the `fastmcp` Python library.
+This is a sample Model Context Protocol (MCP) server that provides
+random weather data via four distinct tools. It's built using
+ the `fastmcp` Python library.
 
 ## Features
 
@@ -36,14 +38,16 @@ The following command can be used to deploy the mcp server on Cloud Run.
 
 ## Tools
 
-Each tool is designed to be called asynchronously. The definitions are available in the `server.py` file.
+Each tool is designed to be called asynchronously. The definitions are available
+ in the `server.py` file.
 
 ### `get_temperature`
 
 get_temperature(unit: Literal["celsius", "fahrenheit"] = "celsius") -> float
 
 
-This tool returns a random temperature. The `unit` parameter can be used to specify the desired unit.
+This tool returns a random temperature. The `unit` parameter can be used to
+ specify the desired unit.
 
 ### `get_wind_speed`
 
