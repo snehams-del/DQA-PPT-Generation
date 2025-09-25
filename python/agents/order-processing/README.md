@@ -49,19 +49,15 @@ This tool was created through an [Application Integration](https://cloud.google.
   - Storage Admin
   - Service Usage Consumer
   - Logs Viewer
-- APIs to enable:
-  - Application Integration API
-  - Connectors API
-  - Secret Manager API
 
 Once you have created your project, [install the Google Cloud SDK](https://cloud.google.com/sdk/docs/install). Then run the following command to authenticate:
 ```bash
 gcloud auth login
 ```
-You also need to enable certain APIs. Run the following command to enable:
+You need to enable certain Google APIs. Run the following command to enable:
 ```bash
 export PROJECT_ID=<project_id>
-gcloud services enable aiplatform.googleapis.com compute.googleapis.com --project "$PROJECT_ID"
+gcloud services enable integrations.googleapis.com connectors.googleapis.com secretmanager.googleapis.com aiplatform.googleapis.com compute.googleapis.com --project "$PROJECT_ID"
 ```
 
 ### Application Integration and Integration Connector Setup
