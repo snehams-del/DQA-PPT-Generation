@@ -28,7 +28,7 @@ def list_all_extensions():
         print("Description:", extension.gca_resource.description)
 
 
-def get_env_var(var_name):
+def get_env_var(var_name: str):
     """Retrieves the value of an environment variable.
 
     Args:
