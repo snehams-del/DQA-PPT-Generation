@@ -8,7 +8,7 @@ from .... import config
 
 
 client = genai.Client(
-    vertexai=True, project=os.environ.get("GOOGLE_CLOUD_PROJECT"),location="us-central1"
+    vertexai=True, project=os.environ.get("GOOGLE_CLOUD_PROJECT"),location="global"
 )
 
 
