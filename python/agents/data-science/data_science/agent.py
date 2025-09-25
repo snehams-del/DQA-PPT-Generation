@@ -34,6 +34,7 @@ from opentelemetry.sdk import trace as trace_sdk
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 
 from .prompts import return_instructions_root
+from .sub_agents import bqml_agent
 from .sub_agents.alloydb.tools import \
     get_database_settings as get_alloydb_database_settings
 from .sub_agents.bigquery.tools import \
@@ -164,11 +165,14 @@ def load_database_settings_in_context(callback_context: CallbackContext):
 
 def get_root_agent() -> LlmAgent:
     tools = [call_analytics_agent]
+    sub_agents = []
     for dataset in _dataset_config["datasets"]:
         if dataset["type"] == "bigquery":
             tools.append(call_bigquery_agent)
+            sub_agents.append(bqml_agent)
         elif dataset["type"] == "alloydb":
             tools.append(call_alloydb_agent)
+
 
     agent = LlmAgent(
         model=os.getenv("ROOT_AGENT_MODEL", ""),
@@ -181,7 +185,7 @@ def get_root_agent() -> LlmAgent:
             Todays date: {date.today()}
             """
         ),
-        #sub_agents=[bqml_agent],
+        sub_agents=sub_agents, # type: ignore
         tools=tools, # type: ignore
         before_agent_callback=load_database_settings_in_context,
         generate_content_config=types.GenerateContentConfig(temperature=0.01),

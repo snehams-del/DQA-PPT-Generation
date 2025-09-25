@@ -16,8 +16,9 @@
 import os
 
 from data_science.sub_agents.bigquery.agent import bigquery_agent
-from data_science.sub_agents.bigquery.tools import \
-    get_database_settings as get_bq_database_settings
+from data_science.sub_agents.bigquery.tools import (
+    get_database_settings as get_bq_database_settings,
+)
 from data_science.sub_agents.bqml.tools import check_bq_models, rag_response
 from google.adk.agents import Agent
 from google.adk.agents.callback_context import CallbackContext
@@ -27,6 +28,7 @@ from google.adk.tools.bigquery import BigQueryToolset
 from google.adk.tools.bigquery.config import BigQueryToolConfig, WriteMode
 
 from .prompts import return_instructions_bqml
+from ...utils.utils import USER_AGENT
 
 # BigQuery built-in tools in ADK
 # https://google.github.io/adk-docs/tools/built-in-tools/#bigquery
@@ -73,14 +75,15 @@ async def call_db_agent(
     tool_context.state["db_agent_output"] = db_agent_output
     return db_agent_output
 
+
 bigquery_tool_filter = [ADK_BUILTIN_BQ_EXECUTE_SQL_TOOL]
 bigquery_tool_config = BigQueryToolConfig(
-    write_mode=WriteMode.ALLOWED, # to be able to execute CREATE MODEL statement
-    max_query_result_rows=80
+    write_mode=WriteMode.ALLOWED,  # to execute CREATE MODEL statement
+    max_query_result_rows=80,
+    application_name=USER_AGENT,
 )
 bq_execute_sql = BigQueryToolset(
-    tool_filter=bigquery_tool_filter,
-    bigquery_tool_config=bigquery_tool_config
+    tool_filter=bigquery_tool_filter, bigquery_tool_config=bigquery_tool_config
 )
 
 root_agent = Agent(

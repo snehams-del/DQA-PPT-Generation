@@ -20,24 +20,32 @@ import os
 
 import numpy as np
 import pandas as pd
-from data_science.utils.utils import get_env_var
+from data_science.utils.utils import get_env_var, USER_AGENT
 from google.adk.tools import ToolContext
 from google.adk.tools.bigquery.client import get_bigquery_client
 from google.cloud import bigquery
 from google.genai import Client
+from google.genai.types import HttpOptions
 
 from .chase_sql import chase_constants
+from ...utils.utils import USER_AGENT
 
 logger = logging.getLogger(__name__)
 
 # Assume that `BQ_COMPUTE_PROJECT_ID` and `BQ_DATA_PROJECT_ID` are set in the
 # environment. See the `data_agent` README for more details.
-dataset_id=get_env_var("BQ_DATASET_ID")
+dataset_id = get_env_var("BQ_DATASET_ID")
 data_project = get_env_var("BQ_DATA_PROJECT_ID")
 compute_project = get_env_var("BQ_COMPUTE_PROJECT_ID")
 vertex_project = get_env_var("GOOGLE_CLOUD_PROJECT")
 location = get_env_var("GOOGLE_CLOUD_LOCATION")
-llm_client = Client(vertexai=True, project=vertex_project, location=location)
+http_options = HttpOptions(headers={"user-agent": USER_AGENT})
+llm_client = Client(
+    vertexai=True,
+    project=vertex_project,
+    location=location,
+    http_options=http_options,
+)
 
 MAX_NUM_ROWS = 10000
 
@@ -98,7 +106,11 @@ def update_database_settings():
 
 def get_bigquery_schema_and_samples():
     """Retrieves schema and sample values for the BigQuery dataset tables."""
-    client=get_bigquery_client(project=compute_project, credentials=None)
+    client = get_bigquery_client(
+        project=compute_project,
+        credentials=None,
+        user_agent=USER_AGENT,
+    )
     dataset_ref = bigquery.DatasetReference(data_project, dataset_id)
     tables_context = {}
     for table in client.list_tables(dataset_ref):
@@ -113,16 +125,16 @@ def get_bigquery_schema_and_samples():
         sample_values = []
         if False:
             sample_query = f"SELECT * FROM `{table_ref}` LIMIT 5"
-            sample_values = client.query(sample_query).to_dataframe().to_dict(
-                orient="list")
+            sample_values = (
+                client.query(sample_query).to_dataframe().to_dict(orient="list")
+            )
             for key in sample_values:
                 sample_values[key] = [
-                    _serialize_value_for_sql(v)
-                    for v in sample_values[key]
+                    _serialize_value_for_sql(v) for v in sample_values[key]
                 ]
         tables_context[str(table_ref)] = {
             "table_schema": table_schema,
-            "example_values": sample_values
+            "example_values": sample_values,
         }
 
     return tables_context
@@ -203,7 +215,7 @@ best practices outlined above to generate the correct BigQuery SQL.
     )
 
     response = llm_client.models.generate_content(
-        model=os.getenv("BASELINE_NL2SQL_MODEL",""),
+        model=os.getenv("BASELINE_NL2SQL_MODEL", ""),
         contents=prompt,
         config={"temperature": 0.1},
     )

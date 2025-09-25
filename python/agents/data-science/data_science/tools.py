@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Top level agent for data agent multi-agents.
-
--- it gets data from database (e.g., BQ) using NL2SQL
--- then, it uses NL2Py to do further data analysis as needed
-"""
+"""Tools for the ADK Sampmles Data Science Agent."""
 
 import logging
 
@@ -26,6 +22,7 @@ from google.adk.tools.agent_tool import AgentTool
 from .sub_agents import alloydb_agent, analytics_agent, bigquery_agent
 
 logger = logging.getLogger(__name__)
+
 
 async def call_bigquery_agent(
     question: str,
@@ -42,6 +39,7 @@ async def call_bigquery_agent(
     tool_context.state["bigquery_agent_output"] = bigquery_agent_output
     return bigquery_agent_output
 
+
 async def call_alloydb_agent(
     question: str,
     tool_context: ToolContext,
@@ -56,6 +54,7 @@ async def call_alloydb_agent(
     )
     tool_context.state["alloydb_agent_output"] = alloydb_agent_output
     return alloydb_agent_output
+
 
 async def call_analytics_agent(
     question: str,
@@ -91,7 +90,7 @@ async def call_analytics_agent(
     """
     logger.debug("call_analytics_agent: %s", question)
 
-    #if question == "N/A":
+    # if question == "N/A":
     #    return tool_context.state["db_agent_output"]
 
     bigquery_data = ""

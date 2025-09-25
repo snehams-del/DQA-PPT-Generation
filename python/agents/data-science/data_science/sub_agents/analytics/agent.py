@@ -21,7 +21,7 @@ from google.adk.code_executors import VertexAiCodeExecutor
 from .prompts import return_instructions_analytics
 
 analytics_agent = Agent(
-    model=os.getenv("ANALYTICS_AGENT_MODEL"),
+    model=os.getenv("ANALYTICS_AGENT_MODEL", ""),
     name="analytics_agent",
     instruction=return_instructions_analytics(),
     code_executor=VertexAiCodeExecutor(

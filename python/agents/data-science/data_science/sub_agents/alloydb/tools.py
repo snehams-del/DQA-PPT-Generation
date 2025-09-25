@@ -21,22 +21,32 @@ import re
 from data_science.utils.utils import get_env_var
 from google.adk.tools import ToolContext
 from google.genai import Client
+from google.genai.types import HttpOptions
 from toolbox_core import ToolboxSyncClient
+
+from ...utils.utils import USER_AGENT
 
 ALLOYDB_TOOLSET = os.getenv("ALLOYDB_TOOLSET", "postgres-database-tools")
 ALLOYDB_SERVER_URL = os.getenv("ALLOYDB_SERVER_URL", "http://127.0.0.1:5000")
 
-#MAX_NUM_ROWS = 80
+# MAX_NUM_ROWS = 80
 
 vertex_project = os.getenv("GOOGLE_CLOUD_PROJECT", None)
 location = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
-llm_client = Client(vertexai=True, project=vertex_project, location=location)
+http_options = HttpOptions(headers={"user-agent": USER_AGENT})
+llm_client = Client(
+    vertexai=True,
+    project=vertex_project,
+    location=location,
+    http_options=http_options,
+)
 
 database_settings = None
 toolbox_client = None
 toolbox_toolset = None
 
 logger = logging.getLogger(__name__)
+
 
 def get_toolbox_client():
     """Get MCP Toolbox client."""
@@ -45,12 +55,14 @@ def get_toolbox_client():
         toolbox_client = ToolboxSyncClient(ALLOYDB_SERVER_URL)
     return toolbox_client
 
+
 def get_toolbox_toolset():
     """Get MCP Toolbox toolset."""
     global toolbox_toolset
     if toolbox_toolset is None:
         toolbox_toolset = get_toolbox_client().load_toolset(ALLOYDB_TOOLSET)
     return toolbox_toolset
+
 
 def get_database_settings():
     """Get database settings."""
@@ -59,10 +71,12 @@ def get_database_settings():
         database_settings = update_database_settings()
     return database_settings
 
+
 def get_schema():
     get_schema_tool = get_toolbox_client().load_tool("list_tables")
-    schema = get_schema_tool(get_env_var("ALLOYDB_SCHEMA_NAME"),"")
+    schema = get_schema_tool(get_env_var("ALLOYDB_SCHEMA_NAME"), "")
     return schema
+
 
 def update_database_settings():
     """Update database settings."""
@@ -146,8 +160,9 @@ sample rows):
     schema = tool_context.state["database_settings"]["alloydb"]["schema"]
 
     prompt = prompt_template.format(
-#        MAX_NUM_ROWS=MAX_NUM_ROWS,
-        SCHEMA=schema, QUESTION=question
+        #        MAX_NUM_ROWS=MAX_NUM_ROWS,
+        SCHEMA=schema,
+        QUESTION=question,
     )
 
     response = llm_client.models.generate_content(
@@ -221,14 +236,13 @@ def run_alloydb_query(
         sql_string = sql_string.replace("\\'", "'")
 
         # 4. Replace escaped newlines (those not preceded by a backslash)
-        #sql_string = sql_string.replace("\\n", "\n")
+        # sql_string = sql_string.replace("\\n", "\n")
 
         # 5. Add limit clause if not present
-        #if "limit" not in sql_string.lower():
+        # if "limit" not in sql_string.lower():
         #    sql_string = sql_string + " limit " + str(MAX_NUM_ROWS)
 
         return sql_string
-
 
     logger.debug("Executing SQL: %s", sql_string)
     sql_string = cleanup_sql(sql_string)
@@ -239,7 +253,7 @@ def run_alloydb_query(
     # Disallow DML and DDL
     if re.search(
         r"(?i)(update|delete|drop|insert|create|alter|truncate|merge)",
-        sql_string
+        sql_string,
     ):
         final_result["error_message"] = (
             "Invalid SQL: Contains disallowed DML/DDL operations."
