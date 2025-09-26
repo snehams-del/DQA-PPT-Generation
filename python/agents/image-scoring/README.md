@@ -104,43 +104,7 @@ a chatbot interface will appear on the right. The conversation is initially
 blank. 
 
 
-## Deployment
-
-The Image Scoring Agent can be deployed to Vertex AI Agent Engine using the following
-commands:
-
-```bash
-uv sync --group deployment
-uv run python3 deployment/deploy.py --create
-```
-
-When the deployment finishes, it will print a line like this:
-
-```
-Created remote agent: projects/<PROJECT_NUMBER>/locations/<PROJECT_LOCATION>/reasoningEngines/<AGENT_ENGINE_ID>
-```
-
-If you forgot the AGENT_ENGINE_ID, you can list existing agents using:
-
-```bash
-uv run python3 deployment/deploy.py --list
-```
-
-To test your deployed agent in Agent Engine, you can run the below test deployment test script.
-First, replace `<AGENT_ENGINE_ID>` in the .env post the deployment.
-
-```bash
-python3 deployment/test_deployment.py
-```
-
-To delete the deployed agent, you may run the following command:
-
-```bash
-export AGENT_ENGINE_ID=<AGENT_ENGINE_ID>
-uv run python3 deployment/deploy.py --delete --resource_id=${AGENT_ENGINE_ID}
-```
-
-### Alternative: Using Agent Starter Pack
+### Using Agent Starter Pack
 
 You can also use the [Agent Starter Pack](https://goo.gle/agent-starter-pack) to create a production-ready version of this agent with additional deployment options:
 
