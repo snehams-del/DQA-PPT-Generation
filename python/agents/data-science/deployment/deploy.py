@@ -214,8 +214,6 @@ def main(argv: list[str]) -> None:  # pylint: disable=unused-argument
             logger.info("Skipping empty/None/whitespace-only environment variable: %s (value: %s)", key, repr(value))
 
     logger.info("Environment variables to be passed to agent: %s", list(env_vars.keys()))
-        "NL2SQL_METHOD",
-    ]
 
     skipped_vars: list[str] = []
     for key in env_var_keys:
