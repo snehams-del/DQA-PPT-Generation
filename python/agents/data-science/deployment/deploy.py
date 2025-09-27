@@ -190,8 +190,6 @@ def main(argv: list[str]) -> None:  # pylint: disable=unused-argument
     env_var_keys = [
         "ROOT_AGENT_MODEL",
         "ANALYTICS_AGENT_MODEL", 
-        "ROOT_AGENT_MODEL",
-        "ANALYTICS_AGENT_MODEL",
         "BASELINE_NL2SQL_MODEL",
         "BIGQUERY_AGENT_MODEL",
         "BQML_AGENT_MODEL",
