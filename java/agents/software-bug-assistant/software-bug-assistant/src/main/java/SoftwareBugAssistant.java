@@ -32,8 +32,8 @@ public class SoftwareBugAssistant {
     private static String NAME = "SoftwareBugAssistant";
     private static String USER_ID = "test-user";
 
-    // ROOT_AGENT needed for ADK Web UI. 
-    public static BaseAgent ROOT_AGENT = initAgent();
+    // ROOT_AGENT needed for ADK Web UI.
+    public static final BaseAgent ROOT_AGENT = initAgent();
 
 
     public static void main(String[] args) {
@@ -65,7 +65,7 @@ public class SoftwareBugAssistant {
 
 
     public static BaseAgent initAgent() {
-        // Set up MCP Toolbox connection to Cloud SQL 
+        // Set up MCP Toolbox connection to Cloud SQL
         try {
             String mcpServerUrl = System.getenv("MCP_TOOLBOX_URL");
             if (mcpServerUrl == null || mcpServerUrl.isEmpty()) {

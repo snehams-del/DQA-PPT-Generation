@@ -24,19 +24,25 @@ To learn more, check out the [ADK Documentation](https://google.github.io/adk-do
 ├── python
 │   ├── agents
 │   │   ├── academic-research
+│   │   ├── blog-writer
 │   │   ├── brand-search-optimization
 │   │   ├── camel
 │   │   ├── customer-service
+│   │   ├── data-engineering
 │   │   ├── data-science
 │   │   ├── financial-advisor
 │   │   ├── fomc-research
 │   │   ├── gemini-fullstack
+│   │   ├── google-trends-agent
 │   │   ├── image-scoring
 │   │   ├── llm-auditor
 │   │   ├── machine-learning-engineering
 │   │   ├── marketing-agency
+│   │   ├── medical-pre-authorization
 │   │   ├── personalized-shopping
 │   │   ├── RAG
+│   │   ├── realtime-conversational-agent
+│   │   ├── safety-plugins
 │   │   ├── README.md
 │   │   ├── software-bug-assistant  
 │   │   └── travel-concierge
