@@ -51,7 +51,7 @@ This is like having a professional QA team dedicated to finding your agent's wea
 Stop guessing if a change was an improvement. This harness provides a numerical reward score for every evaluation run. This enables you to:
 -   **Track Progress**: Get hard data showing your agent's performance is improving over time.
 -   **Prevent Regressions**: Add these evaluations to your CI/CD pipeline to catch regressions before they merge.
--   **Compare Models**: Objectively measure the performance lift of switching from one LLM to another (e.g., Gemini 1.5 Flash vs. Gemini 1.5 Pro).
+-   **Compare Models**: Objectively measure the performance lift of switching from one LLM to another (e.g., Gemini 2.5 Flash vs. Gemini 2.5 Pro).
 
 The conversation shifts from "I think this prompt is better" to "This prompt improved performance on adversarial tasks by 15%."
 
@@ -173,14 +173,14 @@ You can run an evaluation on the included sample agent against the Tau2 `airline
 python run_evaluation.py \
   --domain airline \
   --adk_agent_path sample_adk_agents/airline/agent.py:root_agent \
-  --user-llm gemini-1.5-flash \
+  --user-llm gemini-2.5-flash \
   --num-tasks 1
 ```
 
 **Command Breakdown:**
 *   `--domain airline`: Specifies the Tau2 domain to run against.
 *   `--adk_agent_path ...`: Provides the path to the ADK agent file and the variable name of the agent instance (`file:variable`).
-*   `--user-llm ...`: The LLM to power the Tau2 user simulator. A powerful model like Gemini 1.5 Pro or GPT-4 is recommended for realistic user behavior.
+*   `--user-llm ...`: The LLM to power the Tau2 user simulator. A powerful model like Gemini 2.5 Pro is recommended for realistic user behavior.
 *   `--num-tasks 1`: Runs only the first task for a quick test.
 
 ### How to Use the Harness
@@ -198,7 +198,7 @@ To evaluate your custom ADK agent, follow these steps:
     python run_evaluation.py \
       --domain airline \
       --adk_agent_path my_company/agents/booking_agent.py:flight_booker_agent \
-      --user-llm gemini-1.5-flash
+      --user-llm gemini-2.5-flash
     ```
 
 #### 2. Adding Support for a New Tau2 Domain
