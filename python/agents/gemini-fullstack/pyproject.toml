@@ -26,7 +26,7 @@ dev = [
 [project.optional-dependencies]
 
 jupyter = [
-    "jupyter~=1.0.0",
+    "jupyter~=1.1.1",
 ]
 
 lint = [
