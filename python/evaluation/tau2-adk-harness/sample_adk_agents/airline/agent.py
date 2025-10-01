@@ -178,7 +178,7 @@ def adk_get_flight_status(flight_number: str, date: str) -> str:
 # This is the agent we will evaluate.
 root_agent = Agent(
     name="adk_airline_agent",
-    model="gemini-1.5-flash",
+    model="gemini-2.5-flash",
     description="An ADK agent for booking, finding, and managing flight reservations.",
     instruction=(
         "You are a task-oriented airline assistant. Your ONLY goal is to use the provided tools to fulfill the user's request. "
