@@ -14,14 +14,14 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
 
       - name: Get changed files
         id: changed_files
-        uses: tj-actions/changed-files@v44
+        uses: tj-actions/changed-files@v47
         with:
           files: python/agents/**
 
@@ -79,13 +79,13 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - id: 'auth'
         name: 'Authenticate to Google Cloud'
-        uses: 'google-github-actions/auth@v2'
+        uses: 'google-github-actions/auth@v3'
         with:
           workload_identity_provider: 'projects/628595556591/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
           create_credentials_file: true
@@ -130,6 +130,24 @@ jobs:
               echo \"--- Running tests ---\"
               export AGENT_NAME=\"$DEPLOYMENT_TARGET-$AGENT_NAME\"
               make test
+              
+              echo \"--- Starting backend ---\"
+              make backend &
+              BACKEND_PID=$!
+              
+              echo \"--- Waiting 10 seconds ---\"
+              sleep 10
+
+              # Check if backend process is still running
+              if ! kill -0 $BACKEND_PID 2>/dev/null; then
+                echo \"ERROR: Backend process died during startup\"
+                exit 1
+              fi
+
+              echo \"--- Stopping backend and all child processes ---\"
+              kill -TERM -$BACKEND_PID 2>/dev/null || true
+              sleep 2
+              kill -KILL -$BACKEND_PID 2>/dev/null || true
             else
               echo \"--- Unknown task: ${{ matrix.task }} ---\"
               exit 1

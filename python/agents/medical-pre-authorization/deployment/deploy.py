@@ -12,19 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Deployment script for Image Scoring."""
-
 import os
 
-from absl import app
-from absl import flags
-from dotenv import load_dotenv
-
-
-load_dotenv()
-
-from image_scoring.agent import root_agent
 import vertexai
+from absl import app, flags
+from dotenv import load_dotenv
+from medical_pre_authorization.agent import root_agent
 from vertexai import agent_engines
 from vertexai.preview.reasoning_engines import AdkApp
 
@@ -41,22 +34,23 @@ flags.mark_bool_flags_as_mutual_exclusive(["create", "delete"])
 
 
 def create() -> None:
-    """Creates an agent engine for Image Scoring."""
+    """Creates an agent engine for Financial Advisors."""
     adk_app = AdkApp(agent=root_agent, enable_tracing=True)
 
     remote_agent = agent_engines.create(
         adk_app,
         display_name=root_agent.name,
         requirements=[
-            "google-adk (>=0.0.2)",
-            "google-cloud-aiplatform[agent_engines] (>=1.88.0,<2.0.0)",
-            "google-genai (>=1.5.0,<2.0.0)",
-            "pydantic (>=2.10.6,<3.0.0)",
-            "absl-py (>=2.2.1,<3.0.0)",
-            "google-cloud-storage(>=2.14.0,<=3.1.0)",
-            "pillow (>=10.3.0,<11.0.0)",
+            "google-adk (>=1.13.0,<2.0.0)",
+            "google-genai (>=1.32.0,<2.0.0)",
+            "google-cloud (>=0.34.0,<0.35.0)",
+            "pdfplumber (>=0.11.7,<0.12.0)",
+            "google-cloud-aiplatform (>=1.111.0,<2.0.0)",
+            "reportlab (>=4.4.3,<5.0.0)",
+            "google-cloud-storage (>=2.19.0)",
+            "pymupdf (>=1.26.4,<2.0.0)",
         ],
-        extra_packages=["./image_scoring"],
+        extra_packages=["./medical_pre_authorization"],
     )
     print(f"Created remote agent: {remote_agent.resource_name}")
 
@@ -81,16 +75,22 @@ def list_agents() -> None:
 
 
 def main(argv: list[str]) -> None:
-
-    # print all load environment variables
-    for key, value in os.environ.items():
-        print(f"{key}: {value}")
+    del argv  # unused
+    load_dotenv()
 
     project_id = (
-        FLAGS.project_id if FLAGS.project_id else os.getenv("GOOGLE_CLOUD_PROJECT")
+        FLAGS.project_id
+        if FLAGS.project_id
+        else os.getenv("GOOGLE_CLOUD_PROJECT")
     )
-    location = FLAGS.location if FLAGS.location else os.getenv("GOOGLE_CLOUD_LOCATION")
-    bucket = FLAGS.bucket if FLAGS.bucket else os.getenv("GOOGLE_CLOUD_STORAGE_BUCKET")
+    location = (
+        FLAGS.location if FLAGS.location else os.getenv("GOOGLE_CLOUD_LOCATION")
+    )
+    bucket = (
+        FLAGS.bucket
+        if FLAGS.bucket
+        else os.getenv("GOOGLE_CLOUD_STORAGE_BUCKET")
+    )
 
     print(f"PROJECT: {project_id}")
     print(f"LOCATION: {location}")
@@ -103,7 +103,9 @@ def main(argv: list[str]) -> None:
         print("Missing required environment variable: GOOGLE_CLOUD_LOCATION")
         return
     elif not bucket:
-        print("Missing required environment variable: GOOGLE_CLOUD_STORAGE_BUCKET")
+        print(
+            "Missing required environment variable: GOOGLE_CLOUD_STORAGE_BUCKET"
+        )
         return
 
     vertexai.init(
