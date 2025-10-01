@@ -11,5 +11,5 @@ dependencies = [
     "langchain-community>=0.3.25",
     "python-dotenv==1.1.0",
     "stackapi>=0.3.1",
-    "toolbox-core==0.1.0",
+    "toolbox-core==0.5.2",
 ]
