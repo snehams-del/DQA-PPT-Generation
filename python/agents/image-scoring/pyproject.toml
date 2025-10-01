@@ -34,7 +34,7 @@ lint = [
     "mypy~=1.15.0",
     "codespell~=2.2.0",
     "types-pyyaml~=6.0.12.20240917",
-    "types-requests~=2.32.0.20240914",
+    "types-requests~=2.32.4.20250913",
 ]
 
 [tool.ruff]
