@@ -23,7 +23,7 @@ dev = [
     "agent-starter-pack>=0.14.1",
 ]
 deployment = [
-    "absl-py~=2.2.1",
+    "absl-py~=2.3.1",
 ]
 
 [project.optional-dependencies]
