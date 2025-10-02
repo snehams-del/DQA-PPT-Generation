@@ -32,20 +32,21 @@ def setup_before_agent_call(callback_context: CallbackContext) -> None:
     logger.debug("setup_before_agent_call")
 
     if "database_settings" not in callback_context.state:
-        callback_context.state["database_settings"] = \
+        callback_context.state["database_settings"] = (
             tools.get_database_settings()
+        )
 
 
 alloydb_agent = LlmAgent(
     model=os.getenv("ALLOYDB_AGENT_MODEL", ""),
     name="alloydb_agent",
     instruction=return_instructions_alloydb(),
-    output_key = "alloydb_agent_output",
+    output_key="alloydb_agent_output",
     tools=[
         tools.alloydb_nl2sql,
         tools.run_alloydb_query,
-        #tools.get_toolbox_toolset(),
+        # tools.get_toolbox_toolset(),
     ],
-    #before_agent_callback=setup_before_agent_call,
+    # before_agent_callback=setup_before_agent_call,
     generate_content_config=types.GenerateContentConfig(temperature=0.01),
 )

@@ -39,7 +39,8 @@ tools:
                 CROSS JOIN desired_relkinds dk
                 WHERE
                     t.relkind = ANY(dk.kinds) -- Filter by selected table relkinds ('r', 'p')
-                    AND (NULLIF(TRIM($1), '') IS NULL OR t.relname = ANY(string_to_array($1,','))) -- $1 is object_names
+                    AND (NULLIF(TRIM($1), '') IS NULL OR ns.nspname = ANY(string_to_array($1,','))) -- $1 is schema_names
+                    AND (NULLIF(TRIM($2), '') IS NULL OR t.relname = ANY(string_to_array($2,','))) -- $2 is table_names
                     AND ns.nspname NOT IN ('pg_catalog', 'information_schema', 'pg_toast')
                     AND ns.nspname NOT LIKE 'pg_temp_%' AND ns.nspname NOT LIKE 'pg_toast_temp_%'
             ),
@@ -91,6 +92,9 @@ tools:
                 ) AS object_details
             FROM table_info ti ORDER BY ti.schema_name, ti.table_name;
         parameters:
+            - name: schema
+              type: string
+              description: "Optional: A comma-separated list of schema names. If empty, details for all schemas will be listed."
             - name: table_names
               type: string
               description: "Optional: A comma-separated list of table names. If empty, details for all tables in user-accessible schemas will be listed."

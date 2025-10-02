@@ -1,11 +1,11 @@
 sources:
     pg-source:
         kind: postgres
-        host: ${POSTGRES_HOST}
-        port: ${POSTGRES_PORT}
-        database: ${POSTGRES_DATABASE}
-        user: ${POSTGRES_USER}
-        password: ${POSTGRES_PASSWORD}
+        host: ${ALLOYDB_POSTGRES_HOST}
+        port: ${ALLOYDB_POSTGRES_PORT}
+        database: ${ALLOYDB_POSTGRES_DATABASE}
+        user: ${ALLOYDB_POSTGRES_USER}
+        password: ${ALLOYDB_POSTGRES_PASSWORD}
 tools:
     execute_sql:
         kind: postgres-execute-sql
@@ -96,6 +96,6 @@ tools:
               description: "Optional: A comma-separated list of table names. If empty, details for all tables in user-accessible schemas will be listed."
 
 toolsets:
-    postgres-database-tools:
+    alloydb-postgres-database-tools:
         - execute_sql
         - list_tables

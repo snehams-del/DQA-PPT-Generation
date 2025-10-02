@@ -375,9 +375,9 @@ data into BigQuery:
 
 
 
-#### MCP Toolkit for Databases Setup
+#### MCP Toolkit for Databases: Local Setup
 
-To use this dataset, you also need to set up the [MCP Toolbox for Databases][mcp-toolbox].
+To use this dataset, you also need to set up the [MCP oolbox for Databases][mcp-toolbox].
 For initial setup, you can run the toolbox locally by following these steps:
 
 1. Download the latest version of Toolbox as a binary:
@@ -393,10 +393,17 @@ For initial setup, you can run the toolbox locally by following these steps:
     chmod +x toolbox
     ```
 
-1. Run the Toolbox server, pointing to the `toolbox-alloydb.yaml` configuration file:
+1. Copy the `toolbox_env-example.sh` file to a file called `toolbox_env.sh` and
+populate it with the appropriate values for your project. Then source the `toolbox_env.sh` file:
 
     ```bash
-    ./toolbox --tools-file "toolbox-alloydb.yaml"
+    . ./toolbox_env.sh
+    ```
+
+1. Run the Toolbox server, pointing to the `toolbox-alloydb-local.yaml` configuration file:
+
+    ```bash
+    ./toolbox --tools-file "toolbox-alloydb-local.yaml"
     ```
 
 [mcp-toolbox]: https://googleapis.github.io/genai-toolbox/
@@ -561,13 +568,82 @@ gcloud projects add-iam-policy-binding ${GOOGLE_CLOUD_PROJECT} \
 
 #### MCP Toolbox Deployment
 
-1. Follow the [Cloud Run deployment instructions](deploy-mcp-toolbox) in the MCP
-Toolbox Documentation to deploy the MCP Toolbox for Databases to Cloud Run.
-Take note of these important points during the setup.
+Follow these steps to deploy the MCP Toolbox for Databases on Cloud Run. For
+more details on the process, see the official
+[Cloud Run deployment instructions](deploy-mcp-toolbox).
 
-    * Be sure to use the `toolbox-alloydb.yaml` file from this repo in the setup steps.
-    * Use the same project for the Toolbox deployment as you used for the AlloyDB
-        database setup.
+1. Enable the required Google Cloud APIs:
+    ```bash
+    gcloud services enable run.googleapis.com \
+                        cloudbuild.googleapis.com \
+                        artifactregistry.googleapis.com \
+                        iam.googleapis.com \
+                        secretmanager.googleapis.com
+    ```
+
+1. Ensure the account used for administering your Google Cloud project has the
+approriate IAM roles:
+    * Create Service Account role (`roles/iam.serviceAccountCreator`)
+    * Secret Manager Admin role (`roles/secretmanager.admin`)
+    * Cloud Run Developer (`roles/run.developer`)
+    * Service Account User role (`roles/iam.serviceAccountUser`)
+
+1. Create a service account for the MCP Toolbox:
+    ```bash
+    gcloud iam service-accounts create toolbox-identity
+    ```
+1. Grant permissions to use secret manager.
+    ```bash
+    gcloud projects add-iam-policy-binding $PROJECT_ID \
+        --member serviceAccount:toolbox-identity@$PROJECT_ID.iam.gserviceaccount.com \
+        --role roles/secretmanager.secretAccessor
+    ```
+
+1. [Create a secret](create-a-secret) for the AlloyDB user password.
+    ```bash
+    export ALLOYDB_POSTGRES_PASSWORD=<your Postgres user password>
+    echo -n $ALLOYDB_POSTGRES_PASSWORD | \
+        gcloud secrets create ALLOYDB_POSTGRES_PASSWORD \
+        --replication-policy="automatic" \
+        --data-file=-
+    ```
+    Note that the previous command will expose the database password in plaintext
+    in the list of processes on your machine and in your shell history. To prevent
+    this, store the password in a data file (e.g. `db-pass.txt`) and use this
+    command instead.
+    ```bash
+    gcloud secrets create ALLOYDB_POSTGRES_PASSWORD \
+        --replication-policy="automatic" \
+        --data-file="db-pass.txt"
+    ```
+
+1. Copy the `toolbox.env-example` file to a version called `toolbox.env` with
+the appropriate values for your project and AlloyDB setup.
+
+1. Add the `toolbox-alloydb-remote.yaml` configuration file to Secret Manager.
+    ```bash
+    gcloud secrets create tools --data-file=toolbox-alloydb-remote.yaml
+    ```
+1. Export an environment variable for the container image to use for Cloud Run:
+    ```bash
+    export IMAGE=us-central1-docker.pkg.dev/database-toolbox/toolbox/toolbox:latest
+    ```
+
+1. Deploy Toolbox to Cloud Run.
+    ```bash
+    # TODO(dev): update --network and --subnet to match your VPC if necessary
+    gcloud run deploy toolbox \
+        --image $IMAGE \
+        --service-account toolbox-identity \
+        --region us-central1 \
+        --set-secrets "/app/tools.yaml=tools:latest,ALLOYDB_POSTGRES_PASSWORD=ALLOYDB_POSTGRES_PASSWORD:latest" \
+        --env-vars-file="toolbox.env" \
+        --args="--tools-file=/app/tools.yaml","--address=0.0.0.0","--port=8080" \
+        --network default \
+        --subnet default
+        # --allow-unauthenticated # https://cloud.google.com/run/docs/authenticating/public#gcloud
+
+    ```
 
 1. When the MCP Toolbox is deployed, you should be able to run the following command
 to get a URL for the deployed Toolbox instance:
@@ -578,6 +654,7 @@ to get a URL for the deployed Toolbox instance:
 1. Set the value of `MCP_TOOLBOX_URL` in your `.env` file to that URL.
 
 [deploy-mcp-toolbox]: https://googleapis.github.io/genai-toolbox/how-to/deploy_toolbox/
+[create-a-secret]: https://cloud.google.com/secret-manager/docs/creating-and-accessing-secrets
 
 #### Agent Deployment
 

@@ -22,12 +22,15 @@ from data_science.utils.utils import get_env_var
 from google.adk.tools import ToolContext
 from google.genai import Client
 from google.genai.types import HttpOptions
-from toolbox_core import ToolboxSyncClient
+from toolbox_core import ToolboxSyncClient, auth_methods
 
 from ...utils.utils import USER_AGENT
 
 ALLOYDB_TOOLSET = os.getenv("ALLOYDB_TOOLSET", "postgres-database-tools")
-ALLOYDB_SERVER_URL = os.getenv("ALLOYDB_SERVER_URL", "http://127.0.0.1:5000")
+# The agent connects to AlloyDB using the MCP Toolbox for Databases
+# By default it connects to localhost; change this environment variable
+# for a remote deployment.
+MCP_TOOLBOX_URL = os.getenv("MCP_TOOLBOX_URL", "http://127.0.0.1:5000")
 
 # MAX_NUM_ROWS = 80
 
@@ -40,6 +43,7 @@ llm_client = Client(
     location=location,
     http_options=http_options,
 )
+auth_token_provider = auth_methods.aget_google_id_token(MCP_TOOLBOX_URL)
 
 database_settings = None
 toolbox_client = None
@@ -52,7 +56,10 @@ def get_toolbox_client():
     """Get MCP Toolbox client."""
     global toolbox_client
     if toolbox_client is None:
-        toolbox_client = ToolboxSyncClient(ALLOYDB_SERVER_URL)
+        toolbox_client = ToolboxSyncClient(
+            MCP_TOOLBOX_URL,
+            client_headers={"Authorization": auth_token_provider},
+        )
     return toolbox_client
 
 
