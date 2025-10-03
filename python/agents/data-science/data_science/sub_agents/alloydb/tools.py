@@ -30,9 +30,8 @@ ALLOYDB_TOOLSET = os.getenv("ALLOYDB_TOOLSET", "postgres-database-tools")
 # The agent connects to AlloyDB using the MCP Toolbox for Databases
 # By default it connects to localhost; change this environment variable
 # for a remote deployment.
-MCP_TOOLBOX_HOST = os.getenv("MCP_TOOLBOX_URL", "localhost")
+MCP_TOOLBOX_HOST = os.getenv("MCP_TOOLBOX_HOST", "localhost")
 MCP_TOOLBOX_PORT = os.getenv("MCP_TOOLBOX_PORT", "5000")
-MCP_TOOLBOX_URL = f"http://{MCP_TOOLBOX_HOST}:{MCP_TOOLBOX_PORT}"
 
 # MAX_NUM_ROWS = 80
 
@@ -46,8 +45,6 @@ llm_client = Client(
     http_options=http_options,
 )
 
-# auth_token_provider = auth_methods.aget_google_id_token(MCP_TOOLBOX_URL)
-
 database_settings = None
 toolbox_client = None
 toolbox_toolset = None
@@ -59,10 +56,25 @@ def get_toolbox_client():
     """Get MCP Toolbox client."""
     global toolbox_client
     if toolbox_client is None:
-        toolbox_client = ToolboxSyncClient(
-            MCP_TOOLBOX_URL,
-            # client_headers={"Authorization": auth_token_provider},
+        logger.info(
+            "Connecting to MCP Toolbox at %s:%s",
+            MCP_TOOLBOX_HOST,
+            MCP_TOOLBOX_PORT,
         )
+        if MCP_TOOLBOX_HOST in ["localhost", "127.0.0.1"]:
+            toolbox_url = f"http://{MCP_TOOLBOX_HOST}:{MCP_TOOLBOX_PORT}"
+            logger.info("Connecting to local MCP Toolbox at %s", toolbox_url)
+            toolbox_client = ToolboxSyncClient(toolbox_url)
+        else:
+            toolbox_url = f"https://{MCP_TOOLBOX_HOST}"
+            if MCP_TOOLBOX_PORT is not "":
+                toolbox_url += f":{MCP_TOOLBOX_PORT}"
+            logger.info("Connecting to remote MCP Toolbox at %s", toolbox_url)
+            auth_token_provider = auth_methods.aget_google_id_token(toolbox_url)
+            toolbox_client = ToolboxSyncClient(
+                toolbox_url,
+                client_headers={"Authorization": auth_token_provider},
+            )
     return toolbox_client
 
 
