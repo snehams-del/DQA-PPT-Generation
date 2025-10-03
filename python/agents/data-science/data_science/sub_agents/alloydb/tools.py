@@ -43,7 +43,7 @@ llm_client = Client(
     location=location,
     http_options=http_options,
 )
-auth_token_provider = auth_methods.aget_google_id_token(MCP_TOOLBOX_URL)
+# auth_token_provider = auth_methods.aget_google_id_token(MCP_TOOLBOX_URL)
 
 database_settings = None
 toolbox_client = None
@@ -58,7 +58,7 @@ def get_toolbox_client():
     if toolbox_client is None:
         toolbox_client = ToolboxSyncClient(
             MCP_TOOLBOX_URL,
-            client_headers={"Authorization": auth_token_provider},
+            # client_headers={"Authorization": auth_token_provider},
         )
     return toolbox_client
 
@@ -81,7 +81,9 @@ def get_database_settings():
 
 def get_schema():
     get_schema_tool = get_toolbox_client().load_tool("list_tables")
-    schema = get_schema_tool(get_env_var("ALLOYDB_SCHEMA_NAME"), "")
+    schema = get_schema_tool(
+        schema_names=get_env_var("ALLOYDB_SCHEMA_NAME"), table_names=""
+    )
     return schema
 
 
