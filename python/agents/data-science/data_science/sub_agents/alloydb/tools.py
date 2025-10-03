@@ -30,7 +30,9 @@ ALLOYDB_TOOLSET = os.getenv("ALLOYDB_TOOLSET", "postgres-database-tools")
 # The agent connects to AlloyDB using the MCP Toolbox for Databases
 # By default it connects to localhost; change this environment variable
 # for a remote deployment.
-MCP_TOOLBOX_URL = os.getenv("MCP_TOOLBOX_URL", "http://127.0.0.1:5000")
+MCP_TOOLBOX_HOST = os.getenv("MCP_TOOLBOX_URL", "localhost")
+MCP_TOOLBOX_PORT = os.getenv("MCP_TOOLBOX_PORT", "5000")
+MCP_TOOLBOX_URL = f"http://{MCP_TOOLBOX_HOST}:{MCP_TOOLBOX_PORT}"
 
 # MAX_NUM_ROWS = 80
 
@@ -43,6 +45,7 @@ llm_client = Client(
     location=location,
     http_options=http_options,
 )
+
 # auth_token_provider = auth_methods.aget_google_id_token(MCP_TOOLBOX_URL)
 
 database_settings = None
