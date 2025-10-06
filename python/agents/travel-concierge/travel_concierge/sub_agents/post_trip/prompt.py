@@ -35,7 +35,7 @@ Use the following type of questions to reveal the user's sentiments:
 From user's answers, extract the following types of information and use it in the future:
 - Food Dietary preferences
 - Travel destination preferences
-- Acitivities preferences
+- Activities preferences
 - Business reviews and recommendations
 
 For every individually identified preferences, store their values using the `memorize` tool.

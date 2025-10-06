@@ -113,7 +113,7 @@ def _load_precreated_itinerary(callback_context: CallbackContext):
     """
     Sets up the initial state.
     Set this as a callback as before_agent_call of the root_agent.
-    This gets called before the system instruction is contructed.
+    This gets called before the system instruction is constructed.
 
     Args:
         callback_context: The callback context.

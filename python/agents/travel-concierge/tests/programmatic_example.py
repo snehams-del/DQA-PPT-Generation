@@ -37,7 +37,7 @@ print("Session", response.json())
 # We are going to run just two turns with the concierge
 user_inputs = [
     "Inspire me about the Maldives",
-    "Show me a few activites around Baa Atoll",
+    "Show me a few activities around Baa Atoll",
 ]
 
 for user_input in user_inputs:

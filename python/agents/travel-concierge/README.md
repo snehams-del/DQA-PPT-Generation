@@ -91,10 +91,13 @@ Expand on the "Key Components" from above.
 ### Prerequisites
 
 - Python 3.11+
+- uv
+    - For dependency management and packaging. Please follow the
+        instructions on the official
+        [uv website](https://docs.astral.sh/uv/) for installation.
 - Google Cloud Project (for Vertex AI integration)
 - API Key for [Google Maps Platform Places API](https://developers.google.com/maps/documentation/places/web-service/get-api-key)
 - Google Agent Development Kit 1.0+
-- Poetry: Install Poetry by following the instructions on the official Poetry [website](https://python-poetry.org/docs/)
 
 ### Installation
 
@@ -106,15 +109,10 @@ Expand on the "Key Components" from above.
     ```
     NOTE: From here on, all command-line instructions shall be executed under the directory  `travel-concierge/` unless otherwise stated.
 
-2.  Install dependencies using Poetry or pip:
+2.  Install dependencies using uv:
 
-    **Note for Linux users:** If you get an error related to `keyring` during the installation, you can disable it by running the following command:
     ```bash
-    poetry config keyring.enabled false
-    ```
-    This is a one-time setup.
-    ```bash
-    poetry install
+    uv sync
     ```
 
 3.  Set up Google Cloud credentials:
@@ -153,12 +151,39 @@ Expand on the "Key Components" from above.
     gcloud auth application-default login
     ```
 
-5. Activate the virtual environment set up by Poetry, run:
+5. Activate the virtual environment set up by uv, run:
     ```bash
-    eval $(poetry env activate)
-    (travel-concierge-py3.12) $ # Virtualenv entered
+    source .venv/bin/activate
+    (.venv) $ # Virtualenv entered
     ```
     Repeat this command whenever you have a new shell, before running the commands in this README.
+
+### Alternative: Using Agent Starter Pack
+
+You can also use the [Agent Starter Pack](https://goo.gle/agent-starter-pack) to create a production-ready version of this agent with additional deployment options:
+
+```bash
+# Create and activate a virtual environment
+python -m venv .venv && source .venv/bin/activate # On Windows: .venv\Scripts\activate
+
+# Install the starter pack and create your project
+pip install --upgrade agent-starter-pack
+agent-starter-pack create my-travel-concierge -a adk@travel-concierge
+```
+
+<details>
+<summary>⚡️ Alternative: Using uv</summary>
+
+If you have [`uv`](https://github.com/astral-sh/uv) installed, you can create and set up your project with a single command:
+```bash
+uvx agent-starter-pack create my-travel-concierge -a adk@travel-concierge
+```
+This command handles creating the project without needing to pre-install the package into a virtual environment.
+
+</details>
+
+The starter pack will prompt you to select deployment options and provides additional production-ready features including automated CI/CD deployment scripts.
+
 
 ## Running the Agent
 
@@ -228,7 +253,7 @@ Without specifically optimizing for such usage, this cohort of agents seem to be
 To run the illustrative tests and evaluations, install the extra dependencies and run `pytest`:
 
 ```
-poetry install --with dev
+uv sync --dev
 pytest
 ```
 
@@ -249,7 +274,7 @@ pytest eval
 To deploy the agent to Vertex AI Agent Engine, run the following command under `travel-concierge`:
 
 ```bash
-poetry install --with deployment
+uv sync --group deployment
 python deployment/deploy.py --create
 ```
 When this command returns, if it succeeds it will print an AgentEngine resource
@@ -442,7 +467,7 @@ You will get outputs similar to this below:
 
 Are any of these destinations sound interesting? I can provide you with some activities you can do in the destination you selected.
 
-[user]: "Suggest some acitivities around Baa Atoll"
+[user]: "Suggest some activities around Baa Atoll"
 
 ...
 

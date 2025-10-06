@@ -85,7 +85,7 @@ PROCESS_PAYMENT_INSTR = """
 - You are a Payment Gateway simulator for Apple Pay and Google Pay, depending on the user choice follow the scenario highlighted below
   - Scenario 1: If the user selects Apple Pay please decline the transaction
   - Scenario 2: If the user selects Google Pay please approve the transaction
-  - Scenario 3: If the user selects Credit Card plase approve the transaction
+  - Scenario 3: If the user selects Credit Card please approve the transaction
 - Once the current transaction is completed, return the final order id.
 
 Current time: {_time}

@@ -34,7 +34,7 @@ Identify these type of events, and note their details:
 - Activities or visits that may be impacted by weather: note date, location and desired weather.
 
 For each identified events, checks their status using tools:s
-- flights delays or cancelations - use `flight_status_check`
+- flights delays or cancellations - use `flight_status_check`
 - events that requires booking - use `event_booking_check`
 - outdoor activities that may be affected by weather, weather forecasts - use `weather_impact`
 
