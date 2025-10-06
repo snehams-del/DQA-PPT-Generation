@@ -1,5 +1,31 @@
 # Data Science with Multiple Agents
 
+## NOTE: MAJOR UPDATE
+
+Note for previous users of the Data Science Agent: this newly released version
+of the Data Science Agent introduces some significant changes. Please read this
+document carefully.
+
+### Significant Changes Introduced
+
+1. *AlloyDB data source*: The updated agent includes support for a second data
+    source in AlloyDB, including an AlloyDB sub-agent.
+1. *MCP Toolbox for Databases*: The AlloyDB sub-agent uses the
+    [MCP Toolbox for Databases][mcp-toolbox] to connect to AlloyDB.
+1. *BigQuery Built-In Tools*: The BigQuery sub-agent now uses the
+    [ADK Built-in BigQuery Tool][adk-builtin-tool-bq] to connect to BigQuery.
+1. *New sample dataset*: The agent now includes a new sample dataset with simulated
+    flight and ticket information for a fictitional airline. The new dataset is
+    designed to be hosted in both AlloyDB and BigQuery, to demonstrate the
+    cross-dataset capabiliites of the agent.
+1. *Dataset configuration*: The agent uses a new configuration file format allowing
+    users to configure the data sources used at runtime, including using only
+    BigQuery or BigQuery and AlloyDB.
+1. *Cross-dataset joins*: The new configuration format also includes support for
+    specifying cross-dataset key relationships, allowing the agent to perform
+    cross-dataset joins.
+
+
 ## Overview
 
 This project demonstrates a multi-agent system designed for sophisticated data
@@ -377,7 +403,7 @@ data into BigQuery:
 
 #### MCP Toolkit for Databases: Local Setup
 
-To use this dataset, you also need to set up the [MCP oolbox for Databases][mcp-toolbox].
+To use this dataset, you also need to set up the [MCP Toolbox for Databases][mcp-toolbox].
 For initial setup, you can run the toolbox locally by following these steps:
 
 1. Download the latest version of Toolbox as a binary:
@@ -406,7 +432,6 @@ populate it with the appropriate values for your project. Then source the `toolb
     ./toolbox --tools-file "toolbox-alloydb-local.yaml"
     ```
 
-[mcp-toolbox]: https://googleapis.github.io/genai-toolbox/
 
 ## Running the Agent
 
@@ -889,3 +914,7 @@ Users are solely responsible for any further development, testing, security
 hardening, and deployment of agents based on this sample. We recommend thorough
 review, testing, and the implementation of appropriate safeguards before using
 any derived agent in a live or critical system.
+
+
+[mcp-toolbox]: https://googleapis.github.io/genai-toolbox/
+[adk-builtin-tool-bq]: https://google.github.io/adk-docs/tools/built-in-tools/#bigquery
