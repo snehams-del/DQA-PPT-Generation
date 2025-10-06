@@ -1,4 +1,34 @@
-# FILE: run_evaluation.py
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""
+This script runs an evaluation harness for ADK agents against Tau2-Bench tasks.
+
+It orchestrates the interaction between an ADK agent and a Tau2-Bench environment,
+simulating a user conversation and evaluating the agent's performance based on
+the Tau2-Bench reward system.
+
+Key functionalities include:
+- Loading an ADK agent dynamically from a specified path.
+- Initializing a Tau2-Bench environment for a given domain and task.
+- Injecting Tau2-Bench domain policies into the ADK agent's instructions.
+- Simulating user interactions using a specified LLM.
+- Mapping ADK tool calls to Tau2-Bench tool calls and executing them.
+- Logging detailed trajectories and results for each task.
+- Generating a summary of the evaluation run, including average reward.
+"""
+
 
 import asyncio
 import argparse
@@ -63,6 +93,44 @@ class FileLogger:
         if self.log_file:
             self.log_file.close()
 
+    def task_start(self, task_id):
+        """Logs the start of a task."""
+        self.log(f"--- Running Task: {task_id} ---")
+
+    def info(self, message):
+        """Logs an informational message."""
+        self.log(f"\n[INFO] {message}")
+
+    def user_simulator(self, message, is_stop=False):
+        """Logs a message from the user simulator."""
+        stop_signal = " (STOP SIGNAL)" if is_stop else ""
+        self.log(f"\n[USER SIMULATOR]: {message}{stop_signal}")
+
+    def turn_start(self, turn_number):
+        """Logs the start of a new turn."""
+        self.log(f"\n>>> Turn {turn_number}: ADK Agent processing...")
+
+    def agent_to_harness_tool_call(self, tool_name, args):
+        """Logs a tool call from the ADK agent to the harness."""
+        self.log(f"  [ADK AGENT -> Harness]: Tool Call: {tool_name}({args})")
+
+    def harness_to_env(self, tool_name):
+        """Logs a tool execution in the Tau2 environment."""
+        self.log(f"  [Harness -> Tau2 Env]: Executed {tool_name}.")
+
+    def agent_to_user(self, message):
+        """Logs a text response from the ADK agent to the user."""
+        self.log(f"  [ADK AGENT -> User]: {message}")
+
+    def evaluation_result(self, task_id, reward, db_check):
+        """Logs the final evaluation result for a task."""
+        self.log("\n--- EVALUATION RESULT ---")
+        self.log(f"✅ Task: {task_id}")
+        self.log(f"🏆 Reward: {reward:.2f}")
+        if db_check:
+            self.log(f"🗃️ DB Match: {db_check.db_match}")
+        self.log("----------------------------\n")
+
 
 def _find_tool_call_in_events(events: list) -> FunctionCall | None:
     for event in events:
@@ -87,15 +155,21 @@ def _get_final_text_from_events(events: list) -> str | None:
 
 
 async def run_evaluation_for_task(
-    domain: str, task, adk_agent, user_llm: str, run_path: Path
+    domain: str,
+    task,
+    adk_agent,
+    user_llm: str,
+    run_path: Path,
+    max_turns: int,
 ):
-    """Orchestrates the evaluation of a single task, logging its detailed output to its own file."""
+    """Orchestrates the evaluation of a single task, logging its detailed output to its
+    own file."""
     task_path = run_path / "trajectories" / f"task_{task.id}"
     os.makedirs(task_path, exist_ok=True)
 
     task_logger = FileLogger(task_path / "console.log", to_stdout=False)
 
-    task_logger.log(f"--- Running Task: {task.id} ---")
+    task_logger.task_start(task.id)
 
     env_constructor = registry.get_env_constructor(domain)
     tau2_env = env_constructor()
@@ -117,8 +191,8 @@ async def run_evaluation_for_task(
         "--- Your Original Instructions ---\n"
         f"{original_instruction}"
     )
-    task_logger.log(
-        "\n[INFO] Injected Tau2 domain policy into ADK agent's instructions for this run."
+    task_logger.info(
+        "Injected Tau2 domain policy into ADK agent's instructions for this run."
     )
 
     adk_session_service = InMemorySessionService()
@@ -143,15 +217,17 @@ async def run_evaluation_for_task(
         initial_assistant_msg, user_sim_state
     )
 
-    task_logger.log(f"\n[USER SIMULATOR]: {user_response_msg.content}")
+    task_logger.user_simulator(user_response_msg.content)
     tau2_trajectory.append(user_response_msg)
     current_adk_message = Content(
         role="user", parts=[Part(text=user_response_msg.content)]
     )
 
-    for turn in range(15):
-        task_logger.log(f"\n>>> Turn {turn+1}: ADK Agent processing...")
+    # Main interaction loop: ADK Agent <-> User Simulator
+    for turn in range(max_turns):
+        task_logger.turn_start(turn + 1)
 
+        # Run the ADK agent for one turn with the user's message
         adk_events = [
             event
             async for event in adk_runner.run_async(
@@ -161,17 +237,19 @@ async def run_evaluation_for_task(
             )
         ]
 
+        # Check if the agent responded with a tool call or a text message
         adk_tool_call = _find_tool_call_in_events(adk_events)
 
         if adk_tool_call:
+            # Agent wants to use a tool.
+            # Map the ADK tool call to the corresponding Tau2 tool, execute it,
+            # and feed the result back to the agent in the next turn.
             tool_map_config = get_tool_mapping(domain)
             adk_tool_name = adk_tool_call.name
             adk_args = dict(adk_tool_call.args)
             adk_tool_call_id = adk_tool_call.id or f"adk_tool_call_{turn}"
 
-            task_logger.log(
-                f"  [ADK AGENT -> Harness]: Tool Call: {adk_tool_name}({adk_args})"
-            )
+            task_logger.agent_to_harness_tool_call(adk_tool_name, adk_args)
 
             tau2_tool_name = tool_map_config["tool_map"].get(adk_tool_name)
             tau2_args = tool_map_config["arg_mapper"](adk_tool_name, adk_args)
@@ -190,7 +268,7 @@ async def run_evaluation_for_task(
             )
 
             tool_result = tau2_env.use_tool(tool_name=tau2_tool_name, **tau2_args)
-            task_logger.log(f"  [Harness -> Tau2 Env]: Executed {tau2_tool_name}.")
+            task_logger.harness_to_env(tau2_tool_name)
 
             if hasattr(tool_result, "model_dump"):
                 tool_result_for_adk = tool_result.model_dump()
@@ -226,11 +304,13 @@ async def run_evaluation_for_task(
             continue
 
         else:
+            # Agent responded with a text message.
+            # Get the user simulator's response and check if the conversation should end.
             final_text = _get_final_text_from_events(adk_events)
             if not final_text:
                 final_text = "(Agent produced no text response)"
 
-            task_logger.log(f"  [ADK AGENT -> User]: {final_text}")
+            task_logger.agent_to_user(final_text)
 
             agent_response_msg = AssistantMessage(role="assistant", content=final_text)
             tau2_trajectory.append(agent_response_msg)
@@ -239,14 +319,13 @@ async def run_evaluation_for_task(
                 agent_response_msg, user_sim_state
             )
 
+            # The user simulator signals the end of the conversation
             if UserSimulator.is_stop(user_response_msg):
-                task_logger.log(
-                    f"\n[USER SIMULATOR]: {user_response_msg.content} (STOP SIGNAL)"
-                )
+                task_logger.user_simulator(user_response_msg.content, is_stop=True)
                 tau2_trajectory.append(user_response_msg)
                 break
 
-            task_logger.log(f"\n[USER SIMULATOR]: {user_response_msg.content}")
+            task_logger.user_simulator(user_response_msg.content)
             tau2_trajectory.append(user_response_msg)
             current_adk_message = Content(
                 role="user", parts=[Part(text=user_response_msg.content)]
@@ -268,12 +347,7 @@ async def run_evaluation_for_task(
         full_trajectory=dummy_sim_run.messages,
     )
 
-    task_logger.log("\n--- EVALUATION RESULT ---")
-    task_logger.log(f"✅ Task: {task.id}")
-    task_logger.log(f"🏆 Reward: {reward_info.reward:.2f}")
-    if reward_info.db_check:
-        task_logger.log(f"🗃️ DB Match: {reward_info.db_check.db_match}")
-    task_logger.log("----------------------------\n")
+    task_logger.evaluation_result(task.id, reward_info.reward, reward_info.db_check)
 
     # Save detailed task files
     traj_path = task_path / "trajectory.json"
@@ -348,7 +422,8 @@ async def main(args):
         file_path_str, agent_variable_name = agent_path_str.split(":")
     except ValueError:
         raise ValueError(
-            f"Invalid --adk_agent_path format. Expected 'path/to/agent.py:variable_name', but got '{agent_path_str}'"
+            f"Invalid --adk_agent_path format."
+            f"Expected 'path/to/agent.py:variable_name', but got '{agent_path_str}'"
         )
 
     agent_file_path = Path(file_path_str).resolve()
@@ -364,7 +439,8 @@ async def main(args):
         adk_agent = getattr(agent_module, agent_variable_name)
     except (ImportError, AttributeError) as e:
         raise ImportError(
-            f"Could not import agent '{agent_variable_name}' from '{agent_file_path}'. Error: {e}"
+            f"Could not import agent '{agent_variable_name}'"
+            f"from '{agent_file_path}'. Error: {e}"
         )
     finally:
         sys.path.pop(0)
@@ -373,13 +449,16 @@ async def main(args):
     tasks = get_tasks(args.domain, num_tasks=args.num_tasks)
 
     task_coroutines = [
-        run_evaluation_for_task(args.domain, task, adk_agent, args.user_llm, run_path)
+        run_evaluation_for_task(
+            args.domain, task, adk_agent, args.user_llm, run_path, args.max_turns
+        )
         for task in tasks
     ]
     all_task_results = []
 
     print(f"\nRunning {len(tasks)} tasks in parallel...")
-    # Temporarily redirect stderr to /dev/null to suppress aiohttp warnings and keep the progress bar clean
+    # Temporarily redirect stderr to /dev/null to suppress aiohttp warnings and keep the
+    # progress bar clean
     with open(os.devnull, "w") as devnull:
         with redirect_stderr(devnull):
             for future in tqdm.as_completed(
@@ -420,10 +499,17 @@ if __name__ == "__main__":
         "--adk_agent_path",
         type=str,
         required=True,
-        help="Path to ADK agent. e.g., 'sample_adk_agents/airline/agent.py:variable_name'",
+        help="Path to ADK agent. e.g. "
+        "'sample_adk_agents/airline/agent.py:variable_name'",
     )
     parser.add_argument(
         "--user-llm", type=str, required=True, help="LLM to use for the user simulator."
+    )
+    parser.add_argument(
+        "--max-turns",
+        type=int,
+        default=15,
+        help="Maximum number of turns per task (default: 15).",
     )
 
     args = parser.parse_args()
