@@ -1,13 +1,15 @@
 # FILE: harness/tool_mapper.py
 
+
 def map_airline_arguments(adk_tool_name: str, adk_args: dict) -> dict:
     """
-    Translates arguments from ADK tool format to Tau2 tool format for the airline domain.
-    For our current example, the argument names match, so we can just return them.
-    If they were different, you would add mapping logic here.
-    e.g., if adk_args had 'from_city', you'd map it to 'origin'.
+    Translates arguments from ADK tool format to Tau2 tool format for the airline
+    domain. For our current example, the argument names match, so we can just return
+    them. If they were different, you would add mapping logic here. e.g., if adk_args
+    had 'from_city', you'd map it to 'origin'.
     """
     return adk_args
+
 
 # --- The Central Mapping Configuration ---
 # To support a new domain, add a new entry here.
@@ -30,10 +32,11 @@ DOMAIN_CONFIGS = {
             "adk_update_reservation_passengers": "update_reservation_passengers",
             "adk_get_flight_status": "get_flight_status",
         },
-        "arg_mapper": map_airline_arguments
+        "arg_mapper": map_airline_arguments,
     },
     # "telecom": { ... mappings for telecom would go here ... }
 }
+
 
 def get_tool_mapping(domain: str) -> dict:
     """
@@ -42,4 +45,7 @@ def get_tool_mapping(domain: str) -> dict:
     if domain in DOMAIN_CONFIGS:
         return DOMAIN_CONFIGS[domain]
     else:
-        raise ValueError(f"No tool mapping is configured for domain: '{domain}'. Please add it to harness/tool_mapper.py.")
+        raise ValueError(
+            f"No tool mapping is configured for domain: '{domain}'. Please add it"
+            f"to harness/tool_mapper.py."
+        )

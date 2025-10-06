@@ -7,17 +7,19 @@ from typing import List, Dict, Any
 # Their signatures and docstrings are what the ADK agent's LLM will see.
 # The code inside these functions will NEVER be executed by the harness.
 
+
 def adk_find_flights(origin: str, destination: str, date: str) -> List[dict]:
     """
-    Searches for available direct flights between an origin and a destination on a specific date.
-    Args:
+    Searches for available direct flights between an origin and a destination on a
+    specific date. Args:
         origin: The three-letter IATA code for the origin airport (e.g., 'SFO').
-        destination: The three-letter IATA code for the destination airport (e.g., 'JFK').
-        date: The desired flight date in 'YYYY-MM-DD' format.
+        destination: The three-letter IATA code for the destination airport (e.g.,
+        'JFK'). date: The desired flight date in 'YYYY-MM-DD' format.
     Returns:
         A list of available flights, each represented as a dictionary.
     """
-    pass # The harness executes the real tau2 tool.
+    pass  # The harness executes the real tau2 tool.
+
 
 def adk_get_booking_details(reservation_id: str) -> dict:
     """
@@ -29,6 +31,7 @@ def adk_get_booking_details(reservation_id: str) -> dict:
     """
     pass
 
+
 def adk_cancel_reservation(reservation_id: str) -> dict:
     """
     Cancels an entire flight reservation using its unique ID.
@@ -39,21 +42,30 @@ def adk_cancel_reservation(reservation_id: str) -> dict:
     """
     pass
 
+
 def adk_transfer_to_human(summary: str) -> dict:
     """
-    Transfers the user to a human agent when a request cannot be handled by the available tools or policy.
-    Args:
+    Transfers the user to a human agent when a request cannot be handled by the
+    available tools or policy. Args:
         summary: A brief summary of the user's issue for the human agent.
     Returns:
         A dictionary confirming the transfer.
     """
     pass
 
+
 def adk_book_reservation(
-    user_id: str, origin: str, destination: str, flight_type: str, cabin: str, 
-    flights: List[Dict[str, Any]], passengers: List[Dict[str, Any]], 
-    payment_methods: List[Dict[str, Any]], total_baggages: int, 
-    nonfree_baggages: int, insurance: str
+    user_id: str,
+    origin: str,
+    destination: str,
+    flight_type: str,
+    cabin: str,
+    flights: List[Dict[str, Any]],
+    passengers: List[Dict[str, Any]],
+    payment_methods: List[Dict[str, Any]],
+    total_baggages: int,
+    nonfree_baggages: int,
+    insurance: str,
 ) -> dict:
     """
     Books a flight reservation with all necessary details.
@@ -74,6 +86,7 @@ def adk_book_reservation(
     """
     pass
 
+
 def adk_calculate(expression: str) -> str:
     """
     Calculates the result of a mathematical expression.
@@ -84,6 +97,7 @@ def adk_calculate(expression: str) -> str:
     """
     pass
 
+
 def adk_get_user_details(user_id: str) -> dict:
     """
     Gets the details of a user, including their reservations.
@@ -93,6 +107,7 @@ def adk_get_user_details(user_id: str) -> dict:
         A dictionary with user details.
     """
     pass
+
 
 def adk_list_all_airports() -> List[dict]:
     """
@@ -115,6 +130,7 @@ def adk_search_onestop_flight(origin: str, destination: str, date: str) -> List[
     """
     pass
 
+
 def adk_send_certificate(user_id: str, amount: int) -> str:
     """
     Sends a certificate of a specified amount to a user.
@@ -126,7 +142,10 @@ def adk_send_certificate(user_id: str, amount: int) -> str:
     """
     pass
 
-def adk_update_reservation_baggages(reservation_id: str, total_baggages: int, nonfree_baggages: int, payment_id: str) -> dict:
+
+def adk_update_reservation_baggages(
+    reservation_id: str, total_baggages: int, nonfree_baggages: int, payment_id: str
+) -> dict:
     """
     Updates the baggage information for a reservation.
     Args:
@@ -139,7 +158,10 @@ def adk_update_reservation_baggages(reservation_id: str, total_baggages: int, no
     """
     pass
 
-def adk_update_reservation_flights(reservation_id: str, cabin: str, flights: List[Dict[str, Any]], payment_id: str) -> dict:
+
+def adk_update_reservation_flights(
+    reservation_id: str, cabin: str, flights: List[Dict[str, Any]], payment_id: str
+) -> dict:
     """
     Updates the flight information for a reservation.
     Args:
@@ -153,7 +175,9 @@ def adk_update_reservation_flights(reservation_id: str, cabin: str, flights: Lis
     pass
 
 
-def adk_update_reservation_passengers(reservation_id: str, passengers: List[Dict[str, Any]]) -> dict:
+def adk_update_reservation_passengers(
+    reservation_id: str, passengers: List[Dict[str, Any]]
+) -> dict:
     """
     Updates the passenger information for a reservation.
     Args:
@@ -163,6 +187,7 @@ def adk_update_reservation_passengers(reservation_id: str, passengers: List[Dict
         The updated reservation details.
     """
     pass
+
 
 def adk_get_flight_status(flight_number: str, date: str) -> str:
     """
@@ -175,17 +200,23 @@ def adk_get_flight_status(flight_number: str, date: str) -> str:
     """
     pass
 
+
 # This is the agent we will evaluate.
 root_agent = Agent(
     name="adk_airline_agent",
     model="gemini-2.5-flash",
     description="An ADK agent for booking, finding, and managing flight reservations.",
     instruction=(
-        "You are a task-oriented airline assistant. Your ONLY goal is to use the provided tools to fulfill the user's request. "
-        "You MUST call a tool in your first turn if the user's request contains enough information to do so. "
-        "Analyze the user's request and immediately call the appropriate tool to find, get details for, or cancel a reservation. "
-        "NOTE: If the user wants to cancel you must first check if all criteria for cancellation are met! "
-        "In particular check whether the flight was made within 24 hours. This is important!"
+        "You are a task-oriented airline assistant. Your ONLY goal is to use the "
+        "provided tools to fulfill the user's request. "
+        "You MUST call a tool in your first turn if the user's request contains enough "
+        "information to do so. "
+        "Analyze the user's request and immediately call the appropriate tool to find, "
+        "get details for, or cancel a reservation. "
+        "NOTE: If the user wants to cancel you must first check if all criteria for "
+        "cancellation are met! "
+        "In particular check whether the flight was made within 24 hours. This is "
+        "important!"
     ),
     tools=[
         adk_find_flights,
