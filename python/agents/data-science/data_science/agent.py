@@ -25,22 +25,25 @@ from datetime import date
 
 from google.adk.agents import LlmAgent
 from google.adk.agents.callback_context import CallbackContext
-#from google.adk.tools import load_artifacts
+
+# from google.adk.tools import load_artifacts
 from google.genai import types
 from opentelemetry import trace
-from opentelemetry.exporter.otlp.proto.http.trace_exporter import \
-    OTLPSpanExporter
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
+    OTLPSpanExporter,
+)
 from opentelemetry.sdk import trace as trace_sdk
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 
 from .prompts import return_instructions_root
 from .sub_agents import bqml_agent
-from .sub_agents.alloydb.tools import \
-    get_database_settings as get_alloydb_database_settings
-from .sub_agents.bigquery.tools import \
-    get_database_settings as get_bq_database_settings
-from .tools import (call_alloydb_agent, call_analytics_agent,
-                    call_bigquery_agent)
+from .sub_agents.alloydb.tools import (
+    get_database_settings as get_alloydb_database_settings,
+)
+from .sub_agents.bigquery.tools import (
+    get_database_settings as get_bq_database_settings,
+)
+from .tools import call_alloydb_agent, call_analytics_agent, call_bigquery_agent
 
 # Configure Weave endpoint and authentication
 _WANDB_BASE_URL = "https://trace.wandb.ai"
@@ -78,13 +81,14 @@ _logger = logging.getLogger(__name__)
 # Initialize module-level config variables
 _dataset_config = {}
 _database_settings = {}
-_supported_dataset_types = ["bigquery","alloydb"]
-_required_dataset_config_params = ["name","description"]
+_supported_dataset_types = ["bigquery", "alloydb"]
+_required_dataset_config_params = ["name", "description"]
+
 
 def load_dataset_config():
     """Load the dataset configurations for the agent from the config file"""
 
-    dataset_config_file = os.getenv("DATASET_CONFIG_FILE","")
+    dataset_config_file = os.getenv("DATASET_CONFIG_FILE", "")
     if not dataset_config_file:
         _logger.fatal("DATASET_CONFIG_FILE env var not set")
 
@@ -104,17 +108,21 @@ def load_dataset_config():
             if p not in dataset:
                 _logger.fatal(
                     "Missing required param '%s' from %s dataset config",
-                    p, dataset["type"])
+                    p,
+                    dataset["type"],
+                )
 
     return dataset_config
 
+
 def get_database_settings(db_type: str) -> dict:
     """Wrapper function to get database settings by type"""
-    assert(db_type in _supported_dataset_types)
+    assert db_type in _supported_dataset_types
     if db_type == "bigquery":
         return get_bq_database_settings()
     else:
         return get_alloydb_database_settings()
+
 
 def init_database_settings(dataset_config: dict) -> dict:
     """Initializes the database settings for the configured datasets"""
@@ -122,6 +130,7 @@ def init_database_settings(dataset_config: dict) -> dict:
     for dataset in dataset_config["datasets"]:
         db_settings[dataset["type"]] = get_database_settings(dataset["type"])
     return db_settings
+
 
 def get_dataset_definitions_for_instructions() -> str:
     """Returns the dataset definitions instructions block"""
@@ -157,6 +166,7 @@ def get_dataset_definitions_for_instructions() -> str:
 
     return dataset_definitions
 
+
 def load_database_settings_in_context(callback_context: CallbackContext):
     """Load database settings into the callback context on first use."""
     if "database_settings" not in callback_context.state:
@@ -173,20 +183,19 @@ def get_root_agent() -> LlmAgent:
         elif dataset["type"] == "alloydb":
             tools.append(call_alloydb_agent)
 
-
     agent = LlmAgent(
-        model=os.getenv("ROOT_AGENT_MODEL", ""),
+        model=os.getenv("ROOT_AGENT_MODEL", "gemini-2.5-flash"),
         name="data_science_root_agent",
-        instruction=return_instructions_root() +
-            get_dataset_definitions_for_instructions(),
+        instruction=return_instructions_root()
+        + get_dataset_definitions_for_instructions(),
         global_instruction=(
             f"""
             You are a Data Science and Data Analytics Multi Agent System.
             Todays date: {date.today()}
             """
         ),
-        sub_agents=sub_agents, # type: ignore
-        tools=tools, # type: ignore
+        sub_agents=sub_agents,  # type: ignore
+        tools=tools,  # type: ignore
         before_agent_callback=load_database_settings_in_context,
         generate_content_config=types.GenerateContentConfig(temperature=0.01),
     )

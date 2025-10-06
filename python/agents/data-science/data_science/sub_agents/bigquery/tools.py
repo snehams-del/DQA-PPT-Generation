@@ -51,7 +51,10 @@ MAX_NUM_ROWS = 10000
 
 
 def _serialize_value_for_sql(value):
-    """Serializes a Python value from a pandas DataFrame to a BQ SQL literal."""
+    """Serializes a Python value from a pandas DataFrame into a BigQuery SQL literal."""
+    if isinstance(value, (list, np.ndarray)):
+        # Format arrays.
+        return f"[{', '.join(_serialize_value_for_sql(v) for v in value)}]"
     if pd.isna(value):
         return "NULL"
     if isinstance(value, str):
@@ -67,10 +70,6 @@ def _serialize_value_for_sql(value):
     if isinstance(value, (datetime.datetime, datetime.date, pd.Timestamp)):
         # Timestamps and datetimes need to be quoted.
         return f"'{value}'"
-    if isinstance(value, (list, np.ndarray)):
-        # Format arrays.
-        string_values = [_serialize_value_for_sql(v) for v in value]
-        return f"[{", ".join(string_values)}]"
     if isinstance(value, dict):
         # For STRUCT, BQ expects ('val1', 'val2', ...).
         # The values() order from the dataframe should match the column order.
