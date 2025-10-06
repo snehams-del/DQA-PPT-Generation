@@ -1,6 +1,6 @@
 # Data Science with Multiple Agents
 
-## NOTE: MAJOR UPDATE
+## :star: :star: MAJOR UPDATE :star: :star:
 
 Note for previous users of the Data Science Agent: this newly released version
 of the Data Science Agent introduces some significant changes. Please read this
