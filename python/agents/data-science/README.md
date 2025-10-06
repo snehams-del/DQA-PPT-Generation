@@ -588,6 +588,15 @@ approriate IAM roles:
     * Cloud Run Developer (`roles/run.developer`)
     * Service Account User role (`roles/iam.serviceAccountUser`)
 
+    ```bash
+    gcloud projects add-iam-policy-binding $PROJECT_ID \
+        --member user:$USER_ACCOUNT \
+        --role roles/iam.serviceAccountCreator \
+        --role roles/secretmanager.admin \
+        --role roles/run.developer \
+        --role roles/iam.serviceAccountUser
+    ```
+
 1. Create a service account for the MCP Toolbox:
     ```bash
     gcloud iam service-accounts create toolbox-identity
@@ -651,7 +660,8 @@ to get a URL for the deployed Toolbox instance:
     gcloud run services describe toolbox --format 'value(status.url)'
     ```
 
-1. Set the value of `MCP_TOOLBOX_URL` in your `.env` file to that URL.
+1. Set the value of `MCP_TOOLBOX_HOST` in your `.env` file to that hostname. NOTE: Do not include
+the `https://` prefix.
 
 [deploy-mcp-toolbox]: https://googleapis.github.io/genai-toolbox/how-to/deploy_toolbox/
 [create-a-secret]: https://cloud.google.com/secret-manager/docs/creating-and-accessing-secrets
