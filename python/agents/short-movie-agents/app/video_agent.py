@@ -37,9 +37,6 @@ DESCRIPTION = (
 )
 ASPECT_RATIO = "16:9"
 
-logger.debug(f"ProjectID: {os.getenv('GOOGLE_CLOUD_PROJECT')}")
-logger.debug(f"Location: {VIDEO_MODEL_LOCATION}")
-
 client = genai.Client(
     vertexai=True,
     project=os.getenv("GOOGLE_CLOUD_PROJECT"),
@@ -71,9 +68,9 @@ def video_generate(
     try:
         # Get session_id for the GCS_PATH
         session_id = tool_context._invocation_context.session.id
-        GCS_PATH = f"gs://short-movie-agent/{session_id}"
+        bucket_name = os.getenv("GOOGLE_CLOUD_BUCKET_NAME")
+        GCS_PATH = f"gs://{bucket_name}/{session_id}"
         AUTHORIZED_URI = "https://storage.mtls.cloud.google.com/"
-        logger.debug(f"GCS_PATH: {GCS_PATH}")
 
         # Extract dialogue from screenplay
         dialogue = "\n".join(re.findall(r"^\w+\s*\(.+\)\s*$", screenplay, re.MULTILINE))
@@ -88,10 +85,6 @@ def video_generate(
         operation = client.models.generate_videos(
             model=VIDEO_MODEL,
             prompt=prompt,
-            # image=types.Image(
-            #     gcs_uri=image_link,
-            #     mime_type="image/png",
-            # ),
             config=types.GenerateVideosConfig(
                 aspect_ratio=ASPECT_RATIO,
                 output_gcs_uri=f"{GCS_PATH}/scene_{scene_number}",

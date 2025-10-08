@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM python:3.11-slim
+FROM python:3.13-slim
 
 RUN pip install --no-cache-dir uv==0.6.12
 
@@ -23,9 +23,6 @@ COPY ./pyproject.toml ./README.md ./uv.lock* ./
 COPY ./app ./app
 
 RUN uv sync --frozen
-
-ARG COMMIT_SHA=""
-ENV COMMIT_SHA=${COMMIT_SHA}
 
 EXPOSE 8080
 

@@ -54,7 +54,7 @@ app: FastAPI = get_fast_api_app(
     session_service_uri=session_service_uri,
 )
 app.title = "short-movie-agents"
-app.description = "API for interacting with the Agent test-agent"
+app.description = "API for interacting with the short-movie-agents"
 
 
 @app.post("/feedback")

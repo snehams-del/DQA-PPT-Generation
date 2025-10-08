@@ -233,7 +233,7 @@ Agent Config agents can be deployed using:
 *   **Unsupported Agent Types**: `LangGraphAgent`, `A2aAgent`
 *   **Unsupported Tools**: `AgentTool`, `LongRunningFunctionTool`, `VertexAiSearchTool`, `MCPToolset`, `CrewaiTool`, `LangchainTool`, `ExampleTool`
 
-For complete examples and reference, see the [ADK samples repository](https://github.com/search?q=repo%3Agoogle%2Fadk-python+path%3A%2F%5Econtributing%5C%2Fsamples%5C%2F%2F+.yaml&type=code).
+For complete examples and reference, see the [ADK samples repository](https://github.com/google/adk-python/tree/main/contributing/samples).
 
 ---
 

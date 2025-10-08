@@ -29,7 +29,7 @@ dependencies = [
     "psycopg2-binary>=2.9.10",
 ]
 
-requires-python = ">=3.10,<3.14"
+requires-python = ">=3.13,<3.14"
 
 
 [dependency-groups]
@@ -54,7 +54,7 @@ lint = [
 
 [tool.ruff]
 line-length = 88
-target-version = "py310"
+target-version = "py313"
 
 [tool.ruff.lint]
 select = [

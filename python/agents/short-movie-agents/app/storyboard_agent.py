@@ -63,7 +63,8 @@ def storyboard_generate(
     try:
         # Get session_id for the GCS_PATH
         session_id = tool_context._invocation_context.session.id
-        GCS_PATH = f"gs://short-movie-agent/{session_id}"
+        bucket_name = os.getenv("GOOGLE_CLOUD_BUCKET_NAME")
+        GCS_PATH = f"gs://{bucket_name}/{session_id}"
         AUTHORIZED_URI = "https://storage.mtls.cloud.google.com/"
 
         # Actual image generation

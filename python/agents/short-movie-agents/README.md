@@ -9,6 +9,10 @@ Short Movie Agents demo is an ADK example showcasing a multi-agent architecture 
 - [storyboard agent](app/storyboard_agent.py) - uses context from previous agents and Imagen4 model to generate storyboards
 - [video agent](app/video_agent.py) - produces final video using Veo3
 
+Diagram:
+
+![Agent Diagram](assets/agent_diagram.png)
+
 ## Changelog
 
 See [Changelog.md](Changelog.md).
@@ -41,6 +45,8 @@ Before you begin, ensure you have:
 Install required packages and launch the local development environment:
 
 ```bash
+cp .env-template .env
+vim .env # Uncomment and update the environment variables
 make install && make playground
 ```
 
@@ -78,6 +84,8 @@ The project includes a `GEMINI.md` file that provides context for AI tools like 
 You can test deployment towards a Dev Environment using the following command:
 
 ```bash
+cp .env-template .env
+vim .env # Uncomment and update the environment variables
 gcloud config set project <your-dev-project-id>
 make backend
 ```
