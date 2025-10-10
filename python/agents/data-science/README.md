@@ -305,6 +305,42 @@ allow your ADK Agent to access the AlloyDB cluster.
 The Data Science agent includes two different sample datasets that showcase
 different aspects of its capabilities.
 
+### Dataset Configuration
+To configure the Data Science Agent to use the correct dataset, you
+will need to give it the name of a dataset configuration file in
+the environment variable `DATASET_CONFIG_FILE`. Two sample configuration
+files are provided: `forecasting_sticker_sales_dataset_config.json`
+and `flights_dataset_config.json`, corresponding to the two datasets
+described below. In your `.env. file, set the environment variable
+as either
+```bash
+DATASET_CONFIG_FILE='./forecasting_sticker_sales_dataset_config.json'
+```
+or
+```bash
+DATASET_CONFIG_FILE='./flights_dataset_config.json
+```
+#### Dataset Configuration File Format
+The two provided configuration files give examples of how to specify
+a dataset configuration. The file is a standard JSON format, with
+two main sections: `datasets` and `cross_dataset_relations`.
+
+Each entry in `datasets` must contain the following fields: `type`,
+`name`, and `description`. The description field is passed to the
+root data science agent to help it decide how to use that dataset,
+so ensure the description is written to be useful to the agent.
+
+The `cross_dataset_relations` element contains an array,
+`foreign_keys`, with entries for each foreign key relation between the
+datasets the agent has access to. A `foreign_key` entry has two
+fields, `child` and `parent`, each with the same fields:
+* `type`: The type of the dataset (must match the type in the
+    datasets field)
+* `dataset`: The name of the dataset (must be one of the datasets
+    configured in the datasets field)
+* `table`: The table in the dataset where the key field is found
+* `column`: The column in the dataset containing the key entries.
+
 ### Forecasting Sticker Sales Dataset ###
 
 ***NOTE:** This dataset uses BigQuery only. Make sure to follow the steps in the
