@@ -1,10 +1,12 @@
 # Antom Payment Agent
 
-That integrates Ant International's Antom payment APIs, enabling AI assistants to handle payment and refund operations seamlessly.
+This project implements an AI-powered payment service agent that integrates Ant International's Antom payment MCP. The agent is designed to ensure secure and smooth handling of payemnts and refunds through AI interactions.
 
 ## Overview
 
-The Antom Payment Agent wraps Ant International's Antom payment APIs into standardized MCP tools, allowing AI assistants to securely process payment-related operations during conversations. With this server, you can create payment sessions, query transaction status, handle refunds, and more directly through AI interactions.
+Ant International's Antom payment MCP wraps Ant International's Antom payment APIs into standardized MCP tools, allowing AI assistants to securely process payment-related operations during conversations. With this MCP server, you can create payment sessions, query transaction status, handle refunds, and more directly through AI interactions.
+
+The Antom Payment Agent aims to provide customers with a convenient and seamless dialogue-based payment process. it enhances the overall shopping and payment experience by flexibly organizing the payment flow according to consumer's intent using Ant International's Antom payment MCP, like initiating order checkout and cancel payment.
 
 ## Features
 
@@ -93,5 +95,18 @@ uv run adk web
 After running the agent, try the following example prompt
 
 ```
-[user]: Create a payment link for an order called "Cream Puff" for $100 and think of a sentence describing Cream Puff.
+[user]
+Create a payment link for an order called "Cream Puff" for $100 and think of a sentence describing Cream Puff.
+
+[agent]
+Sure! Here's a payment link for an order called "Cream Puff" for $100:
+
+🔗 Payment Link:
+https://open-sea-global.alipayplus.com/api/open/v1/ac/cashier/self/codevalue/checkout.htm?codeValue=https%3A%2F%2Fglobal.alipay.com%2F281002040096G2MGzTTyy0bKXR6HrRDv4Icb
+
+And here's a sentence describing the Cream Puff:
+
+"Indulge in our heavenly Cream Puff — a delicate, golden shell filled with silky vanilla custard and a hint of caramel, perfect for any sweet craving."
+
+Let me know if you want help generating a real payment link using a specific service!
 ```
