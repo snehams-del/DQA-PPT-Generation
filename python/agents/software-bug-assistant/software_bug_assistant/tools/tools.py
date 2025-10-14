@@ -70,7 +70,7 @@ except Exception:
 
 
 # ----- Example of an MCP Tool (streamable-http) -----
-# If GitHub token is not available (e.g., in CI), set to empty list
+# If GitHub token is not available (e.g., in CI), set to None
 try:
     mcp_tools = MCPToolset(
         connection_params=StreamableHTTPConnectionParams(
@@ -91,4 +91,4 @@ try:
     )
 except Exception:
     # GitHub MCP server not available or token missing
-    mcp_tools = []
+    mcp_tools = None
