@@ -15,7 +15,7 @@
 from google.auth import default
 from google.api_core.exceptions import ResourceExhausted
 import vertexai
-from vertexai.preview import rag
+from vertexai import rag
 import os
 from dotenv import load_dotenv, set_key
 import requests

@@ -16,7 +16,7 @@ import os
 
 from google.adk.agents import Agent
 from google.adk.tools.retrieval.vertex_ai_rag_retrieval import VertexAiRagRetrieval
-from vertexai.preview import rag
+from vertexai import rag
 
 from dotenv import load_dotenv
 from .prompts import return_instructions_root
