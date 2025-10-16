@@ -25,6 +25,7 @@ To learn more, check out the [ADK Documentation](https://google.github.io/adk-do
 │   ├── agents
 │   │   ├── academic-research
 │   │   ├── antom-payment
+│   │   ├── blog-writer
 │   │   ├── brand-search-optimization
 │   │   ├── camel
 │   │   ├── customer-service
@@ -33,15 +34,20 @@ To learn more, check out the [ADK Documentation](https://google.github.io/adk-do
 │   │   ├── financial-advisor
 │   │   ├── fomc-research
 │   │   ├── gemini-fullstack
+│   │   ├── google-trends-agent
 │   │   ├── image-scoring
 │   │   ├── llm-auditor
 │   │   ├── machine-learning-engineering
 │   │   ├── marketing-agency
+│   │   ├── medical-pre-authorization
 │   │   ├── personalized-shopping
 │   │   ├── RAG
-│   │   ├── README.md
+│   │   ├── realtime-conversational-agent
+│   │   ├── safety-plugins
+│   │   ├── short-movie-agents
 │   │   ├── software-bug-assistant  
-│   │   └── travel-concierge
+│   │   ├── travel-concierge
+│   │   └── README.md
 │   └── README.md
 └── README.md
 ```
