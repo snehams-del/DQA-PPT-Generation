@@ -252,7 +252,7 @@ In order to inherit all dependencies of your agent you can build the wheel file 
 
     ```bash
     cd deployment
-    python deploy.py
+    poetry run python deploy.py
     ```
 
 ### Testing deployment
