@@ -38,7 +38,7 @@ if not LOCATION:
     )
 CORPUS_DISPLAY_NAME = "Alphabet_10K_2024_corpus"
 CORPUS_DESCRIPTION = "Corpus containing Alphabet's 10-K 2024 document"
-PDF_URL = "https://abc.xyz/assets/77/51/9841ad5c4fbe85b4440c47a4df8d/goog-10-k-2024.pdf"
+PDF_URL = "https://d18rn0p25nwr6d.cloudfront.net/CIK-0001652044/4b8e828a-944d-4821-862e-2dc9bfb2bd78.pdf"
 PDF_FILENAME = "goog-10-k-2024.pdf"
 ENV_FILE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
 
