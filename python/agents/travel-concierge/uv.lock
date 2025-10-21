@@ -3169,7 +3169,7 @@ deployment = [
 ]
 dev = [
     { name = "agent-starter-pack", specifier = ">=0.14.1" },
-    { name = "google-adk", extras = ["eval"], specifier = ">=1.0.0" },
+    { name = "google-adk", extras = ["eval"], specifier = ">=1.16.0" },
     { name = "pytest", specifier = ">=8.3.5" },
     { name = "pytest-asyncio", specifier = ">=0.26.0" },
 ]
