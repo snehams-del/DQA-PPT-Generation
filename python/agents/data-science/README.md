@@ -318,7 +318,7 @@ DATASET_CONFIG_FILE='./forecasting_sticker_sales_dataset_config.json'
 ```
 or
 ```bash
-DATASET_CONFIG_FILE='./flights_dataset_config.json
+DATASET_CONFIG_FILE='./flights_dataset_config.json'
 ```
 #### Dataset Configuration File Format
 The two provided configuration files give examples of how to specify
@@ -387,7 +387,7 @@ Airlines flights dataset.
     export ALLOYDB_USER=<your AlloyDB user>
     ```
 
-1.  Connect to your database using `psql:
+1.  Connect to your database using `psql`:
     ```bash
     psql -h $ALLOYDB_HOSTNAME -p $ALLOYDB_PORT -U $ALLOYDB_USER -d $ALLOYDB_DATABASE
     ```
