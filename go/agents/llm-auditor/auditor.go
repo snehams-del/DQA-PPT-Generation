@@ -22,8 +22,6 @@ import (
 	"google.golang.org/adk/model/gemini"
 	"google.golang.org/genai"
 
-	// The import paths for critic and reviser are based on the file structure.
-	// You may need to adjust them based on your go.mod file.
 	"llm-auditor/critic"
 	"llm-auditor/reviser"
 )
