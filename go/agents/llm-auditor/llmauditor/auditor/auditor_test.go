@@ -39,19 +39,20 @@ Question: Why is the sky blue?
 Answer: Because the water is blue.`
 
 	userMsg := &genai.Content{
-		Parts: []genai.Part{genai.Text(userInput)},
+		Parts: []*genai.Part{genai.NewPartFromText(userInput)},
 		Role:  string(genai.RoleUser),
 	}
 
 	var response string
-	for event := range r.Run(ctx, "test_user", s.Session.ID(), userMsg, agent.RunConfig{}) {
-		if event.Err != nil {
-			t.Fatal(event.Err)
+	for event, err := range r.Run(ctx, "test_user", s.Session.ID(), userMsg, agent.RunConfig{}) {
+		if err != nil {
+			t.Fatal(err)
+		}
+		if event.ErrorCode != "" {
+			t.Fatalf("Event error: %s - %s", event.ErrorCode, event.ErrorMessage)
 		}
 		if event.Content != nil && len(event.Content.Parts) > 0 {
-			if text, ok := event.Content.Parts[0].(genai.Text); ok {
-				response += string(text)
-			}
+			response += event.Content.Parts[0].Text
 		}
 	}
 
