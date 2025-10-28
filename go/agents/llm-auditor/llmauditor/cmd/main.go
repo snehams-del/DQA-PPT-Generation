@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"llmauditor/auditor"
 
 	"google.golang.org/adk/agent"
 	"google.golang.org/adk/artifact"
@@ -14,7 +15,7 @@ import (
 
 func main() {
 	ctx := context.Background()
-	llmAuditorAgent := GetLLmAuditorAgent(ctx)
+	llmAuditorAgent := auditor.GetLLmAuditorAgent(ctx)
 
 	sessionService := session.InMemoryService()
 	artifactservice := artifact.InMemoryService()

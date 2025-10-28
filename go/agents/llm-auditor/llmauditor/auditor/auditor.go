@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package auditor
 
 import (
 	"context"
@@ -22,8 +22,8 @@ import (
 	"google.golang.org/adk/model/gemini"
 	"google.golang.org/genai"
 
-	"llm-auditor/critic"
-	"llm-auditor/reviser"
+	"llmauditor/critic"
+	"llmauditor/reviser"
 )
 
 func GetLLmAuditorAgent(ctx context.Context) agent.Agent {

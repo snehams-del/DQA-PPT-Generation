@@ -1,4 +1,4 @@
-module llm-auditor
+module llmauditor
 
 go 1.25.3
 
