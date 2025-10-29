@@ -38,7 +38,7 @@ flags.DEFINE_bool("create", False, "Create a new agent.")
 flags.DEFINE_bool("delete", False, "Delete an existing agent.")
 flags.mark_bool_flags_as_mutual_exclusive(["create", "delete"])
 
-AGENT_WHL_FILE = "data_science-0.1-py3-none-any.whl"
+AGENT_WHL_FILE = "data_science-0.1.0-py3-none-any.whl"
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
