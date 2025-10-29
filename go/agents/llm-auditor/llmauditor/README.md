@@ -96,7 +96,7 @@ ADK provides convenient ways to bring up agents locally and interact with them.
 You may talk to the agent using the CLI:
 
 ```bash
-go run .
+go run ./cmd
 ```
 
 This will start a web server on your machine and print the URL.
