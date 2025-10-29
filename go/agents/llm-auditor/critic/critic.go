@@ -89,52 +89,64 @@ func New(model model.LLM) (agent.Agent, error) {
 }
 
 func renderReference(
-	ctx agent.CallbackContext,
-	llmResponse *model.LLMResponse,
-	respErr error,
+    ctx agent.CallbackContext,
+    llmResponse *model.LLMResponse,
+    respErr error,
 ) (*model.LLMResponse, error) {
-	if llmResponse.Content == nil ||
-		llmResponse.Content.Parts == nil ||
-		llmResponse.GroundingMetadata == nil {
-		return llmResponse, nil
-	}
-	var references []string
-	for _, chunk := range llmResponse.GroundingMetadata.GroundingChunks {
-		var title, uri, text string
-		if chunk.RetrievedContext != nil {
-			title = chunk.RetrievedContext.Title
-			uri = chunk.RetrievedContext.URI
-			text = chunk.RetrievedContext.Text
-		} else if chunk.Web != nil {
-			title = chunk.Web.Title
-			uri = chunk.Web.URI
-		}
-		var parts []string
-		if title != "" {
-			parts = append(parts, title)
-		}
-		if text != "" {
-			parts = append(parts, text)
-		}
-		if uri != "" && len(parts) > 0 {
-			parts[0] = fmt.Sprintf("[%s](%s)", parts[0], uri)
-		}
-		if len(parts) > 0 {
-			references = append(references, "* "+strings.Join(parts, ": ")+"\n")
-		}
-	}
-	if len(references) > 0 {
-		referenceText := "\n\nReference:\n\n" + strings.Join(references, "")
-		llmResponse.Content.Parts = append(
-			llmResponse.Content.Parts,
-			&genai.Part{Text: referenceText},
-		)
-	}
-	var allText []string
-	for _, p := range llmResponse.Content.Parts {
-		allText = append(allText, p.Text)
-	}
-	llmResponse.Content.Parts[0].Text = strings.Join(allText, "\n")
-	llmResponse.Content.Parts = llmResponse.Content.Parts[:1]
-	return llmResponse, nil
+    if llmResponse.Content == nil ||
+        llmResponse.Content.Parts == nil ||
+        llmResponse.GroundingMetadata == nil {
+        return llmResponse, nil
+    }
+    var references []string
+    for _, chunk := range llmResponse.GroundingMetadata.GroundingChunks {
+        var title, uri, text string
+        if chunk.RetrievedContext != nil {
+            title = chunk.RetrievedContext.Title
+            uri = chunk.RetrievedContext.URI
+            text = chunk.RetrievedContext.Text
+        } else if chunk.Web != nil {
+            title = chunk.Web.Title
+            uri = chunk.Web.URI
+        }
+        var parts []string
+        if title != "" {
+            parts = append(parts, title)
+        }
+        if text != "" {
+            parts = append(parts, text)
+        }
+        if uri != "" && len(parts) > 0 {
+            parts[0] = fmt.Sprintf("[%s](%s)", parts[0], uri)
+        }
+        if len(parts) > 0 {
+            references = append(references, "* "+strings.Join(parts, ": ")+"\n")
+        }
+    }
+    if len(references) > 0 {
+        referenceText := "\n\nReference:\n\n" + strings.Join(references, "")
+        llmResponse.Content.Parts = append(
+            llmResponse.Content.Parts,
+            &genai.Part{Text: referenceText},
+        )
+    }
+
+    allTextBased := true
+    var allText []string
+    for _, p := range llmResponse.Content.Parts {
+        // Check if the part contains non-text data.
+        if p.FunctionCall != nil || p.InlineData != nil || p.FunctionResponse != nil {
+            allTextBased = false
+            break
+        }
+        allText = append(allText, p.Text)
+    }
+
+    // Only consolidate if all parts were text-based
+    if allTextBased {
+        llmResponse.Content.Parts[0].Text = strings.Join(allText, "\n")
+        llmResponse.Content.Parts = llmResponse.Content.Parts[:1]
+    }
+
+    return llmResponse, nil
 }
