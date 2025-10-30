@@ -13,7 +13,7 @@ require (
 	cloud.google.com/go v0.121.6 // indirect
 	cloud.google.com/go/auth v0.16.5 // indirect
 	cloud.google.com/go/compute/metadata v0.8.0 // indirect
-	github.com/a2aproject/a2a-go v0.0.0-20251023091533-c732060cb007 // indirect
+	github.com/a2aproject/a2a-go v0.0.0-20251028184936-c210240cc397 // indirect
 	github.com/awalterschulze/gographviz v2.0.3+incompatible // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect

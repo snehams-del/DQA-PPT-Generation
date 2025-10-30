@@ -18,8 +18,6 @@ import (
 	"strings"
 
 	"google.golang.org/adk/agent"
-	"google.golang.org/adk/session"
-	"google.golang.org/genai"
 
 	"google.golang.org/adk/agent/llmagent"
 
@@ -104,16 +102,11 @@ Here are the question-answer pair and the reviewer-provided findings:
 `
 
 func New(model model.LLM) (agent.Agent, error) {
-
 	return llmagent.New(llmagent.Config{
-
-		Model: model,
-
-		Name: "reviser_agent",
-
+		Model:       model,
+		Name:        "reviser_agent",
 		Instruction: ReviserPrompt,
-
-		AfterAgentCallbacks: []agent.AfterAgentCallback{
+		AfterModelCallbacks: []llmagent.AfterModelCallback{
 			removeEndOfEditMark,
 		},
 	})
@@ -121,34 +114,20 @@ func New(model model.LLM) (agent.Agent, error) {
 }
 
 func removeEndOfEditMark(
-
 	ctx agent.CallbackContext,
-
-	event *session.Event,
+	response *model.LLMResponse,
 	respError error,
-
-) (*genai.Content, error) {
-
-	if event.Content == nil || event.Content.Parts == nil {
-
-		return event.Content, nil
-
+) (*model.LLMResponse, error) {
+	if response.Content == nil || response.Content.Parts == nil {
+		return response, nil
 	}
 
-	for i, part := range event.Content.Parts {
-
+	for i, part := range response.Content.Parts {
 		if strings.Contains(part.Text, EndMark) {
-
-			event.Content.Parts = event.Content.Parts[:i+1]
-
+			response.Content.Parts = response.Content.Parts[:i+1]
 			part.Text = strings.Split(part.Text, EndMark)[0]
-
-			break
-
 		}
-
 	}
 
-	return event.Content, nil
-
+	return response, nil
 }
