@@ -43,7 +43,7 @@ to implement this workflow.
 
 1.  **Prerequisites**
 
-    *   Go 1.22+
+    *   Go 1.24+
     *   A project on Google Cloud Platform
     *   Google Cloud CLI
         *   For installation, please follow the instruction on the official
