@@ -14,9 +14,13 @@
 
 """logo_create_agent: for creating logos"""
 
+import os
+import uuid
+
 from google.adk import Agent
 from google.adk.tools import ToolContext, load_artifacts
 from google.genai import Client, types
+from google.cloud import storage
 
 from . import prompt
 
@@ -35,14 +39,34 @@ async def generate_image(img_prompt: str, tool_context: "ToolContext"):
     if not response.generated_images:
         return {"status": "failed"}
     image_bytes = response.generated_images[0].image.image_bytes
+
+    # Save in ADK artifacts (visible in Dev UI / artifact_delta)
     await tool_context.save_artifact(
         "image.png",
         types.Part.from_bytes(data=image_bytes, mime_type="image/png"),
     )
+
+    # Additionally persist to GCS when running on Agent Engines so it can be fetched later
+    gcs_uri = ""
+    bucket_name = os.getenv("GOOGLE_CLOUD_STORAGE_BUCKET") or os.getenv("GCS_BUCKET")
+    if bucket_name:
+        try:
+            client = storage.Client()
+            # Use a unique object path to avoid collisions across runs
+            object_name = f"adk-artifacts/logos/{uuid.uuid4().hex}.png"
+            bucket = client.bucket(bucket_name)
+            blob = bucket.blob(object_name)
+            blob.upload_from_string(image_bytes, content_type="image/png")
+            gcs_uri = f"gs://{bucket_name}/{object_name}"
+        except Exception:
+            # Ignore upload issues so the tool still succeeds; artifact remains in ADK
+            gcs_uri = ""
+
     return {
         "status": "success",
         "detail": "Image generated successfully and stored in artifacts.",
         "filename": "image.png",
+        "gcs_uri": gcs_uri,
     }
 
 
