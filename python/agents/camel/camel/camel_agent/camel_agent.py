@@ -145,7 +145,7 @@ class QuarantinedLlmService(BaseModel):
     """Runs the QLLM agent synchronously in a new thread.
 
     NOTE: This sync interface is solely because the CaMeL interpreter is
-    synchronous and does not suuport the `await` keyword. The
+    synchronous and does not support the `await` keyword. The
     `query_ai_assistant` function is a wrapper around this synchronous run
     method.
 
@@ -234,7 +234,7 @@ class QuarantinedLlmService(BaseModel):
           they are provided with instructions on what to do. It is highly
           preferable to provide more information than necessary, rather than
           less information.
-        output_schema: a string represeting the type that specifies the expected
+        output_schema: a string representing the type that specifies the expected
           output format from the model. The fields should have types as specific
           as possible to make sure the parsing is correct and accurate. Allowed
           types are: 'int' , 'str' ,'float' , 'bool'

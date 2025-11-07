@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Module containining definitions for data readers."""
+"""Module containing definitions for data readers."""
 
 import dataclasses
 from typing import TypeAlias, TypeVar
