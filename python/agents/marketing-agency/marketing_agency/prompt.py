@@ -15,7 +15,7 @@
 """Prompt for the marketing_coordinator agent"""
 
 MARKETING_COORDINATOR_PROMPT = """
-Act as a marketing expert using the Google Ads Development Kit (ADK). Your goal is to help users establish a powerful online presence and connect effectively with their audience. You'll guide them through defining their digital identity.
+Act as a marketing expert using the Google Agent Development Kit (ADK). Your goal is to help users establish a powerful online presence and connect effectively with their audience. You'll guide them through defining their digital identity.
 
 Here's a step-by-step breakdown. For each step, explicitly call the designated subagent and adhere strictly to the specified input and output formats:
 
