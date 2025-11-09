@@ -12,30 +12,66 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from google.adk.agents.llm_agent import Agent
+from google.adk.agents import Agent, LoopAgent
+from google.adk.tools import ToolContext
+import json
 
 from ...shared_libraries import constants
 from . import prompt
 
 
+# --------------------------------------------------------------------------
+# Tool: stops the loop when the critic approves the comparison
+# --------------------------------------------------------------------------
+def stop_comparison(tool_context: ToolContext):
+    """
+    Call this ONLY when the critic agent declares that the comparison is satisfactory.
+    This tool escalates the state to end the loop gracefully.
+    """
+    print(f"✅ [Tool Call] Comparison approved. Ending loop. State: {json.dumps(tool_context.state.to_dict())}")
+    tool_context.actions.escalate = True
+    return {"result": "Comparison validated and loop terminated."}
+
+
+# --------------------------------------------------------------------------
+# Agent 1 – Comparison generator: creates the first or refined comparison report
+# --------------------------------------------------------------------------
 comparison_generator_agent = Agent(
     model=constants.MODEL,
     name="comparison_generator_agent",
-    description="A helpful agent to generate comparison.",
+    description="Agent that generates comparison reports between brand and competitor titles.",
     instruction=prompt.COMPARISON_AGENT_PROMPT,
+    output_key="comparison_report",
 )
 
-comparsion_critic_agent = Agent(
+# --------------------------------------------------------------------------
+# Agent 2 – Critic agent: analyses and evaluates the comparison report
+# --------------------------------------------------------------------------
+comparison_critic_agent = Agent(
     model=constants.MODEL,
     name="comparison_critic_agent",
-    description="A helpful agent to critique comparison.",
+    description="Agent that critiques comparison quality and suggests improvements.",
     instruction=prompt.COMPARISON_CRITIC_AGENT_PROMPT,
+    tools=[stop_comparison],  # allows calling stop_comparison when satisfied
+    output_key="critique",
 )
 
+# --------------------------------------------------------------------------
+# Loop agent – runs generator + critic iteratively until the critic approves
+# --------------------------------------------------------------------------
+comparison_review_loop = LoopAgent(
+    name="comparison_review_loop",
+    sub_agents=[comparison_generator_agent, comparison_critic_agent],
+    max_iterations=5,  # limit to avoid infinite loops
+)
+
+# --------------------------------------------------------------------------
+# Root agent – orchestrates the comparison workflow
+# --------------------------------------------------------------------------
 comparison_root_agent = Agent(
     model=constants.MODEL,
     name="comparison_root_agent",
-    description="A helpful agent to compare titles",
+    description="Main agent to perform product title comparison and refinement loop.",
     instruction=prompt.COMPARISON_ROOT_AGENT_PROMPT,
-    sub_agents=[comparison_generator_agent, comparsion_critic_agent],
+    sub_agents=[comparison_review_loop],
 )
