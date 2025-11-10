@@ -1,7 +1,7 @@
 name: checks
 
 on:
-  pull_request_target:
+  pull_request:
 
 jobs:
   # JOB 1: Discover which specific agent folders have changed.
@@ -16,7 +16,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
 
       - name: Get changed files
@@ -80,8 +79,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
 
       - id: 'auth'
         name: 'Authenticate to Google Cloud'
@@ -107,7 +104,7 @@ jobs:
             AGENT_NAME=$(basename \"$TEMPLATE_PATH\")
             DEPLOYMENT_TARGET=\"${{ matrix.deployment_target }}\"
             # Use shorter prefix and truncate if needed to stay under 26 chars
-            TRUNCATED_NAME=$(echo \"$AGENT_NAME\" | cut -c1-21)
+            TRUNCATED_NAME=$(echo \"$AGENT_NAME\" | cut -c1-21 | tr '[:upper:]' '[:lower:]' | tr '_' '-')
             AGENT_GENERATED_NAME=\"test-$TRUNCATED_NAME\"
             
             echo \"--- Testing template: $TEMPLATE_PATH with deployment target: $DEPLOYMENT_TARGET ---\"
