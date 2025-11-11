@@ -1,0 +1,63 @@
+name: Dependabot Auto-Merge
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+  check_suite:
+    types:
+      - completed
+
+permissions:
+  pull-requests: write
+  contents: write
+  checks: read
+
+jobs:
+  auto-approve:
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]' && github.event_name == 'pull_request'
+    steps:
+      - name: Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Approve PR
+        run: gh pr review --approve "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  auto-merge:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'check_suite' && github.event.check_suite.conclusion == 'success'
+    steps:
+      - name: Get PR number
+        id: pr
+        run: |
+          PR_NUMBER=$(gh pr list --repo ${{ github.repository }} --head ${{ github.event.check_suite.head_branch }} --json number --jq '.[0].number')
+          echo "number=$PR_NUMBER" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check if PR is from Dependabot
+        id: check
+        run: |
+          PR_AUTHOR=$(gh pr view ${{ steps.pr.outputs.number }} --repo ${{ github.repository }} --json author --jq '.author.login')
+          if [ "$PR_AUTHOR" = "dependabot[bot]" ]; then
+            echo "is_dependabot=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_dependabot=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Merge PR
+        if: steps.check.outputs.is_dependabot == 'true'
+        run: gh pr merge ${{ steps.pr.outputs.number }} --repo ${{ github.repository }} --squash --auto
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
