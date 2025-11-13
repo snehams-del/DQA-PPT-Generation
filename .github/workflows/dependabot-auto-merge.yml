@@ -1,0 +1,110 @@
+name: Dependabot Auto-Merge
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+  check_suite:
+    types:
+      - completed
+
+permissions:
+  pull-requests: write
+  contents: write
+  checks: read
+
+jobs:
+  auto-approve:
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]' && github.event_name == 'pull_request'
+    steps:
+      - name: Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Approve PR
+        run: gh pr review --approve "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  auto-merge:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'check_suite' && github.event.check_suite.conclusion == 'success'
+    steps:
+      - name: Get PR number
+        id: pr
+        run: |
+          PR_NUMBER=$(gh pr list --repo ${{ github.repository }} --head ${{ github.event.check_suite.head_branch }} --json number --jq '.[0].number')
+          echo "number=$PR_NUMBER" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check if PR is from Dependabot
+        id: check
+        run: |
+          PR_AUTHOR=$(gh pr view ${{ steps.pr.outputs.number }} --repo ${{ github.repository }} --json author --jq '.author.login')
+          if [ "$PR_AUTHOR" = "dependabot[bot]" ]; then
+            echo "is_dependabot=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_dependabot=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout code
+        if: steps.check.outputs.is_dependabot == 'true'
+        uses: actions/checkout@v5
+        with:
+          ref: refs/pull/${{ steps.pr.outputs.number }}/head
+          fetch-depth: 0
+
+      - name: Check if changes are in agents using starter pack for testing
+        if: steps.check.outputs.is_dependabot == 'true'
+        id: check-agent
+        run: |
+          # Get the base branch for comparison
+          BASE_BRANCH=$(gh pr view ${{ steps.pr.outputs.number }} --repo ${{ github.repository }} --json baseRefName --jq '.baseRefName')
+          git fetch origin $BASE_BRANCH
+
+          # Get all changed files
+          CHANGED_FILES=$(git diff --name-only origin/$BASE_BRANCH...HEAD)
+
+          # Check if all changed files are in python/agents/** directories using agent starter pack for testing
+          HAS_AUTOMATED_TESTS=true
+
+          # Get all changed agent directories
+          CHANGED_AGENT_DIRS=$(echo "$CHANGED_FILES" | grep -o 'python/agents/[^/]*' | sort -u || true)
+
+          if [ -z "$CHANGED_AGENT_DIRS" ]; then
+            echo "No changes in python/agents/** directories"
+            HAS_AUTOMATED_TESTS=false
+          else
+            for dir in $CHANGED_AGENT_DIRS; do
+              if [ ! -f "$dir/pyproject.toml" ]; then
+                echo "$dir does not have pyproject.toml"
+                HAS_AUTOMATED_TESTS=false
+                break
+              fi
+
+              if ! grep -q '\[tool\.agent-starter-pack\]' "$dir/pyproject.toml"; then
+                echo "$dir is not using agent starter pack for testing"
+                HAS_AUTOMATED_TESTS=false
+                break
+              fi
+            done
+          fi
+
+          echo "has_tests=$HAS_AUTOMATED_TESTS" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Merge PR
+        if: steps.check.outputs.is_dependabot == 'true' && steps.check-agent.outputs.has_tests == 'true'
+        run: gh pr merge ${{ steps.pr.outputs.number }} --repo ${{ github.repository }} --squash --auto
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
