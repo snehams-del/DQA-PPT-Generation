@@ -82,7 +82,6 @@ def save_to_gcs(tool_context: ToolContext, image_bytes, filename: str, counter: 
         gcs_uri = f"gs://{bucket_name}/{gcs_blob_name}"
 
         # Store GCS URI in session context
-        # Store GCS URI in session context
         tool_context.state["generated_image_gcs_uri_" + counter] = gcs_uri
 
     except Exception as e_gcs:
