@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+python-dotenv
+firebase-admin
+google-cloud-firestore
+google-cloud-aiplatform[adk,agent-engines]==1.108.0
+google-adk==1.10.0

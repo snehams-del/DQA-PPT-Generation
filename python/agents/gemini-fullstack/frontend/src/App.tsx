@@ -2,6 +2,8 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { v4 as uuidv4 } from 'uuid';
 import { WelcomeScreen } from "@/components/WelcomeScreen";
 import { ChatMessagesView } from "@/components/ChatMessagesView";
+import { onAuthStateChanged, signInAnonymously, User } from "firebase/auth";
+import { auth } from "@/firebase";
 
 // Update DisplayData to be a string type
 type DisplayData = string | null;
@@ -53,6 +55,18 @@ export default function App() {
   const currentAgentRef = useRef('');
   const accumulatedTextRef = useRef("");
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+      } else {
+        await signInAnonymously(auth);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   const retryWithBackoff = async (
     fn: () => Promise<any>,
@@ -81,11 +95,13 @@ export default function App() {
   };
 
   const createSession = async (): Promise<{userId: string, sessionId: string, appName: string}> => {
+    const token = await user?.getIdToken();
     const generatedSessionId = uuidv4();
     const response = await fetch(`/api/apps/app/users/u_999/sessions/${generatedSessionId}`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
       }
     });
     
@@ -323,10 +339,12 @@ export default function App() {
 
       // Send the message with retry logic
       const sendMessage = async () => {
+        const token = await user?.getIdToken();
         const response = await fetch("/api/run_sse", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
           },
           body: JSON.stringify({
             appName: currentAppName,
@@ -418,7 +436,7 @@ export default function App() {
       }]);
       setIsLoading(false);
     }
-  }, [processSseEventData]);
+  }, [processSseEventData, user]);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
