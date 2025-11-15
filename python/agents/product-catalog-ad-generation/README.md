@@ -1,10 +1,12 @@
-# Google Short Form Ad Gen Agent
+# Product Catalog Ad Generation Agent
 
 ## Description
 
-This project is a Personalized Ad Generation Assistant that helps users generate content for short-form ad content. It leverages Google Cloud Storage (GCS) to manage static assets and can generate images and videos based on user queries and stored templates.
+This project is a Personalized Ad Generation Assistant that helps marketing teams generate short-form video ads grounded in their product catalog. The agent pulls product metadata from a catalog (e.g., BigQuery), validates demographic targeting, and generates a video using product imagery and corporate branding standards. A human-in-the-loop feedback mechanism allows for iterative refinement of the generated ad.
 
-The agent is defined in `content_gen_agent/agent.py` and uses the `gemini-2.5-pro` model. It orchestrates a multi-step workflow that includes storyline generation, image creation, video and audio generation, and the final assembly of all assets into a cohesive ad.
+The agent is defined in `content_gen_agent/agent.py` and uses the `gemini-2.5-pro` model. It orchestrates a multi-step workflow that includes product selection, storyline generation, image and video creation, and final ad assembly, with opportunities for human feedback at key stages.
+
+This project contains default product imagery and a corporate logo that will get loaded into BigQuery as part of the deployment script.
 
 ## Project Directory
 
@@ -95,12 +97,13 @@ To add your own products to the system, upload your product images to the `stati
 
 The main agent orchestrates the entire ad generation workflow, which can be broken down into the following steps:
 
-1.  **Product Selection**: The user provides a product name, which is used to query a BigQuery table to fetch product details, including a GCS URI for the product's image.
-2.  **Storyline Generation**: The agent calls the `generate_storyline` tool to create a "before and after" narrative and a detailed visual style guide. This sets the creative direction for the ad. The product image from the previous step is used as a reference.
-3.  **Image Generation**: Based on the storyline, the agent generates a series of consistent images for the storyboard using the `generate_images_from_storyline` tool.
-4.  **Video Generation**: The `generate_video` tool is then used to bring the images to life by converting them into video clips.
-5.  **Audio & Voiceover Generation**: Concurrently, the `generate_audio_and_voiceover` tool creates a soundtrack and a voiceover for the ad.
-6.  **Final Assembly**: Finally, the `combine` tool merges the video clips, audio, and voiceover into the final ad, which is then uploaded to the GCS bucket.
+1.  **Product Selection & Demographic Targeting**: The user provides a product name and desired demographic. The agent queries a BigQuery table to fetch product details and validates that the product is suitable for the target audience.
+2.  **Storyline Generation**: The agent calls the `generate_storyline` tool to create a "before and after" narrative and a detailed visual style guide, grounded in product imagery and corporate branding.
+3.  **Human Feedback & Iteration**: The generated storyline and visual guide are presented to the user for feedback. The agent incorporates the feedback to refine the creative direction.
+4.  **Image Generation**: Based on the approved storyline, the agent generates a series of consistent images for the storyboard using the `generate_images_from_storyline` tool.
+5.  **Video Generation**: The `generate_video` tool converts the images into video clips.
+6.  **Audio & Voiceover Generation**: The `generate_audio_and_voiceover` tool creates a soundtrack and voiceover.
+7.  **Final Assembly & Review**: The `combine` tool merges all assets into a final ad. The user can review the final video and provide further feedback for adjustments.
 
 ### Bring Your Own Asset Sheet
 
@@ -154,6 +157,10 @@ gs://<your-gcp-project-id>-contentgen-static/
 ```
 
 This organization allows for easy tracking of generated videos and ensures that each ad has a unique, timestamped folder.
+
+### Disclaimer
+
+This list is not an official Google product. Links on this list also are not necessarily to official Google products.
 
 ## License
 
