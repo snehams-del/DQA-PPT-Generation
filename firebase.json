@@ -1,0 +1,13 @@
+{
+  "hosting": {
+    "source": "python/agents/gemini-fullstack/frontend",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "frameworksBackend": {
+      "region": "us-central1"
+    }
+  }
+}

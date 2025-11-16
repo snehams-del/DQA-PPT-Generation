@@ -2,8 +2,11 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { v4 as uuidv4 } from 'uuid';
 import { WelcomeScreen } from "@/components/WelcomeScreen";
 import { ChatMessagesView } from "@/components/ChatMessagesView";
-import { onAuthStateChanged, signInAnonymously, User } from "firebase/auth";
+import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, User } from "firebase/auth";
 import { auth } from "@/firebase";
+
+// Define the API base URL for the RAG backend
+const API_BASE_URL = 'https://api.vantages.app';
 
 // Update DisplayData to be a string type
 type DisplayData = string | null;
@@ -41,6 +44,21 @@ interface ProcessedEvent {
   data: any;
 }
 
+const LoginScreen = ({ onLogin }: { onLogin: () => void }) => (
+    <div className="flex-1 flex flex-col items-center justify-center p-4 bg-neutral-800">
+      <div className="text-center space-y-6 bg-neutral-900/50 backdrop-blur-md p-8 rounded-2xl border border-neutral-700 shadow-2xl">
+        <h1 className="text-4xl font-bold text-white">Welcome to Gemini FullStack</h1>
+        <p className="text-neutral-300">Please log in with your Google account to continue.</p>
+        <button
+          onClick={onLogin}
+          className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+        >
+          Login with Google
+        </button>
+      </div>
+    </div>
+  );
+
 export default function App() {
   const [userId, setUserId] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -58,15 +76,21 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-      } else {
-        await signInAnonymously(auth);
-      }
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser); // Sets user to null if logged out
     });
     return () => unsubscribe();
   }, []);
+  
+  const handleLogin = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+      // onAuthStateChanged will automatically update the user state
+    } catch (error) {
+      console.error("Error during sign-in:", error);
+    }
+  };
 
   const retryWithBackoff = async (
     fn: () => Promise<any>,
@@ -96,8 +120,10 @@ export default function App() {
 
   const createSession = async (): Promise<{userId: string, sessionId: string, appName: string}> => {
     const token = await user?.getIdToken();
+    if (!token) throw new Error("User not authenticated");
     const generatedSessionId = uuidv4();
-    const response = await fetch(`/api/apps/app/users/u_999/sessions/${generatedSessionId}`, {
+    // NOTE: The user ID in the URL seems hardcoded. The backend should ideally derive the user from the JWT token.
+    const response = await fetch(`${API_BASE_URL}/api/apps/app/users/u_999/sessions/${generatedSessionId}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -119,8 +145,7 @@ export default function App() {
 
   const checkBackendHealth = async (): Promise<boolean> => {
     try {
-      // Use the docs endpoint or root endpoint to check if backend is ready
-      const response = await fetch("/api/docs", {
+      const response = await fetch(`${API_BASE_URL}/api/docs`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json"
@@ -152,23 +177,19 @@ export default function App() {
           .filter((part: any) => part.text)
           .map((part: any) => part.text);
         
-        // Check for function calls
         const functionCallPart = parsed.content.parts.find((part: any) => part.functionCall);
         if (functionCallPart) {
           functionCall = functionCallPart.functionCall;
         }
         
-        // Check for function responses
         const functionResponsePart = parsed.content.parts.find((part: any) => part.functionResponse);
         if (functionResponsePart) {
           functionResponse = functionResponsePart.functionResponse;
         }
       }
 
-      // Extract agent information
       if (parsed.author) {
         agent = parsed.author;
-        console.log('[SSE EXTRACT] Agent:', agent); // DEBUG: Log agent
       }
 
       if (
@@ -179,36 +200,25 @@ export default function App() {
         finalReportWithCitations = parsed.actions.stateDelta.final_report_with_citations;
       }
 
-      // Extract website count from research agents
       let sourceCount = 0;
       if ((parsed.author === 'section_researcher' || parsed.author === 'enhanced_search_executor')) {
-        console.log('[SSE EXTRACT] Relevant agent for source count:', parsed.author); // DEBUG
         if (parsed.actions?.stateDelta?.url_to_short_id) {
-          console.log('[SSE EXTRACT] url_to_short_id found:', parsed.actions.stateDelta.url_to_short_id); // DEBUG
           sourceCount = Object.keys(parsed.actions.stateDelta.url_to_short_id).length;
-          console.log('[SSE EXTRACT] Calculated sourceCount:', sourceCount); // DEBUG
-        } else {
-          console.log('[SSE EXTRACT] url_to_short_id NOT found for agent:', parsed.author); // DEBUG
         }
       }
 
-      // Extract sources if available
       if (parsed.actions?.stateDelta?.sources) {
         sources = parsed.actions.stateDelta.sources;
-        console.log('[SSE EXTRACT] Sources found:', sources); // DEBUG
       }
-
 
       return { textParts, agent, finalReportWithCitations, functionCall, functionResponse, sourceCount, sources };
     } catch (error) {
-      // Log the error and a truncated version of the problematic data for easier debugging.
       const truncatedData = data.length > 200 ? data.substring(0, 200) + "..." : data;
       console.error('Error parsing SSE data. Raw data (truncated): "', truncatedData, '". Error details:', error);
       return { textParts: [], agent: '', finalReportWithCitations: undefined, functionCall: null, functionResponse: null, sourceCount: 0, sources: null };
     }
   };
 
-  // Define getEventTitle here or ensure it's in scope from where it's used
   const getEventTitle = (agentName: string): string => {
     switch (agentName) {
       case "plan_generator":
@@ -239,7 +249,6 @@ export default function App() {
     const { textParts, agent, finalReportWithCitations, functionCall, functionResponse, sourceCount, sources } = extractDataFromSSE(jsonData);
 
     if (sourceCount > 0) {
-      console.log('[SSE HANDLER] Updating websiteCount. Current sourceCount:', sourceCount);
       setWebsiteCount(prev => Math.max(prev, sourceCount));
     }
 
@@ -249,7 +258,6 @@ export default function App() {
 
     if (functionCall) {
       const functionCallTitle = `Function Call: ${functionCall.name}`;
-      console.log('[SSE HANDLER] Adding Function Call timeline event:', functionCallTitle);
       setMessageEvents(prev => new Map(prev).set(aiMessageId, [...(prev.get(aiMessageId) || []), {
         title: functionCallTitle,
         data: { type: 'functionCall', name: functionCall.name, args: functionCall.args, id: functionCall.id }
@@ -258,7 +266,6 @@ export default function App() {
 
     if (functionResponse) {
       const functionResponseTitle = `Function Response: ${functionResponse.name}`;
-      console.log('[SSE HANDLER] Adding Function Response timeline event:', functionResponseTitle);
       setMessageEvents(prev => new Map(prev).set(aiMessageId, [...(prev.get(aiMessageId) || []), {
         title: functionResponseTitle,
         data: { type: 'functionResponse', name: functionResponse.name, response: functionResponse.response, id: functionResponse.id }
@@ -268,12 +275,11 @@ export default function App() {
     if (textParts.length > 0 && agent !== "report_composer_with_citations") {
       if (agent !== "interactive_planner_agent") {
         const eventTitle = getEventTitle(agent);
-        console.log('[SSE HANDLER] Adding Text timeline event for agent:', agent, 'Title:', eventTitle, 'Data:', textParts.join(" "));
         setMessageEvents(prev => new Map(prev).set(aiMessageId, [...(prev.get(aiMessageId) || []), {
           title: eventTitle,
           data: { type: 'text', content: textParts.join(" ") }
         }]));
-      } else { // interactive_planner_agent text updates the main AI message
+      } else { 
         for (const text of textParts) {
           accumulatedTextRef.current += text + " ";
           setMessages(prev => prev.map(msg =>
@@ -285,7 +291,6 @@ export default function App() {
     }
 
     if (sources) {
-      console.log('[SSE HANDLER] Adding Retrieved Sources timeline event:', sources);
       setMessageEvents(prev => new Map(prev).set(aiMessageId, [...(prev.get(aiMessageId) || []), {
         title: "Retrieved Sources", data: { type: 'sources', content: sources }
       }]));
@@ -299,17 +304,15 @@ export default function App() {
   };
 
   const handleSubmit = useCallback(async (query: string, model: string, effort: string) => {
-    if (!query.trim()) return;
+    if (!query.trim() || !user) return;
 
     setIsLoading(true);
     try {
-      // Create session if it doesn't exist
       let currentUserId = userId;
       let currentSessionId = sessionId;
       let currentAppName = appName;
       
       if (!currentSessionId || !currentUserId || !currentAppName) {
-        console.log('Creating new session...');
         const sessionData = await retryWithBackoff(createSession);
         currentUserId = sessionData.userId;
         currentSessionId = sessionData.sessionId;
@@ -318,17 +321,14 @@ export default function App() {
         setUserId(currentUserId);
         setSessionId(currentSessionId);
         setAppName(currentAppName);
-        console.log('Session created successfully:', { currentUserId, currentSessionId, currentAppName });
       }
 
-      // Add user message to chat
       const userMessageId = Date.now().toString();
       setMessages(prev => [...prev, { type: "human", content: query, id: userMessageId }]);
 
-      // Create AI message placeholder
       const aiMessageId = Date.now().toString() + "_ai";
-      currentAgentRef.current = ''; // Reset current agent
-      accumulatedTextRef.current = ''; // Reset accumulated text
+      currentAgentRef.current = ''; 
+      accumulatedTextRef.current = '';
 
       setMessages(prev => [...prev, {
         type: "ai",
@@ -337,10 +337,9 @@ export default function App() {
         agent: '',
       }]);
 
-      // Send the message with retry logic
       const sendMessage = async () => {
-        const token = await user?.getIdToken();
-        const response = await fetch("/api/run_sse", {
+        const token = await user.getIdToken();
+        const response = await fetch(`${API_BASE_URL}/api/run_sse`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -367,14 +366,12 @@ export default function App() {
 
       const response = await retryWithBackoff(sendMessage);
 
-      // Handle SSE streaming
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       let lineBuffer = ""; 
       let eventDataBuffer = "";
 
       if (reader) {
-        // eslint-disable-next-line no-constant-condition
         while (true) {
           const { done, value } = await reader.read();
 
@@ -383,42 +380,33 @@ export default function App() {
           }
           
           let eolIndex;
-          // Process all complete lines in the buffer, or the remaining buffer if 'done'
           while ((eolIndex = lineBuffer.indexOf('\n')) >= 0 || (done && lineBuffer.length > 0)) {
             let line: string;
             if (eolIndex >= 0) {
               line = lineBuffer.substring(0, eolIndex);
               lineBuffer = lineBuffer.substring(eolIndex + 1);
-            } else { // Only if done and lineBuffer has content without a trailing newline
+            } else { 
               line = lineBuffer;
               lineBuffer = "";
             }
 
-            if (line.trim() === "") { // Empty line: dispatch event
+            if (line.trim() === "") { 
               if (eventDataBuffer.length > 0) {
-                // Remove trailing newline before parsing
                 const jsonDataToParse = eventDataBuffer.endsWith('\n') ? eventDataBuffer.slice(0, -1) : eventDataBuffer;
-                console.log('[SSE DISPATCH EVENT]:', jsonDataToParse.substring(0, 200) + "..."); // DEBUG
                 processSseEventData(jsonDataToParse, aiMessageId);
-                eventDataBuffer = ""; // Reset for next event
+                eventDataBuffer = "";
               }
             } else if (line.startsWith('data:')) {
-              eventDataBuffer += line.substring(5).trimStart() + '\n'; // Add newline as per spec for multi-line data
-            } else if (line.startsWith(':')) {
-              // Comment line, ignore
-            } // Other SSE fields (event, id, retry) can be handled here if needed
+              eventDataBuffer += line.substring(5).trimStart() + '\n';
+            }
           }
 
           if (done) {
-            // If the loop exited due to 'done', and there's still data in eventDataBuffer
-            // (e.g., stream ended after data lines but before an empty line delimiter)
             if (eventDataBuffer.length > 0) {
               const jsonDataToParse = eventDataBuffer.endsWith('\n') ? eventDataBuffer.slice(0, -1) : eventDataBuffer;
-              console.log('[SSE DISPATCH FINAL EVENT]:', jsonDataToParse.substring(0,200) + "..."); // DEBUG
               processSseEventData(jsonDataToParse, aiMessageId);
-              eventDataBuffer = ""; // Clear buffer
             }
-            break; // Exit the while(true) loop
+            break;
           }
         }
       }
@@ -427,7 +415,6 @@ export default function App() {
 
     } catch (error) {
       console.error("Error:", error);
-      // Update the AI message placeholder with an error message
       const aiMessageId = Date.now().toString() + "_ai_error";
       setMessages(prev => [...prev, { 
         type: "ai", 
@@ -436,7 +423,7 @@ export default function App() {
       }]);
       setIsLoading(false);
     }
-  }, [processSseEventData, user]);
+  }, [user, userId, sessionId, appName]);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -452,9 +439,7 @@ export default function App() {
   useEffect(() => {
     const checkBackend = async () => {
       setIsCheckingBackend(true);
-      
-      // Check if backend is ready with retry logic
-      const maxAttempts = 60; // 2 minutes with 2-second intervals
+      const maxAttempts = 60;
       let attempts = 0;
       
       while (attempts < maxAttempts) {
@@ -466,10 +451,9 @@ export default function App() {
         }
         
         attempts++;
-        await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds between checks
+        await new Promise(resolve => setTimeout(resolve, 2000));
       }
       
-      // If we get here, backend didn't come up in time
       setIsCheckingBackend(false);
       console.error("Backend failed to start within 2 minutes");
     };
@@ -485,47 +469,22 @@ export default function App() {
     window.location.reload();
   }, []);
 
-  // Scroll to bottom when messages update
-  const scrollToBottom = useCallback(() => {
-    if (scrollAreaRef.current) {
-      const scrollViewport = scrollAreaRef.current.querySelector(
-        "[data-radix-scroll-area-viewport]"
-      );
-      if (scrollViewport) {
-        scrollViewport.scrollTop = scrollViewport.scrollHeight;
-      }
-    }
-  }, []);
-
   const BackendLoadingScreen = () => (
     <div className="flex-1 flex flex-col items-center justify-center p-4 overflow-hidden relative">
-      <div className="w-full max-w-2xl z-10
-                      bg-neutral-900/50 backdrop-blur-md 
-                      p-8 rounded-2xl border border-neutral-700 
-                      shadow-2xl shadow-black/60">
-        
+      <div className="w-full max-w-2xl z-10 bg-neutral-900/50 backdrop-blur-md p-8 rounded-2xl border border-neutral-700 shadow-2xl shadow-black/60">
         <div className="text-center space-y-6">
           <h1 className="text-4xl font-bold text-white flex items-center justify-center gap-3">
             ✨ Gemini FullStack - ADK 🚀
           </h1>
-          
           <div className="flex flex-col items-center space-y-4">
-            {/* Spinning animation */}
             <div className="relative">
               <div className="w-16 h-16 border-4 border-neutral-600 border-t-blue-500 rounded-full animate-spin"></div>
               <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-r-purple-500 rounded-full animate-spin" style={{animationDirection: 'reverse', animationDuration: '1.5s'}}></div>
             </div>
-            
             <div className="space-y-2">
-              <p className="text-xl text-neutral-300">
-                Waiting for backend to be ready...
-              </p>
-              <p className="text-sm text-neutral-400">
-                This may take a moment on first startup
-              </p>
+              <p className="text-xl text-neutral-300">Waiting for backend to be ready...</p>
+              <p className="text-sm text-neutral-400">This may take a moment on first startup</p>
             </div>
-            
-            {/* Animated dots */}
             <div className="flex space-x-1">
               <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0ms'}}></div>
               <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{animationDelay: '150ms'}}></div>
@@ -540,7 +499,7 @@ export default function App() {
   return (
     <div className="flex h-screen bg-neutral-800 text-neutral-100 font-sans antialiased">
       <main className="flex-1 flex flex-col overflow-hidden w-full">
-        <div className={`flex-1 overflow-y-auto ${(messages.length === 0 || isCheckingBackend) ? "flex" : ""}`}>
+        <div className={`flex-1 overflow-y-auto ${(messages.length === 0 || isCheckingBackend || !user) ? "flex" : ""}`}>
           {isCheckingBackend ? (
             <BackendLoadingScreen />
           ) : !isBackendReady ? (
@@ -548,7 +507,7 @@ export default function App() {
               <div className="text-center space-y-4">
                 <h2 className="text-2xl font-bold text-red-400">Backend Unavailable</h2>
                 <p className="text-neutral-300">
-                  Unable to connect to backend services at localhost:8000
+                  Unable to connect to backend services.
                 </p>
                 <button 
                   onClick={() => window.location.reload()} 
@@ -558,6 +517,8 @@ export default function App() {
                 </button>
               </div>
             </div>
+          ) : !user ? (
+            <LoginScreen onLogin={handleLogin} />
           ) : messages.length === 0 ? (
             <WelcomeScreen
               handleSubmit={handleSubmit}
