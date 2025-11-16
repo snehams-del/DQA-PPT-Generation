@@ -25,7 +25,7 @@ moderne.
 ○ Navighează la tab-ul "Rules" (Reguli) din consola Firestore.
 ○ Pentru început (în modul de dezvoltare), poți seta regulile să permită scrierea doar
 pentru contul tău de serviciu (cahier-uploader-sa) și citirea doar pentru utilizatorii
-autentificați (proof.vantage.app).
+autentificați (proof.vantages.app).
 ○ Exemplu de regulă de start:
 <!-- end list -->rules_version = '2';
 service cloud.firestore {
@@ -47,7 +47,7 @@ Rezultat: "Seiful" este gata. Este un depozit NoSQL scalabil, gata să primeasc�
 (nestructurate) de la uploader (MASTER27).
 Partea 2: Configurarea "Memoriei" (Vertex AI Vector
 Search) - RAG
-Acesta este "creierul" (memoria de lucru) pentru agentul RAG din Faza 2 (proof.vantage.app).
+Acesta este "creierul" (memoria de lucru) pentru agentul RAG din Faza 2 (proof.vantages.app).
 Este o componentă mai complexă, dar esențială. Agentul RAG pe care l-ai găsit [cite:
 python/agents/RAG] se va baza pe existența acesteia.
 1. Navighează la Vertex AI Vector Search:

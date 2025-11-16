@@ -17,8 +17,8 @@ A. Produsul Gratuit (Colectorul): Cahier (Nemodificat)
 PROOF - Strategia Modulului "Sidecar" pentru Extracție de Date], nu modificăm codul
 sursă. Cahier rămâne un colector de date "haotice" (nestructurate).
 ● Componenta Tehnică: Scriptul uploader (MASTER27) trimite datele haotice către
-api.vantage.app.
-B. Produsul Plătit (Portalul RAG): proof.vantage.app
+api.vantages.app.
+B. Produsul Plătit (Portalul RAG): proof.vantages.app
 ● Ce Este: Un portal web SaaS securizat, bazat pe interfața de chat gemini-fullstack [cite:
 adk_gemini_fullstack.gif].
 ● Rolul Comercial (Faza 2): Acesta este produsul livrat pentru taxa de implementare
@@ -28,7 +28,7 @@ parcurs.
 măsură ce uploader-ul trimite mai multe date în "memoria" agentului RAG (Vector DB),
 răspunsurile acestuia devin din ce în ce mai relevante și specifice companiei, permițând
 clientului să vadă evoluția AI-ului.
-C. Platforma Publică (Marketing): vantage.app
+C. Platforma Publică (Marketing): vantages.app
 ● Ce Este: Site-ul public de prezentare (WordPress), care conține demo-uri (date statice
 JSON).
 3. Modelul de Monetizare (RAG-First)
@@ -42,13 +42,13 @@ Faza 1: Taxa de Implementare (Pilotul RAG)
 (pentru Fine-Tuning-ul viitor).
 3. "Memoria AI" (Produsul Live): Crearea Bazei de Date Vectoriale (Vector DB) a
 clientului, folosind infrastructura agentului RAG.
-4. "Portalul de Evoluție": Accesul la proof.vantage.app, unde clientul poate
+4. "Portalul de Evoluție": Accesul la proof.vantages.app, unde clientul poate
 interacționa cu agentul și îl poate vedea "cum se deșteaptă" pe măsură ce memoria
 se umple.
 Faza 2: Abonament SaaS (Menținerea Memoriei)
 ● Preț: O taxă lunară/anuală.
 ● Livrabile: Menținerea infrastructurii de colectare, stocarea datelor și accesul continuu la
-portalul RAG proof.vantage.app.
+portalul RAG proof.vantages.app.
 ● Obiectivul Real: Subvenționarea colectării continue a datelor de antrenament (perechile
 Întrebare Manager -> Date Extrase de RAG).
 Faza 3: "Agentul Client" (Upsell-ul de Valoare)
@@ -56,7 +56,7 @@ Faza 3: "Agentul Client" (Upsell-ul de Valoare)
 ● Livrabile: Serviciul de Fine-Tuning. Folosind datele colectate (perechile
 Întrebare/Răspuns RAG) din Faza 2, antrenăm un "Agent Client" dedicat (ex:
 gemini-ft-allianz-v1).
-● Noul Portal: Mutăm clientul pe app.vantage.app, unde noul agent "deștept" (antrenat)
+● Noul Portal: Mutăm clientul pe app.vantages.app, unde noul agent "deștept" (antrenat)
 poate răspunde la întrebări complexe.
 Faza 4: "Agentul Master" (Proprietatea Intelectuală)
 ● Viziune: Folosirea datelor anonimizate de la toți clienții pentru a antrena modelul "Master
