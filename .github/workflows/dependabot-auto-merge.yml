@@ -6,7 +6,9 @@ on:
       - opened
       - synchronize
       - reopened
-  check_suite:
+  # Trigger on workflow runs to catch test completions
+  workflow_run:
+    workflows: ["checks"]
     types:
       - completed
 
@@ -34,25 +36,53 @@ jobs:
 
   auto-merge:
     runs-on: ubuntu-latest
-    if: github.event_name == 'check_suite' && github.event.check_suite.conclusion == 'success'
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
     steps:
-      - name: Get PR number
+      - name: Get PR number from workflow run
         id: pr
         run: |
-          PR_NUMBER=$(gh pr list --repo ${{ github.repository }} --head ${{ github.event.check_suite.head_branch }} --json number --jq '.[0].number')
+          PR_NUMBER=$(gh pr list \
+            --repo ${{ github.repository }} \
+            --head ${{ github.event.workflow_run.head_branch }} \
+            --state open \
+            --json number \
+            --jq '.[0].number')
+
+          if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" = "null" ]; then
+            echo "No open PR found for branch ${{ github.event.workflow_run.head_branch }}"
+            exit 0
+          fi
+
           echo "number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          echo "Found PR #$PR_NUMBER"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check if PR is from Dependabot
+        if: steps.pr.outputs.number != ''
         id: check
         run: |
-          PR_AUTHOR=$(gh pr view ${{ steps.pr.outputs.number }} --repo ${{ github.repository }} --json author --jq '.author.login')
+          PR_INFO=$(gh pr view ${{ steps.pr.outputs.number }} \
+            --repo ${{ github.repository }} \
+            --json author,mergeable,state)
+
+          PR_AUTHOR=$(echo "$PR_INFO" | jq -r '.author.login')
+          PR_MERGEABLE=$(echo "$PR_INFO" | jq -r '.mergeable')
+          PR_STATE=$(echo "$PR_INFO" | jq -r '.state')
+
+          echo "PR Author: $PR_AUTHOR"
+          echo "PR Mergeable: $PR_MERGEABLE"
+          echo "PR State: $PR_STATE"
+
           if [ "$PR_AUTHOR" = "dependabot[bot]" ]; then
             echo "is_dependabot=true" >> $GITHUB_OUTPUT
           else
             echo "is_dependabot=false" >> $GITHUB_OUTPUT
+            exit 0
           fi
+
+          echo "mergeable=$PR_MERGEABLE" >> $GITHUB_OUTPUT
+          echo "state=$PR_STATE" >> $GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -103,8 +133,75 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Update branch if needed
+        if: steps.check.outputs.is_dependabot == 'true' && steps.check-agent.outputs.has_tests == 'true' && steps.check.outputs.mergeable == 'CONFLICTING'
+        run: |
+          echo "Branch needs update, updating..."
+          gh pr comment ${{ steps.pr.outputs.number }} --body "@dependabot rebase"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Wait for all checks to complete
+        if: steps.check.outputs.is_dependabot == 'true' && steps.check-agent.outputs.has_tests == 'true' && steps.check.outputs.mergeable != 'CONFLICTING'
+        id: wait-checks
+        run: |
+          MAX_WAIT_TIME=600  # 10 minutes
+          WAIT_INTERVAL=30   # 30 seconds
+          elapsed=0
+
+          echo "Waiting for all checks to complete..."
+
+          while [ $elapsed -lt $MAX_WAIT_TIME ]; do
+            # Get PR details via API
+            PR_DATA=$(gh api repos/${{ github.repository }}/pulls/${{ steps.pr.outputs.number }})
+
+            # Get commit SHA
+            HEAD_SHA=$(echo "$PR_DATA" | jq -r '.head.sha')
+
+            # Get check runs for this commit
+            CHECK_RUNS=$(gh api repos/${{ github.repository }}/commits/$HEAD_SHA/check-runs)
+
+            # Count checks
+            TOTAL=$(echo "$CHECK_RUNS" | jq '.total_count')
+            PENDING=$(echo "$CHECK_RUNS" | jq '[.check_runs[] | select(.status == "queued" or .status == "in_progress")] | length')
+            FAILED=$(echo "$CHECK_RUNS" | jq '[.check_runs[] | select(.conclusion == "failure" or .conclusion == "cancelled" or .conclusion == "timed_out")] | length')
+
+            echo "Total checks: $TOTAL, Pending: $PENDING, Failed: $FAILED"
+
+            if [ "$FAILED" -gt 0 ]; then
+              echo "Some checks failed, will not merge"
+              echo "all_passed=false" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+
+            if [ "$PENDING" -eq 0 ] && [ "$TOTAL" -gt 0 ]; then
+              echo "All checks completed successfully"
+              echo "all_passed=true" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+
+            if [ "$TOTAL" -eq 0 ]; then
+              echo "No checks found yet, waiting..."
+            fi
+
+            echo "Waiting $WAIT_INTERVAL seconds before next check..."
+            sleep $WAIT_INTERVAL
+            elapsed=$((elapsed + WAIT_INTERVAL))
+          done
+
+          echo "Timeout waiting for checks to complete"
+          echo "all_passed=false" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Merge PR
-        if: steps.check.outputs.is_dependabot == 'true' && steps.check-agent.outputs.has_tests == 'true'
-        run: gh pr merge ${{ steps.pr.outputs.number }} --repo ${{ github.repository }} --squash --auto
+        if: |
+          steps.check.outputs.is_dependabot == 'true' &&
+          steps.check-agent.outputs.has_tests == 'true' &&
+          steps.wait-checks.outputs.all_passed == 'true' &&
+          steps.check.outputs.mergeable != 'CONFLICTING'
+        run: |
+          echo "All checks passed, merging PR #${{ steps.pr.outputs.number }}"
+          gh pr merge ${{ steps.pr.outputs.number }} --repo ${{ github.repository }} --squash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
