@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Adds whitespace padding to images to make them a 9:16 aspect ratio."""
 import os
 from PIL import Image
 
@@ -44,7 +45,7 @@ def add_padding_to_image(input_path, output_path):
         new_img.paste(img, (paste_x, paste_y))
         new_img.save(output_path)
 
-    except Exception as e:
+    except (IOError, FileNotFoundError) as e:
         print(f"Error processing {input_path}: {e}")
 
 def process_images_in_folder(input_folder, output_folder):
@@ -62,6 +63,6 @@ def process_images_in_folder(input_folder, output_folder):
             print(f"Processed {filename}")
 
 if __name__ == "__main__":
-    input_folder = "static/uploads/products"
-    output_folder = "static/generated/padded_products"
-    process_images_in_folder(input_folder, output_folder)
+    INPUT_DIR = "static/uploads/products"
+    OUTPUT_DIR = "static/generated/padded_products"
+    process_images_in_folder(INPUT_DIR, OUTPUT_DIR)

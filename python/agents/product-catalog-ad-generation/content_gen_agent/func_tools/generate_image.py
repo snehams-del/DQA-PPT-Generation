@@ -19,19 +19,15 @@ import logging
 import os
 from typing import Any, Dict, List, Optional
 
-import vertexai
 from dotenv import load_dotenv
-from google import genai
 from google.adk.tools import ToolContext
 from google.cloud import storage
 from google.genai import types
-from google.genai.types import HarmBlockThreshold, HarmCategory
-from vertexai.preview.vision_models import ImageGenerationModel
 
 from content_gen_agent.utils.evaluate_media import (
     calculate_evaluation_score,
-    evaluate_media,
 )
+from content_gen_agent.utils.gemini_utils import call_gemini_image_api, initialize_gemini_client
 from content_gen_agent.utils.images import (
     IMAGE_MIME_TYPE,
     _load_gcs_image
@@ -44,49 +40,14 @@ logging.basicConfig(
 
 load_dotenv()
 
-GCP_PROJECT = os.environ.get("GCP_PROJECT")
-if GCP_PROJECT:
-    vertexai.init(project=GCP_PROJECT, location="us-central1")
-else:
-    logging.warning(
-        "GCP_PROJECT environment variable not set. Imagen 4 generation will fail."
-    )
+GCP_PROJECT = os.getenv("GCP_PROJECT")
 
 IMAGE_GEN_MODEL_GEMINI = "gemini-2.5-flash-image"
-IMAGE_GEN_MODEL_IMAGEN = "imagen-4.0-generate-001"
+
 STORYLINE_MODEL = "gemini-2.5-pro"
 MAX_RETRIES = 3
 ASSET_SHEET_FILENAME = "asset_sheet.png"
 LOGO_GCS_URI_BASE = "branding_logos/logo.png"
-
-SAFETY_SETTINGS = [
-    types.SafetySetting(
-        category=HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-        threshold=HarmBlockThreshold.OFF,
-    ),
-    types.SafetySetting(
-        category=HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-        threshold=HarmBlockThreshold.OFF,
-    ),
-    types.SafetySetting(
-        category=HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-        threshold=HarmBlockThreshold.OFF,
-    ),
-    types.SafetySetting(
-        category=HarmCategory.HARM_CATEGORY_HARASSMENT,
-        threshold=HarmBlockThreshold.OFF,
-    ),
-]
-
-GENERATE_CONTENT_CONFIG = types.GenerateContentConfig(
-    temperature=1.0,
-    top_p=0.95,
-    safety_settings=SAFETY_SETTINGS,
-    image_config=types.ImageConfig(
-                    aspect_ratio="9:16",
-                )
-)
-
 
 def get_bucket() -> str:
     """Retrieves the GCS bucket name from environment variables.
@@ -99,136 +60,54 @@ def get_bucket() -> str:
     """
     try:
         return os.environ["GCS_BUCKET"]
-    except KeyError:
+    except KeyError as e:
         if GCP_PROJECT:
             bucket = f"{GCP_PROJECT}-contentgen-static"
             logging.warning(
-                f"GCS_BUCKET environment variable not set; defaulting to {bucket}"
+                "GCS_BUCKET environment variable not set; defaulting to %s", bucket
             )
             return bucket
         raise RuntimeError(
             "Neither GCS_BUCKET nor GCP_PROJECT environment variables are set"
-        )
+        ) from e
 
 
 GCS_BUCKET = get_bucket()
 LOGO_GCS_URI = f"{GCS_BUCKET}/{LOGO_GCS_URI_BASE}"
 
-try:
-    client = genai.Client()
-except Exception as e:
-    client = None
-    logging.error(f"Failed to initialize Gemini client: {e}", exc_info=True)
-
-
-async def _call_gemini_image_api(
-    contents: List[Any], image_prompt: str
-) -> Dict[str, Any]:
-    """Calls the Gemini image generation API and evaluates the result.
-
-    Args:
-        contents (List[Any]): The content to send to the model.
-        image_prompt (str): The prompt used for image generation.
-
-    Returns:
-        A dictionary with the image bytes, evaluation, and MIME type.
-    """
-    if not client:
-        return {}
-
-    try:
-        response = await client.aio.models.generate_content(
-            model=IMAGE_GEN_MODEL_GEMINI,
-            contents=contents,
-            config=GENERATE_CONTENT_CONFIG,
-        )
-        if (
-            response.candidates
-            and response.candidates[0].content
-            and response.candidates[0].content.parts
-        ):
-            for part in response.candidates[0].content.parts:
-                if part.inline_data and part.inline_data.data:
-                    image_bytes = part.inline_data.data
-                    evaluation = await evaluate_media(
-                        image_bytes, IMAGE_MIME_TYPE, image_prompt
-                    )
-                    return {
-                        "image_bytes": image_bytes,
-                        "evaluation": evaluation,
-                        "mime_type": IMAGE_MIME_TYPE,
-                    }
-    except Exception as e:
-        logging.error(
-            f"Error calling Gemini image API for prompt '{image_prompt}': {e}",
-            exc_info=True,
-        )
-    return {}
-
-
-async def _call_imagen_api(
-    prompt: str, filename_prefix: str
-) -> Dict[str, Any]:
-    """Calls the Imagen 4 image generation API.
-
-    Args:
-        prompt (str): The prompt for image generation.
-        filename_prefix (str): The prefix for the output filename.
-
-    Returns:
-        A dictionary with the status, filename, and image bytes.
-    """
-    try:
-        model = ImageGenerationModel.from_pretrained(IMAGE_GEN_MODEL_IMAGEN)
-        images = model.generate_images(
-            prompt=prompt,
-            number_of_images=1,
-            aspect_ratio="9:16",
-            negative_prompt="",
-            person_generation="allow_all",
-            safety_filter_level="block_few",
-            add_watermark=True,
-        )
-        filename = f"{filename_prefix}.png"
-        return {
-            "status": "success",
-            "detail": f"Image generated successfully for {filename}.",
-            "filename": filename,
-            "image_bytes": images[0]._image_bytes,
-        }
-    except Exception as e:
-        logging.error(
-            f"Error calling Imagen 4 API for prompt '{prompt}': {e}",
-            exc_info=True,
-        )
-        return {
-            "status": "failed",
-            "detail": f"Error generating image for prompt '{prompt}': {e}",
-        }
+client = initialize_gemini_client()
 
 
 async def generate_one_image(
     prompt: str,
-    input_images: Optional[List[types.Part]],
+    input_images: List[types.Part],
     filename_prefix: str,
 ) -> Dict[str, Any]:
-    """Generates a single image, handling retries and model selection.
+    """Generates a single image using Gemini, handling retries.
 
     Args:
         prompt (str): The prompt for image generation.
-        input_images (Optional[List[types.Part]]): A list of input images as Part objects.
+        input_images (List[types.Part]): A list of input images as Part objects.
         filename_prefix (str): The prefix for the output filename.
 
     Returns:
         A dictionary containing the result of the image generation.
     """
     if not input_images:
-        logging.info("No input image provided; using Imagen 4 for generation.")
-        return await _call_imagen_api(prompt, filename_prefix)
+        return {
+            "status": "failed",
+            "detail": "Input image(s) are required for image generation.",
+        }
 
     contents = [prompt, *input_images]
     tasks = [
-        _call_gemini_image_api(contents, prompt) for _ in range(MAX_RETRIES)
+        call_gemini_image_api(
+            client=client,
+            model=IMAGE_GEN_MODEL_GEMINI,
+            contents=contents,
+            image_prompt=prompt,
+        )
+        for _ in range(MAX_RETRIES)
     ]
     results = await asyncio.gather(*tasks)
     successful_attempts = [res for res in results if res]
@@ -247,7 +126,7 @@ async def generate_one_image(
     if best_attempt.get("evaluation").decision != "Pass":
         score = calculate_evaluation_score(best_attempt["evaluation"])
         logging.warning(
-            f"No image passed evaluation for '{prompt}'. Best score: {score}"
+            "No image passed evaluation for '%s'. Best score: %s", prompt, score
         )
 
     filename = f"{filename_prefix}.png"
@@ -259,6 +138,7 @@ async def generate_one_image(
     }
 
 
+# pylint: disable=too-many-locals
 async def generate_images_from_storyline(
     prompts: List[str],
     tool_context: ToolContext,
@@ -268,17 +148,25 @@ async def generate_images_from_storyline(
     """Generates images for a commercial storyboard based on a visual style guide.
 
     Args:
-        prompts (List[str]): a list of prompts in the order of the scene numbers, one prompt for each scene's image.
+        prompts (List[str]): a list of prompts in the order of the scene numbers, one
+          prompt for each scene's image.
             - If logo_prompt_present is true, the last prompt is for the logo background.
             - Make sure to split up each scene's prompt and make them independent of each other.
             - Each prompt should only describe the first frame of that particular scene in detail.
-            - Make sure to mention that each image should fill the space and not have empty whitespace around it.
+                        - Make sure to mention that each image should fill the space and not have
+              empty whitespace around it.
             - Never include children.
         tool_context (ToolContext): Context for saving artifacts.
-        scene_numbers (Optional[List[int]]): A list of scene numbers to generate images for.
-                                                   If None or empty, images will be generated for all scenes.
-                                                   Note that scene numbers are 0-based. Defaults to None.
-        logo_prompt_present (bool): Whether the prompts list contains a prompt for the logo scene. You must set this to false if the prompts list does not contain a prompt for the logo scene. If true, the logo prompt must be last. Defaults to True.
+        scene_numbers (Optional[List[int]]): A list of scene numbers to generate
+          images for.
+          - If None or empty, images will be
+          - generated for all scenes.
+          - Note that scene numbers are 0-based.
+          - Defaults to None.
+        logo_prompt_present (bool): Whether the prompts list contains a prompt for the
+          logo scene. You must set this to false if the prompts list does not
+          contain a prompt for the logo scene. If true, the logo prompt must be
+          last. Defaults to True.
 
     Returns:
         A list of JSON strings with the status of each image generation.
@@ -308,7 +196,7 @@ async def generate_images_from_storyline(
         )
         if not asset_sheet_image:
             raise ValueError("Asset sheet artifact is empty.")
-    except Exception as e:
+    except (FileNotFoundError, ValueError) as e:
         return [
             json.dumps(
                 {
@@ -324,7 +212,7 @@ async def generate_images_from_storyline(
     )
 
     for i, scene_num in enumerate(scenes_to_generate):
-        if not (0 <= i < len(prompts)):
+        if not 0 <= i < len(prompts):
             continue
 
         prompt = prompts[i]

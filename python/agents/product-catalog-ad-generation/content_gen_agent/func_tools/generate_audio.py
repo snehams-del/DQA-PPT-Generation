@@ -17,9 +17,9 @@ import asyncio
 import base64
 import logging
 import os
-import re
+import random
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import aiohttp
 import google.auth
@@ -73,13 +73,27 @@ async def _send_google_api_request(
                         response.raise_for_status()
                         return await response.json()
                 except aiohttp.ClientResponseError as e:
-                    if e.status == 400 and attempt < MAX_RETRIES - 1:
-                        await asyncio.sleep(1)
+                    if e.status in [400, 429, 500, 503] and attempt < MAX_RETRIES - 1:
+                        wait_time = (2**attempt) + (random.uniform(0, 1))
+                        logging.warning(
+                            "Attempt %s/%s failed with status %s. Retrying in %.2f seconds...",
+                            attempt + 1,
+                            MAX_RETRIES,
+                            e.status,
+                            wait_time,
+                        )
+                        await asyncio.sleep(wait_time)
                     else:
+                        logging.error(
+                            "Request failed after %s attempts with status %s: %s",
+                            attempt + 1,
+                            e.status,
+                            e.message,
+                        )
                         raise e
-    except Exception as e:
+    except aiohttp.ClientError as e:
         logging.error(
-            f"Request to {api_endpoint} failed: {e}", exc_info=True
+            "Request to %s failed: %s", api_endpoint, e, exc_info=True
         )
     return None
 
@@ -124,9 +138,9 @@ async def generate_audio(
             types.Part.from_bytes(data=audio_data, mime_type="audio/wav"),
         )
         return {"name": filename}
-    except Exception as e:
-        logging.error(f"Error generating audio: {e}", exc_info=True)
-        logging.warning(f"Falling back to static audio: {STATIC_AUDIO_FALLBACK}")
+    except (aiohttp.ClientError, ValueError) as e:
+        logging.error("Error generating audio: %s", e, exc_info=True)
+        logging.warning("Falling back to static audio: %s", STATIC_AUDIO_FALLBACK)
         return {"name": STATIC_AUDIO_FALLBACK}
 
 
@@ -157,9 +171,9 @@ async def _generate_voiceover_content(
             input=synthesis_input, voice=voice, audio_config=audio_config
         )
         return response.audio_content
-    except Exception as e:
+    except google.api_core.exceptions.GoogleAPICallError as e:
         logging.error(
-            f"Failed to generate voiceover content: {e}", exc_info=True
+            "Failed to generate voiceover content: %s", e, exc_info=True
         )
         return None
 
@@ -196,11 +210,12 @@ async def generate_voiceover(
             types.Part.from_bytes(data=audio_content, mime_type="audio/mp3"),
         )
         return {"name": filename}
-    except Exception as e:
-        logging.error(f"Error saving voiceover artifact: {e}", exc_info=True)
+    except IOError as e:
+        logging.error("Error saving voiceover artifact: %s", e, exc_info=True)
         return None
 
 
+# pylint: disable=too-many-arguments,too-many-positional-arguments
 async def generate_audio_and_voiceover(
     tool_context: ToolContext,
     audio_query: str,
@@ -212,21 +227,29 @@ async def generate_audio_and_voiceover(
 ) -> Dict[str, Any]:
     """
     Generates a background audio track, a voiceover, or both in a single function call.
-    This function can run generation processes concurrently for improved performance when generating both.
+    This function can run generation processes concurrently for improved performance
+    when generating both.
 
     Args:
         audio_query (str): The prompt describing the desired background audio content.
-        voiceover_prompt (str): The prompt that sets the context for the voiceover. e.g. You are a professional announcer with a warm, friendly tone.
-        tool_context (ToolContext): The context for the tool execution, used for artifact management.
-        voiceover_text (str, optional): Explicit text for the voiceover to sell the product. Make it punny and mention the company name. Keep it short and sweet. e.g. FALL into great prices from {company name} - buy from a store near you!
+        voiceover_prompt (str): The prompt that sets the context for the voiceover.
+          e.g. You are a professional announcer with a warm, friendly tone.
+        tool_context (ToolContext): The context for the tool execution, used for
+          artifact management.
+        voiceover_text (str, optional): Explicit text for the voiceover to sell the
+          product. Make it punny and mention the company name. Keep it short and
+          sweet. e.g. FALL into great prices from {company name} - buy from a
+          store near you!
         model_name (str, optional): The Gemini TTS model to use.
                                   Default is "gemini-2.5-flash-preview-tts".
         voice_name (str, optional): The voice name to use. Default is "Kore".
-        generation_mode (str, optional): Specifies what to generate. Can be 'audio', 'voiceover', or 'both'.
+        generation_mode (str, optional): Specifies what to generate. Can be 'audio',
+          'voiceover', or 'both'.
                                          Defaults to 'both'.
 
     Returns:
-        Optional[dict]: A dictionary containing the names of the generated audio and voiceover artifacts,
+        Optional[dict]: A dictionary containing the names of the generated audio and
+          voiceover artifacts,
                         and a list of any failures, or None if the operation fails completely.
     """
     tasks = []

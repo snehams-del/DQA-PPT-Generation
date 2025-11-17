@@ -18,12 +18,11 @@ import os
 import vertexai
 from absl import app, flags
 from dotenv import load_dotenv
+from vertexai import agent_engines
+from vertexai.preview.reasoning_engines import AdkApp
 
 # --- Step 1: Import your BigQuery agent ---
 from content_gen_agent.agent import root_agent
-
-from vertexai import agent_engines
-from vertexai.preview.reasoning_engines import AdkApp
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string("project_id", None, "GCP project ID.")
@@ -43,7 +42,7 @@ load_dotenv()
 env_vars = {
     "GOOGLE_CLOUD_PROJECT_ID": os.getenv("GOOGLE_CLOUD_PROJECT_ID"),
     "GCS_BUCKET": os.getenv("GCS_BUCKET"),
-    "GCP_PROJECT": os.getenv("GCP_PROJECT"), 
+    "GCP_PROJECT": os.getenv("GCP_PROJECT"),
     "GOOGLE_CLOUD_LOCATION_REGION": os.getenv("GOOGLE_CLOUD_LOCATION_REGION"),
     "GEMINI_API_KEY": os.getenv("GEMINI_API_KEY")
     #"GOOGLE_GENAI_USE_VERTEXAI": "true",
@@ -251,6 +250,7 @@ def list_agents() -> None:
 
 
 def main(argv: list[str]) -> None:
+    """The main function for the deployment script."""
     del argv  # unused
 
     project_id = (
@@ -277,7 +277,8 @@ def main(argv: list[str]) -> None:
         print(
             "Error: Missing required configuration. Please set GOOGLE_CLOUD_PROJECT_ID, "
             "GOOGLE_CLOUD_LOCATION_REGION, and GOOGLE_CLOUD_STORAGE_BUCKET environment "
-            "variables (in your .env file) or pass them as flags (--project_id, --location, --bucket)."
+            "variables (in your .env file) or pass them as flags "
+            "(--project_id, --location, --bucket)."
         )
         return
 
@@ -302,4 +303,3 @@ def main(argv: list[str]) -> None:
 
 if __name__ == "__main__":
     app.run(main)
-

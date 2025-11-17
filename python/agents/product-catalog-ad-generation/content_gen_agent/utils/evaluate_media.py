@@ -17,6 +17,7 @@ import logging
 from typing import Literal, Optional
 
 from google import genai
+from google.api_core import exceptions as api_exceptions
 from google.genai import types
 from pydantic import BaseModel
 
@@ -94,12 +95,12 @@ async def evaluate_media(
         )
 
         result = response.parsed
-        logging.info(f"Overall Evaluation Decision: {result.decision}")
+        logging.info("Overall Evaluation Decision: %s", result.decision)
         if result.decision == "Fail":
-            logging.warning(f"Evaluation failed reason: {result.reason}")
+            logging.warning("Evaluation failed reason: %s", result.reason)
         return result
-    except Exception as e:
-        logging.error(f"Media evaluation failed: {e}", exc_info=True)
+    except (api_exceptions.GoogleAPICallError, ValueError) as e:
+        logging.error("Media evaluation failed: %s", e, exc_info=True)
         return None
 
 

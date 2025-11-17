@@ -21,6 +21,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from google import genai
 from google.adk.tools import ToolContext
+from google.api_core import exceptions as api_exceptions
 from google.cloud import storage
 from google.genai.types import GenerateVideosConfig, Image as GenImage
 
@@ -59,8 +60,8 @@ def _get_gcs_files(folder_prefix: str) -> List[str]:
             for blob in blobs
             if blob.name.lower().endswith(ALLOWED_IMAGE_EXTENSIONS)
         ]
-    except Exception as e:
-        logging.error(f"Failed to fetch files from GCS: {e}", exc_info=True)
+    except api_exceptions.GoogleAPICallError as e:
+        logging.error("Failed to fetch files from GCS: %s", e, exc_info=True)
         return []
 
 
@@ -78,26 +79,29 @@ async def _monitor_video_operation(
         A tuple containing the generated video object and an error message.
     """
     logging.info(
-        f"Submitted video generation request for image {image_identifier}. Operation:"
-        f" {operation.name}"
+        "Submitted video generation request for image %s. Operation: %s",
+        image_identifier,
+        operation.name,
     )
     while not operation.done:
         await asyncio.sleep(15)
         operation = vertex_client.operations.get(operation)
         logging.info(
-            f"Operation status for {image_identifier}: {operation.name} - Done:"
-            f" {operation.done}"
+            "Operation status for %s: %s - Done: %s",
+            image_identifier,
+            operation.name,
+            operation.done,
         )
 
     if operation.error:
         error_message = operation.error.get("message", str(operation.error))
         logging.error(
-            f"Operation for {image_identifier} failed with error: {error_message}"
+            "Operation for %s failed with error: %s", image_identifier, error_message
         )
         return None, error_message
     if not (operation.result and hasattr(operation.result, "generated_videos")):
         logging.warning(
-            f"No generated videos found in the response for {image_identifier}."
+            "No generated videos found in the response for %s.", image_identifier
         )
         return None, "No videos found in the response."
     return operation.result.generated_videos[0], None
@@ -116,10 +120,12 @@ def _round_to_nearest_veo_duration(duration: int) -> int:
     return 8
 
 
+# pylint: disable=too-many-arguments
 async def _generate_single_video(
     video_query: str,
     tool_context: ToolContext,
     vertex_client: genai.Client,
+    *,
     input_image: GenImage,
     image_identifier: str,
     duration: int,
@@ -167,9 +173,11 @@ async def _generate_single_video(
             ),
         )
         return {"name": filename}, None
-    except Exception as e:
+    except (api_exceptions.Aborted, ValueError) as e:
         logging.error(
-            f"Error in _generate_single_video for {image_identifier}: {e}",
+            "Error in _generate_single_video for %s: %s",
+            image_identifier,
+            e,
             exc_info=True,
         )
         return None, str(e)
@@ -217,6 +225,7 @@ async def _load_image_bytes(
     return image_bytes, identifier, f"image/{mime_suffix}"
 
 
+# pylint: disable=too-many-locals
 async def generate_video(
     video_queries: List[str],
     tool_context: ToolContext,
@@ -228,11 +237,18 @@ async def generate_video(
 
     Args:
         video_queries (List[str]): A list of prompts for video generation.
-            - Each video query should only describe a 4 second scene, so describe a quick scene with only one setting.
-            - Be VERY descriptive in what movements and camera angles you expect and what should not move in the scene. Describe who/what is causing the movement.
-            - It will use the image as a starting point. Be clear about how the scene transitions and keep it on theme.
-            - Character names won't be understood here, use pronouns + descriptions to detail actions.
-            - Make sure to mention that there should be no text or logos added to the video, except for the logo video where you should ensure the logo is always present for the entire duration of the video.
+            - Each video query should only describe a 4 second scene, so describe a
+              quick scene with only one setting.
+            - Be VERY descriptive in what movements and camera angles you expect and
+              what should not move in the scene. Describe who/what is causing the
+              movement.
+            - It will use the image as a starting point. Be clear about how the scene
+              transitions and keep it on theme.
+            - Character names won't be understood here, use pronouns + descriptions to
+              detail actions.
+            - Make sure to mention that there should be no text or logos added to the
+              video, except for the logo video where you should ensure the logo is
+              always present for the entire duration of the video.
             - Explicitly ground each of your prompts to follow the laws of physics.
         tool_context (ToolContext): The context for artifact management.
         num_images (int): The total number of images available.
@@ -273,15 +289,15 @@ async def generate_video(
             duration = 6 if logo_prompt_present and i == len(image_sources) - 1 else 4
             tasks.append(
                 _generate_single_video(
-                    video_queries[i],
-                    tool_context,
-                    vertex_client,
-                    GenImage(image_bytes=image_bytes, mime_type=mime_type),
-                    identifier,
-                    duration,
+                    video_query=video_queries[i],
+                    tool_context=tool_context,
+                    vertex_client=vertex_client,
+                    input_image=GenImage(image_bytes=image_bytes, mime_type=mime_type),
+                    image_identifier=identifier,
+                    duration=duration,
                 )
             )
-        except Exception as e:
+        except (FileNotFoundError, api_exceptions.GoogleAPICallError) as e:
             failed_videos.append({"source": source_path, "reason": str(e)})
 
     successful_videos = []

@@ -11,10 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from google.cloud import storage
-from google.genai import types
+"""Utility functions for handling images."""
 import logging
 from typing import Optional
+
+from google.api_core import exceptions as api_exceptions
+from google.cloud import storage
+from google.genai import types
 
 # --- Configuration ---
 logging.basicConfig(
@@ -40,8 +43,6 @@ async def _load_gcs_image(
         blob = storage_client.bucket(bucket_name).blob(blob_name)
         image_bytes = blob.download_as_bytes()
         return types.Part.from_bytes(data=image_bytes, mime_type=IMAGE_MIME_TYPE)
-    except Exception as e:
-        logging.error(f"Failed to load image from '{gcs_uri}': {e}")
+    except (api_exceptions.GoogleAPICallError, ValueError) as e:
+        logging.error("Failed to load image from '%s': %s", gcs_uri, e)
         return None
-
-
