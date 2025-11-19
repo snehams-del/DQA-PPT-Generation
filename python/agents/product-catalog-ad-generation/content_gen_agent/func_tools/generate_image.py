@@ -21,7 +21,7 @@ from typing import Any, Dict, List, Optional
 
 from dotenv import load_dotenv
 from google.adk.tools import ToolContext
-from google.cloud import storage
+
 from google.genai import types
 
 from content_gen_agent.utils.evaluate_media import (
@@ -30,7 +30,7 @@ from content_gen_agent.utils.evaluate_media import (
 from content_gen_agent.utils.gemini_utils import call_gemini_image_api, initialize_gemini_client
 from content_gen_agent.utils.images import (
     IMAGE_MIME_TYPE,
-    _load_gcs_image
+    load_image_resource,
 )
 
 # --- Configuration ---
@@ -138,7 +138,74 @@ async def generate_one_image(
     }
 
 
-# pylint: disable=too-many-locals
+async def _load_generation_resources(
+    tool_context: ToolContext,
+) -> tuple[Optional[types.Part], Optional[types.Part], Optional[str]]:
+    """Loads the logo and asset sheet images."""
+    logo_image_bytes, _, logo_mime = await load_image_resource(
+        "gcs", f"gs://{LOGO_GCS_URI}", tool_context
+    )
+    if not logo_image_bytes:
+        return None, None, f"Failed to load logo from '{LOGO_GCS_URI}'."
+    logo_image = types.Part.from_bytes(data=logo_image_bytes, mime_type=logo_mime)
+
+    try:
+        asset_sheet_bytes, _, asset_sheet_mime = await load_image_resource(
+            "artifact", ASSET_SHEET_FILENAME, tool_context
+        )
+        if not asset_sheet_bytes:
+            return None, None, "Asset sheet artifact is empty."
+        asset_sheet_image = types.Part.from_bytes(
+            data=asset_sheet_bytes, mime_type=asset_sheet_mime
+        )
+    except (FileNotFoundError, ValueError) as e:
+        return None, None, f"Failed to load asset sheet: {e}"
+
+    return logo_image, asset_sheet_image, None
+
+
+async def _save_generated_images(
+    results: List[Dict[str, Any]], tool_context: ToolContext
+) -> None:
+    """Saves generated images to the tool context."""
+    save_tasks = []
+    for result in results:
+        if result.get("status") == "success" and result.get("image_bytes"):
+            filename = result["filename"]
+            image_bytes = result["image_bytes"]
+            save_tasks.append(
+                tool_context.save_artifact(
+                    filename,
+                    types.Part.from_bytes(
+                        data=image_bytes, mime_type=IMAGE_MIME_TYPE
+                    ),
+                )
+            )
+            result["detail"] = f"Image stored as {filename}."
+            del result["image_bytes"]
+
+    if save_tasks:
+        await asyncio.gather(*save_tasks)
+
+
+def _create_image_generation_task(
+    scene_num: int,
+    prompt: str,
+    is_logo_scene: bool,
+    logo_image: types.Part,
+    asset_sheet_image: types.Part,
+) -> Any:
+    """Creates a task for generating a single image."""
+    filename_prefix = f"{scene_num}_"
+    if is_logo_scene:
+        logo_prompt = (
+            f"Place the company logo centered on the following background: {prompt}"
+        )
+        return generate_one_image(logo_prompt, [logo_image], filename_prefix)
+
+    return generate_one_image(prompt, [asset_sheet_image], filename_prefix)
+
+
 async def generate_images_from_storyline(
     prompts: List[str],
     tool_context: ToolContext,
@@ -178,33 +245,15 @@ async def generate_images_from_storyline(
             )
         ]
 
-    storage_client = storage.Client()
-    logo_image = await _load_gcs_image(LOGO_GCS_URI, storage_client)
-    if not logo_image:
-        return [
-            json.dumps(
-                {
-                    "status": "failed",
-                    "detail": f"Failed to load logo from '{LOGO_GCS_URI}'.",
-                }
-            )
-        ]
+    logo_image, asset_sheet_image, error_msg = await _load_generation_resources(
+        tool_context
+    )
+    if error_msg:
+        return [json.dumps({"status": "failed", "detail": error_msg})]
 
-    try:
-        asset_sheet_image = await tool_context.load_artifact(
-            ASSET_SHEET_FILENAME
-        )
-        if not asset_sheet_image:
-            raise ValueError("Asset sheet artifact is empty.")
-    except (FileNotFoundError, ValueError) as e:
-        return [
-            json.dumps(
-                {
-                    "status": "failed",
-                    "detail": f"Failed to load asset sheet: {e}",
-                }
-            )
-        ]
+    # We know these are not None if error_msg is None.
+    assert logo_image is not None
+    assert asset_sheet_image is not None
 
     tasks = []
     scenes_to_generate = (
@@ -217,38 +266,15 @@ async def generate_images_from_storyline(
 
         prompt = prompts[i]
         is_logo_scene = logo_prompt_present and scene_num == len(prompts) - 1
-        filename_prefix = f"{scene_num}_"
-
-        if is_logo_scene:
-            logo_prompt = f"Place the company logo centered on the following background: {prompt}"
-            tasks.append(
-                generate_one_image(logo_prompt, [logo_image], filename_prefix)
+        tasks.append(
+            _create_image_generation_task(
+                scene_num, prompt, is_logo_scene, logo_image, asset_sheet_image
             )
-        else:
-            tasks.append(
-                generate_one_image(
-                    prompt, [asset_sheet_image], filename_prefix
-                )
-            )
+        )
 
     results = await asyncio.gather(*tasks)
     results.sort(key=lambda r: r.get("filename", ""))
 
-    save_tasks = []
-    for result in results:
-        if result.get("status") == "success" and result.get("image_bytes"):
-            filename = result["filename"]
-            image_bytes = result["image_bytes"]
-            save_tasks.append(
-                tool_context.save_artifact(
-                    filename,
-                    types.Part.from_bytes(
-                        data=image_bytes, mime_type=IMAGE_MIME_TYPE
-                    ),
-                )
-            )
-            result["detail"] = f"Image stored as {filename}."
-            del result["image_bytes"]
+    await _save_generated_images(results, tool_context)
 
-    await asyncio.gather(*save_tasks)
     return [json.dumps(res) for res in results]

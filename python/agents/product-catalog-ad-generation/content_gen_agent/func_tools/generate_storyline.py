@@ -23,7 +23,7 @@ from dotenv import load_dotenv
 from google import genai
 from google.adk.tools import ToolContext
 from google.api_core import exceptions as api_exceptions
-from google.cloud import storage
+
 from google.genai import types
 
 from content_gen_agent.utils.storytelling import STORYTELLING_INSTRUCTIONS
@@ -32,10 +32,7 @@ from content_gen_agent.utils.evaluate_media import (
     calculate_evaluation_score,
 )
 from content_gen_agent.utils.gemini_utils import call_gemini_image_api, initialize_gemini_client
-from content_gen_agent.utils.images import (
-    IMAGE_MIME_TYPE,
-    _load_gcs_image
-)
+from content_gen_agent.utils.images import load_image_resource
 
 # Configure logging
 logging.basicConfig(
@@ -93,23 +90,12 @@ async def generate_storyline(
         f"minimal whitespace and a '{style_preference}' effect."
     )
 
-        # If we're using a user provided asset sheet, load this before the
+    # If we're using a user provided asset sheet, load this before the
     # storyline text step
-    image_part = None
-    if user_provided_asset_sheet_gcs_uri:
-        # Load asset sheet from storage and save to tool context
-        storage_client = storage.Client()
-        if user_provided_asset_sheet_gcs_uri.startswith("gs://"):
-            user_provided_asset_sheet_gcs_uri = user_provided_asset_sheet_gcs_uri[5:]
-        image_part = await _load_gcs_image(user_provided_asset_sheet_gcs_uri, storage_client)
-        asset_sheet_filename = "asset_sheet.png"
-        await tool_context.save_artifact(
-            asset_sheet_filename,
-            image_part
-        )
-        logging.info(
-            "Saved user-provided asset sheet image to %s", asset_sheet_filename
-        )
+    image_part = await _process_user_asset_sheet(
+        user_provided_asset_sheet_gcs_uri, tool_context
+    )
+    asset_sheet_filename = "asset_sheet.png" if image_part else None
 
     story_data = _generate_storyline_text(
         product,
@@ -156,6 +142,43 @@ async def generate_storyline(
         "storyline_filename": storyline_filename,
         "status": "success",
     }
+
+
+async def _process_user_asset_sheet(
+    user_provided_asset_sheet_gcs_uri: Optional[str],
+    tool_context: ToolContext,
+) -> Optional[types.Part]:
+    """Processes the user-provided asset sheet.
+
+    Args:
+        user_provided_asset_sheet_gcs_uri (Optional[str]): The GCS URI of the asset sheet.
+        tool_context (ToolContext): The tool context for saving artifacts.
+
+    Returns:
+        Optional[types.Part]: The image part if loaded successfully, otherwise None.
+    """
+    if not user_provided_asset_sheet_gcs_uri:
+        return None
+
+    if not user_provided_asset_sheet_gcs_uri.startswith("gs://"):
+        user_provided_asset_sheet_gcs_uri = (
+            f"gs://{user_provided_asset_sheet_gcs_uri}"
+        )
+
+    image_bytes, _, mime_type = await load_image_resource(
+        "gcs", user_provided_asset_sheet_gcs_uri, tool_context
+    )
+
+    if image_bytes:
+        image_part = types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
+        asset_sheet_filename = "asset_sheet.png"
+        await tool_context.save_artifact(asset_sheet_filename, image_part)
+        logging.info(
+            "Saved user-provided asset sheet image to %s", asset_sheet_filename
+        )
+        return image_part
+
+    return None
 
 
 # pylint: disable=too-many-arguments
@@ -268,15 +291,20 @@ async def _ensure_product_photo_artifact(
     if product_photo_filename:
         if product_photo_filename.startswith("gs://"):
             try:
-                storage_client = storage.Client()
-                gcs_uri = product_photo_filename.replace("gs://", "")
-                product_photo_part = await _load_gcs_image(gcs_uri, storage_client)
-                if product_photo_part:
-                    artifact_filename = gcs_uri.split("/")[-1]
-                    await tool_context.save_artifact(artifact_filename, product_photo_part)
+                image_bytes, _, mime_type = await load_image_resource(
+                    "gcs", product_photo_filename, tool_context
+                )
+                if image_bytes:
+                    product_photo_part = types.Part.from_bytes(
+                        data=image_bytes, mime_type=mime_type
+                    )
+                    artifact_filename = product_photo_filename.split("/")[-1]
+                    await tool_context.save_artifact(
+                        artifact_filename, product_photo_part
+                    )
                     logging.info(
                         "Saved product photo from GCS URI '%s' as artifact '%s'",
-                        gcs_uri,
+                        product_photo_filename,
                         artifact_filename,
                     )
                     return artifact_filename
@@ -311,16 +339,16 @@ async def _ensure_product_photo_artifact(
 
     gcs_uri = product_details["image_gcs_uri"]
     try:
-        storage_client = storage.Client()
-        bucket_name, blob_name = gcs_uri.replace("gs://", "").split("/", 1)
-        bucket = storage_client.bucket(bucket_name)
-        blob = bucket.blob(blob_name)
-        image_bytes = blob.download_as_bytes()
+        image_bytes, _, mime_type = await load_image_resource(
+            "gcs", gcs_uri, tool_context
+        )
+        if not image_bytes:
+            raise ValueError("Failed to download image bytes.")
 
         # Use the blob name as the artifact filename
-        artifact_filename = blob_name.split("/")[-1]
+        artifact_filename = gcs_uri.split("/")[-1]
         product_photo_part = genai.types.Part.from_bytes(
-            data=image_bytes, mime_type=IMAGE_MIME_TYPE
+            data=image_bytes, mime_type=mime_type
         )
         await tool_context.save_artifact(artifact_filename, product_photo_part)
         logging.info(
@@ -334,24 +362,7 @@ async def _ensure_product_photo_artifact(
         return None
 
 
-async def _call_image_generation_api(
-    contents: List[Any], image_prompt: str
-) -> Dict[str, Any]:
-    """Calls the image generation API and evaluates the result.
 
-    Args:
-        contents (List[Any]): The content to send to the model.
-        image_prompt (str): The prompt used for image generation.
-
-    Returns:
-        A dictionary with the image bytes, evaluation result, and MIME type.
-    """
-    return await call_gemini_image_api(
-        client=client,
-        model=IMAGE_GEN_MODEL,
-        contents=contents,
-        image_prompt=image_prompt,
-    )
 
 
 def _process_visual_style_guide(
@@ -391,28 +402,15 @@ def _process_visual_style_guide(
     }
 
 
-# pylint: disable=too-many-locals
-async def _generate_asset_sheet_image(
+def _create_asset_sheet_prompt(
     story_data: Dict[str, Any],
-    product_photo_filename: str,
-    tool_context: ToolContext,
     style_guide: str,
 ) -> str:
-    """Generates and evaluates asset sheet images, saving the best one.
-
-    Args:
-        story_data (Dict[str, Any]): The storyline and visual style guide data.
-        product_photo_filename (str): The filename of the product photo.
-        tool_context (ToolContext): The context for saving artifacts.
-        style_guide (str): The visual style description.
-
-    Returns:
-        The filename of the generated asset sheet
-    """
+    """Creates the prompt for the asset sheet image."""
     visual_style_guide = story_data.get("visual_style_guide", {})
     processed_vsg = _process_visual_style_guide(visual_style_guide)
 
-    image_prompt = f"""A visual asset sheet for a commercial.
+    return f"""A visual asset sheet for a commercial.
     Instructions: Create a clean, organized collage displaying each of the following:
     1) Front and side profiles of each character
     2) Locations/settings for each scene
@@ -424,29 +422,19 @@ async def _generate_asset_sheet_image(
     Product: Attached image.
     """
 
-    logging.info("Generating asset sheet image for prompt: '%s'", image_prompt)
 
-    try:
-        contents = [image_prompt]
-        product_photo_part = await tool_context.load_artifact(
-            product_photo_filename
-        )
-        if product_photo_part:
-            contents.append(product_photo_part)
-    except (FileNotFoundError, ValueError) as e:
-        logging.error(
-            "Failed to load product photo artifact '%s': %s",
-            product_photo_filename,
-            e,
-            exc_info=True,
-        )
-        return {
-            "status": "failed",
-            "detail": f"Failed to load product photo: {e}",
-        }
-
+async def _generate_and_select_best_image(
+    contents: List[Any],
+    image_prompt: str,
+) -> Dict[str, Any]:
+    """Generates multiple images and selects the best one based on evaluation."""
     tasks = [
-        _call_image_generation_api(contents, image_prompt)
+        call_gemini_image_api(
+            client=client,
+            model=IMAGE_GEN_MODEL,
+            contents=contents,
+            image_prompt=image_prompt,
+        )
         for _ in range(MAX_RETRIES)
     ]
     results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -470,6 +458,53 @@ async def _generate_asset_sheet_image(
         logging.warning(
             "No image passed evaluation. Selecting best attempt with score: %s", score
         )
+
+    return best_attempt
+
+
+async def _generate_asset_sheet_image(
+    story_data: Dict[str, Any],
+    product_photo_filename: str,
+    tool_context: ToolContext,
+    style_guide: str,
+) -> str:
+    """Generates and evaluates asset sheet images, saving the best one.
+
+    Args:
+        story_data (Dict[str, Any]): The storyline and visual style guide data.
+        product_photo_filename (str): The filename of the product photo.
+        tool_context (ToolContext): The context for saving artifacts.
+        style_guide (str): The visual style description.
+
+    Returns:
+        The filename of the generated asset sheet
+    """
+    image_prompt = _create_asset_sheet_prompt(story_data, style_guide)
+    logging.info("Generating asset sheet image for prompt: '%s'", image_prompt)
+
+    try:
+        contents = [image_prompt]
+        product_photo_part = await tool_context.load_artifact(
+            product_photo_filename
+        )
+        if product_photo_part:
+            contents.append(product_photo_part)
+    except (FileNotFoundError, ValueError) as e:
+        logging.error(
+            "Failed to load product photo artifact '%s': %s",
+            product_photo_filename,
+            e,
+            exc_info=True,
+        )
+        return {
+            "status": "failed",
+            "detail": f"Failed to load product photo: {e}",
+        }
+
+    best_attempt = await _generate_and_select_best_image(contents, image_prompt)
+
+    if "status" in best_attempt and best_attempt["status"] == "failed":
+        return best_attempt
 
     asset_sheet_filename = "asset_sheet.png"
     await tool_context.save_artifact(

@@ -145,15 +145,13 @@ async def generate_audio(
 
 
 async def _generate_voiceover_content(
-    prompt: str, text: str, model_name: str, voice_name: str
+    prompt: str, text: str
 ) -> Optional[bytes]:
     """Synthesizes speech using Gemini-TTS.
 
     Args:
         prompt (str): Styling instructions for the voice.
         text (str): The text to be spoken.
-        model_name (str): The Gemini-TTS model to use.
-        voice_name (str): The name of the prebuilt voice.
 
     Returns:
         The audio content as bytes, or None on failure.
@@ -162,7 +160,7 @@ async def _generate_voiceover_content(
         client = texttospeech.TextToSpeechAsyncClient()
         synthesis_input = texttospeech.SynthesisInput(text=text, prompt=prompt)
         voice = texttospeech.VoiceSelectionParams(
-            language_code="en-US", model_name=model_name, name=voice_name
+            language_code="en-US", model_name=TTS_MODEL_NAME, name=TTS_VOICE_NAME
         )
         audio_config = texttospeech.AudioConfig(
             audio_encoding=texttospeech.AudioEncoding.MP3
@@ -182,8 +180,6 @@ async def generate_voiceover(
     prompt: str,
     text: str,
     tool_context: ToolContext,
-    model_name: str = TTS_MODEL_NAME,
-    voice_name: str = TTS_VOICE_NAME,
 ) -> Optional[Dict[str, str]]:
     """Generates a voiceover and saves it as an artifact.
 
@@ -191,14 +187,12 @@ async def generate_voiceover(
         prompt (str): Styling instructions for the voice.
         text (str): The text to be spoken.
         tool_context (ToolContext): The context for artifact management.
-        model_name (str): The Gemini-TTS model to use. Defaults to "gemini-2.5-flash-preview-tts".
-        voice_name (str): The name of the prebuilt voice. Defaults to "Schedar".
 
     Returns:
         A dictionary with the generated voiceover artifact name.
     """
     audio_content = await _generate_voiceover_content(
-        prompt, text, model_name, voice_name
+        prompt, text
     )
     if not audio_content:
         return None
@@ -215,14 +209,11 @@ async def generate_voiceover(
         return None
 
 
-# pylint: disable=too-many-arguments,too-many-positional-arguments
 async def generate_audio_and_voiceover(
     tool_context: ToolContext,
     audio_query: str,
     voiceover_prompt: str,
     voiceover_text: str,
-    model_name: str = TTS_MODEL_NAME,
-    voice_name: str = TTS_VOICE_NAME,
     generation_mode: str = "both",
 ) -> Dict[str, Any]:
     """
@@ -240,9 +231,6 @@ async def generate_audio_and_voiceover(
           product. Make it punny and mention the company name. Keep it short and
           sweet. e.g. FALL into great prices from {company name} - buy from a
           store near you!
-        model_name (str, optional): The Gemini TTS model to use.
-                                  Default is "gemini-2.5-flash-preview-tts".
-        voice_name (str, optional): The voice name to use. Default is "Kore".
         generation_mode (str, optional): Specifies what to generate. Can be 'audio',
           'voiceover', or 'both'.
                                          Defaults to 'both'.
@@ -261,8 +249,6 @@ async def generate_audio_and_voiceover(
                 voiceover_prompt,
                 voiceover_text,
                 tool_context,
-                model_name,
-                voice_name,
             )
         )
 

@@ -19,11 +19,14 @@ import os
 import re
 from typing import Any, Dict, List, Optional, Tuple
 
+from dataclasses import dataclass
+
 from google import genai
 from google.adk.tools import ToolContext
 from google.api_core import exceptions as api_exceptions
 from google.cloud import storage
 from google.genai.types import GenerateVideosConfig, Image as GenImage
+from content_gen_agent.utils.images import load_image_resource
 
 # --- Configuration ---
 logging.basicConfig(
@@ -35,6 +38,16 @@ GCS_TEMPLATE_IMAGE_FOLDER = "template_images/"
 ALLOWED_IMAGE_EXTENSIONS = (".png", ".jpg", ".jpeg")
 VIDEO_ASPECT_RATIO = "9:16"
 VIDEO_FPS = 24
+
+
+@dataclass
+class VideoGenerationInput:
+    """Input parameters for video generation."""
+
+    video_query: str
+    input_image: GenImage
+    image_identifier: str
+    duration: int
 
 
 def _get_gcs_files(folder_prefix: str) -> List[str]:
@@ -122,23 +135,16 @@ def _round_to_nearest_veo_duration(duration: int) -> int:
 
 # pylint: disable=too-many-arguments
 async def _generate_single_video(
-    video_query: str,
+    video_input: VideoGenerationInput,
     tool_context: ToolContext,
     vertex_client: genai.Client,
-    *,
-    input_image: GenImage,
-    image_identifier: str,
-    duration: int,
 ) -> Tuple[Optional[Dict[str, str]], Optional[str]]:
     """Generates a single video from a given image and prompt.
 
     Args:
-        video_query (str): The prompt for video generation.
+        video_input (VideoGenerationInput): The input parameters for video generation.
         tool_context (ToolContext): The context for artifact management.
         vertex_client (genai.Client): The Vertex AI client.
-        input_image (GenImage): The input image for video generation.
-        image_identifier (str): An identifier for the image.
-        duration (int): The desired duration of the video in seconds.
 
     Returns:
         A tuple containing the video result and an error message.
@@ -146,12 +152,15 @@ async def _generate_single_video(
     try:
         request = {
             "model": VIDEO_MODEL,
-            "source": {"prompt": video_query, "image": input_image},
+            "source": {
+                "prompt": video_input.video_query,
+                "image": video_input.input_image,
+            },
             "config": GenerateVideosConfig(
                 aspect_ratio=VIDEO_ASPECT_RATIO,
                 generate_audio=False,
                 number_of_videos=1,
-                duration_seconds=_round_to_nearest_veo_duration(duration),
+                duration_seconds=_round_to_nearest_veo_duration(video_input.duration),
                 fps=VIDEO_FPS,
                 person_generation="allow_all",
                 enhance_prompt=True,
@@ -159,13 +168,13 @@ async def _generate_single_video(
         }
         operation = vertex_client.models.generate_videos(**request)
         video, error = await _monitor_video_operation(
-            operation, image_identifier, vertex_client
+            operation, video_input.image_identifier, vertex_client
         )
 
         if error or not (video and video.video and video.video.video_bytes):
             return None, error or "Generated video has no content."
 
-        filename = f"{image_identifier}.mp4"
+        filename = f"{video_input.image_identifier}.mp4"
         await tool_context.save_artifact(
             filename,
             genai.types.Part.from_bytes(
@@ -176,7 +185,7 @@ async def _generate_single_video(
     except (api_exceptions.Aborted, ValueError) as e:
         logging.error(
             "Error in _generate_single_video for %s: %s",
-            image_identifier,
+            video_input.image_identifier,
             e,
             exc_info=True,
         )
@@ -196,36 +205,118 @@ def _initialize_vertex_client() -> genai.Client:
     return genai.Client(vertexai=True, project=project_id, location=location)
 
 
-async def _load_image_bytes(
-    source_type: str, source_path: str, tool_context: ToolContext
-) -> Tuple[Optional[bytes], str, str]:
-    """Loads image bytes from either a GCS path or a tool artifact.
 
-    Args:
-        source_type (str): The source of the image ('artifact' or 'gcs').
-        source_path (str): The path to the image.
-        tool_context (ToolContext): The context for artifact management.
 
-    Returns:
-        A tuple with the image bytes, identifier, and MIME type.
-    """
-    identifier = os.path.basename(source_path).split(".")[0]
-    mime_suffix = "jpeg" if source_path.lower().endswith(".jpg") else "png"
-
-    if source_type == "artifact":
-        artifact = await tool_context.load_artifact(source_path)
-        image_bytes = artifact.inline_data.data if artifact and artifact.inline_data else None
+def _get_image_sources(
+    scene_numbers: Optional[List[int]], num_images: int
+) -> List[Tuple[str, str]]:
+    """Determines the image sources based on scene numbers or total count."""
+    if scene_numbers:
+        image_filenames = [f"{i}_.png" for i in scene_numbers]
     else:
-        gcs_uri = source_path[5:] if source_path.startswith("gs://") else source_path
-        bucket_name, blob_name = gcs_uri.split("/", 1)
-        storage_client = storage.Client()
-        blob = storage_client.bucket(bucket_name).blob(blob_name)
-        image_bytes = blob.download_as_bytes()
+        image_filenames = [f"{i}_.png" for i in range(num_images)]
 
-    return image_bytes, identifier, f"image/{mime_suffix}"
+    image_sources = [("artifact", name) for name in image_filenames]
+    if not image_sources:
+        image_sources = [
+            ("gcs", uri) for uri in _get_gcs_files(GCS_TEMPLATE_IMAGE_FOLDER)
+        ]
+    return image_sources
 
 
-# pylint: disable=too-many-locals
+async def _process_video_source(
+    source_type: str,
+    source_path: str,
+    video_query: str,
+    tool_context: ToolContext,
+    *,
+    is_last_image: bool,
+    logo_prompt_present: bool,
+) -> Tuple[Optional[VideoGenerationInput], Optional[Dict[str, str]]]:
+    """Loads image and prepares video generation input."""
+    try:
+        image_bytes, identifier, mime_type = await load_image_resource(
+            source_type, source_path, tool_context
+        )
+        if not image_bytes:
+            return None, {"source": source_path, "reason": "Could not load image"}
+
+        duration = 6 if logo_prompt_present and is_last_image else 4
+        video_input = VideoGenerationInput(
+            video_query=video_query,
+            input_image=GenImage(image_bytes=image_bytes, mime_type=mime_type),
+            image_identifier=identifier,
+            duration=duration,
+        )
+        return video_input, None
+    except (FileNotFoundError, api_exceptions.GoogleAPICallError) as e:
+        return None, {"source": source_path, "reason": str(e)}
+
+
+async def _create_video_tasks(
+    image_sources: List[Tuple[str, str]],
+    video_queries: List[str],
+    tool_context: ToolContext,
+    vertex_client: genai.Client,
+    logo_prompt_present: bool,
+) -> Tuple[List[Any], List[str], List[Dict[str, str]]]:
+    """Creates video generation tasks for the given images."""
+    tasks = []
+    task_sources = []
+    failed_videos = []
+
+    for i, (source_type, source_path) in enumerate(image_sources):
+        if i >= len(video_queries):
+            break
+
+        video_input, failure = await _process_video_source(
+            source_type,
+            source_path,
+            video_queries[i],
+            tool_context,
+            is_last_image=i == len(image_sources) - 1,
+            logo_prompt_present=logo_prompt_present,
+        )
+
+        if failure:
+            failed_videos.append(failure)
+        elif video_input:
+            tasks.append(
+                _generate_single_video(
+                    video_input=video_input,
+                    tool_context=tool_context,
+                    vertex_client=vertex_client,
+                )
+            )
+            task_sources.append(source_path)
+
+    return tasks, task_sources, failed_videos
+
+
+def _process_results(
+    results: List[Tuple[Optional[Dict[str, str]], Optional[str]]],
+    task_sources: List[str],
+    failed_videos: List[Dict[str, str]],
+) -> Tuple[List[Dict[str, str]], List[Dict[str, str]]]:
+    """Processes the results of video generation tasks."""
+    successful_videos = []
+    for i, (res, error) in enumerate(results):
+        if res:
+            successful_videos.append(res)
+        else:
+            failed_videos.append(
+                {"source": task_sources[i], "reason": error or "Generation failed"}
+            )
+
+    successful_videos.sort(
+        key=lambda v: int(re.match(r"(\d+)", v["name"]).group(1))
+        if re.match(r"(\d+)", v["name"])
+        else -1
+    )
+
+    return successful_videos, failed_videos
+
+
 async def generate_video(
     video_queries: List[str],
     tool_context: ToolContext,
@@ -261,61 +352,19 @@ async def generate_video(
     Returns:
         A dictionary with the status and results of the video generation.
     """
-    if scene_numbers:
-        image_filenames = [f"{i}_.png" for i in scene_numbers]
-    else:
-        image_filenames = [f"{i}_.png" for i in range(num_images)]
-
-    image_sources = [("artifact", name) for name in image_filenames]
-    if not image_sources:
-        image_sources = [
-            ("gcs", uri) for uri in _get_gcs_files(GCS_TEMPLATE_IMAGE_FOLDER)
-        ]
-
+    image_sources = _get_image_sources(scene_numbers, num_images)
     vertex_client = _initialize_vertex_client()
-    tasks, failed_videos = [], []
 
-    for i, (source_type, source_path) in enumerate(image_sources):
-        if i >= len(video_queries):
-            break
-        try:
-            image_bytes, identifier, mime_type = await _load_image_bytes(
-                source_type, source_path, tool_context
-            )
-            if not image_bytes:
-                failed_videos.append({"source": source_path, "reason": "Could not load image"})
-                continue
-
-            duration = 6 if logo_prompt_present and i == len(image_sources) - 1 else 4
-            tasks.append(
-                _generate_single_video(
-                    video_query=video_queries[i],
-                    tool_context=tool_context,
-                    vertex_client=vertex_client,
-                    input_image=GenImage(image_bytes=image_bytes, mime_type=mime_type),
-                    image_identifier=identifier,
-                    duration=duration,
-                )
-            )
-        except (FileNotFoundError, api_exceptions.GoogleAPICallError) as e:
-            failed_videos.append({"source": source_path, "reason": str(e)})
+    tasks, task_sources, failed_videos = await _create_video_tasks(
+        image_sources, video_queries, tool_context, vertex_client, logo_prompt_present
+    )
 
     successful_videos = []
     if tasks:
         results = await asyncio.gather(*tasks)
-        for i, (res, error) in enumerate(results):
-            if res:
-                successful_videos.append(res)
-            else:
-                failed_videos.append(
-                    {"source": image_sources[i][1], "reason": error or "Generation failed"}
-                )
-
-    successful_videos.sort(
-        key=lambda v: int(re.match(r"(\d+)", v["name"]).group(1))
-        if re.match(r"(\d+)", v["name"])
-        else -1
-    )
+        successful_videos, failed_videos = _process_results(
+            results, task_sources, failed_videos
+        )
 
     return {
         "status": "success" if successful_videos else "failed",
