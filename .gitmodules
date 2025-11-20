@@ -1,0 +1,3 @@
+[submodule "python/agents/sequential-workflow-automation"]
+	path = python/agents/sequential-workflow-automation
+	url = https://github.com/John-Anthony-L/adk-samples.git
