@@ -224,7 +224,7 @@ uv run python deployment/deploy.py
 After deploying the agent, you'll be able to read the following INFO log message:
 
 ```
-Deployed agent to Vertex AI Agent Engine successfully, resource name: projects/<PROJECT_NUMBER>/locations/us-central1/reasoningEngines/<AGENT_ENGINE_ID>
+Deployed agent to Vertex AI Agent Engine successfully, resource name: projects/<PROJECT_NUMBER>/locations/<GOOGLE_CLOUD_LOCATION>/reasoningEngines/<AGENT_ENGINE_ID>
 ```
 
 Please note your Agent Engine resource name and update `.env` file accordingly as this is crucial for testing the remote agent.
@@ -239,14 +239,14 @@ After deploying the agent, follow these steps to test it:
    - Open your `.env` file.
    - The `AGENT_ENGINE_ID` should have been automatically updated by the `deployment/deploy.py` script when you deployed the agent. Verify that it is set correctly:
      ```
-     AGENT_ENGINE_ID=projects/<PROJECT_NUMBER>/locations/us-central1/reasoningEngines/<AGENT_ENGINE_ID>
+     AGENT_ENGINE_ID=projects/<PROJECT_NUMBER>/locations/<GOOGLE_CLOUD_LOCATION>/reasoningEngines/<AGENT_ENGINE_ID>
      ```
 
 2. **Grant RAG Corpus Access Permissions:**
    - Ensure your `.env` file has the following variables set correctly:
      ```
      GOOGLE_CLOUD_PROJECT=your-project-id
-     RAG_CORPUS=projects/<project-number>/locations/us-central1/ragCorpora/<corpus-id>
+     RAG_CORPUS=projects/<project-number>/locations/<GOOGLE_CLOUD_LOCATION>/ragCorpora/<corpus-id>
      ```
    - Run the permissions script:
      ```bash
