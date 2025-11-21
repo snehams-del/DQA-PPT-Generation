@@ -61,21 +61,38 @@ VERTEXAI_LOCATION=global
 
 ## 4. Copy Modified Files
 
-You will need to copy three files into your local `tau2-bench` directory. These files contain the implementation of the ADK agent, its registration, and unit tests.
+You will need to copy two files into your local `tau2-bench` directory. These files contain the implementation of the ADK agent and its unit tests.
 
 Assuming you have the following files available:
 
-*   `adk_agent.py`
-*   `registry.py`
-*   `test_adk_agent.py`
+*   `tau2_agent/adk_agent.py`
+*   `tests/test_adk_agent.py`
 
 Copy them to the correct locations within the project:
 
 ```bash
-cp ../adk_agent.py src/tau2/agent/adk_agent.py
-cp ../registry.py src/tau2/registry.py
-cp ../test_adk_agent.py tests/test_adk_agent.py
+cp ../tau2_agent/adk_agent.py src/tau2/agent/adk_agent.py
+cp ../tests/test_adk_agent.py tests/test_adk_agent.py
 ```
+
+## 4.1. Registering the ADK Agent
+
+To enable the `adk_agent` within the `tau2-bench` framework, you need to manually modify the `src/tau2/registry.py` file in your `tau2-bench` repository.
+
+1.  **Add the import statement** for `AdkAgent` at the top of `src/tau2/registry.py`:
+    ```python
+    from tau2.agent.adk_agent import AdkAgent
+    ```
+2.  **Register the agent** within the `try` block where other default components are registered (look for `registry = Registry()`):
+    ```python
+    try:
+        registry = Registry()
+        logger.debug("Registering default components...")
+        # ... existing registrations ...
+        registry.register_agent(AdkAgent, "adk_agent") # Add this line
+        # ... more existing registrations ...
+    ```
+    This allows the `adk_agent` to be selected via command-line arguments (e.g., `--agent adk_agent`).
 
 ## 5. Running the ADK Agent
 
