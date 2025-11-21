@@ -48,6 +48,18 @@ tenacity dependecy version may conflict with that of tau2 repo. Upgrading it bac
 pip install --upgrade tenacity
 ```
 
+**IMPORTANT:** Gemini 3 Pro model makes sending thought signatures mandatory. Tau2 bench relies on litellm for user simulation and non-adk agent simulation. Until https://github.com/BerriAI/litellm/pull/16812 is merged to litellm repository, the PR needs to be applied as shown below:
+
+```bash
+git clone --filter=blob:none --quiet https://github.com/BerriAI/litellm.git /tmp/litellm-pr-16812
+cd /tmp/litellm-pr-16812
+git checkout -q pull/16812/head
+git fetch origin pull/16812/head:pr-16812
+git checkout pr-16812
+pip install .
+cd -
+```
+
 ## 3. Add env params
 
 Create `.env` file at root with the following content.
@@ -130,10 +142,16 @@ def _create_agent(name: str, model: Union[str, BaseLlm], instruction: str, tools
 Here is an example command to run the agent on an airline domain task:
 
 ```bash
-tau2 run --domain airline --agent adk_agent --agent-llm vertex_ai/gemini-2.5-pro --user-llm vertex_ai/gemini-2.5-pro --num-trials 1 --num-tasks 1
+tau2 run --domain airline --agent adk_agent --agent-llm vertex_ai/gemini-3-pro-preview --user-llm vertex_ai/gemini-3-pro-preview --num-trials 1 --num-tasks 1 --user-llm-args '{"temperature": 1, "reasoning_effort": "high"}' --agent-llm-args '{"temperature": 1, "reasoning_effort": "high"}'
 ```
 
 Optionally, you can run specific example by using `--task-ids` instead of `--num-tasks`.
+
+**temperature:** When adk_agent is used defaults to 1. The commands in this document sets them explicitly using llm_args for both user and agent models.
+
+**reasoning_level** Only applies to Gemini 3 Pro model. It defaults to high for adk_agent while using this model. Otherwise, it will default to dynamic thinking. Again this document demonsrates setting it explicitly using llm_args.
+
+**NOTE**: It is normal that you will be getting `This model isn't mapped yet` error logs. This is coming from litellm cost calculation workflow used by `--user-llm`. You can suppress is temporarily by swapping `--user-llm vertex_ai/gemini-3-pro-preview` with `--user-llm vertex_ai/gemini-2.5-pro`.
 
 ### Viewing trajectories
 
@@ -149,18 +167,47 @@ Full run requires dropping the arg `--task-ids`.
 
 ```bash
 # Example: Run complete evaluation for all domains
-tau2 run --domain retail --agent adk_agent --agent-llm vertex_ai/gemini-2.5-pro --user-llm vertex_ai/gemini-2.5-pro --num-trials 4 --save-to my_model_retail
-tau2 run --domain airline --agent adk_agent --agent-llm vertex_ai/gemini-2.5-pro --user-llm vertex_ai/gemini-2.5-pro --num-trials 4 --save-to my_model_airline
-tau2 run --domain telecom --agent adk_agent --agent-llm vertex_ai/gemini-2.5-pro --user-llm vertex_ai/gemini-2.5-pro --num-trials 4 --save-to my_model_telecom
+tau2 run \
+  --domain retail \
+  --agent adk_agent \
+  --agent-llm vertex_ai/gemini-3-pro-preview \
+  --user-llm vertex_ai/gemini-3-pro-preview \
+  --num-trials 4 \
+  --save-to gemini_3_pro_retail \
+  --user-llm-args '{"temperature": 1, "reasoning_effort": "high"}' \
+  --agent-llm-args '{"temperature": 1, "reasoning_effort": "high"}'
+
+
+tau2 run \
+  --domain airline \
+  --agent adk_agent \
+  --agent-llm vertex_ai/gemini-3-pro-preview \
+  --user-llm vertex_ai/gemini-3-pro-preview \
+  --num-trials 4 \
+  --save-to gemini_3_pro_airline \
+  --user-llm-args '{"temperature": 1, "reasoning_effort": "high"}' \
+  --agent-llm-args '{"temperature": 1, "reasoning_effort": "high"}'
+
+
+tau2 run \
+  --domain telecom \
+  --agent adk_agent \
+  --agent-llm vertex_ai/gemini-3-pro-preview \
+  --user-llm vertex_ai/gemini-3-pro-preview \
+  --num-trials 4 \
+  --save-to gemini_3_pro_telecom \
+  --user-llm-args '{"temperature": 1, "reasoning_effort": "high"}' \
+  --agent-llm-args '{"temperature": 1, "reasoning_effort": "high"}'
 ```
 
 ### Prepare Submission Package
 
 ```bash
-tau2 submit prepare data/tau2/simulations/my_model_*.json --output ./my_submission
+tau2 submit prepare data/tau2/simulations/gemini_3_pro_*.json --output ./gemini_3_pro_submission
 ```
 
 This command will:
+
 - Verify all trajectory files are valid
 - Check that submission requirements are met
 - Compute performance metrics (Pass^k rates)

@@ -14,12 +14,13 @@
 
 
 import asyncio
-from typing import Any, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from google.adk import Agent as AdkLlmAgent
 from google.adk.agents import BaseAgent
 from google.adk.models.base_llm import BaseLlm
 from google.adk.planners import built_in_planner
+from google.adk.plugins import ReflectAndRetryToolPlugin
 from google.adk.runners import InMemoryRunner
 from google.adk.tools import base_tool
 from google.genai import types
@@ -42,7 +43,7 @@ class AdkTool(base_tool.BaseTool):
         """Initialize the AdkTool with a function declaration.
 
         Args:
-            function_declaration: The function declaration for the tool.
+          function_declaration: The function declaration for the tool.
         """
         super().__init__(
             name=function_declaration.name,
@@ -64,20 +65,24 @@ class AdkTool(base_tool.BaseTool):
 
 
 def _create_agent(
-    name: str, model: Union[str, BaseLlm], instruction: str, tools: List[Tool]
+    name: str,
+    model: Union[str, BaseLlm],
+    instruction: str,
+    tools: List[Tool],
+    llm_args: Dict[str, Any],
 ) -> BaseAgent:
     """Create an ADK LLM Agent with the given parameters.
 
     Args:
-        name: The name of the agent.
-        model: The LLM model to use.
-        instruction: The system prompt/instruction for the agent.
-        tools: The list of tools available to the agent.
+      name: The name of the agent.
+      model: The LLM model to use.
+      instruction: The system prompt/instruction for the agent.
+      tools: The list of tools available to the agent.
+      llm_args: Additional arguments for the LLM.
 
     Returns:
-        An instance of BaseAgent (which also allows workflow agents).
+      An instance of BaseAgent (which also allows workflow agents).
     """
-
     adk_tools = [
         AdkTool(
             types.FunctionDeclaration(
@@ -88,14 +93,33 @@ def _create_agent(
         )
         for tool in tools
     ]
+
+    generate_content_config = types.GenerateContentConfig()
+    generate_content_config.temperature = llm_args.get(
+        "temperature", 1
+    )  # default to recommended temperature for gemini models
+
+    thinking_level = None
+    if (
+        isinstance(model, str)
+        and model.startswith("gemini-3")
+        and "reasoning_effort" in llm_args
+    ):
+        thinking_level = llm_args["reasoning_effort"]
+
+    thinking_config = types.ThinkingConfig(
+        include_thoughts=True, thinking_level=thinking_level, thinking_budget=None
+    )
+
     return AdkLlmAgent(
         model=model,
         name=name,
         instruction=instruction,
         tools=adk_tools,
         planner=built_in_planner.BuiltInPlanner(
-            thinking_config=types.ThinkingConfig(include_thoughts=True),
+            thinking_config=thinking_config,
         ),
+        generate_content_config=generate_content_config,
     )
 
 
@@ -112,12 +136,11 @@ class AdkAgent(LLMAgent):
         """Initialize the AdkAgent with the given parameters.
 
         Args:
-            tools: The list of tools available to the agent.
-            domain_policy: The domain policy for the agent.
-            llm: The LLM model to use.
-            llm_args: Additional arguments for the LLM.
+          tools: The list of tools available to the agent.
+          domain_policy: The domain policy for the agent.
+          llm: The LLM model to use.
+          llm_args: Additional arguments for the LLM.
         """
-
         super().__init__(
             tools=tools, domain_policy=domain_policy, llm=llm, llm_args=llm_args
         )
@@ -127,15 +150,24 @@ class AdkAgent(LLMAgent):
         ), "AdkAgent only supports gemini models for this benchmark."
         if model_name.startswith("vertex_ai/"):
             model_name = model_name.replace("vertex_ai/", "")
+        if model_name.startswith("gemini/"):
+            model_name = model_name.replace("gemini/", "")
         self._adk_root_agent = _create_agent(
             name="customer_service_agent",
             model=self.llm_args.get("model_obj", model_name),
             instruction=self.system_prompt,
             tools=tools,
+            llm_args=llm_args,
         )
-        self.long_running_call_infos = []
+
+        error_handling_plugin = ReflectAndRetryToolPlugin(
+            max_retries=3, throw_exception_if_retry_exceeded=False
+        )
+
         self._runner = InMemoryRunner(
-            agent=self._adk_root_agent, app_name="tau2_adk_app"
+            agent=self._adk_root_agent,
+            app_name="tau2_adk_app",
+            plugins=[error_handling_plugin],
         )
         self._app_name = "tau2_adk_app"
         self._user_id = "tau2_user"
@@ -165,10 +197,11 @@ class AdkAgent(LLMAgent):
         """Run the prompt asynchronously and return the assistant message.
 
         Args:
-            new_message: The new message from the user.
-            function_responses: The list of function responses from tools.
+          new_message: The new message from the user.
+          function_responses: The list of function responses from tools.
+
         Returns:
-            An AssistantMessage containing the response from the agent.
+          An AssistantMessage containing the response from the agent.
         """
         if new_message is not None:
             content = types.Content(
@@ -186,6 +219,9 @@ class AdkAgent(LLMAgent):
         async for event in self._runner.run_async(
             user_id=self._user_id, session_id=self.session.id, new_message=content
         ):
+            if event is None or event.content is None:
+                continue
+
             logger.info(f"** Event received: {event.content.parts}")
             for part in event.content.parts:
                 if part.function_call:
@@ -206,7 +242,6 @@ class AdkAgent(LLMAgent):
                     )
                 elif part.text:
                     if not part.thought:
-                        text_content += "\n" if text_content else ""
                         text_content += part.text
                 else:
                     logger.info(f"** Other part type received: {part}")
@@ -223,13 +258,12 @@ class AdkAgent(LLMAgent):
         """Generate the next message from the agent based on the input message.
 
         Args:
-            message: The input message from the user or tool.
-            state: The current state of the agent.
+          message: The input message from the user or tool.
+          state: The current state of the agent.
 
         Returns:
-            A tuple containing the assistant message and the updated agent state.
+          A tuple containing the assistant message and the updated agent state.
         """
-
         if isinstance(message, MultiToolMessage):
             state.messages.extend(message.tool_messages)
         else:
@@ -292,17 +326,20 @@ class AdkAgent(LLMAgent):
         """Add information about a long-running call.
 
         Args:
-            call_info: A tuple containing the call ID and call name.
+          call_info: A tuple containing the call ID and call name.
         """
+        if not hasattr(self, "long_running_call_infos"):
+            self.long_running_call_infos = []
         self.long_running_call_infos.append(call_info)
 
     def pop_long_running_call_info(self):
         """Pop the oldest long-running call information.
 
         Returns:
-            A tuple containing the call ID and call name, or None if no information is available.
+          A tuple containing the call ID and call name, or None if no information
+          is available.
         """
-        if self.long_running_call_infos:
+        if hasattr(self, "long_running_call_infos") and self.long_running_call_infos:
             return self.long_running_call_infos.pop(0)
         return None
 
@@ -312,12 +349,16 @@ class AdkAgent(LLMAgent):
         """Pop long-running call information by call ID.
 
         Args:
-            call_id: The ID of the long-running call to pop.
+          call_id: The ID of the long-running call to pop.
 
         Returns:
-            A tuple containing the call ID and call name, or None if no information is available.
+          A tuple containing the call ID and call name, or None if no information
+          is available.
         """
-        for i, (stored_call_id, call_name) in enumerate(self.long_running_call_infos):
-            if stored_call_id == call_id:
-                return self.long_running_call_infos.pop(i)
+        if hasattr(self, "long_running_call_infos") and self.long_running_call_infos:
+            for i, (stored_call_id, call_name) in enumerate(
+                self.long_running_call_infos
+            ):
+                if stored_call_id == call_id:
+                    return self.long_running_call_infos.pop(i)
         return None
