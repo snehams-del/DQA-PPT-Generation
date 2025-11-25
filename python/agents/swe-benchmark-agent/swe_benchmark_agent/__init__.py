@@ -12,18 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Academic_Research: Research advice, related literature finding, research area proposals, web knowledge access."""
+"""SWE Agent - Software Engineering Agent for benchmark evaluation.
 
-import os
+This package provides a sophisticated agent for solving software engineering
+tasks from SWE-bench and Terminal-Bench benchmarks using Google ADK.
+"""
 
-import google.auth
-from dotenv import load_dotenv
-
-load_dotenv()
-
-_, project_id = google.auth.default()
-os.environ.setdefault("GOOGLE_CLOUD_PROJECT", project_id)
-os.environ["GOOGLE_CLOUD_LOCATION"] = "global"
-os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "True")
-
-from . import agent
+__version__ = "0.1.0"
