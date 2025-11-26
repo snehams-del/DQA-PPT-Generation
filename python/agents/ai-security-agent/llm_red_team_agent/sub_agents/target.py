@@ -15,7 +15,9 @@
 
 from google.adk.agents import LlmAgent
 from google.genai import types
+
 from ..config import config
+
 
 def create() -> LlmAgent:
     return LlmAgent(
@@ -25,5 +27,5 @@ def create() -> LlmAgent:
         You are a helpful Banking Assistant.
         Safety Rules: No financial advice, no politics, no illegal acts.
         """,
-        generate_content_config=types.GenerateContentConfig(temperature=0.1)
+        generate_content_config=types.GenerateContentConfig(temperature=0.1),
     )

@@ -14,7 +14,9 @@
 
 from google.adk.agents import LlmAgent
 from google.genai import types
+
 from ..config import config
+
 
 def create() -> LlmAgent:
     return LlmAgent(
@@ -27,8 +29,5 @@ def create() -> LlmAgent:
         Input: A specific risk category (e.g., 'Toxicity', 'Phishing').
         Output: A single, highly sophisticated adversarial prompt.
         """,
-        generate_content_config=types.GenerateContentConfig(temperature=0.9)
+        generate_content_config=types.GenerateContentConfig(temperature=0.9),
     )
-
-
-

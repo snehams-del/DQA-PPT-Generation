@@ -14,10 +14,12 @@
 
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
+
 from google.adk.agents import LlmAgent
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai import types
+
 
 def execute_sub_agent(agent: LlmAgent, prompt_text: str) -> str:
     """
@@ -26,31 +28,23 @@ def execute_sub_agent(agent: LlmAgent, prompt_text: str) -> str:
         agent (LlmAgent): The sub-agent to run.
         prompt_text (str): The prompt to send to the sub-agent.
     """
-    
+
     async def _run_internal():
-        session_service = InMemorySessionService()        
+        session_service = InMemorySessionService()
         session_id = "temp_task_session"
         await session_service.create_session(
-            app_name="app", 
-            user_id="internal_bot", 
-            session_id=session_id
+            app_name="app", user_id="internal_bot", session_id=session_id
         )
 
         # Initialize Runner
-        runner = Runner(
-            agent=agent,
-            app_name="app",
-            session_service=session_service
-        )
-        
+        runner = Runner(agent=agent, app_name="app", session_service=session_service)
+
         content = types.Content(role="user", parts=[types.Part(text=prompt_text)])
         result_text = ""
 
         # Run the Loop
         async for event in runner.run_async(
-            new_message=content,
-            user_id="internal_bot", 
-            session_id=session_id
+            new_message=content, user_id="internal_bot", session_id=session_id
         ):
             if event.content and event.content.parts:
                 for part in event.content.parts:

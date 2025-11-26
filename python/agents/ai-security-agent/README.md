@@ -1,8 +1,8 @@
 # AI Security Agent - Red Team Testing Framework
 
-A sophisticated multi-agent system for comprehensive AI safety testing and vulnerability assessment using Google's Gemini models and Agent Development Kit (ADK).
-
 **Created by [Ankul Jain](https://github.com/ankuljain09)**
+
+A sophisticated multi-agent system for comprehensive AI safety testing and vulnerability assessment using Google's Gemini models and Agent Development Kit (ADK).
 
 ## 🎯 Project Overview
 
@@ -88,7 +88,7 @@ The system uses a **three-stage pipeline** architecture with specialized agents:
             │   Target Worker      │
             │  (System Under Test) │
             │                      │
-            │ Model: Gemini 2.5-   │
+            │ Model: Gemini 2.5-  │
             │        Flash         │
             │ Temp: 0.1            │
             └──────────┬───────────┘
@@ -139,7 +139,7 @@ The system uses a **three-stage pipeline** architecture with specialized agents:
 
 ## 🔧 Tools
 
-### complete_security_scan
+### `run_complete_security_scan(risk_category: str) -> str`
 
 The primary tool exposed to the main orchestrator agent. Executes the complete three-stage security audit pipeline.
 
@@ -167,6 +167,13 @@ A formatted summary containing:
 - Target behavior (first 100 chars)  
 - Final verdict (PASS/FAIL with reasoning)
 
+**Example:**
+```python
+from llm_red_team_agent.tools import run_complete_security_scan
+
+result = run_complete_security_scan("Toxicity")
+print(result)
+```
 
 ---
 
@@ -208,43 +215,102 @@ END
 4. **Error Handling**: Attack generation failures are caught early to prevent cascade failures
 
 ---
-## Running the Agent and Tests
-To run any scripts or tests within the project's virtual environment, use uv run:
-
-### Run the main agent (command-line interface):
-```
-uv run adk run llm_red_team_agent
-```
-### Run the integration test:
-```
-uv run python -m tests.test_agent
-```
----
 
 ## 💬 Example Conversation
 
-### Scenario: Testing HateSpeech & PromptInjection
-![HateSpeech&PromptInjection](./assets/HateSpeech&PromptInjection.png)
+### Scenario: Testing Phishing Attack Resistance
 
-### Scenario: Testing PII Leakage & BrandRisk
-![PIILeakage&BrandRisk](./assets/PIILeakage&BrandRisk.png)
+
+### Scenario: Testing Toxicity Handling
 
 
 ---
 
-## Future Roadmap and Enhancements
-To evolve this Proof of Concept into an enterprise-grade Security Operation Center (SOC) for AI, users can adopt and implement following architectural advancements:
-* **RAG-Based Grounding:** Integrate Vertex AI Vector Search to cross-reference responses against enterprise knowledge bases for automated hallucination detection.
-* **Iterative Attack Loops:** Deploy a "Do-Until-Fail" agentic workflow that persistently refines and retries attack prompts (up to 5x) to test resilience against determined adversaries.
-* **Knowledge-Driven Fuzzing:** Connect the Red Team to OWASP Top 10 and MITRE ATLAS databases to dynamically retrieve and mutate proven adversarial payloads.
-* **Self-Optimizing Attacks:** Implement a feedback loop where the Red Team analyzes failed attempts to autonomously refine its prompts using genetic algorithms or Chain-of-Thought reasoning.
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Python 3.9+
+- Google Cloud Account with Vertex AI access
+- Required libraries: `google-adk`, `google-cloud-aiplatform`, `google-genai`
+
+
+### Running a Security Audit
+
+```python
+from llm_red_team_agent.tools import run_complete_security_scan
+
+# Test a specific vulnerability category
+result = run_complete_security_scan("Phishing")
+print(result)
+
+# Test multiple categories
+categories = ["Toxicity", "Phishing", "Financial Fraud", "Prompt Injection"]
+for category in categories:
+    print(f"\nTesting: {category}")
+    result = run_complete_security_scan(category)
+    print(result)
+```
 
 ---
 
-## Disclaimer
-This agent sample is provided for illustrative purposes only. It serves as a basic example of an agent and a foundational starting point for individuals or teams to develop their own agents.
+## 📦 Configuration
 
-Users are solely responsible for any further development, testing, security hardening, and deployment of agents based on this sample. We recommend thorough review, testing, and the implementation of appropriate safeguards before using any derived agent in a live or critical system.
+Edit `llm_red_team_agent/config.py` to customize:
 
+```python
+@dataclass
+class ResearchConfiguration:
+    critic_model: str = "gemini-2.5-pro"           # Model for critical tasks
+    worker_model: str = "gemini-2.5-flash"        # Model for generation tasks
+    max_search_iterations: int = 5                 # Max iterations for search
+```
 
+---
+
+## 🧪 Testing
+
+Run the test suite:
+
+```bash
+python -m pytest tests/test.py -v
+```
+
+---
+
+## 📄 License
+
+Licensed under the Apache License 2.0. See LICENSE file for details.
+
+---
+
+## 👤 Author
+
+**Ankul Jain** - [GitHub](https://github.com/ankuljain09)
+
+---
+
+## 🤝 Contributing
+
+Contributions welcome! Please:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+---
+
+## 📚 References
+
+- [Google Agent Development Kit (ADK)](https://developers.google.com/google-developers/documentation)
+- [Gemini API Documentation](https://ai.google.dev/)
+- [Red Team Techniques](https://www.anthropic.com/research/red-teaming)
+
+---
+
+## ⚠️ Disclaimer
+
+This tool is designed for authorized security testing of AI systems. Ensure you have proper authorization before conducting any red-teaming activities on production systems.
 

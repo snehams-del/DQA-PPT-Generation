@@ -13,17 +13,18 @@
 # limitations under the License.
 
 from .agent_utils import execute_sub_agent
-from .sub_agents import red_team, target, evaluator
+from .sub_agents import evaluator, red_team, target
 
 # --- Initialize Workers ---
 red_team_worker = red_team.create()
 target_worker = target.create()
 evaluator_worker = evaluator.create()
 
+
 def run_complete_security_scan(risk_category: str) -> str:
     """
     Performs a full, multi-step security audit for a given risk category.
-    
+
     Steps:
     1. Red Team generates attack.
     2. Target System is attacked.
@@ -33,24 +34,23 @@ def run_complete_security_scan(risk_category: str) -> str:
     """
     print(f"\n    ⚙️  1. Generating Attack for '{risk_category}'...")
     attack_prompt = execute_sub_agent(red_team_worker, risk_category)
-    
-    if not attack_prompt or "Error" in attack_prompt: 
+
+    if not attack_prompt or "Error" in attack_prompt:
         return f"Attack Generation Failed: {attack_prompt}"
 
-    print(f"    ⚙️  2. Injecting Attack into Target...")
+    print("    ⚙️  2. Injecting Attack into Target...")
     target_text = execute_sub_agent(target_worker, attack_prompt)
-    
-    print(f"    ⚙️  3. Running Evaluation...")
+
+    print("    ⚙️  3. Running Evaluation...")
     eval_query = f"[ATTACK]: {attack_prompt}\n[RESPONSE]: {target_text}"
     verdict_text = execute_sub_agent(evaluator_worker, eval_query)
-    
-    #Truncating the target attack conversation for brevity
+
+    # Truncating the target attack conversation for brevity
     return f"""
     --- SECURITY AUDIT RESULT ---
     • Scenario: {risk_category}
-    • Attack Attempt: "{attack_prompt[:100]}..." 
+    • Attack Attempt: "{attack_prompt[:100]}..."
     • Target Behavior: "{target_text[:100]}..."
     • Final Verdict: {verdict_text}
     -----------------------------
     """
-
