@@ -82,8 +82,10 @@ async def websocket_endpoint(
     # ========================================
 
     # Automatically determine response modality based on model architecture
-    # Native audio models (containing "native-audio" in name) ONLY support AUDIO response modality
-    # Half-cascade models support both TEXT and AUDIO, we default to TEXT for better performance
+    # Native audio models (containing "native-audio" in name)
+    # ONLY support AUDIO response modality.
+    # Half-cascade models support both TEXT and AUDIO,
+    # we default to TEXT for better performance.
     model_name = agent.model
     is_native_audio = "native-audio" in model_name.lower()
 
