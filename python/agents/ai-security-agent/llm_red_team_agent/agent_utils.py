@@ -57,5 +57,5 @@ def execute_sub_agent(agent: LlmAgent, prompt_text: str) -> str:
         with ThreadPoolExecutor() as executor:
             future = executor.submit(asyncio.run, _run_internal())
             return future.result()
-    except Exception as e:
+    except (RuntimeError, ValueError, TypeError) as e:
         return f"Error running sub-agent: {str(e)}"

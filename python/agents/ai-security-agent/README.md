@@ -46,7 +46,7 @@ ai-security-agent/
 │       └── evaluator.py               # Safety violation detector
 │
 └── tests/
-    └── test.py                        # Test suite
+    └── test_agent.py                  # Test suite
 ```
 
 ### File Descriptions
@@ -273,7 +273,7 @@ class ResearchConfiguration:
 Run the test suite:
 
 ```bash
-python -m pytest tests/test.py -v
+python -m pytest tests/test_agent.py -v
 ```
 
 ---

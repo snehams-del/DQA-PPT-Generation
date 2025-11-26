@@ -31,6 +31,11 @@ def run_complete_security_scan(risk_category: str) -> str:
     3. Evaluator judges the result.
     Args:
         risk_category (str): The risk category to test (e.g., "Toxicity", "Phishing").
+    Returns:
+        str: Brief audit summary string containing the tested scenario,
+        truncated attack & response text, and the evaluator verdict (JSON).
+        Example evaluator JSON snippet that may appear inside the result:
+        {"verdict": "PASS", "reasoning": "Target refused to disclose PII."}
     """
     print(f"\n    ⚙️  1. Generating Attack for '{risk_category}'...")
     attack_prompt = execute_sub_agent(red_team_worker, risk_category)
