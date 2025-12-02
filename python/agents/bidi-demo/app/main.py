@@ -23,8 +23,17 @@ load_dotenv(Path(__file__).parent / ".env")
 # pylint: disable=wrong-import-position
 from google_search_agent.agent import agent  # noqa: E402
 
+# Load environment variables from .env file BEFORE importing agent
+load_dotenv(Path(__file__).parent / ".env")
+
+# Import agent after loading environment variables
+# pylint: disable=wrong-import-position
+from google_search_agent.agent import agent  # noqa: E402
+
 # Configure logging
 logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.DEBUG,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
@@ -43,6 +52,8 @@ APP_NAME = "bidi-demo"
 app = FastAPI()
 
 # Mount static files
+static_dir = Path(__file__).parent / "static"
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
 static_dir = Path(__file__).parent / "static"
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
@@ -86,8 +97,7 @@ async def websocket_endpoint(
         affective_dialog: Enable affective dialog (native audio models only)
     """
     logger.debug(
-        f"WebSocket connection request: user_id={user_id}, session_id={session_id}, "
-        f"proactivity={proactivity}, affective_dialog={affective_dialog}"
+        "WebSocket connection request: " f"user_id={user_id}, session_id={session_id}"
     )
     await websocket.accept()
     logger.debug("WebSocket connection accepted")
@@ -101,10 +111,16 @@ async def websocket_endpoint(
     # ONLY support AUDIO response modality.
     # Half-cascade models support both TEXT and AUDIO,
     # we default to TEXT for better performance.
+    # Native audio models (containing "native-audio" in name)
+    # ONLY support AUDIO response modality.
+    # Half-cascade models support both TEXT and AUDIO,
+    # we default to TEXT for better performance.
     model_name = agent.model
     is_native_audio = "native-audio" in model_name.lower()
 
     if is_native_audio:
+        # Native audio models require AUDIO response modality
+        # with audio transcription
         # Native audio models require AUDIO response modality
         # with audio transcription
         response_modalities = ["AUDIO"]
@@ -124,10 +140,11 @@ async def websocket_endpoint(
         )
         logger.debug(
             f"Native audio model detected: {model_name}, "
-            f"using AUDIO response modality, "
-            f"proactivity={proactivity}, affective_dialog={affective_dialog}"
+            "using AUDIO response modality"
         )
     else:
+        # Half-cascade models support TEXT response modality
+        # for faster performance
         # Half-cascade models support TEXT response modality
         # for faster performance
         response_modalities = ["TEXT"]
@@ -142,13 +159,6 @@ async def websocket_endpoint(
             f"Half-cascade model detected: {model_name}, "
             "using TEXT response modality"
         )
-        # Warn if user tried to enable native-audio-only features
-        if proactivity or affective_dialog:
-            logger.warning(
-                f"Proactivity and affective dialog are only supported on native "
-                f"audio models. Current model: {model_name}. "
-                f"These settings will be ignored."
-            )
     logger.debug(f"RunConfig created: {run_config}")
 
     # Get or create session (handles both new sessions and reconnections)
@@ -210,6 +220,7 @@ async def websocket_endpoint(
 
                     logger.debug(
                         f"Sending image: {len(image_data)} bytes, " f"type: {mime_type}"
+                        f"Sending image: {len(image_data)} bytes, " f"type: {mime_type}"
                     )
 
                     # Send image as blob
@@ -220,6 +231,7 @@ async def websocket_endpoint(
         """Receives Events from run_live() and sends to WebSocket."""
         logger.debug("downstream_task started, calling runner.run_live()")
         logger.debug(
+            f"Starting run_live with user_id={user_id}, " f"session_id={session_id}"
             f"Starting run_live with user_id={user_id}, " f"session_id={session_id}"
         )
         async for event in runner.run_live(

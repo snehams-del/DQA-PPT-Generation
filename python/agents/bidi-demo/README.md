@@ -396,30 +396,20 @@ The modality detection is automatic based on the model name. Native audio models
 
 This project uses black, isort, and flake8 for code formatting and linting. Configuration is inherited from the repository root.
 
-**Using uv:**
-
 ```bash
-uv run black .
-uv run isort .
-uv run flake8 .
-```
-
-**Using pip (with activated venv):**
-
-```bash
+# Format code with black
 black .
+
+# Sort imports with isort
 isort .
+
+# Check code style with flake8
 flake8 .
 ```
 
 To check formatting without making changes:
 
 ```bash
-# Using uv
-uv run black --check .
-uv run isort --check .
-
-# Using pip
 black --check .
 isort --check .
 ```
