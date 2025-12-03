@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "parallel_task_decomposition"
+name = "parallel_task_decomposition_execution"
 version = "0.1"
-description = "A sample agent that demonstrates parallel task decomposition."
+description = "A sample agent that demonstrates parallel task decomposition and execution."
 authors = ["Google"]
 readme = "README.md"
-packages = [{include = "parallel_task_decomposition"}]
+packages = [{include = "parallel_task_decomposition_execution"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"

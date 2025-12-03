@@ -1,6 +1,6 @@
-# Parallel Task Decomposition Agent
+# Parallel Task Decomposition & Execution Agent
 
-The Parallel Task Decomposition Agent demonstrates a "Parallel Task Decomposition" design pattern. It's designed to take a single command or topic and break it down into multiple "write" actions that are performed simultaneously.
+The Parallel Task Decomposition & Execution agent is designed to decompose a single complex goal into multiple, independent sub-actions that can be executed concurrently to maximize efficiency and speed.
 
 ## Overview
 
@@ -54,7 +54,7 @@ The goal of this agent is to show how the agent decomposes a single complex goal
     Clone this repository and change to the repo directory:
     ```
     git clone https://github.com/google/adk-samples.git
-    cd adk-samples/python/agents/parallel_task_decomposition
+    cd adk-samples/python/agents/parallel_task_decomposition_execution
     ```
 
     Install [Poetry](https://python-poetry.org)
@@ -99,20 +99,20 @@ The goal of this agent is to show how the agent decomposes a single complex goal
 
 **Using the ADK command line:**
 
-From the `parallel_task_decomposition` directory, run this command:
+From the `parallel_task_decomposition_execution` directory, run this command:
 ```bash
 adk run parallel_task_decomposition_agent
 ```
 
 **Using the ADK Dev UI:**
 
-From the `parallel_task_decomposition` directory, run this command:
+From the `parallel_task_decomposition_execution` directory, run this command:
 ```bash
 adk web .
 ```
-It will display a URL for the demo UI. Point your browser to that URL.
+It will display a URL for the demo UI (the default is http://127.0.0.1:8000). Go to that URL.
 
-The UI will be blank initially. In the dropdown at the top left, choose `parallel_task_decomposition`
+The UI will be blank initially. In the dropdown at the top left, choose `parallel_task_decomposition_agent`
 to load the agent.
 
 The logs from the agent will display on the console in real time as it runs.

@@ -19,7 +19,6 @@ import asyncio
 from typing import Dict, Any, List, Optional
 from google.adk.tools.tool_context import ToolContext
 from .config import (
-    USE_MOCK_DATA,
     GOOGLE_OAUTH_CREDENTIALS_PATH,
     SLACK_MCP_XOXP_TOKEN,
 )
