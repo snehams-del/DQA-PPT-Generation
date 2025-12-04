@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Tools for the ADK Sampmles Data Science Agent."""
+"""Tools for the ADK Samples Data Science Agent."""
 
 import logging
 
