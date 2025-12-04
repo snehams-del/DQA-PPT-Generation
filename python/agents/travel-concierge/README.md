@@ -517,12 +517,12 @@ The following are just the starting ideas:
 
 ## Troubleshoot
 
-The following occasionally happens while interaction with the agent:
+The following occasionally happens during interaction with the agent:
 - "Malformed" function call or response, or pydantic errors - when this happens simply tell the agent to "try again". 
-- If the agents tries to call a tool that doesn't exist, tell the agent that it is the "wrong tool, try again", the agent  is often able to self correct. 
+- If the agent tries to call a tool that doesn't exist, tell the agent that it is the "wrong tool, try again", the agent is often able to self correct. 
 - Similarly, if you have waited for a while and the agent has stopped in the middle of executing a series of actions, ask the agent "what's next" to nudge it forward.
 
-These happens occasionally, it is likely due to variations in JSON responses that requires more rigorous experimentation on prompts and generation parameters to attain more stable results. Within an application, these retries can also be built into the application as part of exception handling.
+This happens occasionally, it is likely due to variations in JSON responses that requires more rigorous experimentation on prompts and generation parameters to attain more stable results. Within an application, these retries can also be built into the application as part of exception handling.
 
 
 ## Disclaimer

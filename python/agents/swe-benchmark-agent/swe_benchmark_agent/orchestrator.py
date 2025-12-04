@@ -555,7 +555,7 @@ class Orchestrator:
                         f"""
                         You are trying to submit your work, but before that, please carefully verify that you have performed the following steps as described in your instructions:
 
-                        1. You have **thoroughly** tested your solution by creating two comprehensive tests covering different edge cases. If you only tested the main functionality so far, you should create another test with more comprehensive test cases. Do **NOT** split existing tests into two seperate tests to satisfy this requirement. You have to create new tests from scratch if needed.
+                        1. You have **thoroughly** tested your solution by creating two comprehensive tests covering different edge cases. If you only tested the main functionality so far, you should create another test with more comprehensive test cases. Do **NOT** split existing tests into two separate tests to satisfy this requirement. You have to create new tests from scratch if needed.
 
                         2. Regression tests: You have run any **existing** related tests in the repository besides your newly created tests to make sure your changes do not regress or break anything.
                             - **Very important:** Make sure you also run a broader set of existing tests, not just the ones in the same test files you edited.
