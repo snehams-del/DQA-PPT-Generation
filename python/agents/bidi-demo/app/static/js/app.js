@@ -275,8 +275,28 @@ function connectWebsocket() {
   const ws_url = getWebSocketUrl();
   websocket = new WebSocket(ws_url);
 
+  // Set connection timeout (10 seconds)
+  const connectionTimeout = setTimeout(() => {
+    if (websocket && websocket.readyState === WebSocket.CONNECTING) {
+      console.error("WebSocket connection timeout");
+      updateConnectionStatus(false);
+      statusText.textContent = "Connection timeout";
+      addSystemMessage("Connection timeout. Please check if the server is running.");
+      
+      // Log to console
+      addConsoleEntry('error', 'WebSocket Connection Timeout', {
+        url: ws_url,
+        message: 'Connection attempt timed out after 10 seconds'
+      }, '⏱️', 'system');
+      
+      // Close the connection
+      websocket.close();
+    }
+  }, 10000);
+
   // Handle connection open
   websocket.onopen = function () {
+    clearTimeout(connectionTimeout);
     console.log("WebSocket connection opened.");
     updateConnectionStatus(true);
     addSystemMessage("Connected to ADK streaming server");
@@ -576,41 +596,52 @@ function connectWebsocket() {
   };
 
   // Handle connection close
-  websocket.onclose = function () {
-    console.log("WebSocket connection closed.");
+  websocket.onclose = function (event) {
+    clearTimeout(connectionTimeout);
+    console.log("WebSocket connection closed.", event);
     updateConnectionStatus(false);
     document.getElementById("sendButton").disabled = true;
-    addSystemMessage("Connection closed. Reconnecting in 5 seconds...");
+    
+    // Only show reconnecting message if it was a normal close (not a timeout)
+    if (event.code !== 1006 || statusText.textContent !== "Connection timeout") {
+      addSystemMessage("Connection closed. Reconnecting in 5 seconds...");
 
-    // Log to console
-    addConsoleEntry('error', 'WebSocket Disconnected', {
-      status: 'Connection closed',
-      reconnecting: true,
-      reconnectDelay: '5 seconds'
-    }, '🔌', 'system');
+      // Log to console
+      addConsoleEntry('error', 'WebSocket Disconnected', {
+        status: 'Connection closed',
+        code: event.code,
+        reason: event.reason || 'No reason provided',
+        reconnecting: true,
+        reconnectDelay: '5 seconds'
+      }, '🔌', 'system');
 
-    setTimeout(function () {
-      console.log("Reconnecting...");
+      setTimeout(function () {
+        console.log("Reconnecting...");
 
-      // Log reconnection attempt to console
-      addConsoleEntry('outgoing', 'Reconnecting to ADK server...', {
-        userId: userId,
-        sessionId: sessionId
-      }, '🔄', 'system');
+        // Log reconnection attempt to console
+        addConsoleEntry('outgoing', 'Reconnecting to ADK server...', {
+          userId: userId,
+          sessionId: sessionId
+        }, '🔄', 'system');
 
-      connectWebsocket();
-    }, 5000);
+        connectWebsocket();
+      }, 5000);
+    }
   };
 
   websocket.onerror = function (e) {
-    console.log("WebSocket error: ", e);
+    clearTimeout(connectionTimeout);
+    console.error("WebSocket error: ", e);
     updateConnectionStatus(false);
+    statusText.textContent = "Connection error";
 
     // Log to console
     addConsoleEntry('error', 'WebSocket Error', {
-      error: e.type,
-      message: 'Connection error occurred'
+      error: e.type || 'Unknown error',
+      message: 'Connection error occurred. Please check server status and network connection.'
     }, '⚠️', 'system');
+    
+    addSystemMessage("Connection error. Please check if the server is running.");
   };
 }
 connectWebsocket();
