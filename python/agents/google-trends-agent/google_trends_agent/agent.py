@@ -1,10 +1,9 @@
 import os
-from dotenv import load_dotenv
 
+from dotenv import load_dotenv
+from google.adk.agents import LlmAgent, SequentialAgent
 from google_trends_agent.prompt import load_agent_instructions
 from google_trends_agent.tools import execute_bigquery_sql
-
-from google.adk.agents import LlmAgent, SequentialAgent
 
 # Construct the path to the .env file in the parent directory
 dotenv_path = os.path.join(os.path.dirname(__file__), ".env")
