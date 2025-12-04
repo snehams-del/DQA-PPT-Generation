@@ -55,6 +55,6 @@ print(trends_query_executor_agent.instruction)
 root_agent = SequentialAgent(
     name="GoogleTrendsAgent",
     sub_agents=[trends_query_generator_agent, trends_query_executor_agent],
-    description="""A two-step pipeline that first generates a SQL query for Google Trends and then executes it. 
+    description="""A two-step pipeline that first generates a SQL query for Google Trends and then executes it.
     Format the output as user friendly markdown format. Separete the SQL query and the interpretation of the results with a horizontal line.""",
 )

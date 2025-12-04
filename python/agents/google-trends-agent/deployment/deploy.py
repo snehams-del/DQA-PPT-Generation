@@ -12,8 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
 import os
 import sys
+
+import vertexai
+from dotenv import load_dotenv, set_key
+from google_trends_agent.agent import root_agent
+from vertexai import agent_engines
+from vertexai.preview.reasoning_engines import AdkApp
 
 try:
     import tomllib
@@ -21,19 +28,11 @@ except ImportError:
     # For Python < 3.11
     import tomllib as tomllib
 
+
 # Add the project root to sys.path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
-
-import logging
-import os
-
-import vertexai
-from dotenv import load_dotenv, set_key
-from google_trends_agent.agent import root_agent
-from vertexai import agent_engines
-from vertexai.preview.reasoning_engines import AdkApp
 
 load_dotenv()
 

@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import os
-from datetime import datetime, timedelta
 
 from jinja2 import Environment, FileSystemLoader
 
