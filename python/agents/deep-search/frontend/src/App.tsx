@@ -13,30 +13,19 @@ interface MessageWithAgent {
   finalReportWithCitations?: boolean;
 }
 
-interface AgentMessage {
-  parts: { text: string }[];
-  role: string;
-}
-
-interface AgentResponse {
-  content: AgentMessage;
-  usageMetadata: {
-    candidatesTokenCount: number;
-    promptTokenCount: number;
-    totalTokenCount: number;
-  };
-  author: string;
-  actions: {
-    stateDelta: {
-      research_plan?: string;
-      final_report_with_citations?: boolean;
-    };
-  };
-}
-
 interface ProcessedEvent {
   title: string;
   data: any;
+}
+
+interface ExtractedSSEData {
+  textParts: string[];
+  agent: string;
+  finalReportWithCitations?: string;
+  functionCall: any;
+  functionResponse: any;
+  sourceCount: number;
+  sources: any;
 }
 
 export default function App() {
@@ -118,7 +107,7 @@ export default function App() {
   };
 
   // Function to extract text and metadata from SSE data
-  const extractDataFromSSE = (data: string) => {
+  const extractDataFromSSE = useCallback((data: string): ExtractedSSEData => {
     try {
       const parsed = JSON.parse(data);
       console.log('[SSE PARSED EVENT]:', JSON.stringify(parsed, null, 2)); // DEBUG: Log parsed event
@@ -190,10 +179,10 @@ export default function App() {
       console.error('Error parsing SSE data. Raw data (truncated): "', truncatedData, '". Error details:', error);
       return { textParts: [], agent: '', finalReportWithCitations: undefined, functionCall: null, functionResponse: null, sourceCount: 0, sources: null };
     }
-  };
+  }, []);
 
   // Define getEventTitle here or ensure it's in scope from where it's used
-  const getEventTitle = (agentName: string): string => {
+  const getEventTitle = useCallback((agentName: string): string => {
     switch (agentName) {
       case "plan_generator":
         return "Planning Research Strategy";
@@ -217,14 +206,14 @@ export default function App() {
       default:
         return `Processing (${agentName || 'Unknown Agent'})`;
     }
-  };
+  }, []);
 
-  const processSseEventData = (jsonData: string, aiMessageId: string) => {
+  const processSseEventData = useCallback((jsonData: string, aiMessageId: string) => {
     const { textParts, agent, finalReportWithCitations, functionCall, functionResponse, sourceCount, sources } = extractDataFromSSE(jsonData);
 
     if (sourceCount > 0) {
       console.log('[SSE HANDLER] Updating websiteCount. Current sourceCount:', sourceCount);
-      setWebsiteCount(prev => Math.max(prev, sourceCount));
+      setWebsiteCount((prev: number) => Math.max(prev, sourceCount));
     }
 
     if (agent && agent !== currentAgentRef.current) {
@@ -234,7 +223,7 @@ export default function App() {
     if (functionCall) {
       const functionCallTitle = `Function Call: ${functionCall.name}`;
       console.log('[SSE HANDLER] Adding Function Call timeline event:', functionCallTitle);
-      setMessageEvents(prev => new Map(prev).set(aiMessageId, [...(prev.get(aiMessageId) || []), {
+      setMessageEvents((prev: Map<string, ProcessedEvent[]>) => new Map(prev).set(aiMessageId, [...(prev.get(aiMessageId) || []), {
         title: functionCallTitle,
         data: { type: 'functionCall', name: functionCall.name, args: functionCall.args, id: functionCall.id }
       }]));
@@ -243,7 +232,7 @@ export default function App() {
     if (functionResponse) {
       const functionResponseTitle = `Function Response: ${functionResponse.name}`;
       console.log('[SSE HANDLER] Adding Function Response timeline event:', functionResponseTitle);
-      setMessageEvents(prev => new Map(prev).set(aiMessageId, [...(prev.get(aiMessageId) || []), {
+      setMessageEvents((prev: Map<string, ProcessedEvent[]>) => new Map(prev).set(aiMessageId, [...(prev.get(aiMessageId) || []), {
         title: functionResponseTitle,
         data: { type: 'functionResponse', name: functionResponse.name, response: functionResponse.response, id: functionResponse.id }
       }]));
@@ -253,14 +242,14 @@ export default function App() {
       if (agent !== "interactive_planner_agent") {
         const eventTitle = getEventTitle(agent);
         console.log('[SSE HANDLER] Adding Text timeline event for agent:', agent, 'Title:', eventTitle, 'Data:', textParts.join(" "));
-        setMessageEvents(prev => new Map(prev).set(aiMessageId, [...(prev.get(aiMessageId) || []), {
+        setMessageEvents((prev: Map<string, ProcessedEvent[]>) => new Map(prev).set(aiMessageId, [...(prev.get(aiMessageId) || []), {
           title: eventTitle,
           data: { type: 'text', content: textParts.join(" ") }
         }]));
       } else { // interactive_planner_agent text updates the main AI message
         for (const text of textParts) {
           accumulatedTextRef.current += text + " ";
-          setMessages(prev => prev.map(msg =>
+          setMessages((prev: MessageWithAgent[]) => prev.map((msg: MessageWithAgent) =>
             msg.id === aiMessageId ? { ...msg, content: accumulatedTextRef.current.trim(), agent: currentAgentRef.current || msg.agent } : msg
           ));
           setDisplayData(accumulatedTextRef.current.trim());
@@ -270,19 +259,19 @@ export default function App() {
 
     if (sources) {
       console.log('[SSE HANDLER] Adding Retrieved Sources timeline event:', sources);
-      setMessageEvents(prev => new Map(prev).set(aiMessageId, [...(prev.get(aiMessageId) || []), {
+      setMessageEvents((prev: Map<string, ProcessedEvent[]>) => new Map(prev).set(aiMessageId, [...(prev.get(aiMessageId) || []), {
         title: "Retrieved Sources", data: { type: 'sources', content: sources }
       }]));
     }
 
     if (agent === "report_composer_with_citations" && finalReportWithCitations) {
       const finalReportMessageId = Date.now().toString() + "_final";
-      setMessages(prev => [...prev, { type: "ai", content: finalReportWithCitations as string, id: finalReportMessageId, agent: currentAgentRef.current, finalReportWithCitations: true }]);
+      setMessages((prev: MessageWithAgent[]) => [...prev, { type: "ai", content: finalReportWithCitations as string, id: finalReportMessageId, agent: currentAgentRef.current, finalReportWithCitations: true }]);
       setDisplayData(finalReportWithCitations as string);
     }
-  };
+  }, [extractDataFromSSE, getEventTitle]);
 
-  const handleSubmit = useCallback(async (query: string, model: string, effort: string) => {
+  const handleSubmit = useCallback(async (query: string) => {
     if (!query.trim()) return;
 
     setIsLoading(true);
@@ -307,14 +296,14 @@ export default function App() {
 
       // Add user message to chat
       const userMessageId = Date.now().toString();
-      setMessages(prev => [...prev, { type: "human", content: query, id: userMessageId }]);
+      setMessages((prev: MessageWithAgent[]) => [...prev, { type: "human", content: query, id: userMessageId }]);
 
       // Create AI message placeholder
       const aiMessageId = Date.now().toString() + "_ai";
       currentAgentRef.current = ''; // Reset current agent
       accumulatedTextRef.current = ''; // Reset accumulated text
 
-      setMessages(prev => [...prev, {
+      setMessages((prev: MessageWithAgent[]) => [...prev, {
         type: "ai",
         content: "",
         id: aiMessageId,
@@ -411,14 +400,14 @@ export default function App() {
       console.error("Error:", error);
       // Update the AI message placeholder with an error message
       const aiMessageId = Date.now().toString() + "_ai_error";
-      setMessages(prev => [...prev, { 
+      setMessages((prev: MessageWithAgent[]) => [...prev, { 
         type: "ai", 
         content: `Sorry, there was an error processing your request: ${error instanceof Error ? error.message : 'Unknown error'}`, 
         id: aiMessageId 
       }]);
       setIsLoading(false);
     }
-  }, [processSseEventData]);
+  }, [userId, sessionId, appName, processSseEventData]);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -467,17 +456,6 @@ export default function App() {
     window.location.reload();
   }, []);
 
-  // Scroll to bottom when messages update
-  const scrollToBottom = useCallback(() => {
-    if (scrollAreaRef.current) {
-      const scrollViewport = scrollAreaRef.current.querySelector(
-        "[data-radix-scroll-area-viewport]"
-      );
-      if (scrollViewport) {
-        scrollViewport.scrollTop = scrollViewport.scrollHeight;
-      }
-    }
-  }, []);
 
   const BackendLoadingScreen = () => (
     <div className="flex-1 flex flex-col items-center justify-center p-4 overflow-hidden relative">
