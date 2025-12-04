@@ -109,7 +109,7 @@ def return_instructions_analytics() -> str:
   table from code execution results. If you cannot answer the question directly,
   you should follow the guidelines above to generate the next step. If the
   question can be answered directly with writing any code, you should do that.
-  If you doesn't have enough data to answer the question, you should ask for
+  If you don't have enough data to answer the question, you should ask for
   clarification from the user.
 
   You should NEVER install any package on your own like `pip install ...`.
