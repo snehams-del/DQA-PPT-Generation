@@ -20,6 +20,8 @@ from google.genai.types import GenerateContentConfig
 from travel_concierge.shared_libraries import types
 from travel_concierge.sub_agents.planning import prompt
 from travel_concierge.tools.memory import memorize
+from travel_concierge.tools.search import google_search_grounding, search_flights, FlightsSelection
+from google.adk.tools import FunctionTool
 
 
 itinerary_agent = Agent(
@@ -72,18 +74,29 @@ flight_seat_selection_agent = Agent(
     generate_content_config=types.json_response_config,
 )
 
+# flight_search_agent = Agent(
+#     model="gemini-2.5-flash",
+#     name="flight_search_agent",
+#     description="Help users find best flight deals",
+#     instruction=prompt.FLIGHT_SEARCH_INSTR,
+#     disallow_transfer_to_parent=True,
+#     disallow_transfer_to_peers=True,
+#     output_schema=types.FlightsSelection,
+#     output_key="flight",
+#     generate_content_config=types.json_response_config,
+# )
+
+search_flights_tool = FunctionTool(func=search_flights)
+
 flight_search_agent = Agent(
     model="gemini-2.5-flash",
-    name="flight_search_agent",
+    name="search_flights_tool",
     description="Help users find best flight deals",
     instruction=prompt.FLIGHT_SEARCH_INSTR,
-    disallow_transfer_to_parent=True,
-    disallow_transfer_to_peers=True,
-    output_schema=types.FlightsSelection,
-    output_key="flight",
-    generate_content_config=types.json_response_config,
+    # instruction="Return the list of flights",
+    output_schema=FlightsSelection,
+    tools=[search_flights_tool],
 )
-
 
 planning_agent = Agent(
     model="gemini-2.5-flash",
