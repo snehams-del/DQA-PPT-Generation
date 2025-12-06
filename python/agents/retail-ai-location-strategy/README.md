@@ -10,34 +10,22 @@ A multi-agent AI pipeline for retail site selection, built with [Google Agent De
   </thead>
   <tbody>
     <tr>
+      <td>🏗️</td>
+      <td><strong>Production-Ready:</strong> Built with ADK for seamless deployment to <a href="https://cloud.google.com/run">Google Cloud Run</a> and <a href="https://cloud.google.com/vertex-ai/generative-ai/docs/agent-engine/overview">Vertex AI Agent Engine</a>.</td>
+    </tr>
+    <tr>
       <td>🔍</td>
-      <td><strong>Multi-Agent Pipeline:</strong> 7 specialized agents for market research, competitor mapping, gap analysis, strategy synthesis, and report generation.</td>
+      <td><strong>Multi-Agent Pipeline:</strong> 7 specialized agents for market research, competitor mapping, gap analysis, strategy recommendations, and report generation.</td>
     </tr>
     <tr>
       <td>🗺️</td>
-      <td><strong>Real-World Data:</strong> Integrates Google Maps Places API for competitor mapping and Google Search for live market research.</td>
-    </tr>
-    <tr>
-      <td>🐍</td>
-      <td><strong>Code Execution:</strong> Python/pandas analysis for quantitative gap analysis with viability scoring.</td>
-    </tr>
-    <tr>
-      <td>🎨</td>
-      <td><strong>AI-Generated Outputs:</strong> Executive HTML reports and infographics via Gemini's native image generation.</td>
-    </tr>
-    <tr>
-      <td>🖥️</td>
-      <td><strong>AG-UI Frontend:</strong> Optional interactive dashboard with <a href="https://docs.ag-ui.com/">AG-UI Protocol</a> and <a href="https://docs.copilotkit.ai/">CopilotKit</a> for real-time pipeline visualization.</td>
-    </tr>
-    <tr>
-      <td>🏗️</td>
-      <td><strong>Production-Ready:</strong> Deploy to <a href="https://cloud.google.com/run">Cloud Run</a> or <a href="https://cloud.google.com/vertex-ai/generative-ai/docs/agent-engine/overview">Vertex AI Agent Engine</a> via <a href="https://goo.gle/agent-starter-pack">Agent Starter Pack</a>.</td>
+      <td><strong>Real-World Data:</strong> Integrates Google Maps Places API for competitor mapping and live web search for market research.</td>
     </tr>
   </tbody>
 </table>
 
 <p align="center">
-  <img src="assets/images/main-intro-image.png" alt="Retail AI Location Strategy - System Architecture" width="800">
+  <img src="assets/images/hero-image.png" alt="Retail AI Location Strategy - Multi-Agent Pipeline" width="700">
 </p>
 
 ## What It Does
@@ -49,6 +37,10 @@ Given a location and business type, this pipeline automatically:
 - Calculates viability scores with Python code execution
 - Generates strategic recommendations with extended reasoning
 - Produces an HTML executive report and visual infographic
+
+<p align="center">
+  <img src="assets/images/simplified-pipeline.png" alt="7-Stage Pipeline Flow" width="700">
+</p>
 
 ---
 
@@ -271,10 +263,6 @@ This starts:
 
 Open `http://localhost:3000` to see the interactive dashboard.
 
-<p align="center">
-  <img src="assets/gifs/ag-ui-demo.gif" alt="AG-UI Frontend Demo" width="700">
-</p>
-
 <details>
 <summary>Manual Setup (Alternative)</summary>
 
@@ -287,7 +275,7 @@ python main.py
 
 # Terminal 2: Start the frontend
 cd app/frontend
-npm install
+npm install --legacy-peer-deps
 cp .env.local.example .env.local
 npm run dev
 # Runs at http://localhost:3000
@@ -337,52 +325,38 @@ Each agent reads from and writes to a shared session state, enabling seamless da
 
 ```
 retail-ai-location-strategy/
-├── Makefile                          # Build and run commands
-├── pyproject.toml                    # Dependencies and package config
-├── .env.example                      # Environment template
-├── README.md                         # This file
-├── DEVELOPER_GUIDE.md                # Detailed developer documentation
+├── Makefile                 # Build and run commands
+├── pyproject.toml           # Dependencies and package config
+├── .env.example             # Environment template
+├── README.md                # This file
+├── DEVELOPER_GUIDE.md       # Detailed developer documentation
 │
-├── notebook/                         # Original Gemini API notebook
+├── notebook/                # Original Gemini API notebook
 │   └── retail_ai_location_strategy_gemini_3.ipynb
 │
-└── app/                              # Agent package (exported as root_agent)
-    ├── __init__.py                   # Exports root_agent for ADK discovery
-    ├── agent.py                      # SequentialAgent pipeline definition
-    ├── config.py                     # Model selection and retry config
-    ├── .env                          # Environment variables (from .env.example)
+└── app/                     # Agent package (exported as root_agent)
+    ├── __init__.py          # Exports root_agent for ADK discovery
+    ├── agent.py             # SequentialAgent pipeline definition
+    ├── config.py            # Model selection and retry config
+    ├── .env                 # Environment variables (from .env.example)
     │
-    ├── sub_agents/                   # 7 specialized agents
-    │   ├── competitor_mapping/
-    │   │   ├── __init__.py
-    │   │   └── agent.py
-    │   ├── gap_analysis/
-    │   │   ├── __init__.py
-    │   │   └── agent.py
-    │   ├── infographic_generator/
-    │   │   ├── __init__.py
-    │   │   └── agent.py
-    │   ├── intake_agent/
-    │   │   ├── __init__.py
-    │   │   └── agent.py
-    │   ├── market_research/
-    │   │   ├── __init__.py
-    │   │   └── agent.py
-    │   ├── report_generator/
-    │   │   ├── __init__.py
-    │   │   └── agent.py
-    │   └── strategy_advisor/
-    │       ├── __init__.py
-    │       └── agent.py
+    ├── sub_agents/          # 7 specialized agents
+    │   ├── intake_agent.py
+    │   ├── market_research.py
+    │   ├── competitor_mapping.py
+    │   ├── gap_analysis.py
+    │   ├── strategy_advisor.py
+    │   ├── report_generator.py
+    │   └── infographic_generator.py
     │
-    ├── tools/                        # Custom function tools
-    │   ├── places_search.py          # Google Maps Places API
-    │   ├── html_report_generator.py  # Executive report generation
-    │   └── image_generator.py        # Infographic generation
+    ├── tools/               # Custom function tools
+    │   ├── places_search.py         # Google Maps Places API
+    │   ├── html_report_generator.py # Executive report generation
+    │   └── image_generator.py       # Infographic generation
     │
-    ├── schemas/                      # Pydantic output schemas
-    ├── callbacks/                    # Pipeline lifecycle callbacks
-    └── frontend/                     # AG-UI interactive dashboard
+    ├── schemas/             # Pydantic output schemas
+    ├── callbacks/           # Pipeline lifecycle callbacks
+    └── frontend/            # AG-UI interactive dashboard (optional)
 ```
 
 ---
