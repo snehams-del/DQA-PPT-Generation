@@ -20,14 +20,15 @@ from google.adk.tools.retrieval.vertex_ai_rag_retrieval import (
     VertexAiRagRetrieval,
 )
 from vertexai.preview import rag
+from openinference.instrumentation import using_session
+from rag.tracing import instrument_adk_with_arize
+
+_ = instrument_adk_with_arize()
 
 from .prompts import return_instructions_root
 
 load_dotenv()
 
-# Build tools list conditionally based on RAG_CORPUS availability
-tools = []
-rag_corpus = os.environ.get("RAG_CORPUS")
 
 if rag_corpus:
     ask_vertex_retrieval = VertexAiRagRetrieval(

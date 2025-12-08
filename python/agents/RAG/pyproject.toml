@@ -1,4 +1,4 @@
-[project]
+[tool.poetry]
 name = "rag"
 version = "0.1.0"
 description = "Answer questions related to Vertex AI documentation using Vertex AI RAG Engine"
@@ -6,7 +6,7 @@ authors = [
     { name = "Hangfei Lin", email = "hangfei@google.com" },
     { name = "Chouaieb Nemri", email = "nemri@google.com" },
 ]
-license = "Apache-2.0"
+license = "Apache License 2.0"
 readme = "README.md"
 requires-python = ">=3.11"
 
