@@ -1,4 +1,4 @@
-[project]
+[tool.poetry]
 name = "travel-concierge"
 version = "0.1.0"
 description = "Orchestrates personalized travel experiences, illustrates means to integrate booking systems, and provides support throughout the traveler's journey, from initial planning, booking, to real-time itinerary services and alerts."
@@ -6,11 +6,11 @@ readme = "README.md"
 requires-python = ">=3.11,<3.13"
 license = { text = "Apache-2.0" }
 authors = [
-    { name = "Gary Ng", email = "gkcng@google.com" },
-    { name = "Arun Santhanagopalan", email = "asanthan@google.com" },
-    { name = "Renee Zhang", email = "xiaolizhang@google.com" },
-    { name = "Anisha Kaul", email = "anishasjkaul@google.com" },
-    { name = "Duncan Renfrow-Symon", email = "drenfrowsymon@google.com" },
+    "Gary Ng <gkcng@google.com>",
+    "Arun Santhanagopalan <asanthan@google.com>",
+    "Renee Zhang <xiaolizhang@google.com>",
+    "Anisha Kaul <anishasjkaul@google.com>",
+    "Duncan Renfrow-Symon <drenfrowsymon@google.com>",
 ]
 dependencies = [
     "google-cloud-aiplatform[adk,agent-engines]>=1.93.0",
