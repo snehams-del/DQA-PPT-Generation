@@ -19,15 +19,16 @@ necessary tools, and configures the underlying language model.
 """
 
 import os
+
 from google.adk.agents import Agent
 from google.adk.tools import FunctionTool
 
-from .utils.storytelling import STORYTELLING_INSTRUCTIONS
 from .func_tools.combine_video import combine
 from .func_tools.generate_audio import generate_audio_and_voiceover
-from .func_tools.generate_video import generate_video
 from .func_tools.generate_image import generate_images_from_storyline
 from .func_tools.generate_storyline import generate_storyline
+from .func_tools.generate_video import generate_video
+from .utils.storytelling import STORYTELLING_INSTRUCTIONS
 
 COMPANY_NAME = os.environ.get("COMPANY_NAME", "ACME Corp")
 SYSTEM_INSTRUCTION: str = f"""ROLE: You are a Personalized Ad Generation Assistant. \
@@ -66,7 +67,7 @@ TASK: Your goal is to orchestrate the generation of a short-form ad (under 15 se
 
 root_agent = Agent(
     name="content_generation_agent",
-    model='gemini-2.5-pro',
+    model="gemini-2.5-pro",
     instruction=SYSTEM_INSTRUCTION,
     tools=[
         FunctionTool(func=generate_storyline),

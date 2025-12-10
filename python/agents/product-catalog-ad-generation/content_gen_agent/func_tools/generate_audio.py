@@ -19,7 +19,7 @@ import logging
 import os
 import random
 import time
-from typing import Any, Dict, Optional
+from typing import Dict, List, Optional, Union
 
 import aiohttp
 import google.auth
@@ -41,17 +41,17 @@ LYRIA_MODEL_NAME = "lyria-002"
 
 
 async def _send_google_api_request(
-    api_endpoint: str, data: Optional[Dict[str, Any]] = None
-) -> Optional[Dict[str, Any]]:
+    api_endpoint: str,
+    data: Optional[Dict[str, Union[List[Dict[str, str]], Dict[str, None]]]] = None,
+) -> Optional[Dict[str, List[Dict[str, str]]]]:
     """Sends an authenticated HTTP request to a Google API endpoint.
 
     Args:
         api_endpoint (str): The URL of the Google API endpoint.
-        data (Optional[Dict[str, Any]]): A dictionary of data to send in the request body.
-          Defaults to None.
+        data: The data payload for the request.
 
     Returns:
-        The JSON response from the API, or None on failure.
+        A dictionary with the API response, or None on failure.
     """
     try:
         creds, _ = google.auth.default()
@@ -92,9 +92,7 @@ async def _send_google_api_request(
                         )
                         raise e
     except aiohttp.ClientError as e:
-        logging.error(
-            "Request to %s failed: %s", api_endpoint, e, exc_info=True
-        )
+        logging.error("Request to %s failed: %s", api_endpoint, e, exc_info=True)
     return None
 
 
@@ -144,9 +142,7 @@ async def generate_audio(
         return {"name": STATIC_AUDIO_FALLBACK}
 
 
-async def _generate_voiceover_content(
-    prompt: str, text: str
-) -> Optional[bytes]:
+async def _generate_voiceover_content(prompt: str, text: str) -> Optional[bytes]:
     """Synthesizes speech using Gemini-TTS.
 
     Args:
@@ -170,9 +166,7 @@ async def _generate_voiceover_content(
         )
         return response.audio_content
     except google.api_core.exceptions.GoogleAPICallError as e:
-        logging.error(
-            "Failed to generate voiceover content: %s", e, exc_info=True
-        )
+        logging.error("Failed to generate voiceover content: %s", e, exc_info=True)
         return None
 
 
@@ -191,9 +185,7 @@ async def generate_voiceover(
     Returns:
         A dictionary with the generated voiceover artifact name.
     """
-    audio_content = await _generate_voiceover_content(
-        prompt, text
-    )
+    audio_content = await _generate_voiceover_content(prompt, text)
     if not audio_content:
         return None
 
@@ -215,7 +207,7 @@ async def generate_audio_and_voiceover(
     voiceover_prompt: str,
     voiceover_text: str,
     generation_mode: str = "both",
-) -> Dict[str, Any]:
+) -> Dict[str, Union[str, List[str]]]:
     """
     Generates a background audio track, a voiceover, or both in a single function call.
     This function can run generation processes concurrently for improved performance
@@ -236,9 +228,8 @@ async def generate_audio_and_voiceover(
                                          Defaults to 'both'.
 
     Returns:
-        Optional[dict]: A dictionary containing the names of the generated audio and
-          voiceover artifacts,
-                        and a list of any failures, or None if the operation fails completely.
+        A dictionary containing the names of the generated audio and
+        voiceover artifacts, and a list of any failures.
     """
     tasks = []
     if generation_mode in ["audio", "both"]:
@@ -256,7 +247,7 @@ async def generate_audio_and_voiceover(
         return {"failures": [f"Invalid generation_mode: {generation_mode}"]}
 
     results = await asyncio.gather(*tasks, return_exceptions=True)
-    response: Dict[str, Any] = {"failures": []}
+    response: Dict[str, Union[str, List[str]]] = {"failures": []}
     result_index = 0
 
     if generation_mode in ["audio", "both"]:

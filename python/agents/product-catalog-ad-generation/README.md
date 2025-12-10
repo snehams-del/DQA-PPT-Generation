@@ -117,7 +117,7 @@ Similarly, you can provide a direct GCS URI for a product photo instead of relyi
 
 The behavior of the agent is influenced by several hardcoded configurations in the `content_gen_agent` directory:
 
--   **Models**: The agent uses `gemini-2.5-pro` for storyline generation and `gemini-2.5-flash-image-preview` for image generation. The video generation is handled by `veo-3.0-fast-generate-001`, and the audio is generated using `lyria-002` and `gemini-2.5-flash-preview-tts`.
+-   **Models**: The agent uses `gemini-2.5-pro` for storyline generation and `gemini-3-pro-image-preview` for image generation. The video generation is handled by `veo-3.1-generate-preview`, and the audio is generated using `lyria-002` and `gemini-2.5-flash-preview-tts`.
 -   **Company Name**: The `COMPANY_NAME` can be set in the `.env` file. If not set, it defaults to "ACME Corp". This influences the branding of the generated content.
 -   **Video Aspect Ratio**: All generated videos adhere to a `9:16` aspect ratio, suitable for short-form content platforms.
 -   **Logo**: The company logo is hardcoded in `static/uploads/branding/logo.png` and is uploaded to GCS during the `02-deploy-gcs-and-bq.sh` setup script.

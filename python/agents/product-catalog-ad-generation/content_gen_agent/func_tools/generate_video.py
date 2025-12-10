@@ -17,16 +17,17 @@ import asyncio
 import logging
 import os
 import re
-from typing import Any, Dict, List, Optional, Tuple
-
 from dataclasses import dataclass
+from typing import Coroutine, Dict, List, Optional, Tuple, Union
 
+from content_gen_agent.utils.images import load_image_resource
 from google import genai
 from google.adk.tools import ToolContext
 from google.api_core import exceptions as api_exceptions
+from google.api_core import operation
 from google.cloud import storage
-from google.genai.types import GenerateVideosConfig, Image as GenImage
-from content_gen_agent.utils.images import load_image_resource
+from google.genai.types import GenerateVideosConfig
+from google.genai.types import Image as GenImage
 
 # --- Configuration ---
 logging.basicConfig(
@@ -79,12 +80,12 @@ def _get_gcs_files(folder_prefix: str) -> List[str]:
 
 
 async def _monitor_video_operation(
-    operation: Any, image_identifier: str, vertex_client: genai.Client
+    operation: operation.Operation, image_identifier: str, vertex_client: genai.Client
 ) -> Tuple[Optional[GenImage], Optional[str]]:
     """Monitors a video generation operation until completion.
 
     Args:
-        operation (Any): The video generation operation to monitor.
+        operation (operation.Operation): The video generation operation to monitor.
         image_identifier (str): An identifier for the image being processed.
         vertex_client (genai.Client): The Vertex AI client.
 
@@ -205,8 +206,6 @@ def _initialize_vertex_client() -> genai.Client:
     return genai.Client(vertexai=True, project=project_id, location=location)
 
 
-
-
 def _get_image_sources(
     scene_numbers: Optional[List[int]], num_images: int
 ) -> List[Tuple[str, str]]:
@@ -259,8 +258,13 @@ async def _create_video_tasks(
     tool_context: ToolContext,
     vertex_client: genai.Client,
     logo_prompt_present: bool,
-) -> Tuple[List[Any], List[str], List[Dict[str, str]]]:
-    """Creates video generation tasks for the given images."""
+) -> Tuple[List[Coroutine], List[str], List[Dict[str, str]]]:
+    """Creates video generation tasks for the given images.
+
+    Returns:
+        A tuple containing a list of video generation coroutines, a list of
+        the sources for each task, and a list of videos that failed to process.
+    """
     tasks = []
     task_sources = []
     failed_videos = []
@@ -309,9 +313,11 @@ def _process_results(
             )
 
     successful_videos.sort(
-        key=lambda v: int(re.match(r"(\d+)", v["name"]).group(1))
-        if re.match(r"(\d+)", v["name"])
-        else -1
+        key=lambda v: (
+            int(re.match(r"(\d+)", v["name"]).group(1))
+            if re.match(r"(\d+)", v["name"])
+            else -1
+        )
     )
 
     return successful_videos, failed_videos
@@ -323,7 +329,7 @@ async def generate_video(
     num_images: int,
     scene_numbers: Optional[List[int]] = None,
     logo_prompt_present: bool = True,
-) -> Dict[str, Any]:
+) -> Dict[str, Union[str, List[Dict[str, str]]]]:
     """Generates videos in parallel from a list of prompts and images.
 
     Args:
@@ -350,7 +356,8 @@ async def generate_video(
             included in scene_numbers. Defaults to True.
 
     Returns:
-        A dictionary with the status and results of the video generation.
+        A dictionary containing the status of the generation, a detail message,
+        a list of successfully generated videos, and a list of failures.
     """
     image_sources = _get_image_sources(scene_numbers, num_images)
     vertex_client = _initialize_vertex_client()

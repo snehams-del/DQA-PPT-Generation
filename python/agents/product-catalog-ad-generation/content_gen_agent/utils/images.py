@@ -14,9 +14,12 @@
 """Utility functions for handling images."""
 import logging
 import os
-from typing import Any, Optional, Tuple
+from typing import TYPE_CHECKING, Literal, Optional, Tuple
 
 from google.cloud import storage
+
+if TYPE_CHECKING:
+    from google.adk.tools import ToolContext
 
 # --- Configuration ---
 logging.basicConfig(
@@ -25,8 +28,11 @@ logging.basicConfig(
 
 IMAGE_MIME_TYPE = "image/png"
 
+
 async def load_image_resource(
-    source_type: str, source_path: str, tool_context: Any
+    source_type: Literal["artifact", "gcs"],
+    source_path: str,
+    tool_context: "ToolContext",
 ) -> Tuple[Optional[bytes], str, str]:
     """Loads image bytes from either a GCS path or a tool artifact.
 

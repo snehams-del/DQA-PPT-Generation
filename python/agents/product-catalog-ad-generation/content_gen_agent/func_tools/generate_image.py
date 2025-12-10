@@ -17,21 +17,22 @@ import asyncio
 import json
 import logging
 import os
-from typing import Any, Dict, List, Optional
-
-from dotenv import load_dotenv
-from google.adk.tools import ToolContext
-
-from google.genai import types
+from typing import Awaitable, List, NotRequired, Optional, TypedDict
 
 from content_gen_agent.utils.evaluate_media import (
     calculate_evaluation_score,
 )
-from content_gen_agent.utils.gemini_utils import call_gemini_image_api, initialize_gemini_client
+from content_gen_agent.utils.gemini_utils import (
+    call_gemini_image_api,
+    initialize_gemini_client,
+)
 from content_gen_agent.utils.images import (
     IMAGE_MIME_TYPE,
     load_image_resource,
 )
+from dotenv import load_dotenv
+from google.adk.tools import ToolContext
+from google.genai import types
 
 # --- Configuration ---
 logging.basicConfig(
@@ -42,12 +43,13 @@ load_dotenv()
 
 GCP_PROJECT = os.getenv("GCP_PROJECT")
 
-IMAGE_GEN_MODEL_GEMINI = "gemini-2.5-flash-image"
+IMAGE_GEN_MODEL_GEMINI = "gemini-3-pro-image-preview"
 
 STORYLINE_MODEL = "gemini-2.5-pro"
 MAX_RETRIES = 3
 ASSET_SHEET_FILENAME = "asset_sheet.png"
 LOGO_GCS_URI_BASE = "branding_logos/logo.png"
+
 
 def get_bucket() -> str:
     """Retrieves the GCS bucket name from environment variables.
@@ -78,11 +80,18 @@ LOGO_GCS_URI = f"{GCS_BUCKET}/{LOGO_GCS_URI_BASE}"
 client = initialize_gemini_client()
 
 
+class ImageGenerationResult(TypedDict):
+    status: str
+    detail: str
+    filename: NotRequired[str]
+    image_bytes: NotRequired[bytes]
+
+
 async def generate_one_image(
     prompt: str,
     input_images: List[types.Part],
     filename_prefix: str,
-) -> Dict[str, Any]:
+) -> ImageGenerationResult:
     """Generates a single image using Gemini, handling retries.
 
     Args:
@@ -165,7 +174,7 @@ async def _load_generation_resources(
 
 
 async def _save_generated_images(
-    results: List[Dict[str, Any]], tool_context: ToolContext
+    results: List[ImageGenerationResult], tool_context: ToolContext
 ) -> None:
     """Saves generated images to the tool context."""
     save_tasks = []
@@ -176,9 +185,7 @@ async def _save_generated_images(
             save_tasks.append(
                 tool_context.save_artifact(
                     filename,
-                    types.Part.from_bytes(
-                        data=image_bytes, mime_type=IMAGE_MIME_TYPE
-                    ),
+                    types.Part.from_bytes(data=image_bytes, mime_type=IMAGE_MIME_TYPE),
                 )
             )
             result["detail"] = f"Image stored as {filename}."
@@ -194,7 +201,7 @@ def _create_image_generation_task(
     is_logo_scene: bool,
     logo_image: types.Part,
     asset_sheet_image: types.Part,
-) -> Any:
+) -> Awaitable[ImageGenerationResult]:
     """Creates a task for generating a single image."""
     filename_prefix = f"{scene_num}_"
     if is_logo_scene:
@@ -240,9 +247,7 @@ async def generate_images_from_storyline(
     """
     if not client:
         return [
-            json.dumps(
-                {"status": "failed", "detail": "Gemini client not initialized."}
-            )
+            json.dumps({"status": "failed", "detail": "Gemini client not initialized."})
         ]
 
     logo_image, asset_sheet_image, error_msg = await _load_generation_resources(

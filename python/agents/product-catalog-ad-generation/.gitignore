@@ -15,6 +15,7 @@ env.bak/
 venv.bak/
 .env
 .vscode
+uv.lock
 
 # Image generation files
 static/generated/*

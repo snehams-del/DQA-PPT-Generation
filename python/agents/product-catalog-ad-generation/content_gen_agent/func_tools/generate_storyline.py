@@ -17,22 +17,23 @@ import asyncio
 import json
 import logging
 import time
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
-from dotenv import load_dotenv
-from google import genai
-from google.adk.tools import ToolContext
-from google.api_core import exceptions as api_exceptions
-
-from google.genai import types
-
-from content_gen_agent.utils.storytelling import STORYTELLING_INSTRUCTIONS
 from content_gen_agent.func_tools.select_product import select_product_from_bq
 from content_gen_agent.utils.evaluate_media import (
     calculate_evaluation_score,
 )
-from content_gen_agent.utils.gemini_utils import call_gemini_image_api, initialize_gemini_client
+from content_gen_agent.utils.gemini_utils import (
+    call_gemini_image_api,
+    initialize_gemini_client,
+)
 from content_gen_agent.utils.images import load_image_resource
+from content_gen_agent.utils.storytelling import STORYTELLING_INSTRUCTIONS
+from dotenv import load_dotenv
+from google import genai
+from google.adk.tools import ToolContext
+from google.api_core import exceptions as api_exceptions
+from google.genai import types
 
 # Configure logging
 logging.basicConfig(
@@ -46,7 +47,7 @@ client = initialize_gemini_client()
 
 # --- Configuration ---
 STORYLINE_MODEL = "gemini-2.5-pro"
-IMAGE_GEN_MODEL = "gemini-2.5-flash-image"
+IMAGE_GEN_MODEL = "gemini-3-pro-image-preview"
 MAX_RETRIES = 3
 
 
@@ -61,7 +62,7 @@ async def generate_storyline(
     product_photo_filename: Optional[str] = None,
     style_preference: str = "photorealistic",
     user_provided_asset_sheet_gcs_uri: Optional[str] = None,
-) -> Dict[str, Any]:
+) -> Dict[str, Union[Optional[str], list[Dict[str, str]]]]:
     """Generates a storyline, visual style guide, and asset sheet.
 
     Args:
@@ -108,10 +109,9 @@ async def generate_storyline(
     if "error" in story_data:
         return {"status": "failed", "detail": story_data["error"]}
 
-
     # Generate the asset sheet from scratch using the generated storyline text
     if not user_provided_asset_sheet_gcs_uri:
-                # Grab the product photo from BQ based on the product name the agent
+        # Grab the product photo from BQ based on the product name the agent
         # extracted from the user query
         product_photo_filename = await _ensure_product_photo_artifact(
             product, tool_context, product_photo_filename
@@ -161,9 +161,7 @@ async def _process_user_asset_sheet(
         return None
 
     if not user_provided_asset_sheet_gcs_uri.startswith("gs://"):
-        user_provided_asset_sheet_gcs_uri = (
-            f"gs://{user_provided_asset_sheet_gcs_uri}"
-        )
+        user_provided_asset_sheet_gcs_uri = f"gs://{user_provided_asset_sheet_gcs_uri}"
 
     image_bytes, _, mime_type = await load_image_resource(
         "gcs", user_provided_asset_sheet_gcs_uri, tool_context
@@ -190,7 +188,7 @@ def _generate_storyline_text(
     company_name: str,
     *,
     image_part: Optional[genai.types.Part] = None,
-) -> Dict[str, Any]:
+) -> Dict[str, Union[str, Dict[str, list[Union[Dict[str, str], str]]]]]:
     """Generates the storyline and visual style guide text.
 
     Args:
@@ -254,15 +252,11 @@ def _generate_storyline_text(
         response = client.models.generate_content(
             model=STORYLINE_MODEL,
             contents=contents,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json"
-            ),
+            config=types.GenerateContentConfig(response_mime_type="application/json"),
         )
         if response.text:
             story_data = json.loads(response.text)
-            logging.info(
-                "Successfully generated storyline and visual style guide."
-            )
+            logging.info("Successfully generated storyline and visual style guide.")
             return story_data
         return {"error": "Received an empty response from the model."}
     except (json.JSONDecodeError, ValueError) as e:
@@ -362,22 +356,19 @@ async def _ensure_product_photo_artifact(
         return None
 
 
-
-
-
 def _process_visual_style_guide(
-    visual_style_guide: Dict[str, Any]
+    visual_style_guide: Dict[str, List[Union[Dict[str, str], str]]],
 ) -> Dict[str, str]:
     """Processes the visual style guide into formatted strings.
 
     Args:
-        visual_style_guide (Dict[str, Any]): The visual style guide dictionary.
+        visual_style_guide (Dict[str, List[Union[Dict[str, str], str]]]): The visual style guide dictionary.
 
     Returns:
         A dictionary of processed descriptions.
     """
 
-    def format_list(items: List[Any]) -> str:
+    def format_list(items: List[Union[Dict[str, str], str]]) -> str:
         processed = []
         for item in items:
             if isinstance(item, dict):
@@ -393,9 +384,11 @@ def _process_visual_style_guide(
     return {
         "asset_sheet": format_list(asset_sheet_items),
         "characters": ". ".join(
-            f"{item.get('name', '')}: {item.get('description', '')}"
-            if isinstance(item, dict)
-            else str(item)
+            (
+                f"{item.get('name', '')}: {item.get('description', '')}"
+                if isinstance(item, dict)
+                else str(item)
+            )
             for item in characters
         ),
         "locations": format_list(locations),
@@ -403,7 +396,7 @@ def _process_visual_style_guide(
 
 
 def _create_asset_sheet_prompt(
-    story_data: Dict[str, Any],
+    story_data: Dict[str, Union[str, Dict[str, list[Union[Dict[str, str], str]]]]],
     style_guide: str,
 ) -> str:
     """Creates the prompt for the asset sheet image."""
@@ -424,9 +417,9 @@ def _create_asset_sheet_prompt(
 
 
 async def _generate_and_select_best_image(
-    contents: List[Any],
+    contents: List[Union[str, "types.Part"]],
     image_prompt: str,
-) -> Dict[str, Any]:
+) -> Dict[str, Union[str, bytes]]:
     """Generates multiple images and selects the best one based on evaluation."""
     tasks = [
         call_gemini_image_api(
@@ -439,9 +432,7 @@ async def _generate_and_select_best_image(
     ]
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
-    generation_attempts = [
-        res for res in results if isinstance(res, dict) and res
-    ]
+    generation_attempts = [res for res in results if isinstance(res, dict) and res]
     if not generation_attempts:
         return {
             "status": "failed",
@@ -463,30 +454,28 @@ async def _generate_and_select_best_image(
 
 
 async def _generate_asset_sheet_image(
-    story_data: Dict[str, Any],
+    story_data: Dict[str, Union[str, Dict[str, list[Union[Dict[str, str], str]]]]],
     product_photo_filename: str,
     tool_context: ToolContext,
     style_guide: str,
-) -> str:
+) -> Union[str, Dict[str, str]]:
     """Generates and evaluates asset sheet images, saving the best one.
 
     Args:
-        story_data (Dict[str, Any]): The storyline and visual style guide data.
+        story_data (Dict[str, Union[str, Dict[str, list[Union[Dict[str, str], str]]]]]): The storyline and visual style guide data.
         product_photo_filename (str): The filename of the product photo.
         tool_context (ToolContext): The context for saving artifacts.
         style_guide (str): The visual style description.
 
     Returns:
-        The filename of the generated asset sheet
+        The filename of the generated asset sheet, or a dict on failure.
     """
     image_prompt = _create_asset_sheet_prompt(story_data, style_guide)
     logging.info("Generating asset sheet image for prompt: '%s'", image_prompt)
 
     try:
         contents = [image_prompt]
-        product_photo_part = await tool_context.load_artifact(
-            product_photo_filename
-        )
+        product_photo_part = await tool_context.load_artifact(product_photo_filename)
         if product_photo_part:
             contents.append(product_photo_part)
     except (FileNotFoundError, ValueError) as e:
@@ -517,15 +506,18 @@ async def _generate_asset_sheet_image(
 
     return asset_sheet_filename
 
+
 async def _save_json_artifact(
-    tool_context: ToolContext, name: str, data: Dict[str, Any]
+    tool_context: ToolContext,
+    name: str,
+    data: Dict[str, Union[Optional[str], dict, list]],
 ) -> str:
     """Saves a JSON object as a text artifact.
 
     Args:
         tool_context (ToolContext): The context for saving artifacts.
         name (str): The base name for the artifact file.
-        data (Dict[str, Any]): The JSON-serializable data to save.
+        data (Dict[str, Union[Optional[str], dict, list]]): The JSON-serializable data to save.
 
     Returns:
         The filename of the saved artifact.

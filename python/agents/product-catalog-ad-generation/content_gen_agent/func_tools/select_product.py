@@ -12,9 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Selects a product from BigQuery based on a product name."""
+import logging
 import os
+
 from google.api_core import exceptions as api_exceptions
 from google.cloud import bigquery
+
 
 def select_product_from_bq(product_name: str) -> dict:
     """
@@ -50,16 +53,17 @@ def select_product_from_bq(product_name: str) -> dict:
             return dict(row)
 
     except api_exceptions.GoogleAPICallError as e:
-        print(f"An error occurred: {e}")
+        logging.error("An error occurred: %s", e)
         return None
 
     return None
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     product = select_product_from_bq("power drill")
     if product:
-        print("Found product:")
-        print(product)
+        logging.info("Found product:")
+        logging.info(product)
     else:
-        print("Product not found.")
+        logging.info("Product not found.")

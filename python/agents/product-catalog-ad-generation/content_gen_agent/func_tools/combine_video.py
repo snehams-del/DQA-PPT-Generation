@@ -57,14 +57,12 @@ def _get_storyline_schema(num_images: int) -> List[Dict]:
 
     schema = []
     if num_images > 1:
-        schema.append(
-            {"name": "before", "generate": True, "step": 0, "duration": 3}
-        )
+        schema.append({"name": "before", "generate": True, "step": 0, "duration": 3})
 
     for i in range(num_images - 2):
         schema.append(
             {
-                "name": f"showcase_{i+1}",
+                "name": f"showcase_{i + 1}",
                 "generate": True,
                 "step": i + 1,
                 "duration": 3,

@@ -13,17 +13,16 @@
 # limitations under the License.
 """Utility functions for interacting with the Gemini API."""
 import logging
-from typing import Any, Dict, List, Optional
+from typing import List, Optional, TypedDict, Union
 
-from google import auth
-from google import genai
+from content_gen_agent.utils.evaluate_media import (
+    EvalResult,
+    evaluate_media,
+)
+from google import auth, genai
 from google.api_core import exceptions as api_exceptions
 from google.genai import types
 from google.genai.types import HarmBlockThreshold, HarmCategory
-
-from content_gen_agent.utils.evaluate_media import (
-    evaluate_media,
-)
 
 IMAGE_MIME_TYPE = "image/png"
 
@@ -52,15 +51,24 @@ GENERATE_CONTENT_CONFIG = types.GenerateContentConfig(
     safety_settings=SAFETY_SETTINGS,
     image_config=types.ImageConfig(
         aspect_ratio="9:16",
-    )
+    ),
 )
+
+
+class ImageGenerationResult(TypedDict):
+    """The result of an image generation call."""
+
+    image_bytes: bytes
+    evaluation: Optional[EvalResult]
+    mime_type: str
+
 
 async def call_gemini_image_api(
     client: genai.Client,
     model: str,
-    contents: List[Any],
+    contents: List[Union[str, types.Part]],
     image_prompt: str,
-) -> Dict[str, Any]:
+) -> Optional[ImageGenerationResult]:
     """Calls the Gemini image generation API and evaluates the result.
 
     Args:
@@ -70,7 +78,7 @@ async def call_gemini_image_api(
         image_prompt: The prompt used for image generation.
 
     Returns:
-        A dictionary with the image bytes, evaluation, and MIME type.
+        A dictionary with the image bytes, evaluation, and MIME type, or None if failed.
     """
     try:
         response = await client.aio.models.generate_content(
@@ -94,11 +102,14 @@ async def call_gemini_image_api(
                         "evaluation": evaluation,
                         "mime_type": IMAGE_MIME_TYPE,
                     }
-    except (api_exceptions.GoogleAPICallError, ValueError) as e:
-        logging.error(
-            "Error calling image generation API: %s", e, exc_info=True
-        )
-    return {}
+    except (
+        api_exceptions.GoogleAPICallError,
+        ValueError,
+        api_exceptions.ResourceExhausted,
+        genai.errors.ServerError,
+    ) as e:
+        logging.error("Error calling image generation API: %s", e, exc_info=True)
+    return None
 
 
 def initialize_gemini_client() -> Optional[genai.Client]:
