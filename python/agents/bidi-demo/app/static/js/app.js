@@ -34,10 +34,30 @@ enableProactivityCheckbox.addEventListener("change", handleRunConfigChange);
 enableAffectiveDialogCheckbox.addEventListener("change", handleRunConfigChange);
 
 // Build WebSocket URL with RunConfig options as query parameters
+// Get checkbox elements for RunConfig options
+const enableProactivityCheckbox = document.getElementById("enableProactivity");
+const enableAffectiveDialogCheckbox = document.getElementById("enableAffectiveDialog");
+
+// Reconnect WebSocket when RunConfig options change
+function handleRunConfigChange() {
+  if (websocket && websocket.readyState === WebSocket.OPEN) {
+    addSystemMessage("Reconnecting with updated settings...");
+    addConsoleEntry('outgoing', 'Reconnecting due to settings change', {
+      proactivity: enableProactivityCheckbox.checked,
+      affective_dialog: enableAffectiveDialogCheckbox.checked
+    }, '🔄', 'system');
+    websocket.close();
+    // connectWebsocket() will be called by onclose handler after delay
+  }
+}
+
+// Add change listeners to RunConfig checkboxes
+enableProactivityCheckbox.addEventListener("change", handleRunConfigChange);
+enableAffectiveDialogCheckbox.addEventListener("change", handleRunConfigChange);
+
+// Build WebSocket URL with RunConfig options as query parameters
 function getWebSocketUrl() {
-  // Use wss:// for HTTPS pages, ws:// for HTTP (localhost development)
-  const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-  const baseUrl = wsProtocol + "//" + window.location.host + "/ws/" + userId + "/" + sessionId;
+  const baseUrl = "ws://" + window.location.host + "/ws/" + userId + "/" + sessionId;
   const params = new URLSearchParams();
 
   // Add proactivity option if checked
@@ -63,12 +83,14 @@ const statusText = document.getElementById("statusText");
 const consoleContent = document.getElementById("consoleContent");
 const clearConsoleBtn = document.getElementById("clearConsole");
 const showAudioEventsCheckbox = document.getElementById("showAudioEvents");
+const showAudioEventsCheckbox = document.getElementById("showAudioEvents");
 let currentMessageId = null;
 let currentBubbleElement = null;
 let currentInputTranscriptionId = null;
 let currentInputTranscriptionElement = null;
 let currentOutputTranscriptionId = null;
 let currentOutputTranscriptionElement = null;
+let inputTranscriptionFinished = false; // Track if input transcription is complete for this turn
 let inputTranscriptionFinished = false; // Track if input transcription is complete for this turn
 
 // Helper function to clean spaces between CJK characters
@@ -97,6 +119,12 @@ function formatTimestamp() {
   const now = new Date();
   return now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
 }
+
+function addConsoleEntry(type, content, data = null, emoji = null, author = null, isAudio = false) {
+  // Skip audio events if checkbox is unchecked
+  if (isAudio && !showAudioEventsCheckbox.checked) {
+    return;
+  }
 
 function addConsoleEntry(type, content, data = null, emoji = null, author = null, isAudio = false) {
   // Skip audio events if checkbox is unchecked
@@ -378,9 +406,47 @@ function connectWebsocket() {
       const totalTokens = usage.totalTokenCount || 0;
       eventSummary = `Token Usage: ${totalTokens.toLocaleString()} total (${promptTokens.toLocaleString()} prompt + ${responseTokens.toLocaleString()} response)`;
       eventEmoji = '📊';
+    } else if (adkEvent.usageMetadata) {
+      // Show token usage information
+      const usage = adkEvent.usageMetadata;
+      const promptTokens = usage.promptTokenCount || 0;
+      const responseTokens = usage.candidatesTokenCount || 0;
+      const totalTokens = usage.totalTokenCount || 0;
+      eventSummary = `Token Usage: ${totalTokens.toLocaleString()} total (${promptTokens.toLocaleString()} prompt + ${responseTokens.toLocaleString()} response)`;
+      eventEmoji = '📊';
     } else if (adkEvent.content && adkEvent.content.parts) {
       const hasText = adkEvent.content.parts.some(p => p.text);
       const hasAudio = adkEvent.content.parts.some(p => p.inlineData);
+      const hasExecutableCode = adkEvent.content.parts.some(p => p.executableCode);
+      const hasCodeExecutionResult = adkEvent.content.parts.some(p => p.codeExecutionResult);
+
+      if (hasExecutableCode) {
+        // Show executable code
+        const codePart = adkEvent.content.parts.find(p => p.executableCode);
+        if (codePart && codePart.executableCode) {
+          const code = codePart.executableCode.code || '';
+          const language = codePart.executableCode.language || 'unknown';
+          const truncated = code.length > 60
+            ? code.substring(0, 60).replace(/\n/g, ' ') + '...'
+            : code.replace(/\n/g, ' ');
+          eventSummary = `Executable Code (${language}): ${truncated}`;
+          eventEmoji = '💻';
+        }
+      }
+
+      if (hasCodeExecutionResult) {
+        // Show code execution result
+        const resultPart = adkEvent.content.parts.find(p => p.codeExecutionResult);
+        if (resultPart && resultPart.codeExecutionResult) {
+          const outcome = resultPart.codeExecutionResult.outcome || 'UNKNOWN';
+          const output = resultPart.codeExecutionResult.output || '';
+          const truncatedOutput = output.length > 60
+            ? output.substring(0, 60).replace(/\n/g, ' ') + '...'
+            : output.replace(/\n/g, ' ');
+          eventSummary = `Code Execution Result (${outcome}): ${truncatedOutput}`;
+          eventEmoji = outcome === 'OUTCOME_OK' ? '✅' : '❌';
+        }
+      }
       const hasExecutableCode = adkEvent.content.parts.some(p => p.executableCode);
       const hasCodeExecutionResult = adkEvent.content.parts.some(p => p.codeExecutionResult);
 
@@ -446,10 +512,22 @@ function connectWebsocket() {
         // Log audio event with isAudio flag (filtered by checkbox)
         const sanitizedEvent = sanitizeEventForDisplay(adkEvent);
         addConsoleEntry('incoming', eventSummary, sanitizedEvent, eventEmoji, author, true);
+
+        // Log audio event with isAudio flag (filtered by checkbox)
+        const sanitizedEvent = sanitizeEventForDisplay(adkEvent);
+        addConsoleEntry('incoming', eventSummary, sanitizedEvent, eventEmoji, author, true);
       }
     }
 
     // Create a sanitized version for console display (replace large audio data with summary)
+    // Skip if already logged as audio event above
+    const isAudioOnlyEvent = adkEvent.content && adkEvent.content.parts &&
+      adkEvent.content.parts.some(p => p.inlineData) &&
+      !adkEvent.content.parts.some(p => p.text);
+    if (!isAudioOnlyEvent) {
+      const sanitizedEvent = sanitizeEventForDisplay(adkEvent);
+      addConsoleEntry('incoming', eventSummary, sanitizedEvent, eventEmoji, author);
+    }
     // Skip if already logged as audio event above
     const isAudioOnlyEvent = adkEvent.content && adkEvent.content.parts &&
       adkEvent.content.parts.some(p => p.inlineData) &&
@@ -481,6 +559,7 @@ function connectWebsocket() {
       currentBubbleElement = null;
       currentOutputTranscriptionId = null;
       currentOutputTranscriptionElement = null;
+      inputTranscriptionFinished = false; // Reset for next turn
       inputTranscriptionFinished = false; // Reset for next turn
       return;
     }
@@ -526,6 +605,7 @@ function connectWebsocket() {
       currentOutputTranscriptionId = null;
       currentOutputTranscriptionElement = null;
       inputTranscriptionFinished = false; // Reset for next turn
+      inputTranscriptionFinished = false; // Reset for next turn
       return;
     }
 
@@ -535,6 +615,11 @@ function connectWebsocket() {
       const isFinished = adkEvent.inputTranscription.finished;
 
       if (transcriptionText) {
+        // Ignore late-arriving transcriptions after we've finished for this turn
+        if (inputTranscriptionFinished) {
+          return;
+        }
+
         // Ignore late-arriving transcriptions after we've finished for this turn
         if (inputTranscriptionFinished) {
           return;
@@ -569,13 +654,28 @@ function connectWebsocket() {
               const accumulatedText = cleanCJKSpaces(cleanText + transcriptionText);
               updateMessageBubble(currentInputTranscriptionElement, accumulatedText, true);
             }
+            if (isFinished) {
+              // Final transcription contains the complete text, replace entirely
+              const cleanedText = cleanCJKSpaces(transcriptionText);
+              updateMessageBubble(currentInputTranscriptionElement, cleanedText, false);
+            } else {
+              // Partial transcription - append to existing text
+              const existingText = currentInputTranscriptionElement.querySelector(".bubble-text").textContent;
+              // Remove typing indicator if present
+              const cleanText = existingText.replace(/\.\.\.$/, '');
+              // Clean spaces between CJK characters before updating
+              const accumulatedText = cleanCJKSpaces(cleanText + transcriptionText);
+              updateMessageBubble(currentInputTranscriptionElement, accumulatedText, true);
+            }
           }
         }
 
         // If transcription is finished, reset the state and mark as complete
+        // If transcription is finished, reset the state and mark as complete
         if (isFinished) {
           currentInputTranscriptionId = null;
           currentInputTranscriptionElement = null;
+          inputTranscriptionFinished = true; // Prevent duplicate bubbles from late events
           inputTranscriptionFinished = true; // Prevent duplicate bubbles from late events
         }
 
@@ -601,6 +701,7 @@ function connectWebsocket() {
           currentInputTranscriptionId = null;
           currentInputTranscriptionElement = null;
           inputTranscriptionFinished = true; // Prevent duplicate bubbles from late events
+          inputTranscriptionFinished = true; // Prevent duplicate bubbles from late events
         }
 
         if (currentOutputTranscriptionId == null) {
@@ -615,6 +716,16 @@ function connectWebsocket() {
           messagesDiv.appendChild(currentOutputTranscriptionElement);
         } else {
           // Update existing transcription bubble
+          if (isFinished) {
+            // Final transcription contains the complete text, replace entirely
+            updateMessageBubble(currentOutputTranscriptionElement, transcriptionText, false);
+          } else {
+            // Partial transcription - append to existing text
+            const existingText = currentOutputTranscriptionElement.querySelector(".bubble-text").textContent;
+            // Remove typing indicator if present
+            const cleanText = existingText.replace(/\.\.\.$/, '');
+            updateMessageBubble(currentOutputTranscriptionElement, cleanText + transcriptionText, true);
+          }
           if (isFinished) {
             // Final transcription contains the complete text, replace entirely
             updateMessageBubble(currentOutputTranscriptionElement, transcriptionText, false);
@@ -652,6 +763,7 @@ function connectWebsocket() {
         // Reset input transcription state so next user input creates new balloon
         currentInputTranscriptionId = null;
         currentInputTranscriptionElement = null;
+        inputTranscriptionFinished = true; // Prevent duplicate bubbles from late events
         inputTranscriptionFinished = true; // Prevent duplicate bubbles from late events
       }
 
