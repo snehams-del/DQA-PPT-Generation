@@ -19,7 +19,7 @@
  */
 
 import { BaseTool, LlmRequest, ToolContext, CallbackContext, InvocationContext } from '@google/adk';
-import { State } from '@google/adk';
+import { State } from '@google/adk/dist/types/sessions/state';
 import { Customer } from '../entities/customer';
 
 const RATE_LIMIT_SECS = 60;
