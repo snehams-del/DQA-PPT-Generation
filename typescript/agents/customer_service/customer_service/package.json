@@ -1,7 +1,7 @@
 {
-  "name": "software-bug-assistant-ts",
+  "name": "customer-service-ts",
   "version": "1.0.0",
-  "description": "Typescript implementation of the software bug assistant agent.",
+  "description": "Typescript implementation of the customer service agent.",
   "main": "dist/main.js",
   "scripts": {
     "start": "ts-node src/main.ts",

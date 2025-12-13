@@ -54,7 +54,7 @@ The agent has access to the following tools (defined in `customer_service/tools/
 
 ### Prerequisites
 
-- Node.js (v18 or higher)
+- Node.js (v20 or higher)
 - Google Cloud Project (for Vertex AI Gemini integration)
 
 ### Installation
