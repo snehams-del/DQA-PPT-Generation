@@ -1,0 +1,24 @@
+{
+  "name": "software-bug-assistant-ts",
+  "version": "1.0.0",
+  "description": "Typescript implementation of the software bug assistant agent.",
+  "main": "dist/main.js",
+  "scripts": {
+    "start": "ts-node src/main.ts",
+    "build": "tsc",
+    "prestart": "npm run build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@google/adk": "0.1.2",
+    "@google/genai": "1.14.0",
+    "uuid": "13.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.26",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}
