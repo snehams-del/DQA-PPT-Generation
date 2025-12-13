@@ -36,7 +36,7 @@ const SyncAskForApprovalInput = z.object({
 
 const UpdateSalesforceCrmInput = z.object({
   customerId: z.string().describe("The ID of the customer."),
-  details: z.record(z.string(), z.any()).describe("A dictionary of details to update in Salesforce."),
+  details: z.object({}).passthrough().describe("A dictionary of details to update in Salesforce."),
 });
 
 const AccessCartInformationInput = z.object({
@@ -45,8 +45,8 @@ const AccessCartInformationInput = z.object({
 
 const ModifyCartInput = z.object({
   customerId: z.string().describe("The ID of the customer."),
-  itemsToAdd: z.array(z.record(z.string(), z.any())).describe("A list of objects, each with 'product_id' and 'quantity'."),
-  itemsToRemove: z.array(z.record(z.string(), z.any())).describe("A list of items to remove (often just product_id)."),
+  itemsToAdd: z.array(z.object({ product_id: z.string(), quantity: z.number() }).passthrough()).describe("A list of objects, each with 'product_id' and 'quantity'."),
+  itemsToRemove: z.array(z.object({ product_id: z.string() }).passthrough()).describe("A list of items to remove (often just product_id)."),
 });
 
 const GetProductRecommendationsInput = z.object({
