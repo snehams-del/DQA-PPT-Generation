@@ -20,7 +20,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-interface StatusResponse {
+export interface StatusResponse {
   status: string;
   message?: string;
   [key: string]: any;
@@ -29,10 +29,14 @@ interface StatusResponse {
 /**
  * Sends a link to the user's phone number to start a video session.
  *
- * @param phoneNumber The phone number to send the link to.
+ * @param params.phoneNumber The phone number to send the link to.
  * @returns An object with the status and message.
  */
-export function sendCallCompanionLink(phoneNumber: string): StatusResponse {
+export function sendCallCompanionLink({
+  phoneNumber,
+}: {
+  phoneNumber: string;
+}): StatusResponse {
   console.info(`Sending call companion link to ${phoneNumber}`);
   return { status: 'success', message: `Link sent to ${phoneNumber}` };
 }
@@ -40,16 +44,20 @@ export function sendCallCompanionLink(phoneNumber: string): StatusResponse {
 /**
  * Approve the flat rate or percentage discount requested by the user.
  *
- * @param discountType The type of discount, either "percentage" or "flat".
- * @param value The value of the discount.
- * @param reason The reason for the discount.
+ * @param params.discountType The type of discount, either "percentage" or "flat".
+ * @param params.value The value of the discount.
+ * @param params.reason The reason for the discount.
  * @returns An object indicating the status of the approval.
  */
-export function approveDiscount(
-  discountType: string,
-  value: number,
-  reason: string
-): StatusResponse {
+export function approveDiscount({
+  discountType,
+  value,
+  reason,
+}: {
+  discountType: string;
+  value: number;
+  reason: string;
+}): StatusResponse {
   if (value > 10) {
     console.info(`Denying ${discountType} discount of ${value}`);
     // Send back a reason for the error so that the model can recover.
@@ -67,16 +75,20 @@ export function approveDiscount(
 /**
  * Asks the manager for approval for a discount.
  *
- * @param discountType The type of discount, either "percentage" or "flat".
- * @param value The value of the discount.
- * @param reason The reason for the discount.
+ * @param params.discountType The type of discount, either "percentage" or "flat".
+ * @param params.value The value of the discount.
+ * @param params.reason The reason for the discount.
  * @returns An object indicating the status of the approval.
  */
-export function syncAskForApproval(
-  discountType: string,
-  value: number,
-  reason: string
-): StatusResponse {
+export function syncAskForApproval({
+  discountType,
+  value,
+  reason,
+}: {
+  discountType: string;
+  value: number;
+  reason: string;
+}): StatusResponse {
   console.info(
     `Asking for approval for a ${discountType} discount of ${value} because ${reason}`
   );
@@ -86,14 +98,17 @@ export function syncAskForApproval(
 /**
  * Updates the Salesforce CRM with customer details.
  *
- * @param customerId The ID of the customer.
- * @param details A dictionary of details to update in Salesforce.
+ * @param params.customerId The ID of the customer.
+ * @param params.details A dictionary of details to update in Salesforce.
  * @returns An object with the status and message.
  */
-export function updateSalesforceCrm(
-  customerId: string,
-  details: Record<string, any>
-): StatusResponse {
+export function updateSalesforceCrm({
+  customerId,
+  details,
+}: {
+  customerId: string;
+  details: Record<string, any>;
+}): StatusResponse {
   console.info(
     `Updating Salesforce CRM for customer ID ${customerId} with details: ${JSON.stringify(
       details
@@ -116,10 +131,14 @@ interface Cart {
 /**
  * Accesses cart information for a customer.
  *
- * @param customerId The ID of the customer.
+ * @param params.customerId The ID of the customer.
  * @returns An object representing the cart contents.
  */
-export function accessCartInformation(customerId: string): Cart {
+export function accessCartInformation({
+  customerId,
+}: {
+  customerId: string;
+}): Cart {
   console.info(`Accessing cart information for customer ID: ${customerId}`);
 
   // MOCK API RESPONSE - Replace with actual API call
@@ -144,16 +163,20 @@ export function accessCartInformation(customerId: string): Cart {
 /**
  * Modifies the user's shopping cart by adding and/or removing items.
  *
- * @param customerId The ID of the customer.
- * @param itemsToAdd A list of objects, each with 'product_id' and 'quantity'.
- * @param itemsToRemove A list of items to remove (often just product_id).
+ * @param params.customerId The ID of the customer.
+ * @param params.itemsToAdd A list of objects, each with 'product_id' and 'quantity'.
+ * @param params.itemsToRemove A list of items to remove (often just product_id).
  * @returns An object indicating the status of the cart modification.
  */
-export function modifyCart(
-  customerId: string,
-  itemsToAdd: Record<string, any>[],
-  itemsToRemove: Record<string, any>[]
-): StatusResponse {
+export function modifyCart({
+  customerId,
+  itemsToAdd,
+  itemsToRemove,
+}: {
+  customerId: string;
+  itemsToAdd: Record<string, any>[];
+  itemsToRemove: Record<string, any>[];
+}): StatusResponse {
   console.info(`Modifying cart for customer ID: ${customerId}`);
   console.info(`Adding items: ${JSON.stringify(itemsToAdd)}`);
   console.info(`Removing items: ${JSON.stringify(itemsToRemove)}`);
@@ -176,14 +199,17 @@ interface ProductRecommendation {
 /**
  * Provides product recommendations based on the type of plant.
  *
- * @param plantType The type of plant (e.g., 'Petunias', 'Sun-loving annuals').
- * @param customerId Optional customer ID for personalized recommendations.
+ * @param params.plantType The type of plant (e.g., 'Petunias', 'Sun-loving annuals').
+ * @param params.customerId Optional customer ID for personalized recommendations.
  * @returns An object of recommended products.
  */
-export function getProductRecommendations(
-  plantType: string,
-  customerId: string
-): { recommendations: ProductRecommendation[] } {
+export function getProductRecommendations({
+  plantType,
+  customerId,
+}: {
+  plantType: string;
+  customerId: string;
+}): { recommendations: ProductRecommendation[] } {
   console.info(
     `Getting product recommendations for plant type: ${plantType} and customer ${customerId}`
   );
@@ -234,14 +260,17 @@ interface ProductAvailability {
 /**
  * Checks the availability of a product at a specified store (or for pickup).
  *
- * @param productId The ID of the product to check.
- * @param storeId The ID of the store (or 'pickup' for pickup availability).
+ * @param params.productId The ID of the product to check.
+ * @param params.storeId The ID of the store (or 'pickup' for pickup availability).
  * @returns An object indicating availability.
  */
-export function checkProductAvailability(
-  productId: string,
-  storeId: string
-): ProductAvailability {
+export function checkProductAvailability({
+  productId,
+  storeId,
+}: {
+  productId: string;
+  storeId: string;
+}): ProductAvailability {
   console.info(
     `Checking availability of product ID: ${productId} at store: ${storeId}`
   );
@@ -252,18 +281,23 @@ export function checkProductAvailability(
 /**
  * Schedules a planting service appointment.
  *
- * @param customerId The ID of the customer.
- * @param date The desired date (YYYY-MM-DD).
- * @param timeRange The desired time range (e.g., "9-12").
- * @param details Any additional details (e.g., "Planting Petunias").
+ * @param params.customerId The ID of the customer.
+ * @param params.date The desired date (YYYY-MM-DD).
+ * @param params.timeRange The desired time range (e.g., "9-12").
+ * @param params.details Any additional details (e.g., "Planting Petunias").
  * @returns An object indicating the status of the scheduling.
  */
-export function schedulePlantingService(
-  customerId: string,
-  date: string,
-  timeRange: string,
-  details: string
-): StatusResponse {
+export function schedulePlantingService({
+  customerId,
+  date,
+  timeRange,
+  details,
+}: {
+  customerId: string;
+  date: string;
+  timeRange: string;
+  details: string;
+}): StatusResponse {
   console.info(
     `Scheduling planting service for customer ID: ${customerId} on ${date} (${timeRange})`
   );
@@ -286,10 +320,14 @@ export function schedulePlantingService(
 /**
  * Retrieves available planting service time slots for a given date.
  *
- * @param date The date to check (YYYY-MM-DD).
+ * @param params.date The date to check (YYYY-MM-DD).
  * @returns A list of available time ranges.
  */
-export function getAvailablePlantingTimes(date: string): string[] {
+export function getAvailablePlantingTimes({
+  date,
+}: {
+  date: string;
+}): string[] {
   console.info(`Retrieving available planting times for ${date}`);
   // MOCK API RESPONSE - Replace with actual API call
   // Generate some mock time slots
@@ -299,16 +337,20 @@ export function getAvailablePlantingTimes(date: string): string[] {
 /**
  * Sends an email or SMS with instructions on how to take care of a specific plant type.
  *
- * @param customerId The ID of the customer.
- * @param plantType The type of plant.
- * @param deliveryMethod 'email' (default) or 'sms'.
+ * @param params.customerId The ID of the customer.
+ * @param params.plantType The type of plant.
+ * @param params.deliveryMethod 'email' (default) or 'sms'.
  * @returns An object indicating the status.
  */
-export function sendCareInstructions(
-  customerId: string,
-  plantType: string,
-  deliveryMethod: string
-): StatusResponse {
+export function sendCareInstructions({
+  customerId,
+  plantType,
+  deliveryMethod,
+}: {
+  customerId: string;
+  plantType: string;
+  deliveryMethod: string;
+}): StatusResponse {
   console.info(
     `Sending care instructions for ${plantType} to customer: ${customerId} via ${deliveryMethod}`
   );
@@ -322,18 +364,23 @@ export function sendCareInstructions(
 /**
  * Generates a QR code for a discount.
  *
- * @param customerId The ID of the customer.
- * @param discountValue The value of the discount (e.g., 10 for 10%).
- * @param discountType "percentage" (default) or "fixed".
- * @param expirationDays Number of days until the QR code expires.
+ * @param params.customerId The ID of the customer.
+ * @param params.discountValue The value of the discount (e.g., 10 for 10%).
+ * @param params.discountType "percentage" (default) or "fixed".
+ * @param params.expirationDays Number of days until the QR code expires.
  * @returns An object containing the QR code data (or a link to it), or an error string if invalid.
  */
-export function generateQrCode(
-  customerId: string,
-  discountValue: number,
-  discountType: string,
-  expirationDays: number
-): StatusResponse | string {
+export function generateQrCode({
+  customerId,
+  discountValue,
+  discountType,
+  expirationDays,
+}: {
+  customerId: string;
+  discountValue: number;
+  discountType: string;
+  expirationDays: number;
+}): StatusResponse | string {
   // Guardrails to validate the amount of discount is acceptable for a auto-approved discount.
   if (discountType === '' || discountType === 'percentage') {
     if (discountValue > 10) {
