@@ -10,13 +10,13 @@ The Cymbal Home & Garden Customer Service Agent is designed to provide a seamles
 
 The key features of the Customer Service Agent include:
 
-| Feature            | Description             |
-| ------------------ | ----------------------- |
-| _Interaction Type_ | Conversational          |
-| _Complexity_       | Intermediate            |
-| _Agent Type_       | Single Agent            |
-| _Components_       | Tools, Multimodal, Live |
-| _Vertical_         | Retail                  |
+| Feature            | Description       |
+| ------------------ | ----------------- |
+| _Interaction Type_ | Conversational    |
+| _Complexity_       | Intermediate      |
+| _Agent Type_       | Single Agent      |
+| _Components_       | Tools, Multimodal |
+| _Vertical_         | Retail            |
 
 ### Agent Architecture
 
@@ -61,14 +61,13 @@ The agent has access to the following tools (defined in `customer_service/tools/
 
 1.  **Clone the repository** (if applicable) and navigate to the project directory:
     ```bash
-    cd path/to/customer_service
+    cd adk-samples/typescript/agents/customer_service
     ```
 
 2.  **Install dependencies**:
     ```bash
     npm install
     ```
-    *Ensure `@google/adk`, `@google/genai`, `zod`, and `uuid` are in your `package.json`.*
 
 3.  **Set up Environment Variables**:
 

@@ -10,6 +10,8 @@
     "forceConsistentCasingInFileNames": true,
     "sourceMap": true
   },
-  "include": ["src/**/*"],
+  "include": [
+    "customer_service/**/*"
+  ],
   "exclude": ["node_modules"]
 }

@@ -2,9 +2,9 @@
   "name": "customer-service-ts",
   "version": "1.0.0",
   "description": "Typescript implementation of the customer service agent.",
-  "main": "dist/main.js",
+  "main": "dist/agent.js",
   "scripts": {
-    "start": "node dist/main.js",
+    "start": "node dist/agent.js",
     "build": "tsc",
     "prestart": "npm run build"
   },
@@ -13,7 +13,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@google/adk": "0.1.2",
-    "@google/genai": "1.14.0",
+    "@google/adk-devtools": "^0.1.2",
     "uuid": "13.0.0"
   },
   "devDependencies": {
