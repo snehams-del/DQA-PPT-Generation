@@ -41,7 +41,7 @@ export class Config {
   CLOUD_PROJECT: string = getEnv('GOOGLE_CLOUD_PROJECT', 'my_project');
   CLOUD_LOCATION: string = getEnv('GOOGLE_CLOUD_LOCATION', 'us-central1');
   GENAI_USE_VERTEXAI: string = getEnv('GOOGLE_GENAI_USE_VERTEXAI', '1');
-  API_KEY: string = getEnv('GOOGLE_API_KEY', '');
+  API_KEY: string = getEnv('GOOGLE_API_KEY', 'GOOGLE_API_KEY');
 }
 
 // Export a singleton instance of the config

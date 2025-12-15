@@ -9,7 +9,7 @@
     "prestart": "npm run build"
   },
   "keywords": ["adk", "typescript", "agent", "customer-service", "google-gemini"],
-  "author": "Google LLC",
+  "author": "Shahin Saadati",
   "license": "Apache-2.0",
   "dependencies": {
     "@google/adk": "0.1.2",

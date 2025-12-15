@@ -18,8 +18,10 @@
  * Callback functions for FOMC Research Agent.
  */
 
-import { BaseTool, LlmRequest, ToolContext, CallbackContext, InvocationContext } from '@google/adk';
+import { BaseTool, LlmRequest, ToolContext, CallbackContext } from '@google/adk';
 import { State } from '@google/adk/dist/types/sessions/state';
+
+
 import { Customer } from '../entities/customer';
 
 const RATE_LIMIT_SECS = 60;
@@ -31,20 +33,18 @@ const RPM_QUOTA = 10;
  * * TYPE: Returns Promise<any> to satisfy 'LlmResponse | undefined' requirement.
  */
 export async function rateLimitCallback({
-  context: callbackContext,
-  request: llmRequest
+  callbackContext,
+  llmRequest
 }: {
-  context: CallbackContext;
-  request: LlmRequest;
+  callbackContext: CallbackContext;
+  llmRequest: LlmRequest;
 }): Promise<any> {
-  // Sanitize empty text parts
-  if (llmRequest.contents) {
-    for (const content of llmRequest.contents) {
-      if (content.parts) {
-        for (const part of content.parts) {
-          if ('text' in part && part.text === '') {
-            part.text = ' ';
-          }
+
+  for (const content of llmRequest.contents) {
+    if (content.parts) {
+      for (const part of content.parts) {
+        if ('text' in part && part.text === '') {
+          part.text = ' ';
         }
       }
     }
@@ -206,7 +206,7 @@ export function beforeTool({
 export function afterTool({
   tool,
   args,
-  context: toolContext,
+  context: ToolContext,
   response: toolResponse
 }: {
   tool: BaseTool;
@@ -236,7 +236,7 @@ export function afterTool({
  * Callback Method: Before Agent Execution
  * * PATTERN: Positional Argument (Required for Agents)
  * * FIXED: Uses CallbackContext directly.
- */
+ */ 
 export function beforeAgent(callbackContext: CallbackContext): undefined {
   // Use state directly from the callbackContext, matching your working example.
   if (!callbackContext.state.has('customer_profile')) {
