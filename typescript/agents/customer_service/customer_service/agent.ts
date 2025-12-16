@@ -73,29 +73,3 @@ export const rootAgent = new LlmAgent({
   beforeAgentCallback: beforeAgent,
   beforeModelCallback: rateLimitCallback,
 });
-
-const USER_ID = 'USER_ID';
-const APP_NAME = 'APP_NAME';
-const SESSION_ID = 'SESSION_ID';
-
-const prompt1 = `I am ordering potting soil and fertilizer for some sun-loving annuals I just bought,
-                 but I need to confirm if I have selected the right products.`;
-
-
-async function main() {
-    const runner = new InMemoryRunner({ appName: APP_NAME, agent: rootAgent });
-
-    await runner.sessionService.createSession({ appName: APP_NAME, userId: USER_ID, sessionId: SESSION_ID });
-
-    const message1 = createUserContent(prompt1);
-
-    let finalResponseContent1 = "No final response received.";
-    for await (const event of runner.runAsync({ userId: USER_ID, sessionId: SESSION_ID, newMessage: message1 })) {
-        if (isFinalResponse(event) && event.content?.parts?.length) {
-            finalResponseContent1 = event.content.parts.map((part: Part) => part.text ?? '').join('');
-        }
-    }
-    console.log(`\nResponse: ${finalResponseContent1}\n`);
-}
-
-main();
