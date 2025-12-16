@@ -43,18 +43,7 @@ The application follows ADK's recommended concurrent task pattern:
 ## Prerequisites
 
 - Python 3.10 or higher
-- [uv](https://docs.astral.sh/uv/) (recommended) or pip
 - Google API key (for Gemini Live API) or Google Cloud project (for Vertex AI Live API)
-
-**Installing uv (if not already installed):**
-
-```bash
-# macOS/Linux
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Windows
-powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-```
 
 ## Installation
 
@@ -64,25 +53,20 @@ powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | ie
 cd src/bidi-demo
 ```
 
-### 2. Install Dependencies
-
-**Using uv (recommended):**
-
-```bash
-uv sync
-```
-
-This automatically creates a virtual environment, installs all dependencies, and generates a lock file for reproducible builds.
-
-**Using pip (alternative):**
+### 2. Create Virtual Environment
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+```
+
+### 3. Install Dependencies
+
+```bash
 pip install -e .
 ```
 
-### 3. Configure Environment Variables
+### 4. Configure Environment Variables
 
 Create or edit `app/.env` with your credentials:
 
@@ -115,15 +99,11 @@ DEMO_AGENT_MODEL=gemini-2.5-flash-native-audio-preview-09-2025
 3. Set `GOOGLE_CLOUD_PROJECT` and `GOOGLE_CLOUD_LOCATION` in `.env`
 4. Set `GOOGLE_GENAI_USE_VERTEXAI=TRUE`
 
-### 4. Set SSL Certificate Path
+### 5. Set SSL Certificate Path
 
 Set the SSL certificate file path for secure connections:
 
 ```bash
-# If using uv
-export SSL_CERT_FILE=$(uv run python -m certifi)
-
-# If using pip with activated venv
 export SSL_CERT_FILE=$(python -m certifi)
 ```
 
@@ -131,21 +111,17 @@ export SSL_CERT_FILE=$(python -m certifi)
 
 ### Start the Server
 
-From the `src/bidi-demo` directory, first change to the `app` subdirectory:
+#### Navigate to App Directory
+
+First, change to the `app` directory:
 
 ```bash
 cd app
 ```
 
-> **Note:** You must run from inside the `app` directory so Python can find the `google_search_agent` module. Running from the parent directory will fail with `ModuleNotFoundError: No module named 'google_search_agent'`.
+#### Option 1: Foreground Mode (Development)
 
-**Using uv (recommended):**
-
-```bash
-uv run --project .. uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
-
-**Using pip (with activated venv):**
+Run the server in foreground with auto-reload on code changes:
 
 ```bash
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
@@ -153,17 +129,19 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 The `--reload` flag enables auto-restart on code changes during development.
 
-#### Background Mode (Testing/Production)
+#### Option 2: Background Mode (Testing/Production)
 
-To run in background with log output:
+Run the server in background with log output to file:
 
 ```bash
-# Using uv (from app directory)
-uv run --project .. uvicorn main:app --host 0.0.0.0 --port 8000 > server.log 2>&1 &
-
-# Using pip (from app directory)
 uvicorn main:app --host 0.0.0.0 --port 8000 > server.log 2>&1 &
 ```
+
+This command:
+
+- Runs uvicorn in background (`&`)
+- Redirects stdout and stderr to `server.log` (`> server.log 2>&1`)
+- Omits `--reload` for stability in production
 
 To check the server log:
 
@@ -174,6 +152,10 @@ tail -f server.log  # Follow log in real-time
 To stop the background server:
 
 ```bash
+# Find the process ID
+lsof -ti:8000
+
+# Stop the server
 kill $(lsof -ti:8000)
 ```
 
@@ -389,40 +371,6 @@ The modality detection is automatic based on the model name. Native audio models
 - Verify model name matches your platform (Gemini vs Vertex AI)
 - Check API quota limits in console
 - Ensure billing is enabled (for Vertex AI)
-
-## Development
-
-### Code Formatting
-
-This project uses black, isort, and flake8 for code formatting and linting. Configuration is inherited from the repository root.
-
-**Using uv:**
-
-```bash
-uv run black .
-uv run isort .
-uv run flake8 .
-```
-
-**Using pip (with activated venv):**
-
-```bash
-black .
-isort .
-flake8 .
-```
-
-To check formatting without making changes:
-
-```bash
-# Using uv
-uv run black --check .
-uv run isort --check .
-
-# Using pip
-black --check .
-isort --check .
-```
 
 ## Additional Resources
 

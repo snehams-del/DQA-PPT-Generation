@@ -58,18 +58,14 @@ def submit_pyspark_job(
         # Define the output path for the job
         output_bucket_path = os.getenv("GCS_BUCKET_FOR_OUTPUT")
         current_timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-        output_path = (
-            f"gs://{output_bucket_path}/output/wordcount_results_{current_timestamp}"
-        )
+        output_path = f"gs://{output_bucket_path}/output/wordcount_results_{current_timestamp}"
 
         job_args = [output_path]
         if input_path is not None:
             job_args.insert(0, input_path)
 
         # Define the PySpark job configuration
-        pyspark_job = dataproc.PySparkJob(
-            main_python_file_uri=main_python_file_uri, args=job_args
-        )
+        pyspark_job = dataproc.PySparkJob(main_python_file_uri=main_python_file_uri, args=job_args)
 
         # Define where the job should run
         placement = dataproc.JobPlacement(cluster_name=cluster_name)
@@ -82,9 +78,7 @@ def submit_pyspark_job(
         )
 
         # Submit the job
-        submitted_job = job_client.submit_job(
-            project_id=project_id, region=region, job=job
-        )
+        submitted_job = job_client.submit_job(project_id=project_id, region=region, job=job)
 
         job_id = submitted_job.reference.job_id
         return {"status": "submitted", "job_id": job_id}
@@ -108,9 +102,7 @@ def submit_pyspark_job(
         )
         return {
             "status": "error",
-            "error_message": (
-                f"An unexpected error occurred during job submission: {str(e)}"
-            ),
+            "error_message": (f"An unexpected error occurred during job submission: {str(e)}"),
         }
 
 
@@ -147,9 +139,7 @@ def submit_scala_job(
         )
 
         # Submit the job
-        submitted_job = job_client.submit_job(
-            project_id=project_id, region=region, job=job
-        )
+        submitted_job = job_client.submit_job(project_id=project_id, region=region, job=job)
 
         job_id = submitted_job.reference.job_id
         return {"status": "submitted", "job_id": job_id}
@@ -222,9 +212,7 @@ def check_job_status(project_id: str, region: str, job_id: str) -> dict[str, Any
         )
         return {
             "status": "error",
-            "error_message": (
-                f"An unexpected error occurred while checking job status: {str(e)}"
-            ),
+            "error_message": (f"An unexpected error occurred while checking job status: {str(e)}"),
         }
 
 
@@ -295,9 +283,7 @@ def list_dataproc_jobs(
         )
         return {
             "status": "error",
-            "error_message": (
-                f"An unexpected error occurred while listing jobs: {str(e)}"
-            ),
+            "error_message": (f"An unexpected error occurred while listing jobs: {str(e)}"),
         }
 
 
@@ -345,9 +331,7 @@ def list_dataproc_jobs_by_type(
                     "job_id": job.reference.job_id,
                     "status": job.status.state.name,
                     "status_message": (
-                        job.status.details
-                        if job.status.details
-                        else "No detailed message."
+                        job.status.details if job.status.details else "No detailed message."
                     ),
                     "type": current_job_type,
                 }
@@ -365,9 +349,7 @@ def list_dataproc_jobs_by_type(
         )
         return {
             "status": "error",
-            "error_message": (
-                f"Failed to list Dataproc jobs by type: {apierror.message}"
-            ),
+            "error_message": (f"Failed to list Dataproc jobs by type: {apierror.message}"),
         }
     except Exception as e:  # pylint: disable=broad-exception-caught
         logger.error(
@@ -379,9 +361,7 @@ def list_dataproc_jobs_by_type(
         )
         return {
             "status": "error",
-            "error_message": (
-                f"An unexpected error occurred while listing jobs by type: {str(e)}"
-            ),
+            "error_message": (f"An unexpected error occurred while listing jobs by type: {str(e)}"),
         }
 
 
@@ -425,9 +405,7 @@ def list_dataproc_jobs_by_cluster(
                     "job_id": job.reference.job_id,
                     "status": job.status.state.name,
                     "status_message": (
-                        job.status.details
-                        if job.status.details
-                        else "No detailed message."
+                        job.status.details if job.status.details else "No detailed message."
                     ),
                     "type": current_job_type,
                     "cluster_name": job.placement.cluster_name,
@@ -446,9 +424,7 @@ def list_dataproc_jobs_by_cluster(
         )
         return {
             "status": "error",
-            "error_message": (
-                f"Failed to list Dataproc jobs by cluster: {apierror.message}"
-            ),
+            "error_message": (f"Failed to list Dataproc jobs by cluster: {apierror.message}"),
         }
     except Exception as e:  # pylint: disable=broad-exception-caught
         logger.error(
@@ -504,9 +480,7 @@ def delete_dataproc_job(
         )
         return {
             "status": "error",
-            "error_message": (
-                f"Failed to delete Dataproc job '{job_id}': {apierror.message}"
-            ),
+            "error_message": (f"Failed to delete Dataproc job '{job_id}': {apierror.message}"),
         }
     except Exception as e:  # pylint: disable=broad-exception-caught
         logger.error(
@@ -550,9 +524,7 @@ def check_dataproc_job_exists(
             "status": "success",
             "exists": True,
             "job_id": job_id,
-            "message": (
-                f"Job '{job_id}' exists and is in '{job.status.state.name}' state."
-            ),
+            "message": (f"Job '{job_id}' exists and is in '{job.status.state.name}' state."),
         }
 
     except GoogleAPICallError as apierror:

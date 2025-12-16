@@ -127,15 +127,11 @@ def create_dataproc_serverless_batch(
         )
         return {
             "status": "error",
-            "error_message": (
-                f"An unexpected error occurred during batch creation: {str(e)}"
-            ),
+            "error_message": (f"An unexpected error occurred during batch creation: {str(e)}"),
         }
 
 
-def check_dataproc_serverless_status(
-    project_id: str, region: str, batch_id: str
-) -> dict[str, Any]:
+def check_dataproc_serverless_status(project_id: str, region: str, batch_id: str) -> dict[str, Any]:
     """
     Checks the status of a Dataproc Serverless batch job.
 
@@ -186,9 +182,7 @@ def check_dataproc_serverless_status(
         }
 
 
-def list_dataproc_serverless_batches(
-    project_id: str, region: str
-) -> list[dict[str, Any]]:
+def list_dataproc_serverless_batches(project_id: str, region: str) -> list[dict[str, Any]]:
     """
     Lists all Dataproc Serverless batch jobs in a region.
 
@@ -201,9 +195,7 @@ def list_dataproc_serverless_batches(
     """
     try:
         batch_client = get_batch_client(region)
-        batches = batch_client.list_batches(
-            parent=f"projects/{project_id}/locations/{region}"
-        )
+        batches = batch_client.list_batches(parent=f"projects/{project_id}/locations/{region}")
         all_batches = [
             {
                 "batch_id": batch.name.split("/")[-1],
@@ -258,9 +250,7 @@ def list_dataproc_serverless_batches_by_state(
     """
     try:
         batch_client = get_batch_client(region)
-        batches = batch_client.list_batches(
-            parent=f"projects/{project_id}/locations/{region}"
-        )
+        batches = batch_client.list_batches(parent=f"projects/{project_id}/locations/{region}")
         filtered_batches = [
             {
                 "batch_id": batch.name.split("/")[-1],
@@ -302,9 +292,7 @@ def list_dataproc_serverless_batches_by_state(
         }
 
 
-def delete_dataproc_serverless_batch(
-    project_id: str, region: str, batch_id: str
-) -> dict[str, Any]:
+def delete_dataproc_serverless_batch(project_id: str, region: str, batch_id: str) -> dict[str, Any]:
     """
     Deletes a Dataproc Serverless batch job.
 
@@ -335,9 +323,7 @@ def delete_dataproc_serverless_batch(
         )
         return {
             "status": "error",
-            "error_message": (
-                f"Failed to delete Dataproc Serverless batch: {apierror.message}"
-            ),
+            "error_message": (f"Failed to delete Dataproc Serverless batch: {apierror.message}"),
         }
     except Exception as e:  # pylint: disable=broad-exception-caught
         logger.error(
@@ -348,7 +334,5 @@ def delete_dataproc_serverless_batch(
         )
         return {
             "status": "error",
-            "error_message": (
-                f"An unexpected error occurred while deleting the batch: {str(e)}"
-            ),
+            "error_message": (f"An unexpected error occurred while deleting the batch: {str(e)}"),
         }
