@@ -33,12 +33,17 @@ const RPM_QUOTA = 10;
  * * TYPE: Returns Promise<any> to satisfy 'LlmResponse | undefined' requirement.
  */
 export async function rateLimitCallback({
-  callbackContext,
-  llmRequest
+  context: callbackContext,
+  request: llmRequest
 }: {
-  callbackContext: CallbackContext;
-  llmRequest: LlmRequest;
+    context: CallbackContext;
+    request: LlmRequest;
 }): Promise<any> {
+  // Add null checks for llmRequest and llmRequest.contents
+  if (!llmRequest || !llmRequest.contents) {
+    console.debug('llmRequest or llmRequest.contents is undefined. Skipping rate limit.');
+    return undefined;
+  }
 
   for (const content of llmRequest.contents) {
     if (content.parts) {
