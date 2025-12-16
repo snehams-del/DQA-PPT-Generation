@@ -84,10 +84,10 @@ The agent has access to the following tools (defined in `customer_service/tools/
 
 ## Running the Agent
 
-The entry point for the agent is `customer_service/agent.ts`. This file contains a `main()` function that initializes the agent, creates a session, and runs a sample interaction.
+The entry point for the agent is `customer_service/agent.ts`. This file contains a rootAgent that is used to run the agent.
 
-To run the agent using `ts-node` (or `tsx`):
+To run the agent using `adk run`:
 
 ```bash
-npx ts-node customer_service/agent.ts
+npx adk run customer_service/agent.ts
 ```
