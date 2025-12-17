@@ -3,6 +3,7 @@ import csv
 import json
 import logging
 import os
+import time
 from typing import Any, Dict, List, Optional
 
 import vertexai
@@ -251,17 +252,12 @@ def run_policy_from_gcs(
         }
 
 
-import time
-
-
 def _get_remediation_with_retry(model, violation, max_retries=3):
     """Gets a remediation suggestion for a single violation with exponential backoff."""
     base_delay = 1
 
     try:
-        prompt_path = os.path.join(
-            script_dir, "prompts", PROMPT_REMEDIATION_FILE
-        )
+        prompt_path = os.path.join(script_dir, "prompts", PROMPT_REMEDIATION_FILE)
         with open(prompt_path, "r") as f:
             prompt_template = f.read()
     except FileNotFoundError:
@@ -821,9 +817,7 @@ else:
 
 # Load instruction from file
 try:
-    instruction_path = os.path.join(
-        script_dir, "prompts", PROMPT_INSTRUCTION_FILE
-    )
+    instruction_path = os.path.join(script_dir, "prompts", PROMPT_INSTRUCTION_FILE)
     with open(instruction_path, "r") as f:
         agent_instruction = f.read()
 except FileNotFoundError:

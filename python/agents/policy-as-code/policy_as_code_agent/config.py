@@ -24,7 +24,9 @@ GEMINI_MODEL_PRO = os.getenv("GEMINI_MODEL_PRO", "gemini-2.5-pro")
 GEMINI_MODEL_FLASH = os.getenv("GEMINI_MODEL_FLASH", "gemini-2.5-flash")
 
 # Prompt Configuration
-PROMPT_CODE_GENERATION_FILE = os.getenv("PROMPT_CODE_GENERATION_FILE", "code_generation.md")
+PROMPT_CODE_GENERATION_FILE = os.getenv(
+    "PROMPT_CODE_GENERATION_FILE", "code_generation.md"
+)
 PROMPT_REMEDIATION_FILE = os.getenv("PROMPT_REMEDIATION_FILE", "remediation.md")
 PROMPT_INSTRUCTION_FILE = os.getenv("PROMPT_INSTRUCTION_FILE", "instructions.md")
 
