@@ -12,11 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Adds whitespace padding to images to make them a 9:16 aspect ratio."""
-
 import logging
 import os
 
+
 from PIL import Image
+
 
 
 def add_padding_to_image(input_path, output_path):
@@ -52,6 +53,9 @@ def add_padding_to_image(input_path, output_path):
     except (IOError, FileNotFoundError) as e:
         logging.error("Error processing %s: %s", input_path, e)
 
+    except (IOError, FileNotFoundError) as e:
+        logging.error("Error processing %s: %s", input_path, e)
+
 
 def process_images_in_folder(input_folder, output_folder):
     """
@@ -62,13 +66,20 @@ def process_images_in_folder(input_folder, output_folder):
 
     for filename in os.listdir(input_folder):
         if filename.lower().endswith((".png", ".jpg", ".jpeg", ".bmp", ".gif")):
+        if filename.lower().endswith((".png", ".jpg", ".jpeg", ".bmp", ".gif")):
             input_path = os.path.join(input_folder, filename)
             output_path = os.path.join(output_folder, filename)
             add_padding_to_image(input_path, output_path)
             logging.info("Processed %s", filename)
 
+            logging.info("Processed %s", filename)
+
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    INPUT_DIR = "static/uploads/products"
+    OUTPUT_DIR = "static/generated/padded_products"
+    process_images_in_folder(INPUT_DIR, OUTPUT_DIR)
     logging.basicConfig(level=logging.INFO)
     INPUT_DIR = "static/uploads/products"
     OUTPUT_DIR = "static/generated/padded_products"

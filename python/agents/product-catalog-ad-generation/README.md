@@ -30,17 +30,13 @@ This project contains default product imagery and a corporate logo that will get
 │   ├── 02-deploy-gcs-and-bq.sh   # Deploys GCS, BigQuery, and populates with product data.
 │   ├── populate_bq_with_gemini.py # Script to populate BigQuery with product metadata using Gemini.
 │   ├── generate_sample_data.py   # Generates sample product images and a logo based on configuration.
+│   ├── generate_sample_data.py   # Generates sample product images and a logo based on configuration.
 │   └── add_padding.py          # Adds whitespace padding to images to fix aspect ratio.
 ├── static/
 │   ├── uploads/                  # Contains all the static assets to be uploaded to GCS.
 │   └── generated/                # Local directory where generated videos are saved.
 └── ...
 ```
-
-## Requirements
-
-Before you begin, ensure you have:
-- **Google Cloud SDK**: For GCP services - [Install](https://cloud.google.com/sdk/docs/install)
 
 ## Setup Scripts
 
@@ -54,6 +50,32 @@ This script enables the required Google Cloud APIs for the project to function c
 ```bash
 bash scripts/01-setup-gcp.sh
 ```
+
+### (Optional) `generate_sample_data.py`
+
+If you do not have your own product images, you can use this script to generate high-quality sample product images and a company logo using Gemini. This creates a realistic dataset for testing the ad generation workflow.
+
+**Usage:**
+
+```bash
+python scripts/generate_sample_data.py
+```
+
+**Configuration:**
+
+You can configure the generation parameters by modifying the constants at the top of the `scripts/generate_sample_data.py` file:
+
+- `COMPANY_NAME`: The name of the company (e.g., "OmniMart").
+- `PRODUCT_DESCRIPTION`: A description of the products to generate (e.g., "A department store offering...").
+- `PRODUCT_COUNT`: The number of product images to generate.
+- `LOGO_DESCRIPTION`: A description for the company logo. Set to `None` to skip logo generation.
+
+**Output:**
+
+- Product images are saved to `static/uploads/products/`.
+- The logo is saved to `static/uploads/branding/logo.png`.
+
+The script will generate a plan, ask for confirmation (you can type 'x' to see the full prompts), and then generate the images in parallel.
 
 ### (Optional) `generate_sample_data.py`
 
@@ -124,7 +146,7 @@ Similarly, you can provide a product photo either directly through the ADK web U
 
 The behavior of the agent is influenced by several hardcoded configurations in the `content_gen_agent` directory:
 
--   **Models**: The agent uses `gemini-3-flash-preview` for storyline generation and `gemini-3-pro-image-preview` for image generation. The video generation is handled by `veo-3.1-generate-preview`, and the audio is generated using `lyria-002` and `gemini-2.5-flash-preview-tts`.  Note that some of these models may only be available in the "global" region of Google Cloud.
+-   **Models**: The agent uses `gemini-2.5-pro` for storyline generation and `gemini-3-pro-image-preview` for image generation. The video generation is handled by `veo-3.1-generate-preview`, and the audio is generated using `lyria-002` and `gemini-2.5-flash-preview-tts`.
 -   **Company Name**: The `COMPANY_NAME` can be set in the `.env` file. If not set, it defaults to "ACME Corp". This influences the branding of the generated content.
 -   **Video Aspect Ratio**: All generated videos adhere to a `9:16` aspect ratio, suitable for short-form content platforms.
 -   **Logo**: The company logo is hardcoded in `static/uploads/branding/logo.png` and is uploaded to GCS during the `02-deploy-gcs-and-bq.sh` setup script.
