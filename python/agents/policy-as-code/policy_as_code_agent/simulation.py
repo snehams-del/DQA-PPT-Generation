@@ -11,7 +11,7 @@ def validate_code_safety(code: str) -> list:
     """
     errors = []
 
-    # Blacklisted modules that should not be imported
+    # Exclude listed modules that should not be imported
     unsafe_modules = {
         "os",
         "sys",
@@ -25,7 +25,7 @@ def validate_code_safety(code: str) -> list:
         "requests",
     }
 
-    # Blacklisted built-in functions
+    # Exclude listed built-in functions
     unsafe_functions = {"eval", "exec", "open", "compile", "__import__"}
 
     try:

@@ -75,7 +75,7 @@ The agent follows a simple, powerful, five-step process:
     *   **Data Format:** The agent is designed to consume **JSONL** (JSON Lines) formatted metadata exports, which is a standard output from Dataplex.
 *   **Security:**
     *   **AST Analysis:** Before any code is executed, the agent performs static analysis using Python's Abstract Syntax Tree (AST) module. This detects and blocks dangerous imports (like `os`, `sys`, `subprocess`) and unsafe function calls (like `eval`, `open`).
-    *   **Restricted Execution:** The dynamic execution of code is handled within a restricted environment using `exec()`, where access is limited to a safe whitelist of libraries (`json`, `re`, `datetime`) and standard built-ins.
+    *   **Restricted Execution:** The dynamic execution of code is handled within a restricted environment using `exec()`, where access is limited to a safe allowlist of libraries (`json`, `re`, `datetime`) and standard built-ins.
 *   **Extensibility:** New and unforeseen policy types can be supported instantly without any changes to the agent's underlying code, as the LLM can generate the required logic on demand.
 
 ## 4. Usage Example
