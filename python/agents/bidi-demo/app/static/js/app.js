@@ -961,17 +961,58 @@ function startAudio() {
 // (due to the gesture requirement for the Web Audio API)
 const startAudioButton = document.getElementById("startAudioButton");
 startAudioButton.addEventListener("click", () => {
-  startAudioButton.disabled = true;
-  startAudio();
-  is_audio = true;
-  addSystemMessage("Audio mode enabled - you can now speak to the agent");
+  if (is_audio) {
+    // Stop audio mode
+    stopAudio();
+  } else {
+    // Start audio mode
+    startAudioButton.disabled = true;
+    startAudio();
+    is_audio = true;
+    startAudioButton.disabled = false;
+    startAudioButton.textContent = "Stop Audio";
+    addSystemMessage("Audio mode enabled - you can now speak to the agent");
 
-  // Log to console
-  addConsoleEntry('outgoing', 'Audio Mode Enabled', {
-    status: 'Audio worklets started',
-    message: 'Microphone active - audio input will be sent to agent'
-  }, '🎤', 'system');
+    // Log to console
+    addConsoleEntry('outgoing', 'Audio Mode Enabled', {
+      status: 'Audio worklets started',
+      message: 'Microphone active - audio input will be sent to agent'
+    }, '🎤', 'system');
+  }
 });
+
+// Stop audio
+function stopAudio() {
+  is_audio = false;
+  
+  // Stop the audio recorder
+  if (micStream) {
+    micStream.getTracks().forEach(track => track.stop());
+    micStream = null;
+  }
+  
+  // Close audio contexts if needed
+  if (audioRecorderContext) {
+    audioRecorderContext.close();
+    audioRecorderContext = null;
+  }
+  
+  if (audioPlayerContext) {
+    audioPlayerContext.close();
+    audioPlayerContext = null;
+  }
+  
+  // Update button state
+  startAudioButton.textContent = "Start Audio";
+  
+  addSystemMessage("Audio mode disabled");
+  
+  // Log to console
+  addConsoleEntry('outgoing', 'Audio Mode Disabled', {
+    status: 'Audio worklets stopped',
+    message: 'Microphone closed'
+  }, '🎤', 'system');
+}
 
 // Audio recorder handler
 function audioRecorderHandler(pcmData) {
