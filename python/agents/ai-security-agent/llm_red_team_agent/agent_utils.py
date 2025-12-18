@@ -27,6 +27,8 @@ def execute_sub_agent(agent: LlmAgent, prompt_text: str) -> str:
     Args:
         agent (LlmAgent): The sub-agent to run.
         prompt_text (str): The prompt to send to the sub-agent.
+    Returns:
+        str: The response from the sub-agent.
     """
 
     async def _run_internal():
