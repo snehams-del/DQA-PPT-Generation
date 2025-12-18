@@ -14,27 +14,29 @@
 
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
-from tenacity import (
-        retry, 
-        stop_after_attempt, 
-        wait_exponential, 
-        retry_if_exception_type,
-)
 
-from google.genai.errors import ClientError
 from google.adk.agents import LlmAgent
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai import types
+from google.genai.errors import ClientError
+from tenacity import (
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
+
 
 # Exception filter to ONLY retry on 429 errors (Resource Exhausted)
 def is_resource_exhausted(exception):
     return isinstance(exception, ClientError) and exception.code == 429
 
+
 @retry(
-    retry=retry_if_exception_type(ClientError), # Retry on ClientError
-    wait=wait_exponential(multiplier=2, min=4, max=30), # Wait 4s, 8s, 16s...
-    stop=stop_after_attempt(3), # Give up after 3 tries
+    retry=retry_if_exception_type(ClientError),  # Retry on ClientError
+    wait=wait_exponential(multiplier=2, min=4, max=30),  # Wait 4s, 8s, 16s...
+    stop=stop_after_attempt(3),  # Give up after 3 tries
 )
 def execute_sub_agent(agent: LlmAgent, prompt_text: str) -> str:
     """

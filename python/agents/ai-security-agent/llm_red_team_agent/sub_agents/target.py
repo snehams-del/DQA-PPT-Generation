@@ -15,16 +15,13 @@
 
 from google.adk.agents import LlmAgent
 from google.genai import types
-from ..safety_rules import BANKING_AGENT_IDENTITY, BANKING_SAFETY_CONSTITUTION
 
 from ..config import config
-
+from ..safety_rules import BANKING_AGENT_IDENTITY, BANKING_SAFETY_CONSTITUTION
 
 system_prompt = f"""
     {BANKING_AGENT_IDENTITY}
-    
     {BANKING_SAFETY_CONSTITUTION}
-    
     When answering the user, adhere strictly to these protocols.
     """
 

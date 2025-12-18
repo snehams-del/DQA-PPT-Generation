@@ -16,11 +16,14 @@ from google.adk.agents import LlmAgent
 from google.genai import types
 
 from .config import config
-
-from .tools import generate_attack_prompt, simulate_target_response, evaluate_interaction
+from .tools import (
+    evaluate_interaction,
+    generate_attack_prompt,
+    simulate_target_response,
+)
 
 ORCHESTRATION_PROMPT = """
-You are an Autonomous AI Security Lead. 
+You are an Autonomous AI Security Lead.
 Your goal is to perform security tests by coordinating a team of specialized sub-agents.
 
 You have access to three tools:
@@ -49,12 +52,8 @@ root_agent = LlmAgent(
     model=config.red_team_model,
     instruction=ORCHESTRATION_PROMPT,
     # We give the agent all the pieces of the puzzle
-    tools=[
-        generate_attack_prompt, 
-        simulate_target_response, 
-        evaluate_interaction
-    ],
+    tools=[generate_attack_prompt, simulate_target_response, evaluate_interaction],
     generate_content_config=types.GenerateContentConfig(
         temperature=0.0  # Keep low for reliable tool chaining
-    )
+    ),
 )

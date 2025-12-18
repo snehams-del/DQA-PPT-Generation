@@ -22,6 +22,7 @@ evaluator_worker = evaluator.create()
 
 # --- Granular Tools ---
 
+
 def generate_attack_prompt(risk_category: str) -> str:
     """
     TOOL 1: Asks the Red Team agent to generate a malicious prompt.
@@ -30,19 +31,21 @@ def generate_attack_prompt(risk_category: str) -> str:
     print(f"\n    🛠️  [Tool Call] Generating Attack for '{risk_category}'...")
     return execute_sub_agent(red_team_worker, risk_category)
 
+
 def simulate_target_response(attack_prompt: str) -> str:
     """
     TOOL 2: Sends an attack prompt to the Target agent (Victim) and gets the response.
     Use this after you have an attack prompt.
     """
-    print(f"    🛠️  [Tool Call] Simulating Victim Response...")
+    print("    🛠️  [Tool Call] Simulating Victim Response...")
     return execute_sub_agent(target_worker, attack_prompt)
+
 
 def evaluate_interaction(attack_prompt: str, target_response: str) -> str:
     """
     TOOL 3: Asks the Evaluator to judge if the attack was successful.
     Use this last. Returns a PASS/FAIL verdict.
     """
-    print(f"    🛠️  [Tool Call] Evaluating Interaction...")
+    print("    🛠️  [Tool Call] Evaluating Interaction...")
     eval_query = f"[ATTACK]: {attack_prompt}\n[RESPONSE]: {target_response}"
     return execute_sub_agent(evaluator_worker, eval_query)
