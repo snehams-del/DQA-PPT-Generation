@@ -176,7 +176,6 @@ def remove_core_policy(policy: str) -> dict:
 def find_policy_in_memory(
     query: str,
     source: str,
-    threshold: float = 0.7,  # Adjusted threshold for vector search distance
     version: str = "latest",
     author: Optional[str] = None,
     start_date: Optional[str] = None,

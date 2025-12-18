@@ -59,7 +59,7 @@ def validate_code_safety(code: str) -> list:
     return errors
 
 
-def run_simulation(policy_code: str, metadata: list, query: str) -> list:
+def run_simulation(policy_code: str, metadata: list) -> list:
     violations = []
     if not policy_code or policy_code.startswith("# API key not configured"):
         violations.append({"policy": "Configuration Error", "violation": policy_code})

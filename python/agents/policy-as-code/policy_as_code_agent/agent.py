@@ -135,7 +135,10 @@ def run_policy_from_gcs(
         bucket_name = path_parts[0]
         blob_prefix = path_parts[1] if len(path_parts) > 1 else ""
         bucket = storage_client.bucket(bucket_name)
-        is_directory = blob_prefix.endswith("/")
+        blobs = list(storage_client.list_blobs(bucket_name, prefix=blob_prefix))
+        is_directory = len(blobs) > 1 or (
+            len(blobs) == 1 and blobs[0].name.endswith("/")
+        )
         is_file = not is_directory
 
     except Exception as e:
@@ -183,7 +186,7 @@ def run_policy_from_gcs(
                     }
                 ]
 
-            violations = run_simulation(policy_code, metadata, "")
+            violations = run_simulation(policy_code, metadata)
             for v in violations:
                 v["source_file"] = file_uri
             return violations
@@ -230,7 +233,7 @@ def run_policy_from_gcs(
                 )
             return {"status": "error", "error_message": metadata["error"]}
 
-        violations = run_simulation(policy_code, metadata, "")
+        violations = run_simulation(policy_code, metadata)
 
         if violations and violations[0].get("policy") == "Configuration Error":
             if policy_id:
@@ -330,61 +333,6 @@ def suggest_remediation(violations: List[Dict[str, Any]]) -> dict:
 def get_supported_examples() -> dict:
     """Returns a list of example policy queries"""
     return DEFAULT_CORE_POLICIES
-
-
-def check_policy_local(query: str) -> dict:
-    """
-    Runs a policy check locally against a hardcoded metadata file for testing.
-    """
-    # Path is relative to the repository root, where tests are run from.
-    local_metadata_path = os.path.join(
-        script_dir, "../../../..", "data", "policy_as_code_agent", "1.jsonl"
-    )
-
-    try:
-        with open(local_metadata_path, "r") as f:
-            content = f.read()
-    except FileNotFoundError:
-        return {
-            "status": "error",
-            "error_message": f"Metadata file not found at {local_metadata_path}",
-        }
-
-    schema = get_json_schema_from_content(content)
-
-    try:
-        metadata_sample = [
-            json.loads(line) for line in content.splitlines() if line.strip()
-        ]
-    except json.JSONDecodeError:
-        metadata_sample = []
-
-    policy_code = llm_generate_policy_code(query, schema, metadata_sample)
-
-    if policy_code.startswith("# Error:") or policy_code.startswith(
-        "# API key not configured"
-    ):
-        return {"status": "error", "error_message": policy_code}
-
-    metadata = metadata_sample  # The sample is the full data for this file
-    violations = run_simulation(policy_code, metadata, "")
-
-    if violations and violations[0].get("policy") == "Configuration Error":
-        return {"status": "error", "error_message": violations[0]["violation"]}
-
-    if violations:
-        return {
-            "status": "success",
-            "report": {"violations_found": True, "violations": violations},
-        }
-    else:
-        return {
-            "status": "success",
-            "report": {
-                "violations_found": False,
-                "message": "No policy violations found.",
-            },
-        }
 
 
 def generate_policy_code_from_dataplex(policy_query: str, dataplex_query: str) -> dict:
@@ -529,7 +477,7 @@ def run_policy_on_dataplex(
                     "error_message": "Found assets in search, but failed to fetch their full details.",
                 }
 
-            violations = run_simulation(policy_code, metadata, "")
+            violations = run_simulation(policy_code, metadata)
 
             return _handle_policy_results(
                 violations, policy_id, version, "dataplex", len(metadata)

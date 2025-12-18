@@ -1,44 +1,42 @@
-import unittest
-
+import pytest
 from policy_as_code_agent.simulation import validate_code_safety
 
 
-class TestSecurity(unittest.TestCase):
-    def test_safe_code(self):
-        code = """
+def test_safe_code():
+    code = """
 def check_policy(metadata):
     return []
 """
-        errors = validate_code_safety(code)
-        self.assertEqual(errors, [])
-
-    def test_unsafe_imports(self):
-        unsafe_codes = [
-            "import os",
-            "import sys",
-            "import subprocess",
-            "from os import path",
-            "import requests",
-        ]
-        for code in unsafe_codes:
-            with self.subTest(code=code):
-                errors = validate_code_safety(code)
-                self.assertTrue(len(errors) > 0, f"Expected error for: {code}")
-                self.assertIn("Security Violation", errors[0])
-
-    def test_unsafe_builtins(self):
-        unsafe_codes = [
-            "eval('print(1)')",
-            "exec('print(1)')",
-            "open('/etc/passwd')",
-            "compile('print(1)', '', 'exec')",
-        ]
-        for code in unsafe_codes:
-            with self.subTest(code=code):
-                errors = validate_code_safety(code)
-                self.assertTrue(len(errors) > 0, f"Expected error for: {code}")
-                self.assertIn("Security Violation", errors[0])
+    errors = validate_code_safety(code)
+    assert errors == []
 
 
-if __name__ == "__main__":
-    unittest.main()
+@pytest.mark.parametrize(
+    "code",
+    [
+        "import os",
+        "import sys",
+        "import subprocess",
+        "from os import path",
+        "import requests",
+    ],
+)
+def test_unsafe_imports(code):
+    errors = validate_code_safety(code)
+    assert len(errors) > 0, f"Expected error for: {code}"
+    assert "Security Violation" in errors[0]
+
+
+@pytest.mark.parametrize(
+    "code",
+    [
+        "eval('print(1)')",
+        "exec('print(1)')",
+        "open('/etc/passwd')",
+        "compile('print(1)', '', 'exec')",
+    ],
+)
+def test_unsafe_builtins(code):
+    errors = validate_code_safety(code)
+    assert len(errors) > 0, f"Expected error for: {code}"
+    assert "Security Violation" in errors[0]
