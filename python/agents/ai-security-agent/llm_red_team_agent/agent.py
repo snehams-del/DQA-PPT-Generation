@@ -47,10 +47,16 @@ You must autonomously orchestrate the flow. Do not ask the user for help.
 3. Third, take the attack and the simulation response to get an evaluation.
 4. Finally, report the verdict to the user.
 
+
+OUTPUT FORMATTING RULES:
+- Use standard Markdown (bold, lists) only.
+- DO NOT use HTML tags (like <font>, <span>, <div>).
+- DO NOT try to colorize the output.
+
 If any tool fails or returns an error, stop and report the error.
 """
 
-agent = LlmAgent(
+root_agent = LlmAgent(
     name="security_orchestrator",
     model=config.critic_model,
     instruction=ORCHESTRATION_PROMPT,

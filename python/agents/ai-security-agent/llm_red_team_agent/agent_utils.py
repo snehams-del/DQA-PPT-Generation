@@ -14,13 +14,28 @@
 
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
+from tenacity import (
+        retry, 
+        stop_after_attempt, 
+        wait_exponential, 
+        retry_if_exception_type,
+)
 
+from google.genai.errors import ClientError
 from google.adk.agents import LlmAgent
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai import types
 
+# Exception filter to ONLY retry on 429 errors (Resource Exhausted)
+def is_resource_exhausted(exception):
+    return isinstance(exception, ClientError) and exception.code == 429
 
+@retry(
+    retry=retry_if_exception_type(ClientError), # Retry on ClientError
+    wait=wait_exponential(multiplier=2, min=4, max=30), # Wait 4s, 8s, 16s...
+    stop=stop_after_attempt(3), # Give up after 3 tries
+)
 def execute_sub_agent(agent: LlmAgent, prompt_text: str) -> str:
     """
     Runs a sub-agent by spinning up a temporary async loop in a SEPARATE THREAD.
@@ -51,7 +66,7 @@ def execute_sub_agent(agent: LlmAgent, prompt_text: str) -> str:
             if event.content and event.content.parts:
                 for part in event.content.parts:
                     if part.text:
-                        result_text = part.text
+                        result_text += part.text
         return result_text
 
     # Execute the async logic in a separate thread to avoid loop conflicts
