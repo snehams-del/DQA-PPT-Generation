@@ -22,20 +22,17 @@ os.environ.setdefault("GOOGLE_CLOUD_PROJECT", project_id)
 os.environ.setdefault("GOOGLE_CLOUD_LOCATION", "global")
 os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "True")
 
-
 @dataclass
-class ModelConfiguration:
+class SecurityAuditConfig:  
     """Configuration for red team security models and parameters.
 
     Attributes:
-        critic_model (str): Model for evaluation and red team tasks.
-        worker_model (str): Model for target tasks.
-        max_search_iterations (int): Maximum search iterations allowed.
+        evaluator_model: The model used for evaluating security vulnerabilities.
+        red_team_model: The model used for generating red team attacks.
+        target_model: The target model being audited for security vulnerabilities.
     """
+    evaluator_model: str = "gemini-2.5-pro"      
+    red_team_model: str = "gemini-2.5-pro"       
+    target_model: str = "gemini-2.5-flash"       
 
-    critic_model: str = "gemini-2.5-pro"
-    worker_model: str = "gemini-2.5-flash"
-    max_search_iterations: int = 5
-
-
-config = ModelConfiguration()
+config = SecurityAuditConfig()

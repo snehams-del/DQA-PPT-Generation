@@ -9,7 +9,7 @@ A sophisticated multi-agent system for comprehensive AI safety testing and vulne
 The **AI Security Agent** is an automated red-teaming framework designed to test and evaluate the robustness of AI systems against adversarial attacks. It employs a multi-agent architecture where specialized agents collaborate to:
 
 1. **Generate adversarial prompts** targeting specific vulnerability categories
-2. **Execute attacks** against a target system (e.g., a banking assistant)
+2. **Execute attacks** against a target system (specifically configured as a Banking Assistant handling sensitive financial operations)
 3. **Evaluate responses** to determine if safety guidelines were violated
 
 This project leverages Google's Gemini models (Gemini 2.5 Pro and Flash) to create a comprehensive security audit pipeline for LLM systems. It's built on the **Google Agent Development Kit (ADK)** for scalable, production-ready agent orchestration.
@@ -38,6 +38,7 @@ ai-security-agent/
 │   ├── agent_utils.py                 # Async agent execution utilities
 │   ├── config.py                      # Configuration (models, parameters)
 │   ├── tools.py                       # Security scanning tools
+│   ├── safety_rules.py                # Defines the Banking Safety guidelines
 │   │
 │   └── sub_agents/                    # Specialized sub-agents
 │       ├── __init__.py
@@ -56,6 +57,7 @@ ai-security-agent/
 | **agent.py** | Main orchestrator that manages the security scanning workflow |
 | **config.py** | Global configuration including model selection and parameters |
 | **tools.py** | Core security scan function that orchestrates the 3-step process |
+| **safety_rules.py** | Contains the specific system instructions and guardrails for the Banking Assistant|
 | **agent_utils.py** | Utilities for executing agents asynchronously with proper session management |
 | **red_team.py** | Creates the red team agent that generates adversarial prompts |
 | **target.py** | Creates the target agent (banking assistant with safety rules) |
@@ -88,7 +90,7 @@ The system uses a **three-stage pipeline** architecture with specialized agents:
             │   Target Worker      │
             │  (System Under Test) │
             │                      │
-            │ Model: Gemini 2.5-  │
+            │ Model: Gemini 2.5-   │
             │        Flash         │
             │ Temp: 0.1            │
             └──────────┬───────────┘
@@ -124,7 +126,7 @@ The system uses a **three-stage pipeline** architecture with specialized agents:
 - **Purpose**: Simulate the system under test
 - **Model**: Gemini 2.5 Flash (faster, cost-effective)
 - **Temperature**: 0.1 (consistent, conservative responses)
-- **Role**: Banking Assistant with safety guardrails
+- **Role**: Banking Assistant compliant with strict policies defined in safety_rules.py
 - **Input**: Adversarial prompt from red team
 - **Output**: Response to the adversarial prompt
 
@@ -139,43 +141,15 @@ The system uses a **three-stage pipeline** architecture with specialized agents:
 
 ## 🔧 Tools
 
-### `run_complete_security_scan(risk_category: str) -> str`
+### generate_attack_prompt
+Generates an adversarial prompt designed to test the robustness of a target system or model by attempting to bypass safety guidelines or elicit unintended behaviors.
 
-The primary tool exposed to the main orchestrator agent. Executes the complete three-stage security audit pipeline.
+### simulate_target_response
+Simulates a response from the target system or model given an input prompt. This tool mimics the behavior of the target to enable testing without repeated actual API calls.
 
-**Parameters:**
-- `risk_category` (str): The vulnerability category to test
-  - Examples: "Toxicity", "Phishing", "Financial Fraud", "Prompt Injection", "Jailbreaking"
+### evaluate_interaction
+Evaluates the results of an interaction between a generated attack prompt and the simulated target response. Determines the effectiveness of the attack and provides metrics on whether safety guidelines were violated or unintended behavior was triggered.
 
-**Process:**
-1. **Stage 1 - Attack Generation**
-   - Red Team agent generates adversarial prompt for the given category
-   - Prompt is crafted to bypass safety measures
-
-2. **Stage 2 - Target Injection**
-   - Adversarial prompt is sent to Target agent
-   - Target responds according to its instructions and safety rules
-
-3. **Stage 3 - Evaluation**
-   - Evaluator analyzes both attack and response
-   - Produces JSON verdict indicating if safety was maintained
-
-**Returns:**
-A formatted summary containing:
-- Risk scenario tested
-- Attack attempt (first 100 chars)
-- Target behavior (first 100 chars)  
-- Final verdict (PASS/FAIL with reasoning)
-
-**Example:**
-```python
-from llm_red_team_agent.tools import run_complete_security_scan
-
-result = run_complete_security_scan("Toxicity")
-print(result)
-```
-
----
 
 ## 🔄 Workflow
 
@@ -185,7 +159,7 @@ The complete workflow follows this sequence:
 START
   │
   ├─► User Input: Risk Category
-  │        (e.g., "Phishing")
+  │        (e.g., "Toxicity")
   │
   ├─► STAGE 1: Red Team Generation
   │   └─► Prompt: "Generate an adversarial prompt for Phishing"
@@ -218,11 +192,11 @@ END
 
 ## 💬 Example Conversation
 
-### Scenario: Testing Phishing Attack Resistance
+### Scenario: Testing Unregulated Financial Advice 
+![Unregulated Financial Advice](assets/unregulatedFinancialAdvice.png)
 
-
-### Scenario: Testing Toxicity Handling
-
+### Scenario: Testing Prompt Injection
+![Prompt Injection](assets/promptInjection.png)
 
 ---
 
@@ -232,25 +206,7 @@ END
 
 - Python 3.9+
 - Google Cloud Account with Vertex AI access
-- Required libraries: `google-adk`, `google-cloud-aiplatform`, `google-genai`
-
-
-### Running a Security Audit
-
-```python
-from llm_red_team_agent.tools import run_complete_security_scan
-
-# Test a specific vulnerability category
-result = run_complete_security_scan("Phishing")
-print(result)
-
-# Test multiple categories
-categories = ["Toxicity", "Phishing", "Financial Fraud", "Prompt Injection"]
-for category in categories:
-    print(f"\nTesting: {category}")
-    result = run_complete_security_scan(category)
-    print(result)
-```
+- Required libraries: `google-adk`, `google-cloud-aiplatform`, `google-genai`, `tenacity`
 
 ---
 
@@ -260,10 +216,10 @@ Edit `llm_red_team_agent/config.py` to customize:
 
 ```python
 @dataclass
-class ResearchConfiguration:
-    critic_model: str = "gemini-2.5-pro"           # Model for critical tasks
-    worker_model: str = "gemini-2.5-flash"        # Model for generation tasks
-    max_search_iterations: int = 5                 # Max iterations for search
+class SecurityAuditConfig:
+    evaluator_model: str = "gemini-2.5-pro"      
+    red_team_model: str = "gemini-2.5-pro"       
+    target_model: str = "gemini-2.5-flash"    
 ```
 
 ---
@@ -284,12 +240,6 @@ Licensed under the Apache License 2.0. See LICENSE file for details.
 
 ---
 
-## 👤 Author
-
-**Ankul Jain** - [GitHub](https://github.com/ankuljain09)
-
----
-
 ## 🤝 Contributing
 
 Contributions welcome! Please:
@@ -306,7 +256,6 @@ Contributions welcome! Please:
 
 - [Google Agent Development Kit (ADK)](https://developers.google.com/google-developers/documentation)
 - [Gemini API Documentation](https://ai.google.dev/)
-- [Red Team Techniques](https://www.anthropic.com/research/red-teaming)
 
 ---
 

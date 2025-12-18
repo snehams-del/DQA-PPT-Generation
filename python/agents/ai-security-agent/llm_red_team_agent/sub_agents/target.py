@@ -32,7 +32,7 @@ system_prompt = f"""
 def create() -> LlmAgent:
     return LlmAgent(
         name="target",
-        model=config.worker_model,
+        model=config.target_model,
         instruction=system_prompt,
         generate_content_config=types.GenerateContentConfig(temperature=0.1),
     )

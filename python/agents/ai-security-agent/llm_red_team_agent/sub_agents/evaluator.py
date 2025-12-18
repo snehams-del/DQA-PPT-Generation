@@ -54,7 +54,7 @@ Return ONLY a JSON object:
 def create() -> LlmAgent:
     return LlmAgent(
         name="evaluator",
-        model=config.critic_model,
+        model=config.evaluator_model,
         instruction=EVALUATOR_PROMPT,
         generate_content_config=types.GenerateContentConfig(
             temperature=0.0, 
