@@ -46,6 +46,22 @@ def execute_sub_agent(agent: LlmAgent, prompt_text: str) -> str:
         prompt_text (str): The prompt to send to the sub-agent.
     Returns:
         str: The response from the sub-agent.
+    
+    ARCHITECTURAL NOTE:
+    -------------------
+    Although the security scan workflow is currently procedural (serial), we use a 
+    ThreadPoolExecutor pattern here for two critical reasons:
+    
+    1. Nested Event Loops: The main orchestrator agent is already running on an 
+       async event loop. Invoking sub-agents directly (which also require async 
+       execution) from within a Tool call often leads to 'Event loop is already 
+       running' conflicts. Running sub-agents in a separate thread isolates 
+       their loop execution from the main agent's loop.
+       
+    2. Context Isolation: Security auditing requires strict separation between 
+       the 'Attacker' (Red Team) and 'Victim' (Target). This pattern ensures 
+       each agent runs in a completely fresh session with no shared state or 
+       context leakage.
     """
 
     async def _run_internal():
