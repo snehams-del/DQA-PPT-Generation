@@ -58,18 +58,14 @@ def create_cluster(
         master_config = InstanceGroupConfig(
             num_instances=cluster_config.get("num_instances_master"),
             machine_type_uri=cluster_config.get("machine_type_master"),
-            disk_config=DiskConfig(
-                boot_disk_size_gb=cluster_config.get("boot_disk_size_master")
-            ),
+            disk_config=DiskConfig(boot_disk_size_gb=cluster_config.get("boot_disk_size_master")),
         )
 
         # Define the configuration for the worker nodes
         worker_config = InstanceGroupConfig(
             num_instances=cluster_config.get("num_instances_worker"),
             machine_type_uri=cluster_config.get("machine_type_worker"),
-            disk_config=DiskConfig(
-                boot_disk_size_gb=cluster_config.get("boot_disk_size_worker")
-            ),
+            disk_config=DiskConfig(boot_disk_size_gb=cluster_config.get("boot_disk_size_worker")),
         )
 
         # Define the GCE (Compute Engine) configuration for the cluster
@@ -114,9 +110,7 @@ def create_cluster(
                 master_config=master_config,
                 worker_config=worker_config,
                 software_config=software_config,
-                initialization_actions=(
-                    initialization_actions if initialization_actions else None
-                ),
+                initialization_actions=(initialization_actions if initialization_actions else None),
             ),
         )
 
@@ -159,15 +153,11 @@ def create_cluster(
         )
         return {
             "status": "error",
-            "error_message": (
-                f"An unexpected error occurred during cluster creation: {str(e)}"
-            ),
+            "error_message": (f"An unexpected error occurred during cluster creation: {str(e)}"),
         }
 
 
-def cluster_exists_or_not(
-    project_id: str, region: str, cluster_name: str
-) -> dict[str, Any]:
+def cluster_exists_or_not(project_id: str, region: str, cluster_name: str) -> dict[str, Any]:
     """
     Checks if a Dataproc cluster exists.
 
@@ -184,9 +174,7 @@ def cluster_exists_or_not(
         cluster_client = get_cluster_client(region)
 
         # Attempt to fetch the cluster details
-        cluster_client.get_cluster(
-            project_id=project_id, region=region, cluster_name=cluster_name
-        )
+        cluster_client.get_cluster(project_id=project_id, region=region, cluster_name=cluster_name)
 
         # If no exception is raised, the cluster exists
         return {
@@ -199,9 +187,7 @@ def cluster_exists_or_not(
         return {
             "status": "success",
             "exists": False,
-            "message": (
-                f"Cluster '{cluster_name}' does not exist in region '{region}'."
-            ),
+            "message": (f"Cluster '{cluster_name}' does not exist in region '{region}'."),
         }
 
     except GoogleAPICallError as apierror:
@@ -280,9 +266,7 @@ def list_clusters(project_id: str, region: str) -> dict[str, Any]:
         )
         return {
             "status": "error",
-            "error_message": (
-                f"An unexpected error occurred while listing clusters: {str(e)}"
-            ),
+            "error_message": (f"An unexpected error occurred while listing clusters: {str(e)}"),
         }
 
 
@@ -317,9 +301,7 @@ def start_stop_cluster(
             operation.result()
             return {
                 "status": "success",
-                "report": (
-                    f"Cluster '{cluster_name}' started successfully in region '{region}'."
-                ),
+                "report": (f"Cluster '{cluster_name}' started successfully in region '{region}'."),
             }
 
         if action.lower() == "stop":
@@ -334,14 +316,10 @@ def start_stop_cluster(
             operation.result()
             return {
                 "status": "success",
-                "report": (
-                    f"Cluster '{cluster_name}' stopped successfully in region '{region}'."
-                ),
+                "report": (f"Cluster '{cluster_name}' stopped successfully in region '{region}'."),
             }
 
-        raise Exception(
-            "Invalid action. Use 'start' or 'stop'."
-        )  # pylint: disable=broad-exception-raised
+        raise Exception("Invalid action. Use 'start' or 'stop'.")  # pylint: disable=broad-exception-raised
 
     except GoogleAPICallError as apierror:
         logger.error(
@@ -444,12 +422,8 @@ def update_cluster(
             "status": updated_cluster.status.state.name,
             "config": {
                 "worker_config": {
-                    "num_instances": (
-                        updated_cluster.config.worker_config.num_instances
-                    ),
-                    "machine_type_uri": (
-                        updated_cluster.config.worker_config.machine_type_uri
-                    ),
+                    "num_instances": (updated_cluster.config.worker_config.num_instances),
+                    "machine_type_uri": (updated_cluster.config.worker_config.machine_type_uri),
                     "disk_config": {
                         "boot_disk_size_gb": (
                             updated_cluster.config.worker_config.disk_config.boot_disk_size_gb
@@ -461,9 +435,7 @@ def update_cluster(
 
         return {
             "status": "success",
-            "report": (
-                f"Cluster '{cluster_name}' updated successfully in region '{region}'."
-            ),
+            "report": (f"Cluster '{cluster_name}' updated successfully in region '{region}'."),
             "details": cluster_details,
         }
 
@@ -487,15 +459,11 @@ def update_cluster(
         )
         return {
             "status": "error",
-            "error_message": (
-                f"An unexpected error occurred during cluster update: {str(e)}"
-            ),
+            "error_message": (f"An unexpected error occurred during cluster update: {str(e)}"),
         }
 
 
-def get_cluster_details(
-    project_id: str, region: str, cluster_name: str
-) -> dict[str, Any]:
+def get_cluster_details(project_id: str, region: str, cluster_name: str) -> dict[str, Any]:
     """
     Gets the details of a Dataproc cluster.
 
@@ -600,9 +568,7 @@ def delete_cluster(project_id: str, region: str, cluster_name: str) -> dict[str,
 
         return {
             "status": "success",
-            "report": (
-                f"Cluster '{cluster_name}' deleted successfully in region '{region}'."
-            ),
+            "report": (f"Cluster '{cluster_name}' deleted successfully in region '{region}'."),
         }
 
     except GoogleAPICallError as apierror:
@@ -625,7 +591,5 @@ def delete_cluster(project_id: str, region: str, cluster_name: str) -> dict[str,
         )
         return {
             "status": "error",
-            "error_message": (
-                f"An unexpected error occurred while deleting the cluster: {str(e)}"
-            ),
+            "error_message": (f"An unexpected error occurred while deleting the cluster: {str(e)}"),
         }

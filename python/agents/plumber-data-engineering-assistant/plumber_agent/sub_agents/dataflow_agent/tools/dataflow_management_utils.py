@@ -76,9 +76,7 @@ def list_dataflow_jobs(
             ]
 
         search_scope = (
-            "in all regions"
-            if search_location == "-"
-            else f"in location '{search_location}'"
+            "in all regions" if search_location == "-" else f"in location '{search_location}'"
         )
 
         if not jobs:
@@ -99,15 +97,11 @@ def list_dataflow_jobs(
         logger.error("An error occurred: %s", e, exc_info=True)
         return {
             "status": "error",
-            "error_message": (
-                f"API Error listing jobs: {e.reason} (Code: {e.status_code})"
-            ),
+            "error_message": (f"API Error listing jobs: {e.reason} (Code: {e.status_code})"),
         }
 
 
-def get_dataflow_job_details(
-    project_id: str, job_id: str, location: str
-) -> dict[str, str]:
+def get_dataflow_job_details(project_id: str, job_id: str, location: str) -> dict[str, str]:
     """
     Retrieves detailed information and metrics for a specific Google Cloud
     Dataflow job.
@@ -270,7 +264,5 @@ def cancel_dataflow_job(project_id: str, job_id: str, location: str) -> dict[str
             }
         return {
             "status": "error",
-            "error_message": (
-                f"API Error cancelling job: {e.reason} (Code: {e.status_code})"
-            ),
+            "error_message": (f"API Error cancelling job: {e.reason} (Code: {e.status_code})"),
         }
