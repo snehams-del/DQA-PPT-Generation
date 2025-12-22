@@ -1,6 +1,9 @@
 import json
 
-from policy_as_code_agent.utils.llm import generate_sample_values_str, get_json_schema_from_content
+from policy_as_code_agent.utils.llm import (
+    generate_sample_values_str,
+    get_json_schema_from_content,
+)
 
 
 def test_generate_sample_values_picks_representative():

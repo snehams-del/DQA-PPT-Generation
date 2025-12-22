@@ -21,9 +21,6 @@ from .config import (
     PROMPT_INSTRUCTION_FILE,
     PROMPT_REMEDIATION_FILE,
 )
-from .utils.dataplex import entry_to_dict, get_project_id
-from .utils.gcs import get_content_from_gcs_for_schema, load_metadata
-from .utils.llm import get_json_schema_from_content, llm_generate_policy_code
 from .mcp import _get_dataplex_mcp_toolset
 from .memory import (
     add_core_policy,
@@ -40,6 +37,9 @@ from .memory import (
     save_core_policies,
     save_policy_to_memory,
 )
+from .utils.dataplex import entry_to_dict, get_project_id
+from .utils.gcs import get_content_from_gcs_for_schema, load_metadata
+from .utils.llm import get_json_schema_from_content, llm_generate_policy_code
 
 # Initialize Vertex AI globally to ensure all clients (including ADK's memory service)
 # use the correct project and location.
