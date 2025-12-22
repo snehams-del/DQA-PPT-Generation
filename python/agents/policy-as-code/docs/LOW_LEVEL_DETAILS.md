@@ -77,11 +77,11 @@ To enhance efficiency and provide a consistent user experience, the agent includ
 **C. `configurations/core_policies` Document**
 *   `policies` (Array[String]): List of active "Core Policy" queries.
 
-### 4. LLM & Code Generation (`policy_as_code/llm_utils.py`)
+### 4. LLM & Code Generation (`policy_as_code/utils/llm.py`)
 
 The agent uses a sophisticated prompt engineering approach to generate accurate Python code.
 
-*   **Prompt Template:** Located at `prompts/code_generation/v4.md`.
+*   **Prompt Template:** Located at `prompts/code_generation.md`.
 *   **Dynamic Injection:**
     *   `{{USER_POLICY_QUERY}}`: The user's request.
     *   `{{INFERRED_JSON_SCHEMA}}`: A JSON schema derived from the actual metadata.

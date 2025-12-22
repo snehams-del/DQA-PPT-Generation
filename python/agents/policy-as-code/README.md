@@ -8,30 +8,38 @@ Follow these steps to get the agent up and running locally using the **Agent Dev
 
 ### 1. Prerequisites
 
-*   **Python 3.9+**
+*   **Python 3.11+**
 *   **Google Cloud SDK (`gcloud`)** installed and authenticated.
 *   **Git**
+*   **uv** (Recommended for dependency management) or standard `pip`.
 
 ### 2. Installation
 
 Clone the repository and navigate to the agent's directory:
 
 ```bash
-# Clone the repository (replace with your repo URL)
+# Clone the repository
 git clone https://github.com/google/adk-samples.git
 cd adk-samples/python/agents/policy-as-code
 ```
 
-Set up a virtual environment and install dependencies:
+Set up a virtual environment and install dependencies.
 
+Using `uv` (Recommended):
 ```bash
-# Install dependencies
 uv sync
+```
+
+Using `pip`:
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install .
 ```
 
 ### 3. Configuration
 
-The agent requires a few environment variables to function (e.g., your GCP Project ID).
+The agent requires a few environment variables to function.
 
 1.  Copy the example configuration file:
     ```bash
@@ -39,8 +47,8 @@ The agent requires a few environment variables to function (e.g., your GCP Proje
     ```
 
 2.  Open `.env` and fill in your details:
-    *   `GCP_PROJECT`: Your Google Cloud Project ID.
-    *   `GCP_REGION`: (e.g., `us-central1`).
+    *   `GOOGLE_CLOUD_PROJECT`: Your Google Cloud Project ID.
+    *   `GOOGLE_CLOUD_LOCATION`: (e.g., `us-central1`).
     *   `ENABLE_MEMORY_BANK`: Set to `True` to enable long-term memory (requires Firestore). Set to `False` to run without it. See [Memory Integration](./docs/MEMORY_INTEGRATION.md) for details.
     *   `FIRESTORE_DATABASE`: (Optional) Leave as `(default)` unless using a named database.
 
@@ -53,14 +61,27 @@ The agent requires a few environment variables to function (e.g., your GCP Proje
 
 Start the agent using the ADK web interface.
 
+**Using `uv` (Recommended):**
 ```bash
+uv run adk web
+```
+
+**Using `pip`:**
+```bash
+# Ensure your virtual environment is activated
 adk web
 ```
 
 **Optional:** To enable short-term contextual memory (Agent Engine) for better conversation history, add the `--memory_service_uri` flag:
 
+**Using `uv`:**
 ```bash
-adk web . --memory_service_uri="agentengine://AGENT_ENGINE_ID"
+uv run adk web --memory_service_uri="agentengine://AGENT_ENGINE_ID"
+```
+
+**Using `pip`:**
+```bash
+adk web --memory_service_uri="agentengine://AGENT_ENGINE_ID"
 ```
 
 This will start a local web server (usually at `http://localhost:3000` or `http://127.0.0.1:5000`). Open the URL in your browser to chat with the agent!
@@ -93,7 +114,7 @@ The agent is built using the **Google Cloud Agent Development Kit (ADK)** and le
 *   `policy_as_code_agent/`
     *   `agent.py`: Entry point and core agent definition.
     *   `memory.py`: Handles Firestore interactions (saving/retrieving policies).
-    *   `llm_utils.py`: Logic for prompting Gemini to generate code.
+    *   `utils/`: Utility modules for LLM logic, Dataplex, GCS, and common tools.
     *   `simulation.py`: Sandboxed execution engine for running policy code.
     *   `prompts/`: Markdown templates for LLM instructions.
 *   `tests/`: Unit and integration tests.
@@ -103,6 +124,12 @@ The agent is built using the **Google Cloud Agent Development Kit (ADK)** and le
 
 To run the test suite and ensure everything is working correctly:
 
+**Using `uv` (Recommended):**
+```bash
+uv run pytest
+```
+
+**Using `pip`:**
 ```bash
 pytest
 ```
@@ -112,4 +139,4 @@ pytest
 For deep dives into the implementation, check the `docs/` folder:
 - [High-Level Architecture](./docs/HIGH_LEVEL_DETAILS.md)
 - [Low-Level Implementation](./docs/LOW_LEVEL_DETAILS.md)
-- [Design Iterations](./docs/ITERATIONS.md)
+- [Memory Implementation](./docs/MEMORY_IMPLEMENTATION.md)

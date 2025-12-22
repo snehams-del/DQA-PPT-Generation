@@ -5,10 +5,10 @@ import re
 import vertexai
 from vertexai.generative_models import GenerativeModel
 
-from .config import GEMINI_MODEL_PRO, LOCATION, PROJECT_ID, PROMPT_CODE_GENERATION_FILE
-from .utils.json_utils import traverse
+from ..config import GEMINI_MODEL_PRO, LOCATION, PROJECT_ID, PROMPT_CODE_GENERATION_FILE
+from .json_tools import traverse
 
-script_dir = os.path.dirname(os.path.abspath(__file__))
+script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 def generate_sample_values_str(metadata_sample: list) -> str:
@@ -116,12 +116,13 @@ def llm_generate_policy_code(query: str, schema: dict, metadata_sample: list) ->
     # Load the prompt from the file
     try:
         prompt_path = os.path.join(
-            script_dir, "prompts", "code_generation", PROMPT_CODE_GENERATION_FILE
+            script_dir, "prompts", PROMPT_CODE_GENERATION_FILE
         )
+
         with open(prompt_path, "r") as f:
             prompt_template = f.read()
     except FileNotFoundError:
-        return f"# Error: Prompt file not found at prompts/code_generation/{PROMPT_CODE_GENERATION_FILE}"
+        return f"# Error: Prompt file not found at prompts/{PROMPT_CODE_GENERATION_FILE}"
 
     # Replace placeholders in the prompt
     prompt = prompt_template.replace("{{INFERRED_JSON_SCHEMA}}", schema_str)
