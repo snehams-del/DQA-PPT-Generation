@@ -1,0 +1,9 @@
+[project]
+name = "long-term-memory"
+version = "0.1.0"
+description = "Personal Assistant who remembers my preference to plan my itinerary accordingly"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "cognee-integration-google-adk>=0.1.1",
+]
