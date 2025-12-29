@@ -239,6 +239,17 @@ The application runs inside a secure, non-root container environment:
 > **Note on Environment Variables:**
 > Since the `Dockerfile` copies local files (`COPY . .`), your local `.config` file will be included in the container. For production environments, it is recommended to exclude `.config` via `.dockerignore` and set secrets directly in the Cloud Run configuration using Google Secret Manager.
 
+## Usage
+
+1. Open the URL of the App once deployed using the Cloud Run URL. 
+2. Simply ask: "Hi. What can you do?", & the Agent responds with the steps.
+3. The idea flow is: you ask to generate dummy data, followed by running SFT, and lastly to evaluate the model.
+4. All operations run in the background and information is shown over in the UI.
+
+> **Note:** 
+> In the current/initial version, the UI is `stateful` in its responses - I.e., it waits for all operations in the backend, and comes back with the
+status only once the backend task (like generating data or fine tuning a model, for examples) are completed on Vertex AI. 
+
 ## 📂 Project Structure
 
 ```text
