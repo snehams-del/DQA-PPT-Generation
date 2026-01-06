@@ -112,8 +112,12 @@ echo "🤖 Populating BigQuery table using Gemini..."
 # Install required Python libraries
 echo "   -> Installing Python dependencies..."
 
+# Check if uv command exists
+if command -v uv &>/dev/null; then
+    echo "Using uv pip..."
+    pip_cmd="uv pip"
 # Check if pip3 command exists
-if command -v pip3 &>/dev/null; then
+elif command -v pip3 &>/dev/null; then
     echo "Using pip3..."
     pip_cmd="pip3"
 # If pip3 is not found, check for pip
@@ -121,11 +125,15 @@ elif command -v pip &>/dev/null; then
     echo "Using pip..."
     pip_cmd="pip"
 else
-    echo "Error: pip or pip3 not found. Please install Python and pip."
+    echo "Error: uv, pip, or pip3 not found. Please install uv or Python and pip."
     exit 1
 fi
 
-"$pip_cmd" install --upgrade --user -q google-genai google-cloud-bigquery google-cloud-storage
+if [[ "$pip_cmd" == "uv pip" ]]; then
+    $pip_cmd install --upgrade -q google-genai google-cloud-bigquery google-cloud-storage
+else
+    "$pip_cmd" install --upgrade --user -q google-genai google-cloud-bigquery google-cloud-storage
+fi
 
 # Run the Python script
 echo "   -> Running Python script to populate BigQuery..."

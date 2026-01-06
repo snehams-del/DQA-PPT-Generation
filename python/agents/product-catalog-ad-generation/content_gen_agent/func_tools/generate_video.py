@@ -85,7 +85,7 @@ async def _monitor_video_operation(
     """Monitors a video generation operation until completion.
 
     Args:
-        operation (operation.Operation): The video generation operation to monitor.
+        operation (operation.Operation): The video operation to monitor.
         image_identifier (str): An identifier for the image being processed.
         vertex_client (genai.Client): The Vertex AI client.
 
@@ -110,7 +110,9 @@ async def _monitor_video_operation(
     if operation.error:
         error_message = operation.error.get("message", str(operation.error))
         logging.error(
-            "Operation for %s failed with error: %s", image_identifier, error_message
+            "Operation for %s failed with error: %s",
+            image_identifier,
+            error_message,
         )
         return None, error_message
     if not (operation.result and hasattr(operation.result, "generated_videos")):
@@ -143,7 +145,7 @@ async def _generate_single_video(
     """Generates a single video from a given image and prompt.
 
     Args:
-        video_input (VideoGenerationInput): The input parameters for video generation.
+        video_input (VideoGenerationInput): Input params for video generation.
         tool_context (ToolContext): The context for artifact management.
         vertex_client (genai.Client): The Vertex AI client.
 
@@ -215,16 +217,13 @@ def _get_image_sources(
     else:
         image_filenames = [f"{i}_.png" for i in range(num_images)]
 
-    image_sources = [("artifact", name) for name in image_filenames]
+    image_sources = image_filenames
     if not image_sources:
-        image_sources = [
-            ("gcs", uri) for uri in _get_gcs_files(GCS_TEMPLATE_IMAGE_FOLDER)
-        ]
+        image_sources = _get_gcs_files(GCS_TEMPLATE_IMAGE_FOLDER)
     return image_sources
 
 
 async def _process_video_source(
-    source_type: str,
     source_path: str,
     video_query: str,
     tool_context: ToolContext,
@@ -235,10 +234,10 @@ async def _process_video_source(
     """Loads image and prepares video generation input."""
     try:
         image_bytes, identifier, mime_type = await load_image_resource(
-            source_type, source_path, tool_context
+            source_path, tool_context
         )
         if not image_bytes:
-            return None, {"source": source_path, "reason": "Could not load image"}
+            return None, {"source": source_path, "reason": "Failed image load"}
 
         duration = 6 if logo_prompt_present and is_last_image else 4
         video_input = VideoGenerationInput(
@@ -253,7 +252,7 @@ async def _process_video_source(
 
 
 async def _create_video_tasks(
-    image_sources: List[Tuple[str, str]],
+    image_sources: List[str],
     video_queries: List[str],
     tool_context: ToolContext,
     vertex_client: genai.Client,
@@ -269,12 +268,11 @@ async def _create_video_tasks(
     task_sources = []
     failed_videos = []
 
-    for i, (source_type, source_path) in enumerate(image_sources):
+    for i, source_path in enumerate(image_sources):
         if i >= len(video_queries):
             break
 
         video_input, failure = await _process_video_source(
-            source_type,
             source_path,
             video_queries[i],
             tool_context,
@@ -334,24 +332,25 @@ async def generate_video(
 
     Args:
         video_queries (List[str]): A list of prompts for video generation.
-            - Each video query should only describe a 4 second scene, so describe a
-              quick scene with only one setting.
-            - Be VERY descriptive in what movements and camera angles you expect and
-              what should not move in the scene. Describe who/what is causing the
-              movement.
-            - It will use the image as a starting point. Be clear about how the scene
-              transitions and keep it on theme.
-            - Character names won't be understood here, use pronouns + descriptions to
-              detail actions.
-            - Make sure to mention that there should be no text or logos added to the
-              video, except for the logo video where you should ensure the logo is
-              always present for the entire duration of the video.
-            - Explicitly ground each of your prompts to follow the laws of physics.
+            - Each video query should only describe a 4 second scene, so
+              describe a quick scene with only one setting.
+            - Be VERY descriptive in what movements and camera angles you
+              expect and what should not move in the scene. Describe who/what
+              is causing the movement.
+            - It will use the image as a starting point. Be clear about how
+              the scene transitions and keep it on theme.
+            - Character names won't be understood here, use pronouns +
+              descriptions to detail actions.
+            - Make sure to mention that there should be no text or logos added
+              to the video, except for the logo video where you should ensure
+              the logo is always present for the entire duration of the video.
+            - Explicitly ground each of your prompts to follow the laws of
+              physics.
         tool_context (ToolContext): The context for artifact management.
         num_images (int): The total number of images available.
-        scene_numbers (Optional[List[int]]): A list of specific 0-indexed scene numbers to
-            generate videos for. If None, generates for all images. Must be in
-            ascending order. Defaults to None.
+        scene_numbers (Optional[List[int]]): A list of specific 0-indexed scene
+            numbers to generate videos for. If None, generates for all images.
+            Must be in ascending order. Defaults to None.
         logo_prompt_present (bool): If true, the logo scene number must be
             included in scene_numbers. Defaults to True.
 
@@ -363,7 +362,11 @@ async def generate_video(
     vertex_client = _initialize_vertex_client()
 
     tasks, task_sources, failed_videos = await _create_video_tasks(
-        image_sources, video_queries, tool_context, vertex_client, logo_prompt_present
+        image_sources,
+        video_queries,
+        tool_context,
+        vertex_client,
+        logo_prompt_present,
     )
 
     successful_videos = []
