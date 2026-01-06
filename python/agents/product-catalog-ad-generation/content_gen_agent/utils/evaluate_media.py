@@ -11,7 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Performs quality assurance checks on generated media using a generative model."""
+"""Performs quality assurance checks on generated media using a generative
+model."""
 
 import logging
 from typing import Literal, Optional
@@ -26,7 +27,7 @@ from pydantic import BaseModel
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
-EVALUATION_MODEL = "gemini-2.5-flash"
+EVALUATION_MODEL = "gemini-3-flash-preview"
 
 
 class EvalResult(BaseModel):
@@ -56,11 +57,13 @@ def _get_internal_prompt(mime_type: str, evaluation_criteria: str) -> str:
         return get_image_evaluation_prompt(evaluation_criteria)
     return f"""
     You are a strict Quality Assurance specialist.
-    Evaluate the following media based on this single criterion: '{evaluation_criteria}'.
+    Evaluate the following media based on this single criterion:
+    '{evaluation_criteria}'.
 
     Your response must be in JSON.
     - If the media passes, respond with: {{"decision": "Pass"}}
-    - If it fails, respond with: {{"decision": "Fail", "reason": "A concise explanation."}}
+    - If it fails, respond with:
+      {{"decision": "Fail", "reason": "A concise explanation."}}
     """
 
 
@@ -72,7 +75,7 @@ async def evaluate_media(
     Args:
         media_bytes: The media content as bytes.
         mime_type: The MIME type of the media.
-        evaluation_criteria: The rule or question to evaluate the media against.
+        evaluation_criteria: The rule or question to evaluate media against.
 
     Returns:
         An instance of EvalResult, or None on failure.
