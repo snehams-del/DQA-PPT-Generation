@@ -38,6 +38,11 @@ This project contains default product imagery and a corporate logo that will get
 └── ...
 ```
 
+## Requirements
+
+Before you begin, ensure you have:
+- **Google Cloud SDK**: For GCP services - [Install](https://cloud.google.com/sdk/docs/install)
+
 ## Setup Scripts
 
 The `scripts/` directory contains a series of automation scripts to set up the necessary Google Cloud infrastructure for the project. These scripts must be run in order.
@@ -146,7 +151,7 @@ Similarly, you can provide a product photo either directly through the ADK web U
 
 The behavior of the agent is influenced by several hardcoded configurations in the `content_gen_agent` directory:
 
--   **Models**: The agent uses `gemini-2.5-pro` for storyline generation and `gemini-3-pro-image-preview` for image generation. The video generation is handled by `veo-3.1-generate-preview`, and the audio is generated using `lyria-002` and `gemini-2.5-flash-preview-tts`.
+-   **Models**: The agent uses `gemini-3-flash-preview` for storyline generation and `gemini-3-pro-image-preview` for image generation. The video generation is handled by `veo-3.1-generate-preview`, and the audio is generated using `lyria-002` and `gemini-2.5-flash-preview-tts`.  Note that some of these models may only be available in the "global" region of Google Cloud.
 -   **Company Name**: The `COMPANY_NAME` can be set in the `.env` file. If not set, it defaults to "ACME Corp". This influences the branding of the generated content.
 -   **Video Aspect Ratio**: All generated videos adhere to a `9:16` aspect ratio, suitable for short-form content platforms.
 -   **Logo**: The company logo is hardcoded in `static/uploads/branding/logo.png` and is uploaded to GCS during the `02-deploy-gcs-and-bq.sh` setup script.

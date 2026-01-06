@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Selects a product from BigQuery based on a product name."""
+
 import logging
 import os
 

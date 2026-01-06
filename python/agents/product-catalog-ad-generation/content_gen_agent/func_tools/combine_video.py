@@ -302,7 +302,11 @@ async def _combine_and_upload_video(
     try:
         final_clip = concatenate_videoclips(video_clips, method="compose")
         final_clip.audio = await _load_and_process_audio_clips(
-            audio_file, voiceover_file, final_clip.duration, tool_context, temp_dir
+            audio_file,
+            voiceover_file,
+            final_clip.duration,
+            tool_context,
+            temp_dir,
         )
 
         filename = f"combined_video_{int(time.time())}.mp4"

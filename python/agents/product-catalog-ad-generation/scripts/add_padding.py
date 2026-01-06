@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Adds whitespace padding to images to make them a 9:16 aspect ratio."""
+
 import logging
 import os
 
