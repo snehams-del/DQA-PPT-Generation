@@ -163,15 +163,6 @@ gs://<your-gcp-project-id>-contentgen-static/
 
 This organization allows for easy tracking of generated videos and ensures that each ad has a unique, timestamped folder.
 
-## Deployment
-
-You can deploy the agent using the `agent_engine_deploy.py` script. Make sure your environment is authenticated with Google Cloud.
-
-```bash
-gcloud config set project <your-dev-project-id>
-python agent_engine_deploy.py
-```
-
 ### Disclaimer
 
 This list is not an official Google product. Links on this list also are not necessarily to official Google products.
