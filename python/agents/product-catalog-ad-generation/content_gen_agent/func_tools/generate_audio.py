@@ -97,9 +97,7 @@ async def generate_audio(
                 MAX_RETRIES,
             )
             async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    url, headers=headers, json=payload
-                ) as resp:
+                async with session.post(url, headers=headers, json=payload) as resp:
                     if resp.status == 200:
                         data = await resp.json()
                         predictions = data.get("predictions")
@@ -107,9 +105,7 @@ async def generate_audio(
                             not predictions
                             or "bytesBase64Encoded" not in predictions[0]
                         ):
-                            logging.warning(
-                                "No audioContent in Lyria response."
-                            )
+                            logging.warning("No audioContent in Lyria response.")
                             raise ValueError("Invalid response format")
 
                         audio_b64 = predictions[0]["bytesBase64Encoded"]
@@ -152,8 +148,7 @@ async def generate_audio(
             if attempt < MAX_RETRIES - 1:
                 wait_time = (2**attempt) + random.uniform(0, 1)
                 logging.warning(
-                    "Attempt %s/%s failed with error: %s. "
-                    "Retrying in %.2f seconds...",
+                    "Attempt %s/%s failed with error: %s. Retrying in %.2f seconds...",
                     attempt + 1,
                     MAX_RETRIES,
                     e,
@@ -168,15 +163,11 @@ async def generate_audio(
                     exc_info=True,
                 )
 
-    logging.warning(
-        "Falling back to static audio: %s", STATIC_AUDIO_FALLBACK
-    )
+    logging.warning("Falling back to static audio: %s", STATIC_AUDIO_FALLBACK)
     return {"name": STATIC_AUDIO_FALLBACK}
 
 
-async def _generate_voiceover_content(
-    prompt: str, text: str
-) -> Optional[bytes]:
+async def _generate_voiceover_content(prompt: str, text: str) -> Optional[bytes]:
     """Synthesizes speech using Gemini-TTS.
 
     Args:
@@ -202,9 +193,7 @@ async def _generate_voiceover_content(
         )
         return response.audio_content
     except GoogleAPICallError as e:
-        logging.error(
-            "Failed to generate voiceover content: %s", e, exc_info=True
-        )
+        logging.error("Failed to generate voiceover content: %s", e, exc_info=True)
         return None
 
 
@@ -235,9 +224,7 @@ async def generate_voiceover(
         )
         return {"name": filename}
     except IOError as e:
-        logging.error(
-            "Error saving voiceover artifact: %s", e, exc_info=True
-        )
+        logging.error("Error saving voiceover artifact: %s", e, exc_info=True)
         return None
 
 
@@ -297,9 +284,7 @@ async def generate_audio_and_voiceover(
     if generation_mode in ["audio", "both"]:
         audio_res = results[result_index]
         if isinstance(audio_res, Exception) or not audio_res:
-            response["failures"].append(
-                f"audio: {audio_res or 'Unknown error'}"
-            )
+            response["failures"].append(f"audio: {audio_res or 'Unknown error'}")
             response["audio_name"] = STATIC_AUDIO_FALLBACK
         else:
             response["audio_name"] = audio_res["name"]
@@ -308,9 +293,7 @@ async def generate_audio_and_voiceover(
     if generation_mode in ["voiceover", "both"]:
         vo_res = results[result_index]
         if isinstance(vo_res, Exception) or not vo_res:
-            response["failures"].append(
-                f"voiceover: {vo_res or 'Unknown error'}"
-            )
+            response["failures"].append(f"voiceover: {vo_res or 'Unknown error'}")
         else:
             response["voiceover_name"] = vo_res["name"]
 

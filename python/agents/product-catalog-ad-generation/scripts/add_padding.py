@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Adds whitespace padding to images to make them a 9:16 aspect ratio."""
+
 import logging
 import os
 
@@ -60,9 +61,7 @@ def process_images_in_folder(input_folder, output_folder):
         os.makedirs(output_folder)
 
     for filename in os.listdir(input_folder):
-        if filename.lower().endswith(
-            (".png", ".jpg", ".jpeg", ".bmp", ".gif")
-        ):
+        if filename.lower().endswith((".png", ".jpg", ".jpeg", ".bmp", ".gif")):
             input_path = os.path.join(input_folder, filename)
             output_path = os.path.join(output_folder, filename)
             add_padding_to_image(input_path, output_path)

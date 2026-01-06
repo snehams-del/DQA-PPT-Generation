@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Utility functions for handling images."""
+
 import logging
 import os
 from typing import Optional, Tuple
@@ -44,9 +45,7 @@ async def _load_gcs_image(
         bucket_name, blob_name = gcs_uri.split("/", 1)
         blob = storage_client.bucket(bucket_name).blob(blob_name)
         image_bytes = blob.download_as_bytes()
-        return types.Part.from_bytes(
-            data=image_bytes, mime_type=IMAGE_MIME_TYPE
-        )
+        return types.Part.from_bytes(data=image_bytes, mime_type=IMAGE_MIME_TYPE)
     except Exception as e:
         logging.error(f"Failed to load image from '{gcs_uri}': {e}")
         return None
@@ -88,8 +87,7 @@ async def ensure_image_artifact(
                 raise ValueError("Failed to load image from GCS.")
         except Exception as e:
             logging.warning(
-                "Failed to process GCS URI '%s': %s. Will try to load as "
-                "artifact.",
+                "Failed to process GCS URI '%s': %s. Will try to load as artifact.",
                 image_filename,
                 e,
                 exc_info=True,
@@ -141,9 +139,7 @@ async def load_image_resource(
     else:
         artifact = await tool_context.load_artifact(source_path)
         image_bytes = (
-            artifact.inline_data.data
-            if artifact and artifact.inline_data
-            else None
+            artifact.inline_data.data if artifact and artifact.inline_data else None
         )
 
     return image_bytes, identifier, f"image/{mime_suffix}"

@@ -20,10 +20,11 @@ import os
 from typing import Awaitable, List, NotRequired, Optional, TypedDict
 
 from content_gen_agent.utils.evaluate_media import calculate_evaluation_score
-from content_gen_agent.utils.gemini_utils import (call_gemini_image_api,
-                                                  initialize_gemini_client)
-from content_gen_agent.utils.images import (IMAGE_MIME_TYPE,
-                                            ensure_image_artifact)
+from content_gen_agent.utils.gemini_utils import (
+    call_gemini_image_api,
+    initialize_gemini_client,
+)
+from content_gen_agent.utils.images import IMAGE_MIME_TYPE, ensure_image_artifact
 from dotenv import load_dotenv
 from google.adk.tools import ToolContext
 from google.genai import types
@@ -118,9 +119,7 @@ async def generate_one_image(
     if not successful_attempts:
         return {
             "status": "failed",
-            "detail": (
-                f"All image generation attempts failed for prompt: '{prompt}'."
-            ),
+            "detail": (f"All image generation attempts failed for prompt: '{prompt}'."),
         }
 
     best_attempt = max(
@@ -157,9 +156,7 @@ async def _save_generated_images(
             save_tasks.append(
                 tool_context.save_artifact(
                     filename,
-                    types.Part.from_bytes(
-                        data=image_bytes, mime_type=IMAGE_MIME_TYPE
-                    ),
+                    types.Part.from_bytes(data=image_bytes, mime_type=IMAGE_MIME_TYPE),
                 )
             )
             result["detail"] = f"Image stored as {filename}."
@@ -180,8 +177,7 @@ def _create_image_generation_task(
     filename_prefix = f"{scene_num}_"
     if is_logo_scene:
         logo_prompt = (
-            "Place the company logo centered on the following background: "
-            f"{prompt}"
+            f"Place the company logo centered on the following background: {prompt}"
         )
         return generate_one_image(logo_prompt, [logo_image], filename_prefix)
 
@@ -239,9 +235,7 @@ async def generate_images_from_storyline(
     """
     if not client:
         return [
-            json.dumps({
-                "status": "failed", "detail": "Gemini client not initialized."
-            })
+            json.dumps({"status": "failed", "detail": "Gemini client not initialized."})
         ]
 
     logo_image = None
@@ -252,21 +246,18 @@ async def generate_images_from_storyline(
                     {
                         "status": "failed",
                         "detail": (
-                            "logo_filename must be set if "
-                            "logo_prompt_present is True."
+                            "logo_filename must be set if logo_prompt_present is True."
                         ),
                     }
                 )
             ]
-        logo_filename = await ensure_image_artifact(
-            logo_filename, tool_context
-        )
+        logo_filename = await ensure_image_artifact(logo_filename, tool_context)
         if not logo_filename:
             return [
                 json.dumps(
                     {
                         "status": "failed",
-                        "detail": f"Failed to load logo from '{logo_filename}'"
+                        "detail": f"Failed to load logo from '{logo_filename}'",
                     }
                 )
             ]
@@ -277,9 +268,8 @@ async def generate_images_from_storyline(
                     {
                         "status": "failed",
                         "detail": (
-                            "Failed to load logo content from"
-                            f" '{logo_filename}'."
-                        )
+                            f"Failed to load logo content from '{logo_filename}'."
+                        ),
                     }
                 )
             ]
@@ -293,9 +283,8 @@ async def generate_images_from_storyline(
                 {
                     "status": "failed",
                     "detail": (
-                        "Failed to load asset sheet from"
-                        f" '{asset_sheet_filename}'.",
-                    )
+                        f"Failed to load asset sheet from '{asset_sheet_filename}'.",
+                    ),
                 }
             )
         ]

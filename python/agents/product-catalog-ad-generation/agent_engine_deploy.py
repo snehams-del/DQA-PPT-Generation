@@ -19,6 +19,7 @@ import os
 
 import vertexai
 from absl import app, flags
+
 # --- Step 1: Import your BigQuery agent ---
 from content_gen_agent.agent import root_agent
 from dotenv import load_dotenv
@@ -34,9 +35,7 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string("project_id", None, "GCP project ID.")
 flags.DEFINE_string("location", None, "GCP location.")
 flags.DEFINE_string("bucket", None, "GCP Cloud Storage bucket for staging.")
-flags.DEFINE_string(
-    "resource_id", None, "ReasoningEngine resource ID for deletion."
-)
+flags.DEFINE_string("resource_id", None, "ReasoningEngine resource ID for deletion.")
 
 flags.DEFINE_bool("list", False, "List all deployed agent engines.")
 flags.DEFINE_bool("create", False, "Creates a new agent engine.")
@@ -220,14 +219,11 @@ def create() -> None:
         requirements=requirements,
         extra_packages=["content_gen_agent"],
         description=(
-            "An agent that creates short form video based on "
-            "generated product images."
+            "An agent that creates short form video based on generated product images."
         ),
         env_vars=env_vars,
     )
-    logging.info(
-        "Successfully created remote agent: %s", remote_agent.resource_name
-    )
+    logging.info("Successfully created remote agent: %s", remote_agent.resource_name)
     logging.info(
         "You can now interact with this agent via its resource name in "
         "your applications."
@@ -269,20 +265,15 @@ def main(argv: list[str]) -> None:
     del argv  # unused
 
     project_id = (
-        FLAGS.project_id if FLAGS.project_id
-        else os.getenv("GOOGLE_CLOUD_PROJECT_ID")
+        FLAGS.project_id if FLAGS.project_id else os.getenv("GOOGLE_CLOUD_PROJECT_ID")
     )
     # --- THIS LINE IS THE FIX ---
     # Corrected the typo from GOOGLE_CLOUD_LOCATION_REGION_REGION to
     # GOOGLE_CLOUD_LOCATION_REGION
     location = (
-        FLAGS.location if FLAGS.location
-        else os.getenv("GOOGLE_CLOUD_LOCATION_REGION")
+        FLAGS.location if FLAGS.location else os.getenv("GOOGLE_CLOUD_LOCATION_REGION")
     )
-    bucket = (
-        FLAGS.bucket if FLAGS.bucket
-        else os.getenv("GOOGLE_CLOUD_STORAGE_BUCKET")
-    )
+    bucket = FLAGS.bucket if FLAGS.bucket else os.getenv("GOOGLE_CLOUD_STORAGE_BUCKET")
 
     logging.info("Using Project ID: %s", project_id)
     logging.info("Using Location:   %s", location)
@@ -309,15 +300,11 @@ def main(argv: list[str]) -> None:
         create()
     elif FLAGS.delete:
         if not FLAGS.resource_id:
-            logging.error(
-                "--resource_id is required for the delete operation."
-            )
+            logging.error("--resource_id is required for the delete operation.")
             return
         delete(FLAGS.resource_id)
     else:
-        logging.info(
-            "No command specified. Use --create, --delete, or --list."
-        )
+        logging.info("No command specified. Use --create, --delete, or --list.")
 
 
 if __name__ == "__main__":
