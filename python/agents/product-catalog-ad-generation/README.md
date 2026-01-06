@@ -100,6 +100,8 @@ To add your own products to the system, upload your product images to the `stati
 
 ## Usage
 
+After installing dependencies, the product catalog ad generation agent can be run via the `adk web` command.
+
 The main agent orchestrates the entire ad generation workflow, which can be broken down into the following steps:
 
 1.  **Product Selection & Demographic Targeting**: The user provides a product name and desired demographic. The agent queries a BigQuery table to fetch product details and validates that the product is suitable for the target audience.
