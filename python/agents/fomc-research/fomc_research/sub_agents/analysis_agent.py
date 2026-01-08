@@ -23,7 +23,9 @@ from . import analysis_agent_prompt
 AnalysisAgent = Agent(
     model=MODEL,
     name="analysis_agent",
-    description=("Analyze inputs and determine implications for future FOMC actions."),
+    description=(
+        "Analyze inputs and determine implications for future FOMC actions."
+    ),
     instruction=analysis_agent_prompt.PROMPT,
     before_model_callback=rate_limit_callback,
 )

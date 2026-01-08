@@ -28,7 +28,9 @@ logger = logging.getLogger(__name__)
 
 MOVE_SIZE_BP = 25
 DATASET_NAME = os.getenv("GOOGLE_CLOUD_BQ_DATASET", "fomc_research_agent")
-TIMESERIES_CODES = os.getenv("GOOGLE_GENAI_FOMC_AGENT_TIMESERIES_CODES", "SFRH5,SFRZ5")
+TIMESERIES_CODES = os.getenv(
+    "GOOGLE_GENAI_FOMC_AGENT_TIMESERIES_CODES", "SFRH5,SFRZ5"
+)
 
 
 def fetch_prices_from_bq(
@@ -81,7 +83,9 @@ WHERE timeseries_code IN UNNEST(@timeseries_codes)
     return prices
 
 
-def number_of_moves(front_ff_future_px: float, back_ff_future_px: float) -> float:
+def number_of_moves(
+    front_ff_future_px: float, back_ff_future_px: float
+) -> float:
     """Computes the expected number of rate moves between two prices.
 
     Args:

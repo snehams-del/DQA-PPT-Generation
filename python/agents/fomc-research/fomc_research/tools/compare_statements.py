@@ -35,10 +35,14 @@ async def compare_statements_tool(tool_context: ToolContext) -> dict[str, str]:
     """
     fed_hostname = "https://www.federalreserve.gov"
 
-    reqd_statement_url = tool_context.state["requested_meeting_statement_pdf_url"]
+    reqd_statement_url = tool_context.state[
+        "requested_meeting_statement_pdf_url"
+    ]
     if not reqd_statement_url.startswith("https"):
         reqd_statement_url = fed_hostname + reqd_statement_url
-    prev_statement_url = tool_context.state["previous_meeting_statement_pdf_url"]
+    prev_statement_url = tool_context.state[
+        "previous_meeting_statement_pdf_url"
+    ]
     if not prev_statement_url.startswith("https"):
         prev_statement_url = fed_hostname + prev_statement_url
 

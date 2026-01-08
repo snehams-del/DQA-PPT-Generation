@@ -49,9 +49,13 @@ async def download_file_from_url(
         response.raise_for_status()
 
         file_bytes = base64.b64encode(response.content)
-        mime_type = response.headers.get("Content-Type", mimetypes.guess_type(url))
+        mime_type = response.headers.get(
+            "Content-Type", mimetypes.guess_type(url)
+        )
         artifact = Part(inline_data=Blob(data=file_bytes, mime_type=mime_type))
-        await tool_context.save_artifact(filename=output_filename, artifact=artifact)
+        await tool_context.save_artifact(
+            filename=output_filename, artifact=artifact
+        )
         logger.info("Downloaded %s to artifact %s", url, output_filename)
         return output_filename
 
@@ -90,9 +94,13 @@ def create_html_redline(text1: str, text2: str) -> str:
     html_output = ""
     for op, text in diffs:
         if op == -1:  # Deletion
-            html_output += f'<del style="background-color: #ffcccc;">{text}</del>'
+            html_output += (
+                f'<del style="background-color: #ffcccc;">{text}</del>'
+            )
         elif op == 1:  # Insertion
-            html_output += f'<ins style="background-color: #ccffcc;">{text}</ins>'
+            html_output += (
+                f'<ins style="background-color: #ccffcc;">{text}</ins>'
+            )
         else:  # Unchanged
             html_output += text
 
@@ -112,7 +120,9 @@ async def save_html_to_artifact(
       The name of the artifact.
     """
     artifact = Part(text=html_content)
-    await tool_context.save_artifact(filename=output_filename, artifact=artifact)
+    await tool_context.save_artifact(
+        filename=output_filename, artifact=artifact
+    )
     logger.info("HTML content successfully saved to %s", output_filename)
     return output_filename
 

@@ -118,7 +118,10 @@ def create_bigquery_table(
 
     try:
         table = client.create_table(table)
-        print(f"Table {table.project}.{table.dataset_id}.{table.table_id} " "created.")
+        print(
+            f"Table {table.project}.{table.dataset_id}.{table.table_id} "
+            "created."
+        )
         return table
     except Exception as e:  # pylint: disable=broad-exception-caught
         if isinstance(e, NotFound):
@@ -191,7 +194,9 @@ def insert_csv_to_bigquery(
     )
 
     if errors:
-        raise GoogleCloudError(f"Errors occurred while inserting rows: {errors}")
+        raise GoogleCloudError(
+            f"Errors occurred while inserting rows: {errors}"
+        )
     else:
         print(
             f"Successfully inserted {len(rows_to_insert)} rows into "
