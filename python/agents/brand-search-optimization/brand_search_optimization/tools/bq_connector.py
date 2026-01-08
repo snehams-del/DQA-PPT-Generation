@@ -59,7 +59,9 @@ def get_product_details_for_brand(tool_context: ToolContext):
         LIMIT 3
     """
     query_job_config = bigquery.QueryJobConfig(
-        query_parameters=[bigquery.ScalarQueryParameter("parameter1", "STRING", brand)]
+        query_parameters=[
+            bigquery.ScalarQueryParameter("parameter1", "STRING", brand)
+        ]
     )
 
     query_job = client.query(query, job_config=query_job_config)
@@ -74,6 +76,8 @@ def get_product_details_for_brand(tool_context: ToolContext):
         description = row.Description if row.Description else "N/A"
         attributes = row.Attributes if row.Attributes else "N/A"
 
-        markdown_table += f"| {title} | {description} | {attributes} | {brand}\n"
+        markdown_table += (
+            f"| {title} | {description} | {attributes} | {brand}\n"
+        )
 
     return markdown_table

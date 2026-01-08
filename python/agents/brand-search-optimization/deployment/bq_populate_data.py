@@ -78,7 +78,11 @@ def populate_bigquery_table():
     client.delete_table(table_id, not_found_ok=True)  # Make an API request.
     print("Deleted table '{}'.".format(table_id))
     table = client.create_table(table)  # Make an API request.
-    print("Created table {}.{}.{}".format(PROJECT, table.dataset_id, table.table_id))
+    print(
+        "Created table {}.{}.{}".format(
+            PROJECT, table.dataset_id, table.table_id
+        )
+    )
 
     errors = client.insert_rows_json(table=table, json_rows=data_to_insert)
 

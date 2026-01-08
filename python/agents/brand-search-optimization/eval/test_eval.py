@@ -31,6 +31,8 @@ async def test_all():
     """Test the agent's basic ability on a few examples."""
     await AgentEvaluator.evaluate(
         agent_module="brand_search_optimization",
-        eval_dataset_file_path_or_dir=str(pathlib.Path(__file__).parent / "data"),
+        eval_dataset_file_path_or_dir=str(
+            pathlib.Path(__file__).parent / "data"
+        ),
         num_runs=1,
     )

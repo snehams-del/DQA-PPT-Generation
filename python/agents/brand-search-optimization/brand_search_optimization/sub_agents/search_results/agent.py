@@ -109,7 +109,9 @@ def enter_text_into_element(text_to_enter: str, element_id: str) -> str:
     try:
         input_element = driver.find_element(By.ID, element_id)
         input_element.send_keys(text_to_enter)
-        return f"Entered text '{text_to_enter}' into element with ID: {element_id}"
+        return (
+            f"Entered text '{text_to_enter}' into element with ID: {element_id}"
+        )
     except selenium.common.exceptions.NoSuchElementException:
         return "Element with given ID not found."
     except selenium.common.exceptions.ElementNotInteractableException:
