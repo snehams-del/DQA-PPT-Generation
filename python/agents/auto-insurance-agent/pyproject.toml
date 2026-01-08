@@ -17,7 +17,7 @@ dependencies = [
 
 [tool.ruff]
 # Points back to the Master template in the root
-extend = "../../pyproject.toml"
+extend = "../../../pyproject.toml"
 
 [tool.ruff.lint.isort]
 # This tells Ruff which directories contains the sample's core code to group

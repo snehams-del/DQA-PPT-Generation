@@ -45,9 +45,8 @@ log_cli_date_format = "%Y-%m-%d %H:%M:%S"
 log_cli_format = "[%(asctime)s] %(levelname)s (%(funcName)s) \t [%(pathname)s:%(lineno)d] %(message)s"
 filterwarnings = ["ignore::UserWarning"]
 
-
 [tool.ruff]
-extend = "../../pyproject.toml"
+extend = "../../../pyproject.toml"
 
 [tool.ruff.lint.isort]
 known-first-party = ["customer_service"]
@@ -78,5 +77,5 @@ example_question = "Hi there, I need help with my garden"
 agent_directory = "customer_service"
 
 [build-system]
-requires = ["hatchling]
+requires = ["hatchling"]
 build-backend = "hatchling.build"

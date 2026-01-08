@@ -32,7 +32,7 @@ jupyter = [
 
 
 [tool.ruff]
-extend = ".../.../pyproject.toml"
+extend = "../../../pyproject.toml"
 
 [tool.ruff.lint.isort]
 known-first-party = ["image_scoring"]

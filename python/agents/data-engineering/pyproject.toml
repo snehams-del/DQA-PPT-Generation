@@ -23,10 +23,10 @@ dependencies = [
 ]
 
 [tool.ruff]
-extend = "../../pyproject.toml"
+extend = "../../../pyproject.toml"
 
 [tool.ruff.lint.isort]
-knwon-first-party = ["data_engineering", "deployment"]
+known-first-party = ["data_engineering", "deployment"]
 
 [tool.agent-starter-pack]
 example_question = "Hi there, I need help with my Database"

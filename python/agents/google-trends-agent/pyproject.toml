@@ -5,7 +5,7 @@ description = "AI Agent that is designed to surface the newest Google Trends in 
 authors = [
     {name = "Yehia Elshater",email = "elshater@google.com"}
 ]
-license = {text = "Apache License 2.0"}
+license = "Apache-2.0"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -28,7 +28,7 @@ dev = [
 
 
 [tool.ruff]
-extend = ".../.../pyproject.toml"
+extend = "../../../pyproject.toml"
 
 [tool.ruff.lint.isort]
 known-first-party = ["google_trends_agent"]

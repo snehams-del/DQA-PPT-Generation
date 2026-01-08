@@ -20,7 +20,7 @@ dependencies = [
 
 [tool.ruff]
 # Point back to the Master template in the root
-extend = "../../pyproject.toml"
+extend = "../../../pyproject.toml"
 
 [tool.ruff.lint.isort]
 known-first-party = ["order_processing"]

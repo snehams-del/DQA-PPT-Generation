@@ -39,7 +39,7 @@ dev = [
 ]
 
 [tool.ruff]
-extend = "../../pyproject.toml"
+extend = "../../../pyproject.toml"
 
 
 [tool.ruff.lint.isort]

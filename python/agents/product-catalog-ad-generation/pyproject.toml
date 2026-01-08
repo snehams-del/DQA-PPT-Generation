@@ -30,7 +30,7 @@ deployment = [
 ]
 
 [tool.ruff]
-extend = "../../pyproject.toml"
+extend = "../../../pyproject.toml"
 
 [tool.ruff.lint.isort]
 known-first-party = ["content_gen_agent"]

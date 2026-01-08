@@ -28,7 +28,7 @@ deployment = [
 ]
 
 [tool.ruff]
-extend = "../../pyproject.toml"
+extend = "../../../pyproject.toml"
 
 [tool.ruff.lint.isort]
 known-first-party = ["medical_pre_authorization"]
