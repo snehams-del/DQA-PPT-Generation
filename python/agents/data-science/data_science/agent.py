@@ -40,7 +40,9 @@ from .sub_agents import bqml_agent
 from .sub_agents.alloydb.tools import (
     get_database_settings as get_alloydb_database_settings,
 )
-from .sub_agents.bigquery.tools import get_database_settings as get_bq_database_settings
+from .sub_agents.bigquery.tools import (
+    get_database_settings as get_bq_database_settings,
+)
 from .tools import call_alloydb_agent, call_analytics_agent, call_bigquery_agent
 
 # Configure Weave endpoint and authentication

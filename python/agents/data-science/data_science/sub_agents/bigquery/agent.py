@@ -43,7 +43,9 @@ def setup_before_agent_call(callback_context: CallbackContext) -> None:
     """Setup the agent."""
 
     if "database_settings" not in callback_context.state:
-        callback_context.state["database_settings"] = tools.get_database_settings()
+        callback_context.state["database_settings"] = (
+            tools.get_database_settings()
+        )
 
 
 def store_results_in_context(
