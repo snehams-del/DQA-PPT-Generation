@@ -29,33 +29,13 @@ dev = [
 jupyter = [
     "jupyter~=1.1.1",
 ]
-lint = [
-    "ruff>=0.4.6",
-    "mypy~=1.18.2",
-    "codespell~=2.4.1",
-    "types-pyyaml~=6.0.12.20240917",
-    "types-requests~=2.32.4.20250913",
-]
+
 
 [tool.ruff]
-line-length = 88
-target-version = "py310"
-
-[tool.ruff.lint]
-select = [
-    "E",   # pycodestyle
-    "F",   # pyflakes
-    "W",   # pycodestyle warnings
-    "I",   # isort
-    "C",  # flake8-comprehensions
-    "B",   # flake8-bugbear
-    "UP", # pyupgrade
-    "RUF", # ruff specific rules
-]
-ignore = ["E501", "C901", "B006"] # ignore line too long, too complex
+extend = ".../.../pyproject.toml"
 
 [tool.ruff.lint.isort]
-known-first-party = ["app", "frontend"]
+known-first-party = ["image_scoring"]
 
 [tool.mypy]
 disallow_untyped_calls = true
@@ -75,16 +55,11 @@ disable_error_code = ["misc", "no-untyped-call", "no-any-return"]
 
 exclude = [".venv"]
 
-[tool.codespell]
-ignore-words-list = "rouge"
-skip = "./locust_env/*,uv.lock,.venv,./frontend,**/*.ipynb"
 
 [build-system]
-requires = ["uv_build>=0.8.14,<0.9.0"]
-build-backend = "uv_build"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-[tool.uv.build-backend]
-module-root = ""
 
 [tool.pytest.ini_options]
 pythonpath = "."

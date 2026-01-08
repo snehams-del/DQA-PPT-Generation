@@ -7,6 +7,7 @@ authors = [
 ]
 readme = "README.md"
 requires-python = ">=3.11"
+license = "Apache-2.0"
 dependencies = [
     "pydantic>=2.11.7",
     "python-dotenv>=1.1.1",
@@ -15,3 +16,14 @@ dependencies = [
     "google-genai>=1.36.0",
     "google-adk>=1.14.1"
 ]
+
+
+[tool.ruff]
+extend = "../../pyproject.toml"
+
+[tool.ruff.lint.isort]
+known-first-party = ["example_agent"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

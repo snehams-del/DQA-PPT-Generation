@@ -218,6 +218,9 @@ bin/
 # Claude Code
 .claude/
 
+# Gemini CLI
+GEMINI.md
+
 # Documentation
 .docs/
 
