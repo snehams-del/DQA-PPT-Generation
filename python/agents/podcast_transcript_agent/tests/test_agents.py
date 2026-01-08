@@ -47,7 +47,9 @@ async def test_run_with_txt():
                 )
             ),
             types.Part(
-                inline_data=types.Blob(mime_type="text/plain", data=file_content)
+                inline_data=types.Blob(
+                    mime_type="text/plain", data=file_content
+                )
             ),
         ]
     )
@@ -74,4 +76,6 @@ async def test_run_with_txt():
                             if data["metadata"]["duration_seconds"] > 0:
                                 found_valid_transcript = True
 
-    assert found_valid_transcript, "No final event found with valid transcript metadata"
+    assert (
+        found_valid_transcript
+    ), "No final event found with valid transcript metadata"
