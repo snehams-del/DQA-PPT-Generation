@@ -12,13 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Utility functions for interacting with the Gemini API."""
+
 import logging
 from typing import List, Optional, TypedDict, Union
 
-from content_gen_agent.utils.evaluate_media import (
-    EvalResult,
-    evaluate_media,
-)
+from content_gen_agent.utils.evaluate_media import EvalResult, evaluate_media
 from google import auth, genai
 from google.api_core import exceptions as api_exceptions
 from google.genai import types
@@ -78,7 +76,8 @@ async def call_gemini_image_api(
         image_prompt: The prompt used for image generation.
 
     Returns:
-        A dictionary with the image bytes, evaluation, and MIME type, or None if failed.
+        A dictionary with the image bytes, evaluation, and MIME type, or None
+        if failed.
     """
     try:
         response = await client.aio.models.generate_content(
