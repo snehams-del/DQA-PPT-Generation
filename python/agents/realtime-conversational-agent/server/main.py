@@ -31,23 +31,32 @@ async def start_agent_session(user_id: str):
 
     # Create a Runner
     runner = InMemoryRunner(
-        app_name=os.getenv("APP_NAME"),
+        app_name=os.getenv("APP_NAME", "realtime-conversational-agent"),
         agent=root_agent
     )
 
     # Create a Session
     session = await runner.session_service.create_session(
-        app_name=os.getenv("APP_NAME"),
+        app_name=os.getenv("APP_NAME", "realtime-conversational-agent"),
         user_id=user_id,
     )
 
     # Create a LiveRequestQueue for this session
     live_request_queue = LiveRequestQueue()
 
+    # Determine if using Vertex AI (`transparent` parameter is supported)
+    use_vertex_ai = os.getenv("GOOGLE_GENAI_USE_VERTEXAI", "FALSE").upper() == "TRUE"
+    
+    # Setup SessionResumptionConfig based on API provider
+    # Note: transparent=True is supported by Vertex AI but not by Gemini API
+    session_resumption_config = types.SessionResumptionConfig(
+        transparent=True
+    ) if use_vertex_ai else types.SessionResumptionConfig()
+
     # Setup RunConfig 
     run_config = RunConfig(
         streaming_mode="bidi",
-        session_resumption=types.SessionResumptionConfig(transparent=True),
+        session_resumption=session_resumption_config,
         realtime_input_config=types.RealtimeInputConfig(
             automatic_activity_detection=types.AutomaticActivityDetection(
                 start_of_speech_sensitivity=types.StartSensitivity.START_SENSITIVITY_LOW,
@@ -56,7 +65,7 @@ async def start_agent_session(user_id: str):
                 silence_duration_ms=0,
             )
         ),
-        response_modalities = ["AUDIO"],
+        response_modalities = [types.Modality.AUDIO],
         speech_config=types.SpeechConfig(
             voice_config=types.VoiceConfig(
                 prebuilt_voice_config=types.PrebuiltVoiceConfig(

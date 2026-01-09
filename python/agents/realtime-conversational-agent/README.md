@@ -92,6 +92,9 @@ The server handles the AI agent logic and WebSocket connections.
     # Get this from Google AI Studio
     GOOGLE_API_KEY="PASTE_YOUR_ACTUAL_API_KEY_HERE"
 
+    # Application name for session management
+    APP_NAME="realtime-conversational-agent"
+
     # Configuration for the agent's voice (Example: 'Puck' for gemini-live-2.5-flash)
     AGENT_VOICE="Puck"
     AGENT_LANGUAGE="en-US"
@@ -107,6 +110,9 @@ The server handles the AI agent logic and WebSocket connections.
     GOOGLE_CLOUD_PROJECT="PASTE_YOUR_ACTUAL_PROJECT_ID"
     # Your Vertex AI location (e.g., us-central1)
     GOOGLE_CLOUD_LOCATION="us-central1"
+
+    # Application name for session management
+    APP_NAME="realtime-conversational-agent"
 
     # Configuration for the agent's voice (Example: 'Puck' for gemini-live-2.5-flash)
     AGENT_VOICE="Puck"
