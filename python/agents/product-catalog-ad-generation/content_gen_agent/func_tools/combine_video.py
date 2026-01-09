@@ -253,7 +253,11 @@ async def _combine_and_upload_video(
     try:
         final_clip = concatenate_videoclips(video_clips, method="compose")
         final_clip.audio = await _load_and_process_audio_clips(
-            audio_file, voiceover_file, final_clip.duration, tool_context, temp_dir
+            audio_file,
+            voiceover_file,
+            final_clip.duration,
+            tool_context,
+            temp_dir,
         )
 
         filename = f"combined_video_{int(time.time())}.mp4"
@@ -296,7 +300,8 @@ async def combine(
         video_files (List[str]): A list of video artifact filenames.
         audio_file (str): The filename of the background audio artifact.
         num_images (int): The number of images in the storyline.
-        tool_context (ToolContext): The context for tool execution and artifact management.
+        tool_context (ToolContext): The context for tool execution and
+          artifact management.
         voiceover_file (Optional[str]): The filename of the voiceover artifact.
           Defaults to None.
 
