@@ -70,6 +70,9 @@ asyncio_default_fixture_loop_scope = "function"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build.targets.wheel]
+packages = ["rag"]
+
 # This configuration file is used by goo.gle/agent-starter-pack to power remote templating.
 # It defines the template's properties and settings.
 [tool.agent-starter-pack]
