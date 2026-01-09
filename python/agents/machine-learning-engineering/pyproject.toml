@@ -3,7 +3,7 @@ name = "machine_learning_engineering"
 version = "0.1.0"
 description = "MLE-STAR: A novel machine learning engineering (MLE) agent to automate the implementation of ML models."
 authors = ["Jiefeng Chen <jiefengc@google.com>", "Raj Sinha <sinharaj@google.com", "Jaehyun Nam <jaehyunnam@google.com>", "Jinsung Yoon <jinsungyoon@google.com>"]
-license = "Apache License 2.0"
+license = "Apache-2.0"
 readme = "README.md"
 requires-python = ">=3.10,<3.13"
 

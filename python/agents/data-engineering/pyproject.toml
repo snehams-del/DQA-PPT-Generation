@@ -24,7 +24,12 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "pytest>=9.0.1",
+    "pytest>=8.3.5",
+    "pytest-asyncio>=0.26.0",
+    "google-adk[eval]>=1.0.0",
+]
+deployment = [
+    "absl-py>=2.2.1",
 ]
 
 [tool.ruff]
