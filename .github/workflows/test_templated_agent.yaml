@@ -87,6 +87,8 @@ jobs:
           workload_identity_provider: 'projects/628595556591/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
           create_credentials_file: true
           project_id: adk-devops
+          token_format: 'access_token'
+          access_token_scopes: 'https://www.googleapis.com/auth/cloud-platform'
       
       # --- RUN THE TEMPLATE GENERATION AND TESTING USING CONTAINER ---
       - name: ${{ matrix.task }} - ${{ matrix.agent_path }} (${{ matrix.deployment_target }})
@@ -98,6 +100,14 @@ jobs:
             -c "
             set -e # Exit immediately if a command exits with a non-zero status.
             set -x
+
+            # Export project variables so the ADK and GenAI SDKs know where to point
+            export GOOGLE_CLOUD_PROJECT=\"adk-devops\"
+            export PROJECT_ID=\"adk-devops\"
+            export GOOGLE_CLOUD_LOCATION=\"us-central1\"
+            
+            # Silence Arize warnings if not configured
+            export ARIZE_DISABLED=\"true\"            
 
             # Extract agent name from path
             TEMPLATE_PATH=\"${{ matrix.agent_path }}\"
