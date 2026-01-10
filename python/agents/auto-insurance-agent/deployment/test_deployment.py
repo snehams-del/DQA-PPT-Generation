@@ -23,6 +23,8 @@ from vertexai import agent_engines
 
 
 def pretty_print_event(event):
+    max_args = 100
+
     """Pretty prints an event with truncation for long content."""
     if "content" not in event:
         print(f"[{event.get('author', 'unknown')}]: {event}")
@@ -37,11 +39,13 @@ def pretty_print_event(event):
             print(f"[{author}]: {text}")
         elif "functionCall" in part:
             func_call = part["functionCall"]
-            print(f"[{author}]: Function call: {func_call.get('name', 'unknown')}")
+            print(
+                f"[{author}]: Function call: {func_call.get('name', 'unknown')}"
+            )
             # Truncate args if too long
             args = json.dumps(func_call.get("args", {}))
-            if len(args) > 100:
-                args = args[:97] + "..."
+            if len(args) > max_args:
+                args = args[:max_args-3] + "..."
             print(f"  Args: {args}")
         elif "functionResponse" in part:
             func_response = part["functionResponse"]
@@ -50,8 +54,8 @@ def pretty_print_event(event):
             )
             # Truncate response if too long
             response = json.dumps(func_response.get("response", {}))
-            if len(response) > 100:
-                response = response[:97] + "..."
+            if len(response) > max_args:
+                response = response[:max_args-3] + "..."
             print(f"  Response: {response}")
 
 
