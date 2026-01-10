@@ -14,3 +14,14 @@ dependencies = [
 
 [tool.agent-starter-pack.settings]
 deployment_targets = ["agent_engine", "cloud_run"]
+
+[tool.ruff]
+extend = "../../../pyproject.toml"
+
+[tool.ruff.lint.isort]
+known-first-party = ["currency_agent"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
