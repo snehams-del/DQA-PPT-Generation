@@ -183,6 +183,18 @@ def get_root_agent() -> LlmAgent:
         elif dataset["type"] == "alloydb":
             tools.append(call_alloydb_agent)
 
+    # Ensure call_analytics_agent is always in the tools list
+    # This is a defensive check to prevent the tool from being missing
+    if call_analytics_agent not in tools:
+        _logger.warning(
+            "call_analytics_agent was not in tools list, adding it now"
+        )
+        tools.insert(0, call_analytics_agent)
+
+    # Log the tools being registered for debugging
+    tool_names = [getattr(tool, "__name__", str(tool)) for tool in tools]
+    _logger.debug(f"Registering tools: {tool_names}")
+
     agent = LlmAgent(
         model=os.getenv("ROOT_AGENT_MODEL", "gemini-2.5-flash"),
         name="data_science_root_agent",
