@@ -15,7 +15,7 @@
 from google.adk.agents import Agent
 
 # Import the tools
-from .tools import membership, claims, roadsideAssistance, rewards
+from .tools import membership, claims, roadside_assistance, rewards
 
 # Roadside sub-agent
 roadside_agent = Agent(
@@ -29,10 +29,10 @@ roadside_agent = Agent(
     - Do not greet the user.    
     - Ask what they need help with and make sure it's one of the things mentioned above.
     - Ask for their location. Tell them they can give an address or an approximate location by cross street.
-    - Use the tool `roadsideAssistance` to create a tow request.
+    - Use the tool `roadside_assistance` to create a tow request.
     - Tell them you have found a company nearby who can help. Provide them with the eta from the tow request. Include a made up name for a towing company in your reply. Tell them they will get a call back shortly.
     - Transfer back to the parent agent without saying anything else.""",
-    tools=[roadsideAssistance]
+    tools=[roadside_assistance]
 )
 
 # Membership sub-agent

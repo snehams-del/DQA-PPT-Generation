@@ -50,7 +50,7 @@ claims = APIHubToolset(
 )
 
 # Roadside API
-roadsideAssistance = APIHubToolset(
+roadside_assistance = APIHubToolset(
     name="cymbal-auto-roadside-assistance-api",
     description="Roadside Assistance API",
     apihub_resource_name=f"{API_HUB_LOCATION}/roadside_api",

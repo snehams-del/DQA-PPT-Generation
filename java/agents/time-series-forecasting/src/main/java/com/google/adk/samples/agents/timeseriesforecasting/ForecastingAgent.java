@@ -151,7 +151,7 @@ public class ForecastingAgent {
 
     private static void runInteractiveSession(InMemoryRunner runner, Session session,
             BaseAgent agent) {
-        System.out.println("\\nTime Series Forecasting Agent");
+        System.out.println("\nTime Series Forecasting Agent");
         System.out.println("-----------------------------");
         System.out.println("Examples:");
         System.out.println("predict next week's liquor sales in iowa");
@@ -160,7 +160,7 @@ public class ForecastingAgent {
 
         try (Scanner scanner = new Scanner(System.in, StandardCharsets.UTF_8)) {
             while (true) {
-                System.out.print("\\nYou > ");
+                System.out.print("\nYou > ");
                 String userInput = scanner.nextLine();
 
                 if ("quit".equalsIgnoreCase(userInput.trim())) {
@@ -174,7 +174,7 @@ public class ForecastingAgent {
                 Flowable<Event> events = runner.runWithSessionId(session.id(), userMsgForHistory,
                         RunConfig.builder().build());
 
-                System.out.print("\\nAgent > ");
+                System.out.print("\nAgent > ");
                 final StringBuilder agentResponseBuilder = new StringBuilder();
                 final AtomicBoolean toolCalledInTurn = new AtomicBoolean(false);
                 final AtomicBoolean toolErroredInTurn = new AtomicBoolean(false);

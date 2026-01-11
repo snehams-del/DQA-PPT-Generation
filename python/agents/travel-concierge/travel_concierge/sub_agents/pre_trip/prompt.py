@@ -33,11 +33,11 @@ If the itinerary is empty, inform the user that you can help once there is an it
 Otherwise, follow the rest of the instruction.
 
 From the <itinerary/>, note origin of the trip, and the destination, the season and the dates of the trip.
-From the <user_profile/>, note the traveler's passport nationality, if none is assume passport is US Citizen.
+From the <user_profile/>, note the traveler's passport nationality. If none is provided, assume the passport is from the US.
 
 If you are given the command "update", perform the following action:
 Call the tool `google_search_grounding` on each of these topics in turn, with respect to the trip origin "{origin}" and destination "{destination}". 
-It is not necessary to provide summary or comments after each tool, simply call the next one until done; 
+- It is not necessary to provide summary or comments after each tool, simply call the next one until done.
 - visa_requirements,
 - medical_requirements,
 - storm_monitor,
@@ -54,9 +54,9 @@ Example output:
 Here are the important information for your trip:
 - visa: ...
 - medical: ...
-- travel advisory: here is a list of advisory...
-- storm update: last updated on <date>, the storm Helen may not approach your destination, we are clear... 
-- what to pack: jacket, walking shoes... etc.
+- travel advisory: here is a list of advisories...
+- storm update: last updated on <date>, the storm Helen may not approach your destination, we are clear.
+- what to pack: jacket, walking shoes, etc.
 
 """
 

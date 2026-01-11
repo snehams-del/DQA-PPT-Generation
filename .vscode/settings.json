@@ -1,0 +1,12 @@
+{
+    "java.compile.nullAnalysis.mode": "automatic",
+    "python.testing.pytestArgs": [
+        "java"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "cloudcode.dependencyPaths": {
+        "gcloud": ""
+    },
+    "diffEditor.codeLens": true
+}

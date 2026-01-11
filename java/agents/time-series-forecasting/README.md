@@ -196,15 +196,11 @@ This section describes how to deploy the MCP Toolbox server and the Java agent t
 
 1. **Deploy to Cloud Run**: This command deploys the agent to Cloud Run using the provided Dockerfile.
 
-    ```bash
-    gcloud run deploy time-series-forecasting --source . --region $GOOGLE_CLOUD_LOCATION --project $GOOGLE_CLOUD_PROJECT --allow-unauthenticated --set-env-vars="GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_LOCATION,GOOGLE_GENAI_USE_VERTEXAI=$GOOGLE_GENAI_USE_VERTEXAI,MCP_TOOLBOX_SERVER_URL=$MCP_TOOLBOX_SERVER_URL"
-    ```
-
     * `--source .`: Specifies the current directory as the source code location.
     * `--region $GOOGLE_CLOUD_LOCATION`: Specifies the Google Cloud region to deploy to.
     * `--project $GOOGLE_CLOUD_PROJECT`: Specifies the Google Cloud project to deploy to.
     * `--allow-unauthenticated`: Makes the service public. For production, configure appropriate [authentication and authorization for Cloud Run](https://cloud.google.com/run/docs/authenticating/end-users).
-    * `--set-env-vars`: Sets environment variables required by the agent. Make sure to replace the placeholders with your actual project ID, location, and toolbox server URL.
+    * `--set-env-vars`: Sets environment variables required by the agent.
 
     The command will output a **Service URL** (e.g., `https://time-series-forecasting-xxxxx-uc.a.run.app`).
 
@@ -219,6 +215,10 @@ This section describes how to deploy the MCP Toolbox server and the Java agent t
     ```
 
     Your Java agent will now communicate with the MCP Toolbox server running on Cloud Run.
+
+    ```bash
+    gcloud run deploy time-series-forecasting --source . --region $GOOGLE_CLOUD_LOCATION --project $GOOGLE_CLOUD_PROJECT --allow-unauthenticated --set-env-vars="GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT,GOOGLE_GENAI_USE_VERTEXAI=$GOOGLE_GENAI_USE_VERTEXAI,MCP_TOOLBOX_SERVER_URL=$MCP_TOOLBOX_SERVER_URL"
+    ```
 
 ### Testing the Cloud Run Deployed Toolbox via Local Proxy (Optional)
 
