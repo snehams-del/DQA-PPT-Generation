@@ -22,7 +22,6 @@ import textwrap
 
 
 def return_instructions_root(version: str = "v1") -> str:
-
     instruction_prompt_v1 = textwrap.dedent(
         """
         You are an AI assistant with access to specialized corpus of documents.

@@ -17,9 +17,10 @@ import os
 
 import vertexai
 from dotenv import set_key
-from rag.agent import root_agent
 from vertexai import agent_engines
 from vertexai.preview.reasoning_engines import AdkApp
+
+from rag.agent import root_agent
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -28,7 +29,9 @@ GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT")
 GOOGLE_CLOUD_LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION")
 STAGING_BUCKET = os.getenv("STAGING_BUCKET")
 # Define the path to the .env file relative to this script
-ENV_FILE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".env"))
+ENV_FILE_PATH = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", ".env")
+)
 
 vertexai.init(
     project=GOOGLE_CLOUD_PROJECT,
@@ -42,7 +45,9 @@ def update_env_file(agent_engine_id, env_file_path):
     """Updates the .env file with the agent engine ID."""
     try:
         set_key(env_file_path, "AGENT_ENGINE_ID", agent_engine_id)
-        print(f"Updated AGENT_ENGINE_ID in {env_file_path} to {agent_engine_id}")
+        print(
+            f"Updated AGENT_ENGINE_ID in {env_file_path} to {agent_engine_id}"
+        )
     except Exception as e:
         print(f"Error updating .env file: {e}")
 

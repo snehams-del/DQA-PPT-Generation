@@ -49,7 +49,9 @@ ENV_FILE_PATH = os.path.abspath(
 # --- Start of the script ---
 def initialize_vertex_ai():
     credentials, _ = default()
-    vertexai.init(project=PROJECT_ID, location=LOCATION, credentials=credentials)
+    vertexai.init(
+        project=PROJECT_ID, location=LOCATION, credentials=credentials
+    )
 
 
 def create_or_get_corpus():
@@ -62,7 +64,9 @@ def create_or_get_corpus():
     for existing_corpus in existing_corpora:
         if existing_corpus.display_name == CORPUS_DISPLAY_NAME:
             corpus = existing_corpus
-            print(f"Found existing corpus with display name '{CORPUS_DISPLAY_NAME}'")
+            print(
+                f"Found existing corpus with display name '{CORPUS_DISPLAY_NAME}'"
+            )
             break
     if corpus is None:
         corpus = rag.create_corpus(

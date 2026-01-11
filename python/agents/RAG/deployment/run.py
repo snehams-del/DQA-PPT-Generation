@@ -7,6 +7,9 @@ from dotenv import load_dotenv
 from google.adk.sessions import VertexAiSessionService
 from vertexai import agent_engines
 
+MAX_TEXT_LENGTH = 200
+MAX_ARGS_LENGTH = 100
+MAX_RESPONSE_LENGTH = 100
 
 def pretty_print_event(event):
     """Pretty prints an event with truncation for long content."""
@@ -21,16 +24,18 @@ def pretty_print_event(event):
         if "text" in part:
             text = part["text"]
             # Truncate long text to 200 characters
-            if len(text) > 200:
-                text = text[:197] + "..."
+            if len(text) > MAX_TEXT_LENGTH:
+                text = text[:MAX_TEXT_LENGTH - 3] + "..."
             print(f"[{author}]: {text}")
         elif "functionCall" in part:
             func_call = part["functionCall"]
-            print(f"[{author}]: Function call: {func_call.get('name', 'unknown')}")
+            print(
+                f"[{author}]: Function call: {func_call.get('name', 'unknown')}"
+            )
             # Truncate args if too long
             args = json.dumps(func_call.get("args", {}))
-            if len(args) > 100:
-                args = args[:97] + "..."
+            if len(args) > MAX_ARGS_LENGTH:
+                args = args[:MAX_ARGS_LENGTH - 3] + "..."
             print(f"  Args: {args}")
         elif "functionResponse" in part:
             func_response = part["functionResponse"]
@@ -39,8 +44,8 @@ def pretty_print_event(event):
             )
             # Truncate response if too long
             response = json.dumps(func_response.get("response", {}))
-            if len(response) > 100:
-                response = response[:97] + "..."
+            if len(response) > MAX_RESPONSE_LENGTH:
+                response = response[:MAX_RESPONSE_LENGTH - 3] + "..."
             print(f"  Response: {response}")
 
 
