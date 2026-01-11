@@ -17,7 +17,7 @@ def get_text_from_response(
   if response.content and response.content.parts:
     num_parts = len(response.content.parts)
     for i in range(num_parts):
-        if hasattr(response.content.parts[i], "text"):
+        if hasattr(response.content.parts[i], "text") and response.content.parts[i].text is not None:
             final_text += response.content.parts[i].text
   return final_text
 
