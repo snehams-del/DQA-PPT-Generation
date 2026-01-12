@@ -203,6 +203,7 @@ jobs:
           gcp_service_account: '${{ vars.SERVICE_ACCOUNT_EMAIL }}'
           use_vertex_ai: '${{ vars.GOOGLE_GENAI_USE_VERTEXAI }}'
           use_gemini_code_assist: '${{ vars.GOOGLE_GENAI_USE_GCA }}'
+          allowed_commands: "printenv, gh, git, ls, cat, head, tail"
           settings: |-
             {
               "maxSessionTurns": 50,
