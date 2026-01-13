@@ -45,6 +45,10 @@ dev = [
     "agent-starter-pack>=0.14.1",
 ]
 
+[project]
+name = "rag"
+version = "0.1.0"
+
 [project.optional-dependencies]
 lint = [
     "ruff>=0.4.6",
