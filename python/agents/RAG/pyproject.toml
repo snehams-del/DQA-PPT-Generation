@@ -3,8 +3,8 @@ name = "rag"
 version = "0.1.0"
 description = "Answer questions related to Vertex AI documentation using Vertex AI RAG Engine"
 authors = [
-        {name = "Hangfei Lin", email = "hangfei@google.com"},
-        {name = "Chouaieb Nemri", email = "nemri@google.com"},
+    {name = "Hangfei Lin", email = "hangfei@google.com"},
+    {name = "Chouaieb Nemri", email = "nemri@google.com"},
 ]
 license = "Apache License 2.0"
 readme = "README.md"
@@ -50,12 +50,12 @@ select = [
     "F",   # pyflakes
     "W",   # pycodestyle warnings
     "I",   # isort
-    "C",  # flake8-comprehensions
+    "C",   # flake8-comprehensions
     "B",   # flake8-bugbear
-    "UP", # pyupgrade
+    "UP",  # pyupgrade
     "RUF", # ruff specific rules
 ]
-ignore = ["E501", "C901"] # ignore line too long, too complex
+ignore = ["E501", "C901"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["rag"]
@@ -75,7 +75,6 @@ follow_imports = "silent"
 ignore_missing_imports = true
 explicit_package_bases = true
 disable_error_code = ["misc", "no-untyped-call", "no-any-return"]
-
 exclude = [".venv"]
 
 [tool.codespell]
@@ -87,14 +86,9 @@ pythonpath = "."
 asyncio_default_fixture_loop_scope = "function"
 
 [build-system]
-requires = ["uv_build>=0.8.14,<0.9.0"]
-build-backend = "uv_build"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-[tool.uv.build-backend]
-module-root = ""
-
-# This configuration file is used by goo.gle/agent-starter-pack to power remote templating.
-# It defines the template's properties and settings.
 [tool.agent-starter-pack]
 example_question = "What are the key business segments mentioned in Alphabet's 2024 10-K report?"
 
