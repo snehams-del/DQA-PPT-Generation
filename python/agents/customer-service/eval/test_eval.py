@@ -25,7 +25,7 @@ pytest_plugins = ("pytest_asyncio",)
 @pytest.fixture(scope="session", autouse=True)
 def load_env():
     load_dotenv(find_dotenv(".env"))
-    c = Config()
+    Config()
 
 
 @pytest.mark.asyncio

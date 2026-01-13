@@ -16,16 +16,16 @@
 
 import logging
 import time
-
-from google.adk.agents.callback_context import CallbackContext
-from google.adk.models import LlmRequest
 from typing import Any, Dict, Optional, Tuple
-from google.adk.tools import BaseTool
+
+from customer_service.entities.customer import Customer
+from google.adk.agents.callback_context import CallbackContext
 from google.adk.agents.invocation_context import InvocationContext
+from google.adk.models import LlmRequest
 from google.adk.sessions.state import State
+from google.adk.tools import BaseTool
 from google.adk.tools.tool_context import ToolContext
 from jsonschema import ValidationError
-from customer_service.entities.customer import Customer
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -46,11 +46,8 @@ def rate_limit_callback(
     """
     for content in llm_request.contents:
         for part in content.parts:
-            if part.text=="":
-                part.text=" "
-
-    
-    
+            if part.text == "":
+                part.text = " "
 
     now = time.time()
     if "timer_start" not in callback_context.state:
@@ -58,8 +55,7 @@ def rate_limit_callback(
         callback_context.state["timer_start"] = now
         callback_context.state["request_count"] = 1
         logger.debug(
-            "rate_limit_callback [timestamp: %i, "
-            "req_count: 1, elapsed_secs: 0]",
+            "rate_limit_callback [timestamp: %i, " "req_count: 1, elapsed_secs: 0]",
             now,
         )
         return
@@ -67,8 +63,7 @@ def rate_limit_callback(
     request_count = callback_context.state["request_count"] + 1
     elapsed_secs = now - callback_context.state["timer_start"]
     logger.debug(
-        "rate_limit_callback [timestamp: %i, request_count: %i,"
-        " elapsed_secs: %i]",
+        "rate_limit_callback [timestamp: %i, request_count: %i," " elapsed_secs: %i]",
         now,
         request_count,
         elapsed_secs,
@@ -86,32 +81,44 @@ def rate_limit_callback(
 
     return
 
+
 def validate_customer_id(customer_id: str, session_state: State) -> Tuple[bool, str]:
     """
-        Validates the customer ID against the customer profile in the session state.
-        
-        Args:
-            customer_id (str): The ID of the customer to validate.
-            session_state (State): The session state containing the customer profile.
-        
-        Returns:
-            A tuple containing an bool (True/False) and a String. 
-            When False, a string with the error message to pass to the model for deciding
-            what actions to take to remediate.
+    Validates the customer ID against the customer profile in the session state.
+
+    Args:
+        customer_id (str): The ID of the customer to validate.
+        session_state (State): The session state containing the customer profile.
+
+    Returns:
+        A tuple containing an bool (True/False) and a String.
+        When False, a string with the error message to pass to the model for deciding
+        what actions to take to remediate.
     """
-    if 'customer_profile' not in session_state:
+    if "customer_profile" not in session_state:
         return False, "No customer profile selected. Please select a profile."
 
     try:
         # We read the profile from the state, where it is set deterministically
         # at the beginning of the session.
-        c = Customer.model_validate_json(session_state['customer_profile'])
+        c = Customer.model_validate_json(session_state["customer_profile"])
         if customer_id == c.customer_id:
             return True, None
         else:
-            return False, "You cannot use the tool with customer_id " +customer_id+", only for "+c.customer_id+"."
-    except ValidationError as e:
-        return False, "Customer profile couldn't be parsed. Please reload the customer data. "
+            return (
+                False,
+                "You cannot use the tool with customer_id "
+                + customer_id
+                + ", only for "
+                + c.customer_id
+                + ".",
+            )
+    except ValidationError:
+        return (
+            False,
+            "Customer profile couldn't be parsed. Please reload the customer data. ",
+        )
+
 
 def lowercase_value(value):
     """Make dictionary lowercase"""
@@ -127,9 +134,7 @@ def lowercase_value(value):
 
 
 # Callback Methods
-def before_tool(
-    tool: BaseTool, args: Dict[str, Any], tool_context: CallbackContext
-):
+def before_tool(tool: BaseTool, args: Dict[str, Any], tool_context: CallbackContext):
 
     # i make sure all values that the agent is sending to tools are lowercase
     lowercase_value(args)
@@ -137,8 +142,8 @@ def before_tool(
     # Several tools require customer_id as input. We don't want to rely
     # solely on the model picking the right customer id. We validate it.
     # Alternative: tools can fetch the customer_id from the state directly.
-    if 'customer_id' in args:
-        valid, err = validate_customer_id(args['customer_id'], tool_context.state)
+    if "customer_id" in args:
+        valid, err = validate_customer_id(args["customer_id"], tool_context.state)
         if not valid:
             return err
 
@@ -149,40 +154,39 @@ def before_tool(
         if amount <= 10:  # Example business rule
             return {
                 "status": "approved",
-                "message": "You can approve this discount; no manager needed."
+                "message": "You can approve this discount; no manager needed.",
             }
         # Add more logic checks here as needed for your tools.
 
     if tool.name == "modify_cart":
-        if (
-            args.get("items_added") is True
-            and args.get("items_removed") is True
-        ):
+        if args.get("items_added") is True and args.get("items_removed") is True:
             return {"result": "I have added and removed the requested items."}
     return None
+
 
 def after_tool(
     tool: BaseTool, args: Dict[str, Any], tool_context: ToolContext, tool_response: Dict
 ) -> Optional[Dict]:
 
-  # After approvals, we perform operations deterministically in the callback
-  # to apply the discount in the cart.
-  if tool.name == "sync_ask_for_approval":
-    if tool_response['status'] == "approved":
-        logger.debug("Applying discount to the cart")
-        # Actually make changes to the cart
+    # After approvals, we perform operations deterministically in the callback
+    # to apply the discount in the cart.
+    if tool.name == "sync_ask_for_approval":
+        if tool_response["status"] == "approved":
+            logger.debug("Applying discount to the cart")
+            # Actually make changes to the cart
 
-  if tool.name == "approve_discount":
-    if tool_response['status'] == "ok":
-        logger.debug("Applying discount to the cart")
-        # Actually make changes to the cart
+    if tool.name == "approve_discount":
+        if tool_response["status"] == "ok":
+            logger.debug("Applying discount to the cart")
+            # Actually make changes to the cart
 
-  return None
+    return None
+
 
 # checking that the customer profile is loaded as state.
 def before_agent(callback_context: InvocationContext):
     # In a production agent, this is set as part of the
-    # session creation for the agent. 
+    # session creation for the agent.
     if "customer_profile" not in callback_context.state:
         callback_context.state["customer_profile"] = Customer.get_customer(
             "123"
