@@ -17,7 +17,6 @@
 import logging
 import uuid
 from datetime import datetime, timedelta
-from google.adk.tools import ToolContext
 
 logger = logging.getLogger(__name__)
 
@@ -61,12 +60,15 @@ def approve_discount(discount_type: str, value: float, reason: str) -> str:
     if value > 10:
         logger.info("Denying %s discount of %s", discount_type, value)
         # Send back a reason for the error so that the model can recover.
-        return {"status": "rejected",
-                "message": "discount too large. Must be 10 or less."}
+        return {
+            "status": "rejected",
+            "message": "discount too large. Must be 10 or less.",
+        }
     logger.info(
         "Approving a %s discount of %s because %s", discount_type, value, reason
     )
     return {"status": "ok"}
+
 
 def sync_ask_for_approval(discount_type: str, value: float, reason: str) -> str:
     """
@@ -290,9 +292,7 @@ def schedule_planting_service(
     # MOCK API RESPONSE - Replace with actual API call to your scheduling system
     # Calculate confirmation time based on date and time_range
     start_time_str = time_range.split("-")[0]  # Get the start time (e.g., "9")
-    confirmation_time_str = (
-        f"{date} {start_time_str}:00"  # e.g., "2024-07-29 9:00"
-    )
+    confirmation_time_str = f"{date} {start_time_str}:00"  # e.g., "2024-07-29 9:00"
 
     return {
         "status": "success",
@@ -374,7 +374,7 @@ def generate_qr_code(
         >>> generate_qr_code(customer_id='123', discount_value=10.0, discount_type='percentage', expiration_days=30)
         {'status': 'success', 'qr_code_data': 'MOCK_QR_CODE_DATA', 'expiration_date': '2024-08-24'}
     """
-    
+
     # Guardrails to validate the amount of discount is acceptable for a auto-approved discount.
     # Defense-in-depth to prevent malicious prompts that could circumvent system instructions and
     # be able to get arbitrary discounts.
@@ -383,7 +383,7 @@ def generate_qr_code(
             return "cannot generate a QR code for this amount, must be 10% or less"
     if discount_type == "fixed" and discount_value > 20:
         return "cannot generate a QR code for this amount, must be 20 or less"
-    
+
     logger.info(
         "Generating QR code for customer: %s with %s - %s discount.",
         customer_id,
@@ -391,9 +391,9 @@ def generate_qr_code(
         discount_type,
     )
     # MOCK API RESPONSE - Replace with actual QR code generation library
-    expiration_date = (
-        datetime.now() + timedelta(days=expiration_days)
-    ).strftime("%Y-%m-%d")
+    expiration_date = (datetime.now() + timedelta(days=expiration_days)).strftime(
+        "%Y-%m-%d"
+    )
     return {
         "status": "success",
         "qr_code_data": "MOCK_QR_CODE_DATA",  # Replace with actual QR code
