@@ -13,11 +13,11 @@
 # limitations under the License.
 """Configuration module for the customer service agent."""
 
-import os
 import logging
-from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import BaseModel, Field
+import os
 
+from pydantic import BaseModel, Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -34,9 +34,7 @@ class Config(BaseSettings):
     """Configuration settings for the customer service agent."""
 
     model_config = SettingsConfigDict(
-        env_file=os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "../.env"
-        ),
+        env_file=os.path.join(os.path.dirname(os.path.abspath(__file__)), "../.env"),
         env_prefix="GOOGLE_",
         case_sensitive=True,
     )
