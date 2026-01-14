@@ -69,7 +69,7 @@ agent-starter-pack create my-blogger-agent -a adk@blogger-agent
 <details>
 <summary>⚡️ Alternative: Using uv</summary>
 
-If you have [`uv`](https://github.com/astral-sh/uv) installed, you can create and set up your project with a single command:
+If you have [`uv`](https://github.com/astral-sh/uv) installed, you can then create and set up your project with a single command:
 
 ```bash
 uvx agent-starter-pack create my-blogger-agent -a adk@blogger-agent
