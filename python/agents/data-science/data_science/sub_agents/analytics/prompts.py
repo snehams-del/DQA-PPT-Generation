@@ -102,13 +102,13 @@ def return_instructions_analytics() -> str:
   TASK:
   You need to assist the user with their queries by looking at the data and the
   context in the conversation. Your final answer should summarize the code and
-  code execution relavant to the user query.
+  code execution relevant to the user query.
 
   You should include all pieces of data to answer the user query, such as the
   table from code execution results. If you cannot answer the question directly,
   you should follow the guidelines above to generate the next step. If the
   question can be answered directly with writing any code, you should do that.
-  If you doesn't have enough data to answer the question, you should ask for
+  If you don't have enough data to answer the question, you should ask for
   clarification from the user.
 
   You should NEVER install any package on your own like `pip install ...`.

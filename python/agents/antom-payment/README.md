@@ -1,12 +1,12 @@
 # Antom Payment Agent
 
-This project implements an AI-powered payment service agent that integrates Ant International's Antom payment MCP. The agent is designed to ensure secure and smooth handling of payemnts and refunds through AI interactions.
+This project implements an AI-powered payment service agent that integrates Ant International's Antom payment MCP. The agent is designed to ensure secure and smooth handling of payments and refunds through AI interactions.
 
 ## Overview
 
 Ant International's Antom payment MCP wraps Ant International's Antom payment APIs into standardized MCP tools, allowing AI assistants to securely process payment-related operations during conversations. With this MCP server, you can create payment sessions, query transaction status, handle refunds, and more directly through AI interactions.
 
-The Antom Payment Agent aims to provide customers with a convenient and seamless dialogue-based payment process. it enhances the overall shopping and payment experience by flexibly organizing the payment flow according to consumer's intent using Ant International's Antom payment MCP, like initiating order checkout and cancel payment.
+The Antom Payment Agent aims to provide customers with a convenient and seamless dialogue-based payment process. It enhances the overall shopping and payment experience by flexibly organizing the payment flow according to consumer's intent using Ant International's Antom payment MCP, like initiating order checkout and cancel payment.
 
 ## Features
 
@@ -56,7 +56,7 @@ Before using the Antom Payment Agent, ensure you have:
 
 3. **Configuration**
 
-  You may set the following environment variables in your shell, or in a `python/agents/antom-payment/antom-payemnt-agent/.env` file instead.
+  You may set the following environment variables in your shell, or in a `python/agents/antom-payment/antom-payment-agent/.env` file instead.
    *   Set up Google Cloud credentials.
 
           GOOGLE_GENAI_USE_VERTEXAI
