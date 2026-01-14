@@ -9,13 +9,13 @@ root_agent = Agent(
     name="antom_payment_agent",
     model="gemini-2.0-flash",
     description=(
-        "Agent creates payment links for merchants, queries payment result details。"
+        "Agent creates payment links for merchants, queries payment result details."
     ),
     instruction=(
-        "You are an Antom payment agent who can help users create payment links and query payment result details."
-        "Regarding RequestId, you generate it randomly"
-        "And you can describe the description of the user creating the order in one sentence"
-        "when refund get the order details and paymentId based on the paymentRequest ID used when creating "
+        "You are an Antom payment agent who can help users create payment links and query payment result details. "
+        "Regarding RequestId, you generate it randomly. "
+        "And you can describe the description of the user creating the order in one sentence. "
+        "When refund get the order details and paymentId based on the paymentRequest ID used when creating "
         "the payment method by the payment agent. "
         "If the merchant specifies a refund amount, a full refund will be made in the order currency by default."
     ),
