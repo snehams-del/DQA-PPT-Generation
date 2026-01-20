@@ -4,7 +4,6 @@ import (
 	"context"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/tpryan/navalplan/services/researcher/config"
 )
@@ -24,13 +23,14 @@ func TestCreateResearcherAgent(t *testing.T) {
 		mapsKey = "dummy-key"
 	}
 
+	cfg := &config.Config{
+		ModelName:    modelName,
+		GeminiAPIKey: apiKey,
+		MapsAPIKey:   mapsKey,
+	}
+
 	srv := &Server{
-		config: &config.Config{
-			ModelName:    modelName,
-			GeminiAPIKey: apiKey,
-			MapsAPIKey:   mapsKey,
-		},
-		timings: make(map[string]time.Time),
+		config: cfg,
 	}
 
 	researcherTools, err := srv.setupTools()
@@ -38,7 +38,9 @@ func TestCreateResearcherAgent(t *testing.T) {
 		t.Fatalf("Failed to setup tools: %v", err)
 	}
 
-	a, err := srv.createStopAgent(context.Background(), researcherTools)
+	toolMonitor := NewToolMonitor()
+
+	a, err := NewStopAgent(context.Background(), cfg, toolMonitor, researcherTools)
 	if err != nil {
 		t.Fatalf("Failed to create researcher agent: %v", err)
 	}

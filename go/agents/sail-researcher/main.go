@@ -18,15 +18,10 @@ import (
 	"github.com/tpryan/navalplan/services/researcher/logging"
 	"github.com/tpryan/navalplan/services/researcher/tools"
 	"google.golang.org/adk/agent"
-	"google.golang.org/adk/agent/llmagent"
 	"google.golang.org/adk/cmd/launcher"
-	"google.golang.org/adk/model/gemini"
 	"google.golang.org/adk/server/adkrest"
 	"google.golang.org/adk/session"
 	"google.golang.org/adk/tool"
-	"google.golang.org/adk/tool/agenttool"
-	"google.golang.org/adk/tool/geminitool"
-	"google.golang.org/genai"
 )
 
 //go:embed prompts/search_specialist.md
@@ -50,8 +45,6 @@ type Provider interface {
 type Server struct {
 	config *config.Config
 	mu     sync.Mutex
-	// timings stores the start time of tool executions, keyed by function call ID.
-	timings map[string]time.Time
 
 	providers []Provider
 }
@@ -84,8 +77,7 @@ func main() {
 
 	ctx := context.Background()
 	srv := &Server{
-		config:  cfg,
-		timings: make(map[string]time.Time),
+		config: cfg,
 	}
 	defer srv.Close()
 
@@ -101,17 +93,19 @@ func (s *Server) run(ctx context.Context) error {
 		return fmt.Errorf("setting up tools: %w", err)
 	}
 
-	voyageAgent, err := s.createVoyageAgent(ctx)
+	toolMonitor := NewToolMonitor()
+
+	voyageAgent, err := NewVoyageAgent(ctx, s.config, toolMonitor)
 	if err != nil {
 		return fmt.Errorf("creating guide agent: %w", err)
 	}
 
-	stopAgent, err := s.createStopAgent(ctx, researcherTools)
+	stopAgent, err := NewStopAgent(ctx, s.config, toolMonitor, researcherTools)
 	if err != nil {
 		return fmt.Errorf("creating researcher agent: %w", err)
 	}
 
-	discoveryAgent, err := s.createDiscoveryAgent(ctx)
+	discoveryAgent, err := NewDiscoveryAgent(ctx, s.config, toolMonitor)
 	if err != nil {
 		return fmt.Errorf("creating discovery agent: %w", err)
 	}
@@ -140,39 +134,6 @@ func (s *Server) run(ctx context.Context) error {
 	return http.ListenAndServe(":"+s.config.Port, traceMiddleware(s.config.Project, loggingMiddleware(mux)))
 }
 
-type agentConfig struct {
-	name        string
-	description string
-	instruction string
-	tools       []tool.Tool
-	temperature float32
-}
-
-func (s *Server) createAgent(ctx context.Context, acfg *agentConfig) (agent.Agent, error) {
-	genConfig := &genai.GenerateContentConfig{
-		MaxOutputTokens: maxOutputTokens,
-		Temperature:     genai.Ptr(acfg.temperature),
-	}
-
-	m, err := gemini.NewModel(ctx, s.config.ModelName, &genai.ClientConfig{
-		APIKey: s.config.GeminiAPIKey,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return llmagent.New(llmagent.Config{
-		Name:                  acfg.name,
-		Model:                 m,
-		Description:           acfg.description,
-		Instruction:           acfg.instruction,
-		Tools:                 acfg.tools,
-		BeforeToolCallbacks:   []llmagent.BeforeToolCallback{s.onBeforeTool},
-		AfterToolCallbacks:    []llmagent.AfterToolCallback{s.onAfterTool},
-		GenerateContentConfig: genConfig,
-	})
-}
-
 func (s *Server) setupTools() ([]tool.Tool, error) {
 	weatherTool, wp, err := tools.NewWeatherTool()
 	if err != nil {
@@ -199,78 +160,6 @@ func (s *Server) setupTools() ([]tool.Tool, error) {
 	s.providers = append(s.providers, pp)
 
 	return []tool.Tool{weatherTool, tideTool, sunriseTool, placesTool}, nil
-}
-
-func (s *Server) createVoyageAgent(ctx context.Context) (agent.Agent, error) {
-	return s.createAgent(ctx, &agentConfig{
-		name:        "guide_agent",
-		description: "A Local Knowledge Expert and Sailing Guide.",
-		instruction: _voyageAgentPrompt,
-		tools: []tool.Tool{
-			geminitool.GoogleSearch{},
-		},
-		temperature: 0.4,
-	})
-}
-
-func (s *Server) createStopAgent(ctx context.Context, researcherTools []tool.Tool) (agent.Agent, error) {
-	searchAgent, err := s.createAgent(ctx, &agentConfig{
-		name:        "search_specialist",
-		description: "Finds information on the web (facilities, reviews).",
-		instruction: _searchSpecialistPrompt,
-		tools: []tool.Tool{
-			geminitool.GoogleSearch{},
-		},
-		temperature: 0.4,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("creating search agent: %w", err)
-	}
-
-	allTools := append(researcherTools, agenttool.New(searchAgent, nil))
-
-	return s.createAgent(ctx, &agentConfig{
-		name:        "researcher_agent",
-		description: "A Virtual Harbourmaster that researches sailing destinations.",
-		instruction: _stopAgentPrompt,
-		tools:       allTools,
-		temperature: 0.4,
-	})
-}
-
-func (s *Server) createDiscoveryAgent(ctx context.Context) (agent.Agent, error) {
-	return s.createAgent(ctx, &agentConfig{
-		name:        "discovery_agent",
-		description: "The Commodore - Global Seasonal Discovery Expert.",
-		instruction: _discoveryAgentPrompt,
-		tools: []tool.Tool{
-			geminitool.GoogleSearch{},
-		},
-		temperature: 0.2,
-	})
-}
-
-func (s *Server) onBeforeTool(ctx tool.Context, t tool.Tool, args map[string]any) (map[string]any, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.timings[ctx.FunctionCallID()] = time.Now()
-	return nil, nil
-}
-
-func (s *Server) onAfterTool(ctx tool.Context, t tool.Tool, args map[string]any, result map[string]any, err error) (map[string]any, error) {
-	s.mu.Lock()
-	startTime, ok := s.timings[ctx.FunctionCallID()]
-	if ok {
-		delete(s.timings, ctx.FunctionCallID())
-	}
-	s.mu.Unlock()
-
-	if ok {
-		timesince := time.Since(startTime)
-		str := timesince.String()
-		slog.Debug("tool execution", "tool", t.Name(), "duration", str)
-	}
-	return result, nil
 }
 
 var _ http.ResponseWriter = (*responseWriter)(nil)
