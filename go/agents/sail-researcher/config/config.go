@@ -14,12 +14,12 @@ type Config struct {
 }
 
 func New(getEnv func(string) string) (*Config, error) {
-	mapsKey := getEnv("NAVALPLAN_BACKEND_MAPS_API_KEY")
+	mapsKey := getEnv("GOOGLE_MAPS_KEY")
 	if mapsKey == "" {
-		return nil, fmt.Errorf("NAVALPLAN_BACKEND_MAPS_API_KEY is not set")
+		return nil, fmt.Errorf("GOOGLE_MAPS_KEY is not set")
 	}
 
-	modelName := getEnv("NAVALPLAN_AGENT_MODEL")
+	modelName := getEnv("MODEL")
 	if modelName == "" {
 		modelName = "gemini-2.0-flash-001"
 	}
@@ -31,9 +31,6 @@ func New(getEnv func(string) string) (*Config, error) {
 
 	port := getEnv("PORT")
 	if port == "" {
-		port = getEnv("NAVALPLAN_AGENT_PORT")
-	}
-	if port == "" {
 		port = "8081"
 	}
 
@@ -43,6 +40,9 @@ func New(getEnv func(string) string) (*Config, error) {
 	}
 
 	project := getEnv("GOOGLE_CLOUD_PROJECT")
+	if project == "" {
+		return nil, fmt.Errorf("GOOGLE_CLOUD_PROJECT is not set")
+	}
 
 	cfg := &Config{
 		Env:          env,

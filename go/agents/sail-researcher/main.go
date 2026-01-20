@@ -67,7 +67,6 @@ func (s *Server) Close() {
 func main() {
 	// Load .env file (try current dir, then project root)
 	godotenv.Load(".env")
-	godotenv.Load("../../.env")
 
 	cfg, err := config.New(os.Getenv)
 	if err != nil {
