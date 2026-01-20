@@ -26,21 +26,6 @@ type Provider interface {
 	Close() error
 }
 
-type Server struct {
-	config *config.Config
-	mu     sync.Mutex
-
-	providers []Provider
-}
-
-func (s *Server) Close() {
-	for _, p := range s.providers {
-		if err := p.Close(); err != nil {
-			slog.Error("Failed to close provider", "error", err)
-		}
-	}
-}
-
 func main() {
 	// Load .env file (try current dir, then project root)
 	godotenv.Load(".env")
@@ -68,6 +53,21 @@ func main() {
 	if err := srv.run(ctx); err != nil {
 		slog.Error("Application error", "error", err)
 		os.Exit(1)
+	}
+}
+
+type Server struct {
+	config *config.Config
+	mu     sync.Mutex
+
+	providers []Provider
+}
+
+func (s *Server) Close() {
+	for _, p := range s.providers {
+		if err := p.Close(); err != nil {
+			slog.Error("Failed to close provider", "error", err)
+		}
 	}
 }
 
