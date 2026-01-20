@@ -151,7 +151,7 @@ type agentConfig struct {
 func (s *Server) createAgent(ctx context.Context, acfg *agentConfig) (agent.Agent, error) {
 	genConfig := &genai.GenerateContentConfig{
 		MaxOutputTokens: maxOutputTokens,
-		Temperature:     genai.Ptr[float32](acfg.temperature),
+		Temperature:     genai.Ptr(acfg.temperature),
 	}
 
 	m, err := gemini.NewModel(ctx, s.config.ModelName, &genai.ClientConfig{
