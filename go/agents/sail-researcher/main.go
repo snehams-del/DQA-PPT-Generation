@@ -4,12 +4,10 @@ package main
 
 import (
 	"context"
-	_ "embed"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
-	"strings"
 	"sync"
 	"time"
 
@@ -23,20 +21,6 @@ import (
 	"google.golang.org/adk/session"
 	"google.golang.org/adk/tool"
 )
-
-//go:embed prompts/search_specialist.md
-var _searchSpecialistPrompt string
-
-//go:embed prompts/stop_agent.md
-var _stopAgentPrompt string
-
-//go:embed prompts/voyage_agent.md
-var _voyageAgentPrompt string
-
-//go:embed prompts/discovery_agent.md
-var _discoveryAgentPrompt string
-
-const maxOutputTokens = 65536
 
 type Provider interface {
 	Close() error
@@ -88,7 +72,7 @@ func main() {
 }
 
 func (s *Server) run(ctx context.Context) error {
-	researcherTools, err := s.setupTools()
+	researcherTools, err := s.setupTools(ctx)
 	if err != nil {
 		return fmt.Errorf("setting up tools: %w", err)
 	}
@@ -131,10 +115,10 @@ func (s *Server) run(ctx context.Context) error {
 
 	slog.Info("Starting custom server", "port", s.config.Port)
 	// Apply Trace Middleware then Logging Middleware
-	return http.ListenAndServe(":"+s.config.Port, traceMiddleware(s.config.Project, loggingMiddleware(mux)))
+	return http.ListenAndServe(":"+s.config.Port, TraceMiddleware(s.config.Project, LoggingMiddleware(mux)))
 }
 
-func (s *Server) setupTools() ([]tool.Tool, error) {
+func (s *Server) setupTools(ctx context.Context) ([]tool.Tool, error) {
 	weatherTool, wp, err := tools.NewWeatherTool()
 	if err != nil {
 		return nil, err
@@ -153,81 +137,11 @@ func (s *Server) setupTools() ([]tool.Tool, error) {
 	}
 	s.providers = append(s.providers, sp)
 
-	placesTool, pp, err := tools.NewPlacesTool(s.config.MapsAPIKey)
+	placesTool, pp, err := tools.NewPlacesTool(ctx, s.config.MapsAPIKey)
 	if err != nil {
 		return nil, err
 	}
 	s.providers = append(s.providers, pp)
 
 	return []tool.Tool{weatherTool, tideTool, sunriseTool, placesTool}, nil
-}
-
-var _ http.ResponseWriter = (*responseWriter)(nil)
-
-type responseWriter struct {
-	http.ResponseWriter
-	statusCode int
-}
-
-func (rw *responseWriter) WriteHeader(code int) {
-	rw.statusCode = code
-	rw.ResponseWriter.WriteHeader(code)
-}
-
-func (rw *responseWriter) Flush() {
-	if f, ok := rw.ResponseWriter.(http.Flusher); ok {
-		f.Flush()
-	}
-}
-
-func loggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-		ww := &responseWriter{ResponseWriter: w, statusCode: http.StatusOK}
-
-		defer func() {
-			timesince := time.Since(start)
-			str := timesince.String()
-
-			level := slog.LevelInfo
-			if ww.statusCode >= 400 {
-				level = slog.LevelWarn
-			}
-			if ww.statusCode >= 500 {
-				level = slog.LevelError
-			}
-
-			slog.Log(r.Context(), level, "Request handled",
-				"method", r.Method,
-				"path", r.URL.Path,
-				"status", ww.statusCode,
-				"duration", str,
-				"remote_addr", r.RemoteAddr,
-			)
-		}()
-
-		next.ServeHTTP(ww, r)
-	})
-}
-
-// traceMiddleware exists to make sure when running on Cloud Run, trace
-// ids are propegated so that you can get debugging and analysis.
-func traceMiddleware(projectID string, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		traceHeader := r.Header.Get("X-Cloud-Trace-Context")
-		traceParts := strings.Split(traceHeader, "/")
-		if len(traceParts) > 0 && len(traceParts[0]) > 0 {
-			traceID := traceParts[0]
-			var trace string
-			if projectID != "" {
-				trace = fmt.Sprintf("projects/%s/traces/%s", projectID, traceID)
-			} else {
-				trace = traceID
-			}
-			ctx := logging.AddTraceToContext(r.Context(), trace)
-			next.ServeHTTP(w, r.WithContext(ctx))
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
 }

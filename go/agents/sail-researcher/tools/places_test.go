@@ -31,7 +31,7 @@ func (m *mockPlacesClient) Close() error {
 }
 
 func TestNewPlacesTool(t *testing.T) {
-	tool, _, err := NewPlacesTool("dummy-key")
+	tool, _, err := NewPlacesTool(t.Context(), "dummy-key")
 	if err != nil {
 		t.Fatalf("NewPlacesTool() error = %v", err)
 	}

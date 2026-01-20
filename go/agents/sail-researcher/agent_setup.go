@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 
 	"github.com/tpryan/navalplan/services/researcher/config"
@@ -13,6 +14,20 @@ import (
 	"google.golang.org/adk/tool/geminitool"
 	"google.golang.org/genai"
 )
+
+//go:embed prompts/search_specialist.md
+var searchSpecialistPrompt string
+
+//go:embed prompts/stop_agent.md
+var stopAgentPrompt string
+
+//go:embed prompts/voyage_agent.md
+var voyageAgentPrompt string
+
+//go:embed prompts/discovery_agent.md
+var discoveryAgentPrompt string
+
+const maxOutputTokens = 65536
 
 type agentConfig struct {
 	name        string
@@ -51,7 +66,7 @@ func NewVoyageAgent(ctx context.Context, cfg *config.Config, monitor *ToolMonito
 	return constructAgent(ctx, cfg, monitor, &agentConfig{
 		name:        "guide_agent",
 		description: "A Local Knowledge Expert and Sailing Guide.",
-		instruction: _voyageAgentPrompt,
+		instruction: voyageAgentPrompt,
 		tools: []tool.Tool{
 			geminitool.GoogleSearch{},
 		},
@@ -63,7 +78,7 @@ func NewStopAgent(ctx context.Context, cfg *config.Config, monitor *ToolMonitor,
 	searchAgent, err := constructAgent(ctx, cfg, monitor, &agentConfig{
 		name:        "search_specialist",
 		description: "Finds information on the web (facilities, reviews).",
-		instruction: _searchSpecialistPrompt,
+		instruction: searchSpecialistPrompt,
 		tools: []tool.Tool{
 			geminitool.GoogleSearch{},
 		},
@@ -78,7 +93,7 @@ func NewStopAgent(ctx context.Context, cfg *config.Config, monitor *ToolMonitor,
 	return constructAgent(ctx, cfg, monitor, &agentConfig{
 		name:        "researcher_agent",
 		description: "A Virtual Harbourmaster that researches sailing destinations.",
-		instruction: _stopAgentPrompt,
+		instruction: stopAgentPrompt,
 		tools:       allTools,
 		temperature: 0.4,
 	})
@@ -88,7 +103,7 @@ func NewDiscoveryAgent(ctx context.Context, cfg *config.Config, monitor *ToolMon
 	return constructAgent(ctx, cfg, monitor, &agentConfig{
 		name:        "discovery_agent",
 		description: "The Commodore - Global Seasonal Discovery Expert.",
-		instruction: _discoveryAgentPrompt,
+		instruction: discoveryAgentPrompt,
 		tools: []tool.Tool{
 			geminitool.GoogleSearch{},
 		},

@@ -33,7 +33,7 @@ func TestCreateResearcherAgent(t *testing.T) {
 		config: cfg,
 	}
 
-	researcherTools, err := srv.setupTools()
+	researcherTools, err := srv.setupTools(context.Background())
 	if err != nil {
 		t.Fatalf("Failed to setup tools: %v", err)
 	}

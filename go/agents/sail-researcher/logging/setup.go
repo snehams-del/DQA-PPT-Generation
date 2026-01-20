@@ -27,7 +27,7 @@ func InitLogging(env string) {
 				return a
 			},
 		})
-		handler = &CloudLoggingHandler{Handler: jsonHandler, FormatMessage: true}
+		handler = &CloudLoggingHandler{Handler: jsonHandler, FormatMessage: false}
 	} else {
 		// Development: Charmbracelet colorful slog
 		chOptions := charm.Options{Prefix: "agent", ReportTimestamp: true, Level: charm.DebugLevel}
