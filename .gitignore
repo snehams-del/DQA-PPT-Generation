@@ -223,3 +223,5 @@ bin/
 
 # ADK
 .adk/
+go/agents/sail-researcher/researcher
+go/agents/sail-researcher/vendor/*
