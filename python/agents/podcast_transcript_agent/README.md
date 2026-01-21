@@ -110,7 +110,7 @@ You can also run the agent as a standalone API server. This is useful for progra
 To start the API server, run the following command:
 
 ```bash
-adk api-server
+adk api_server
 ```
 
 This will start a local server at `http://localhost:8000`.
