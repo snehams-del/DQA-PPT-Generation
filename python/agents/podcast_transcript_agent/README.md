@@ -135,6 +135,31 @@ To run the included tests, use `pytest`:
 .venv/bin/pytest
 ```
 
+## Evaluation
+
+The project includes an evaluation suite leveraging the Vertex AI Rapid Evaluation SDK to measure agent performance across metrics like Groundedness, Fluency, and Coherence.
+
+### Running Evaluations
+
+You can run evaluations in two modes: `fast` (smaller subset) or `detailed` (full dataset).
+
+To run the fast evaluation suite:
+```bash
+.venv/bin/python evals/run_eval.py --mode fast
+```
+
+To run the detailed evaluation suite:
+```bash
+.venv/bin/python evals/run_eval.py --mode detailed
+```
+
+### Metrics Explained
+- **Groundedness**: Measures how well the transcript is supported by the source document.
+- **Fluency**: Evaluates the grammatical correctness and natural flow of the dialogue.
+- **Coherence**: Assesses the logical structure and consistency of the podcast segments.
+
+Evaluation results are logged to the console and also tracked as Experiments in the Vertex AI console in your GCP project.
+
 ## Customization
 
 This agent is designed to be easily customizable:
