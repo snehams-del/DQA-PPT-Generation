@@ -12,18 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from google.adk.agents import Agent
+import os
 
-from podcast_transcript_agent.config import PODCAST_TRANSCRIPT_MODEL_NAME
-from podcast_transcript_agent.models.podcast_plan import PodcastEpisodePlan
-
-from . import prompt
-
-podcast_episode_planner_agent = Agent(
-    name="podcast_episode_planner_agent",
-    model=PODCAST_TRANSCRIPT_MODEL_NAME,
-    description="Plans the podcast episode based on extracted topics",
-    instruction=prompt.PODCAST_EPISODE_PLANNER_PROMPT,
-    output_schema=PodcastEpisodePlan,
-    output_key="podcast_episode_plan",
-)
+PODCAST_TRANSCRIPT_MODEL_NAME = os.getenv("PODCAST_TRANSCRIPT_MODEL_NAME", "gemini-2.5-flash")
