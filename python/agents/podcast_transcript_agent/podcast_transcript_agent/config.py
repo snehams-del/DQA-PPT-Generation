@@ -14,4 +14,4 @@
 
 import os
 
-PODCAST_TRANSCRIPT_MODEL_NAME = os.getenv("PODCAST_TRANSCRIPT_MODEL_NAME", "gemini-2.5-flash")
+PODCAST_TRANSCRIPT_MODEL_NAME = os.getenv("PODCAST_TRANSCRIPT_MODEL_NAME", "gemini-3-flash-preview")
