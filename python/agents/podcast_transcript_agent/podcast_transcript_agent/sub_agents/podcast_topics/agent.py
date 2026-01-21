@@ -14,13 +14,14 @@
 
 from google.adk.agents import Agent
 
+from podcast_transcript_agent.config import PODCAST_TRANSCRIPT_MODEL_NAME
 from podcast_transcript_agent.models.podcast_topics import PodcastTopics
 
 from . import prompt
 
 podcast_topics_agent = Agent(
     name="podcast_topics_agent",
-    model="gemini-2.5-flash",
+    model=PODCAST_TRANSCRIPT_MODEL_NAME,
     description="Extracts podcast topics from provided input",
     instruction=prompt.TOPIC_EXTRACTION_PROMPT,
     output_schema=PodcastTopics,
