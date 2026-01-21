@@ -68,8 +68,8 @@ Create a `.env` file in the root of the project and add the following configurat
 ```
 GOOGLE_GENAI_USE_VERTEXAI=TRUE
 GOOGLE_CLOUD_PROJECT="your-gcp-project-id"
-GOOGLE_CLOUD_LOCATION="your-gcp-region"
-PODCAST_TRANSCRIPT_MODEL_NAME="gemini-2.5-flash"
+GOOGLE_CLOUD_LOCATION="global"
+PODCAST_TRANSCRIPT_MODEL_NAME="gemini-3-flash-preview"
 ```
 
 If you are using Vertex AI, make sure you are authenticated with `gcloud`:
