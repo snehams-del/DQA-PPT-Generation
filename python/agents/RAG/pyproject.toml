@@ -1,12 +1,12 @@
-[tool.poetry]
+[project]
 name = "rag"
 version = "0.1.0"
 description = "Answer questions related to Vertex AI documentation using Vertex AI RAG Engine"
 authors = [
-        "Hangfei Lin <hangfei@google.com>",
-        "Chouaieb Nemri <nemri@google.com>",
+        { name = "Hangfei Lin", email = "hangfei@google.com" },
+        { name = "Chouaieb Nemri", email = "nemri@google.com" },
 ]
-license = "Apache License 2.0"
+license = { text = "Apache License 2.0" }
 readme = "README.md"
 dependencies = [
     "google-cloud-aiplatform[adk,agent-engines]>=1.108.0",
@@ -17,6 +17,7 @@ dependencies = [
     "requests>=2.32.3",
     "llama-index>=0.12",
 ]
+requires-python = ">=3.11,<3.13"
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.13"
