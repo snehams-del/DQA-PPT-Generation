@@ -57,7 +57,6 @@ func main() {
 
 type Server struct {
 	config *config.Config
-
 	providers []Provider
 }
 
