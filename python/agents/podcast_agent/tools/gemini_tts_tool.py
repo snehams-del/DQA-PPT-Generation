@@ -50,7 +50,38 @@ class GeminiTtsTool:
         idx = int(hashlib.md5(speaker_alias.encode()).hexdigest(), 16) % len(self.voice_pool)
         return self.voice_pool[idx]
 
-    def generate_audio(self, transcript_segments: List[Dict], output_file: str = "podcast.wav") -> str:
+    def generate_audio(self, transcript_json: str, output_file: str = "podcast.wav") -> str:
+        """
+        Generates audio using the Gemini TTS MultiSpeakerMarkup API via REST.
+        Args:
+            transcript_json: JSON string containing the podcast transcript with 'segments'.
+            output_file: Path to the output WAV file.
+        """
+        try:
+             # Handle cases where the LLM passes a python dict as string or wrapped in markdown
+             cleaned_json = transcript_json.strip()
+             if cleaned_json.startswith("```json"):
+                 cleaned_json = cleaned_json[7:]
+             if cleaned_json.endswith("```"):
+                 cleaned_json = cleaned_json[:-3]
+             cleaned_json = cleaned_json.strip()
+             
+             data = json.loads(cleaned_json)
+             if isinstance(data, list):
+                 transcript_segments = data
+             elif "segments" in data:
+                 transcript_segments = data["segments"]
+             else:
+                 # Fallback if structure is unknown, assume list of turns? 
+                 # Or just log warning and try usage
+                 transcript_segments = [data]
+        except json.JSONDecodeError as e:
+            self.logger.error(f"Failed to parse transcript JSON: {e}")
+            return f"Error: Invalid JSON provided. {e}"
+
+        return self._generate_audio_impl(transcript_segments, output_file)
+
+    def _generate_audio_impl(self, transcript_segments: List[Dict], output_file: str = "podcast.wav") -> str:
         """
         Generates audio using the Gemini TTS MultiSpeakerMarkup API via REST.
         """

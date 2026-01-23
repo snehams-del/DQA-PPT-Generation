@@ -20,7 +20,7 @@ import pytest
 from google.adk.runners import InMemoryRunner
 from google.genai import types
 
-from podcast_transcript_agent.agent import podcast_transcript_agent
+from podcast_agent.agent import podcast_agent
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -31,7 +31,7 @@ def load_env():
 @pytest.mark.asyncio
 async def test_run_with_txt():
     """Tests that the agent can generate a transcript from a text file."""
-    runner = InMemoryRunner(agent=podcast_transcript_agent)
+    runner = InMemoryRunner(agent=podcast_agent)
     session = await runner.session_service.create_session(
         app_name=runner.app_name, user_id="test_user"
     )
@@ -62,20 +62,18 @@ async def test_run_with_txt():
         session_id=session.id,
         new_message=content,
     ):
+        print(f"DEBUG: Event from {event.author} (final={event.is_final_response()})")
+        if event.content and event.content.parts:
+             text = event.content.parts[0].text or "No Text"
+             print(f"DEBUG: Content: {text[:100]}...")
         if (
             event.is_final_response()
-            and event.author == "podcast_transcript_writer_agent"
+            and event.author == "podcast_audio_generator_agent"
         ):
             if event.content and event.content.parts:
                 for part in event.content.parts:
-                    if part.text:
-                        data = json.loads(part.text)
-                        if (
-                            "metadata" in data
-                            and "duration_seconds" in data["metadata"]
-                        ):
-                            if data["metadata"]["duration_seconds"] > 0:
-                                found_valid_transcript = True
+                    if part.text and "podcast_output.wav" in part.text:
+                        found_valid_transcript = True
 
     assert found_valid_transcript, (
         "No final event found with valid transcript metadata"

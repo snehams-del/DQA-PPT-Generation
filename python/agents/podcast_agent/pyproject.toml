@@ -41,7 +41,7 @@ known-first-party = ["podcast_transcript_agent"]
 
 [tool.hatch.build.targets.wheel]
 # Ensures Hatchling finds the package folder correctly
-packages = ["podcast_transcript_agent"]
+packages = ["podcast_agent"]
 
 [build-system]
 requires = ["hatchling"]

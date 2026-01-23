@@ -12,22 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from google.adk.agents import Agent
 
-from pydantic import BaseModel
+from podcast_agent.config import PODCAST_TRANSCRIPT_MODEL_NAME
+from podcast_agent.models.podcast_transcript import PodcastTranscript
 
-from podcast_transcript_agent.models.podcast_transcript import PodcastSpeaker
+from . import prompt
 
-
-class Segment(BaseModel):
-    """A model for a 'main_segment', which includes a title."""
-
-    title: str
-    script_points: list[str]
-
-
-class PodcastEpisodePlan(BaseModel):
-    """Represents the entire episode, containing a title and a list of segments."""
-
-    episode_title: str
-    speakers: list[PodcastSpeaker]
-    segments: list[Segment]
+podcast_transcript_writer_agent = Agent(
+    name="podcast_transcript_writer_agent",
+    model=PODCAST_TRANSCRIPT_MODEL_NAME,
+    description="Writes the podcast transcript based on the podcast plan",
+    instruction=prompt.PODCAST_TRANSCRIPT_WRITER_PROMPT,
+    output_schema=PodcastTranscript,
+    output_key="podcast_episode_transcript",
+)

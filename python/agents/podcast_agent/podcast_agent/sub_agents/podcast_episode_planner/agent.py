@@ -14,16 +14,16 @@
 
 from google.adk.agents import Agent
 
-from podcast_transcript_agent.config import PODCAST_TRANSCRIPT_MODEL_NAME
-from podcast_transcript_agent.models.podcast_transcript import PodcastTranscript
+from podcast_agent.config import PODCAST_TRANSCRIPT_MODEL_NAME
+from podcast_agent.models.podcast_plan import PodcastEpisodePlan
 
 from . import prompt
 
-podcast_transcript_writer_agent = Agent(
-    name="podcast_transcript_writer_agent",
+podcast_episode_planner_agent = Agent(
+    name="podcast_episode_planner_agent",
     model=PODCAST_TRANSCRIPT_MODEL_NAME,
-    description="Writes the podcast transcript based on the podcast plan",
-    instruction=prompt.PODCAST_TRANSCRIPT_WRITER_PROMPT,
-    output_schema=PodcastTranscript,
-    output_key="podcast_episode_transcript",
+    description="Plans the podcast episode based on extracted topics",
+    instruction=prompt.PODCAST_EPISODE_PLANNER_PROMPT,
+    output_schema=PodcastEpisodePlan,
+    output_key="podcast_episode_plan",
 )

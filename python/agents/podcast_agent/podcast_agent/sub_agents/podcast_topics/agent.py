@@ -14,8 +14,8 @@
 
 from google.adk.agents import Agent
 
-from podcast_transcript_agent.config import PODCAST_TRANSCRIPT_MODEL_NAME
-from podcast_transcript_agent.models.podcast_topics import PodcastTopics
+from podcast_agent.config import PODCAST_TRANSCRIPT_MODEL_NAME
+from podcast_agent.models.podcast_topics import PodcastTopics
 
 from . import prompt
 
