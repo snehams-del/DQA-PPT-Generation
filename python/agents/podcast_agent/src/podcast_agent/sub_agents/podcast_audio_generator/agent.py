@@ -1,6 +1,6 @@
 
 from google.adk.agents import LlmAgent
-from tools.gemini_tts_tool import GeminiTtsTool
+from podcast_agent.tools.gemini_tts_tool import GeminiTtsTool
 from podcast_agent.config import (
     TTS_MODEL_NAME,
     TTS_LOCATION,

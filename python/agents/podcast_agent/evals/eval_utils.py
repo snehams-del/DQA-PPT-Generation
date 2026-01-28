@@ -4,7 +4,7 @@ from vertexai.preview.evaluation import (
     MetricPromptTemplateExamples,
     EvalTask,
 )
-from podcast_agent.config import (
+from ..config import (
     GOOGLE_CLOUD_LOCATION,
 )
 

@@ -11,8 +11,8 @@ dotenv.load_dotenv()
 
 from google.adk.runners import InMemoryRunner
 from google.genai import types
-from podcast_agent.agent import podcast_agent
-from podcast_agent.config import PODCAST_MODEL_GOOGLE_CLOUD_LOCATION, GOOGLE_CLOUD_LOCATION as EVAL_LOCATION, PODCAST_TRANSCRIPT_MODEL_NAME
+from ..agent import podcast_agent
+from ..config import PODCAST_MODEL_GOOGLE_CLOUD_LOCATION, GOOGLE_CLOUD_LOCATION as EVAL_LOCATION, PODCAST_TRANSCRIPT_MODEL_NAME
 from evals.eval_utils import init_vertex_eval, get_pointwise_metrics
 from vertexai.preview.evaluation import EvalTask
 
@@ -21,7 +21,7 @@ print(f"DEBUG: Config PODCAST_MODEL_GOOGLE_CLOUD_LOCATION={PODCAST_MODEL_GOOGLE_
 print(f"DEBUG: Config EVAL_LOCATION={EVAL_LOCATION}")
 # Inspect agent model if possible
 try:
-    from podcast_agent.sub_agents.podcast_transcript_writer.agent import podcast_transcript_writer_agent
+    from ..sub_agents.podcast_transcript_writer.agent import podcast_transcript_writer_agent
     print(f"DEBUG: Agent podcast_transcript_writer_agent.model={getattr(podcast_transcript_writer_agent, 'model', 'cloud-not-found')}")
 except ImportError:
     print("DEBUG: Could not import podcast_transcript_writer_agent directly")
@@ -74,7 +74,7 @@ async def run_agent(source_text: str) -> str:
                                         for dial in segment.get("speaker_dialogues", []):
                                             transcript_text += f"{dial['speaker_id']}: {dial['text']}\n"
                             except json.JSONDecodeError:
-                                print("Warning: Could not decode JSON from agent response")
+                                print("Warning: Could not decode JSON from src.agent response")
                                 transcript_text += part.text # Fallback
     finally:
         # Restore Eval Location
@@ -116,7 +116,7 @@ async def main():
         print("Running agent on item...")
         response = await run_agent(context)
         if not response:
-             print("Warning: Empty response from agent.")
+             print("Warning: Empty response from src.agent.")
              response = "No transcript generated."
         
         results.append({
@@ -130,7 +130,7 @@ async def main():
     
     print("Starting Vertex AI Evaluation...")
     # Re-init to ensure correct location for Eval Service
-    from podcast_agent.config import GOOGLE_CLOUD_LOCATION
+    from ..config import GOOGLE_CLOUD_LOCATION
     print(f"Re-initializing Vertex AI for Eval in {GOOGLE_CLOUD_LOCATION}...")
     init_vertex_eval()
     
