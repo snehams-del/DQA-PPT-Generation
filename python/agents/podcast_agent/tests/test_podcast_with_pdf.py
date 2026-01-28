@@ -5,9 +5,9 @@ import sys
 from unittest.mock import MagicMock, patch, AsyncMock
 
 # Add parent directory to path to import podcast_agent
-sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from podcast_agent import PodcastAgent
+from podcast_agent.agent import podcast_agent as PodcastAgent
 
 def test_podcast_agent_with_pdf():
     # Mock the runner and tts_tool to avoid actual API calls during plumbing test

@@ -12,22 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 
-from pydantic import BaseModel
-
-from podcast_agent.models.podcast_transcript import PodcastSpeaker
-
-
-class Segment(BaseModel):
-    """A model for a 'main_segment', which includes a title."""
-
-    title: str
-    script_points: list[str]
-
-
-class PodcastEpisodePlan(BaseModel):
-    """Represents the entire episode, containing a title and a list of segments."""
-
-    episode_title: str
-    speakers: list[PodcastSpeaker]
-    segments: list[Segment]
+PODCAST_TRANSCRIPT_MODEL_NAME = os.getenv("PODCAST_TRANSCRIPT_MODEL_NAME", "gemini-2.5-flash")
+PODCAST_MODEL_GOOGLE_CLOUD_LOCATION = os.getenv("MODEL_GOOGLE_CLOUD_LOCATION", "global")
+GOOGLE_CLOUD_LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
+GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT")
+TTS_MODEL_NAME = os.getenv("TTS_MODEL_NAME", "gemini-2.5-pro-tts")
+TTS_LOCATION = os.getenv("TTS_LOCATION", GOOGLE_CLOUD_LOCATION)

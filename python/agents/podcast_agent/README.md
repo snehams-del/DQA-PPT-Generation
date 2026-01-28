@@ -4,23 +4,25 @@
 
 ## Agent Details
 
-The Podcast Transcript Agent is a sequential agent that orchestrates a series of sub-agents to perform the task of generating a podcast transcript. It takes a user-provided document and guides it through a pipeline of three specialized agents:
-
-1.  **Podcast Topics Agent**: Extracts the key topics and information from the source document.
-2.  **Podcast Episode Planner Agent**: Structures the extracted information into a coherent podcast episode plan.
-3.  **Podcast Transcript Writer Agent**: Writes a full conversational script based on the episode plan.
-
-## Agent Architecture
-
-The Podcast Transcript Agent operates as a sequential process, where each step is handled by a dedicated sub-agent. The output of one agent becomes the input for the next, ensuring a smooth and logical workflow from topic extraction to the final script.
-
-```mermaid
-graph LR
-    A[Source Document] --> B(podcast_topics_agent);
-    B --> C(podcast_episode_planner_agent);
-    C --> D(podcast_transcript_writer_agent);
-    D --> E[Podcast Transcript];
-```
+7.  The Podcast Transcript Agent is a sequential agent that orchestrates a series of sub-agents to perform the task of generating a podcast transcript. It takes a user-provided document and guides it through a pipeline of four specialized agents:
+8.  
+9.  1.  **Podcast Topics Agent**: Extracts the key topics and information from the source document.
+10. 2.  **Podcast Episode Planner Agent**: Structures the extracted information into a coherent podcast episode plan.
+11. 3.  **Podcast Transcript Writer Agent**: Writes a full conversational script based on the episode plan.
+12. 4.  **Podcast Audio Generator Agent**: Converts the generated transcript into an audio file using Gemini TTS.
+13. 
+14. ## Agent Architecture
+15. 
+16. The Podcast Transcript Agent operates as a sequential process, where each step is handled by a dedicated sub-agent. The output of one agent becomes the input for the next, ensuring a smooth and logical workflow from topic extraction to the final audio.
+17. 
+18. ```mermaid
+19. graph LR
+20.     A[Source Document] --> B(podcast_topics_agent);
+21.     B --> C(podcast_episode_planner_agent);
+22.     C --> D(podcast_transcript_writer_agent);
+23.     D --> E(podcast_audio_generator_agent);
+24.     E --> F[Podcast Audio];
+25. ```
 
 ## Key Features
 
@@ -63,13 +65,22 @@ uv sync
 
 ### 4. Configure Environment Variables
 
-Create a `.env` file in the root of the project and add the following configuration for Vertex AI Authentication:
+Create a `.env` file in the root of the project. You can copy the provided `sample.env` as a starting point:
 
+```bash
+cp sample.env .env
 ```
+
+Edit the `.env` file and add your Google Cloud Project details:
+
+```ini
 GOOGLE_GENAI_USE_VERTEXAI=TRUE
 GOOGLE_CLOUD_PROJECT="your-gcp-project-id"
-GOOGLE_CLOUD_LOCATION="global"
-PODCAST_TRANSCRIPT_MODEL_NAME="gemini-3-flash-preview"
+GOOGLE_CLOUD_LOCATION="us-central1"
+MODEL_GOOGLE_CLOUD_LOCATION="global"
+# Optional overrides
+TTS_MODEL_NAME="gemini-2.5-pro-tts"
+TTS_LOCATION="us-central1"
 ```
 
 If you are using Vertex AI, make sure you are authenticated with `gcloud`:
@@ -80,52 +91,67 @@ gcloud auth application-default login
 
 ## Running the Agent
 
-You can run the agent in two ways: through the interactive web interface or as a standalone API server.
+You can run the agent through the ADK Web interface, which provides a convenient way to interact with the agent during development.
 
-### Using the ADK Web Interface
+### Prerequisites
 
-The web interface provides a user-friendly way to interact with the agent.
-
-To start the web interface, run the following command from the root of the project:
+Ensure you have your environment variables set, especially for Vertex AI and the TTS model:
 
 ```bash
-adk web
+export GOOGLE_CLOUD_PROJECT="your-project-id"
+export GOOGLE_CLOUD_LOCATION="us-central1"
+export GOOGLE_GENAI_USE_VERTEXAI=1
+# Optional: Override default TTS model or location
+# export TTS_MODEL_NAME="gemini-2.5-pro-tts"
+# export TTS_LOCATION="us-central1"
 ```
 
-This will start a local server and open a web browser with the agent's user interface.
+### Using ADK Web
 
-#### Uploading Files
-
-The web interface allows you to easily upload PDF and text files to the agent.
-
-1.  In the chat interface, you will see a paperclip icon for attachments.
-2.  Click the paperclip icon to open a file dialog.
-3.  Select the PDF or text file you want to use to generate the podcast transcript.
-4.  The file will be uploaded and sent to the agent along with your prompt.
-
-### Using the ADK API Server
-
-You can also run the agent as a standalone API server. This is useful for programmatic access or for integrating the agent into other applications.
-
-To start the API server, run the following command:
+To start the web interface and API server, run the following command from the root of the project (where `pyproject.toml` is located):
 
 ```bash
-adk api_server
+adk web --port 8000 src
 ```
 
-This will start a local server at `http://localhost:8000`.
+This will start the server on port 8000. You can then interact with the agent via the API.
 
-#### Example Interaction
+#### 1. Create a Session
 
-You can interact with the running API server using the provided shell scripts in the `tests` directory.
-
-**Example with a text file:**
+First, create a new session for your interaction:
 
 ```bash
-./tests/run_with_txt.sh
+curl -X POST http://localhost:8000/apps/podcast_agent/users/test_user/sessions \
+-H "Content-Type: application/json" \
+-d '{}'
 ```
 
-This script sends the content of `tests/test_artifacts/test_pyramid.txt` to the agent and saves the agent's response in `test_response.json`.
+This will return a session ID (e.g., `9a4993a4...`).
+
+#### 2. Run the Agent (Generate Podcast)
+
+Use the returned session ID to send a prompt to the agent. For example, to generate a podcast about a specific topic:
+
+```bash
+curl -X POST http://localhost:8000/run \
+-H "Content-Type: application/json" \
+-d '{
+  "app_name": "podcast_agent",
+  "user_id": "test_user",
+  "session_id": "YOUR_SESSION_ID_HERE",
+  "new_message": {
+    "parts": [
+      {
+        "text": "Topic: Killing Joke band history"
+      }
+    ],
+    "role": "user"
+  },
+  "streaming": false
+}'
+```
+
+The agent will process the request, generate the transcript, synthesize the audio, and return the path to the generated `.wav` file in the response.
 
 ## Testing
 

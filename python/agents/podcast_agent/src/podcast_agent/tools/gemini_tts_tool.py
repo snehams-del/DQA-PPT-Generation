@@ -9,6 +9,7 @@ import io
 from typing import List, Dict, Optional
 import google.auth
 from google.auth.transport.requests import Request
+import random
 
 # Gemini TTS REST API Implementation favoring "gemini-2.5-pro-tts" model features
 
@@ -22,14 +23,41 @@ class GeminiTtsTool:
         self.logger = logging.getLogger(__name__)
         self.project_id = os.getenv("GOOGLE_CLOUD_PROJECT")
         
+        # Database of Gemini Voices by Gender
+        self.male_voices = [
+            "Achird", "Algenib", "Algieba", "Alnilam", "Charon", "Enceladus", 
+            "Fenrir", "Iapetus", "Orus", "Puck", "Rasalgethi", "Sadachbia", 
+            "Sadaltager", "Schedar", "Umbriel", "Zubenelgenubi"
+        ]
+        self.female_voices = [
+            "Achernar", "Aoede", "Autonoe", "Callirrhoe", "Despina", "Erinome", 
+            "Gacrux", "Kore", "Laomedeia", "Leda", "Pulcherrima", "Sulafat", 
+            "Vindemiatrix", "Zephyr"
+        ]
+
+        # Randomly assign genders to Host and Expert (one Male, one Female)
+        # 50% chance Host is Female
+        host_is_female = random.choice([True, False])
+
+        if host_is_female:
+            host_voice = random.choice(self.female_voices)
+            expert_voice = random.choice(self.male_voices)
+        else:
+            host_voice = random.choice(self.male_voices)
+            expert_voice = random.choice(self.female_voices)
+            
+        self.logger.info(f"Voice Assignment - Host: {host_voice} ({'Female' if host_is_female else 'Male'}), Expert: {expert_voice} ({'Male' if host_is_female else 'Female'})")
+
         # Mapping for MultiSpeakerVoiceConfig
-        # Speaker Alias -> Speaker ID (Gemini Voice Name like 'Puck', 'Charon')
         self.speaker_voice_map = {
-            "Host": "Puck",
-            "Expert": "Charon",
+            "Host": host_voice,
+            "Expert": expert_voice,
         }
-        # Pool for unknown speakers
-        self.voice_pool = ["Fenrir", "Kore", "Leda"]
+        
+        # Pool for unknown speakers (exclude chosen ones)
+        all_voices = self.male_voices + self.female_voices
+        self.voice_pool = [v for v in all_voices if v not in [host_voice, expert_voice]]
+        random.shuffle(self.voice_pool)
 
         # Setup Auth
         self.credentials, self.detected_project = google.auth.default()
@@ -125,7 +153,7 @@ class GeminiTtsTool:
         inputs = []
         current_turns = []
         current_len = 0
-        MAX_CHAR_LIMIT = 600 # Reduced to 600 to avoid 502 timeouts aggressively
+        MAX_CHAR_LIMIT = 500 # Reduced to 500 to avoid 502 timeouts aggressively
         
         for turn in all_turns:
             turn_len = len(turn['text'])
@@ -198,29 +226,44 @@ class GeminiTtsTool:
                     seen_aliases.add(safe_alias)
 
             # Ensure at least 2 speakers to satisfy API requirement
-            if len(speaker_voice_configs) < 2:
-                # Add a dummy speaker that isn't in the chunk
-                dummy_pool = ["Host", "Expert", "GuestOne", "GuestTwo"]
-                for dummy_raw in dummy_pool:
-                    dummy_safe = get_safe_alias(dummy_raw)
-                    if dummy_safe not in seen_aliases:
-                        voice_id = self._get_voice_id_for_speaker(dummy_raw)
-                        speaker_voice_configs.append({
-                            "speakerAlias": dummy_safe,
-                            "speakerId": voice_id
-                        })
-                        if len(speaker_voice_configs) >= 2:
-                            break
+            # If the chunk only has 1 speaker, the API fails with "Multi-speaker synthesis requires two distinct speakers."
+            if len(seen_aliases) < 2 and api_turns:
+                 # Find a speaker alias that isn't the current one
+                 current_speaker = list(seen_aliases)[0]
+                 dummy_speaker = "Expert" if current_speaker == "Host" else "Host"
+                 # Just in case current_speaker is something else
+                 if dummy_speaker == current_speaker:
+                     dummy_speaker = "SpeakerTwo"
+                 
+                 # Append a dummy silent turn
+                 api_turns.append({
+                     "text": ".",
+                     "speaker": dummy_speaker
+                 })
+                 
+                 # Register the dummy speaker's voice
+                 if dummy_speaker not in seen_aliases:
+                      if dummy_speaker in self.speaker_voice_map:
+                          voice_id = self.speaker_voice_map[dummy_speaker]
+                      else:
+                          voice_id = self._get_voice_id_for_speaker(dummy_speaker)
+                          
+                      speaker_voice_configs.append({
+                          "speakerAlias": dummy_speaker,
+                          "speakerId": voice_id
+                      })
+                      seen_aliases.add(dummy_speaker)
 
             payload = {
                 "input": {
                     "multiSpeakerMarkup": {
                         "turns": api_turns
-                    }
+                    },
+                    "prompt": "Generate a podcast conversation."
                 },
                 "voice": {
                     "languageCode": "en-US",
-                    "modelName": self.model_name, # "gemini-2.5-pro-tts"
+                    "modelName": self.model_name, # "gemini-2.5-flash-tts"
                     "multiSpeakerVoiceConfig": {
                          "speakerVoiceConfigs": speaker_voice_configs
                     }
@@ -230,6 +273,14 @@ class GeminiTtsTool:
                     "sampleRateHertz": 24000 
                 }
             }
+            
+            # Rate limiting / Backoff for stability
+            import time
+            time.sleep(1)
+
+            # Debug Payload
+            if chunk_idx == 0:
+                print(f"DEBUG: Payload for chunk {chunk_idx}: {json.dumps(payload, indent=2)}")
 
             try:
                 # Retry logic for 500-level errors
