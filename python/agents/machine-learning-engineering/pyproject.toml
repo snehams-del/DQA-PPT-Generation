@@ -8,9 +8,9 @@ authors = [
     { name = "Jaehyun Nam", email = "jaehyunnam@google.com" },
     { name = "Jinsung Yoon", email = "jinsungyoon@google.com" }
 ]
-license = {text = "Apache License 2.0"}
+license = "Apache-2.0"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.11,<3.13"
 
 dependencies = [
     "google-adk>=1.5.0",
@@ -26,12 +26,13 @@ dependencies = [
     "torch>=2.7.1",
 ]
 
-[dependency-groups]
+[project.optional-dependencies]
 dev = [
     "pytest>=8.3.5",
     "pytest-asyncio>=0.26.0",
     "google-adk[eval]>=1.5.0",
     "google-cloud-aiplatform[evaluation]>=1.93.0",
+    "agent-starter-pack>=0.14.1",
 ]
 deployment = [
     "absl-py>=2.2.1",
@@ -50,8 +51,20 @@ ignore = ["C901", "PLR0911", "PLR0912", "PLR0915"]
 known-first-party = ["machine_learning_engineering"]
 
 [tool.pytest.ini_options]
-asyncio_mode = "auto"
+pythonpath = "."
+asyncio_default_fixture_loop_scope = "function"
 
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["uv_build>=0.8.14,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-root = ""
+
+# This configuration file is used by goo.gle/agent-starter-pack to power remote templating.
+# It defines the template's properties and settings.
+[tool.agent-starter-pack]
+example_question = "Can you build a model to classify the iris dataset?"
+
+[tool.agent-starter-pack.settings]
+agent_directory = "machine_learning_engineering"

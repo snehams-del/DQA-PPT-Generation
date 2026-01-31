@@ -46,14 +46,14 @@ to implement this workflow.
 
 1.  **Prerequisites**
 
-    *   Python 3.12+
-    *   Poetry
+    *   Python 3.10+
+    *   uv
         *   For dependency management and packaging. Please follow the
             instructions on the official
-            [Poetry website](https://python-poetry.org/docs/) for installation.
+            [uv website](https://docs.astral.sh/uv/) for installation.
 
         ```bash
-        pip install poetry
+        curl -LsSf https://astral.sh/uv/install.sh | sh
         ```
     *  Git
         *   Git can be downloaded from https://git-scm.com/. Then follow the [installation guide](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git).
@@ -75,40 +75,10 @@ to implement this workflow.
         cd adk-samples/python/agents/machine-learning-engineering
         ```
 
-    *   Install Poetry
+    *   Install dependencies
         ```bash
-        # Install the Poetry package and dependencies.
-        # Note for Linux users: If you get an error related to `keyring` during the installation, you can disable it by running the following command:
-        # poetry config keyring.enabled false
-        # This is a one-time setup.
-        poetry install
-        ```
-
-        This command reads the `pyproject.toml` file and installs all the necessary dependencies into a virtual environment managed by Poetry.
-
-        If the above command returns with a `command not found` error, then use:
-
-        ```bash
-        python -m poetry install
-        ```
-
-    *   Activate the shell
-
-        ```bash
-        poetry env activate
-        ```
-
-        This activates the virtual environment, allowing you to run commands within the project's environment. To make sure the environment is active, use for example
-
-        ```bash
-        $> poetry env list
-        machine-learning-engineering-Gb54hHID-py3.12 (Activated)
-        ```
-
-        If the above command did not activate the environment for you, you can also activate it through
-
-        ```bash
-        source $(poetry env info --path)/bin/activate
+        # Install the package and dependencies.
+        uv sync
         ```
 
 <a name="configuration"></a>
@@ -154,9 +124,9 @@ You may talk to the agent using the CLI:
 adk run machine_learning_engineering
 ```
 
-Or via the Poetry shell:
+Or via the `uv` shell:
 ```bash
-poetry run adk run machine_learning_engineering
+uv run adk run machine_learning_engineering
 ```
 
 Or on a web interface:
@@ -197,15 +167,15 @@ print(f"Submission file saved successfully to {submission_file_path}")
 For running tests and evaluation, install the extra dependencies:
 
 ```bash
-poetry install --with dev
+uv sync --dev
 ```
 
 Then the tests and evaluation can be run from the `machine-learning-engineering` directory using
 the `pytest` module:
 
 ```bash
-python3 -m pytest tests
-python3 -m pytest eval
+uv run pytest tests
+uv run pytest eval
 ```
 
 `tests` runs the agent on a sample request, and makes sure that every component
@@ -224,8 +194,8 @@ The Machine Learning Engineering Agent can be deployed to Vertex AI Agent Engine
 commands:
 
 ```bash
-poetry install --with deployment
-python3 deployment/deploy.py --create
+uv sync --group deployment
+uv run deployment/deploy.py --create
 ```
 
 When the deployment finishes, it will print a line like this:
@@ -237,7 +207,7 @@ Created remote agent: projects/<PROJECT_NUMBER>/locations/<PROJECT_LOCATION>/rea
 If you forget the AGENT_ENGINE_ID, you can list the existing agents using:
 
 ```bash
-python3 deployment/deploy.py --list
+uv run deployment/deploy.py --list
 ```
 
 The output will be like:
@@ -253,7 +223,7 @@ All remote agents:
 You may interact with the deployed agent using the `test_deployment.py` script
 ```bash
 $ export USER_ID=<any string>
-$ python3 deployment/test_deployment.py --resource_id=${AGENT_ENGINE_ID} --user_id=${USER_ID}
+$ uv run deployment/test_deployment.py --resource_id=${AGENT_ENGINE_ID} --user_id=${USER_ID}
 Found agent with resource ID: ...
 Created session for user ID: ...
 Type 'quit' to exit.
@@ -266,9 +236,34 @@ To get started, please provide the task description of the competition.
 To delete the deployed agent, you may run the following command:
 
 ```bash
-python3 deployment/deploy.py --delete --resource_id=${AGENT_ENGINE_ID}
+uv run deployment/deploy.py --delete --resource_id=${AGENT_ENGINE_ID}
 ```
 
+### Alternative: Using Agent Starter Pack
+
+You can also use the [Agent Starter Pack](https://goo.gle/agent-starter-pack) to create a production-ready version of this agent with additional deployment options:
+
+```bash
+# Create and activate a virtual environment
+python -m venv .venv && source .venv/bin/activate # On Windows: .venv\Scripts\activate
+
+# Install the starter pack and create your project
+pip install --upgrade agent-starter-pack
+agent-starter-pack create my-mle-agent -a adk@machine-learning-engineering
+```
+
+<details>
+<summary>⚡️ Alternative: Using uv</summary>
+
+If you have [`uv`](https://github.com/astral-sh/uv) installed, you can create and set up your project with a single command:
+```bash
+uvx agent-starter-pack create my-mle-agent -a adk@machine-learning-engineering
+```
+This command handles creating the project without needing to pre-install the package into a virtual environment.
+
+</details>
+
+The starter pack will prompt you to select deployment options and provides additional production-ready features including automated CI/CD deployment scripts.
 
 ## Appendix
 
