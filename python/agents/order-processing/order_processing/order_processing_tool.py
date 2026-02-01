@@ -56,10 +56,17 @@ TOOL_INSTR = """
             - Inform the user with this **exact phrasing**: "Your order has been successfully processed. You should have received a confirmation email with all the pertinent details, including your order ID."
 """
 
-order_processing_tool = ApplicationIntegrationToolset(
-    project=GOOGLE_CLOUD_PROJECT,
-    location=GOOGLE_CLOUD_LOCATION,
-    integration=APPINT_PROCESS_NAME,
-    triggers=[APPINT_PROCESS_TRIGGER],
-    tool_instructions=TOOL_INSTR,
-)
+_order_processing_tool = None
+
+def get_order_processing_tool():
+    global _order_processing_tool
+    if _order_processing_tool is None:
+        _order_processing_tool = ApplicationIntegrationToolset(
+            project=GOOGLE_CLOUD_PROJECT,
+            location=GOOGLE_CLOUD_LOCATION,
+            integration=APPINT_PROCESS_NAME,
+            triggers=[APPINT_PROCESS_TRIGGER],
+            tool_instructions=TOOL_INSTR,
+        )
+    return _order_processing_tool
+
