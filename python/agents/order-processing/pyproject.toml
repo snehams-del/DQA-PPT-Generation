@@ -39,6 +39,11 @@ example_question = "I'd like to order 5 Google Pixel phones. My name is Test Use
 [tool.agent-starter-pack.settings]
 agent_directory = "order_processing"
 
+[tool.pytest.ini_options]
+markers = [
+  "integration: tests that require a deployed Agent Engine"
+]
+
 
 [build-system]
 requires = ["hatchling"]
