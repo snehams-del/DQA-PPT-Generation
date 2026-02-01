@@ -14,11 +14,12 @@
 
 from google.adk.agents import Agent
 
-from .order_processing_tool import order_processing_tool
+from .order_processing_tool import get_order_processing_tool
+
 
 root_agent = Agent(
     model="gemini-2.5-flash",
     name="order_processing_agent",
     instruction="Help the user with creating orders, leverage the tools you have access to",
-    tools=[order_processing_tool],
+    tools=[get_order_processing_tool],
 )
