@@ -15,6 +15,7 @@ dependencies = [
     "google-cloud-aiplatform[adk,agent-engines]>=1.100.0,<2.0.0",
     "python-dotenv>=1.1.1,<2.0.0",
     "google-cloud-secret-manager>=2.24.0,<3.0.0",
+    "agent-starter-pack>=0.32.0",
 ]
 
 [dependency-groups]
@@ -31,6 +32,13 @@ extend = "../../../pyproject.toml"
 
 [tool.ruff.lint.isort]
 known-first-party = ["order_processing"]
+
+[tool.agent-starter-pack]
+example_question = "I'd like to order 5 Google Pixel phones. My name is Test User and my address is 15 Testing Drive."
+
+[tool.agent-starter-pack.settings]
+agent_directory = "order_processing"
+
 
 [build-system]
 requires = ["hatchling"]
