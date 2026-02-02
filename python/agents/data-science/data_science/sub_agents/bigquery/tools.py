@@ -20,12 +20,13 @@ import os
 
 import numpy as np
 import pandas as pd
-from data_science.utils.utils import USER_AGENT, get_env_var
 from google.adk.tools import ToolContext
 from google.adk.tools.bigquery.client import get_bigquery_client
 from google.cloud import bigquery
 from google.genai import Client
 from google.genai.types import HttpOptions
+
+from data_science.utils.utils import USER_AGENT, get_env_var
 
 from .chase_sql import chase_constants
 
@@ -73,7 +74,7 @@ def _serialize_value_for_sql(value):
         # For STRUCT, BQ expects ('val1', 'val2', ...).
         # The values() order from the dataframe should match the column order.
         string_values = [_serialize_value_for_sql(v) for v in value.values()]
-        return f"({", ".join(string_values)})"
+        return f"({', '.join(string_values)})"
     return str(value)
 
 

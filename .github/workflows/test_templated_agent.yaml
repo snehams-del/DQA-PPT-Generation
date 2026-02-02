@@ -34,6 +34,11 @@ jobs:
           grep -o 'python/agents/[^/]*' | \
           sort -u | \
           while read -r dir; do
+            if [ -f "$dir/.testignore" ]; then
+              echo "Skipping tests for $dir becuase .testignore is present."
+              continue
+            fi
+
             if [ -f "$dir/pyproject.toml" ]; then
               # Check if the pyproject.toml contains [tool.agent-starter-pack] section
               if grep -q '\[tool\.agent-starter-pack\]' "$dir/pyproject.toml"; then
@@ -68,7 +73,6 @@ jobs:
     # --- PERMISSIONS BLOCK FOR OIDC AUTHENTICATION ---
     permissions:
       contents: 'read'
-      id-token: 'write'
 
     strategy:
       fail-fast: false

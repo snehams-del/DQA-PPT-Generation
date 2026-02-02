@@ -57,7 +57,7 @@ def load_csv_to_bigquery(
 
     job.result()  # Wait for the job to complete
 
-    print(f"Loaded {job.output_rows} rows into " f"{dataset_name}.{table_name}")
+    print(f"Loaded {job.output_rows} rows into {dataset_name}.{table_name}")
 
 
 def create_dataset_if_not_exists(
@@ -86,7 +86,6 @@ def create_dataset_if_not_exists(
 
 
 def main():
-
     current_directory = os.getcwd()
     print(f"Current working directory: {current_directory}")
 
