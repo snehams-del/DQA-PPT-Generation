@@ -54,4 +54,5 @@ dependencies = [
     "streamlit",
     "sseclient",
     "sqlalchemy",
+    "ruff>=0.14.14",
 ]

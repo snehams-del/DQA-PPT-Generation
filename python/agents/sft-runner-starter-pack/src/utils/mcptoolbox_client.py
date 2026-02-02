@@ -66,7 +66,9 @@ class MCPToolboxClient:
         self.bq_client = bigquery.Client(project=self.project_id)
         print("--- MCPToolboxClient: BigQuery client initialized. ---")
 
-    def execute_tool(self, tool_name: str, parameters: dict = None) -> pd.DataFrame:
+    def execute_tool(
+        self, tool_name: str, parameters: dict = None
+    ) -> pd.DataFrame:
         """
         Executes a tool defined in tools.yaml.
 
@@ -104,7 +106,9 @@ class MCPToolboxClient:
         else:
             raise ValueError(f"Unsupported tool kind: {kind}")
 
-        print(f"--- MCPToolboxClient: Executing generated query: {query[:200]}... ---")
+        print(
+            f"--- MCPToolboxClient: Executing generated query: {query[:200]}... ---"
+        )
         try:
             df = self.bq_client.query(query).to_dataframe()
             return df

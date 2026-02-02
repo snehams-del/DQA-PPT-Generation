@@ -27,7 +27,8 @@ from ...config import config
 
 # Logging Setup
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -72,9 +73,13 @@ def fine_tune_model(
         )
         if endpoints:
             tuned_model_endpoint = endpoints[0]
-            logger.info(f"Model is deployed to endpoint: {tuned_model_endpoint.name}")
+            logger.info(
+                f"Model is deployed to endpoint: {tuned_model_endpoint.name}"
+            )
             break
-        logger.info("Waiting for endpoint to be created and model to be deployed...")
+        logger.info(
+            "Waiting for endpoint to be created and model to be deployed..."
+        )
         time.sleep(5)
 
     output = {"model_endpoint": tuned_model_endpoint.resource_name}

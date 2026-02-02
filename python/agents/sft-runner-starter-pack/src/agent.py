@@ -44,7 +44,8 @@ from .prompts import (
 
 # Logging Setup
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -120,13 +121,15 @@ def setup_before_agent_call(callback_context: CallbackContext):
     callback_context.state["gcs_bucket_name"] = config.bucket_name
     callback_context.state["base_model"] = config.flash_model
     callback_context.state["target_examples"] = config.initial_target_examples
-    callback_context.state["bq_dataset_id"] = config.DATASET
-    callback_context.state["GCP_PROJECT_ID"] = config.project_id
-    callback_context.state["GCP_LOCATION"] = config.location
-    callback_context.state["GCS_BUCKET_NAME"] = config.bucket_name
-    callback_context.state["BASE_MODEL_FOR_TUNING"] = config.flash_model
-    callback_context.state["INITIAL_TARGET_EXAMPLES"] = config.initial_target_examples
-    callback_context.state["BQ_DATASET_ID"] = config.DATASET
+    callback_context.state["bq_dataset_id"] = config.dataset
+    callback_context.state["gcp_project_id"] = config.project_id
+    callback_context.state["gcp_location"] = config.location
+    callback_context.state["gcs_bucket_name"] = config.bucket_name
+    callback_context.state["base_model_for_tuning"] = config.flash_model
+    callback_context.state["initial_target_examples"] = (
+        config.initial_target_examples
+    )
+    callback_context.state["bq_dataset_id"] = config.dataset
     print(f"Initial state setup complete.")
 
 
@@ -134,7 +137,7 @@ def setup_before_agent_call(callback_context: CallbackContext):
 root_agent = LlmAgent(
     name="FineTuningCoordinator",
     model=config.flash_model,
-    description="A master coordinator for a machine learning fine-tuning pipeline.",
+    description="A coordinator for a machine learning fine-tuning pipeline.",
     instruction=ROOT_PROMPT,
     sub_agents=[
         full_pipeline_agent,

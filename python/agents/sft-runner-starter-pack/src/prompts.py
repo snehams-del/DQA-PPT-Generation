@@ -15,7 +15,7 @@
 
 # Orchestrator prompt
 ROOT_PROMPT = """
-You are a master coordinator for a machine learning fine-tuning pipeline.
+You are a coordinator for a machine learning fine-tuning pipeline.
 You have access to a team of specialist agents to perform specific tasks.
 Your job is to understand the user's request and delegate the task to the correct agent.
 

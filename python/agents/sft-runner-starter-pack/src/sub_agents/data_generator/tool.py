@@ -29,7 +29,8 @@ from ...config import config
 
 # Define logging
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -51,7 +52,8 @@ def _format_schemas_for_prompt(
     )
     for table_name in tables_df["table_name"]:
         schema_df = mcptoolbox_client.execute_tool(
-            "get_table_schema", {"dataset_id": bq_dataset_id, "table_id": table_name}
+            "get_table_schema",
+            {"dataset_id": bq_dataset_id, "table_id": table_name},
         )
         full_table_name = f"`{project_id}.{bq_dataset_id}.{table_name}`"
         schema_string = f"Table Name: {full_table_name}\nColumns:\n"
@@ -94,7 +96,9 @@ def _generate_examples_batch(
     )
     try:
         logger.info("Sending request to Gemini to generate examples...")
-        response = model.generate_content(prompt, generation_config=generation_config)
+        response = model.generate_content(
+            prompt, generation_config=generation_config
+        )
         logger.info("Received response from Gemini.")
         return response.text
     except Exception as e:
@@ -121,7 +125,7 @@ def _upload_to_gcs(local_path: str, bucket_name: str, folder_name: str) -> str:
 # MAIN Utility: Generates synthetic data - calls other Utilities
 def generate_synthetic_data(
     project_id: str = config.project_id,
-    bq_dataset_id: str = config.DATASET,
+    bq_dataset_id: str = config.dataset,
     seed_data_path: str = config.seed_queries,
     target_examples: int = config.initial_target_examples,
     gcs_bucket_name: str = config.bucket_name,
@@ -130,7 +134,7 @@ def generate_synthetic_data(
     logger.info(f"--- Executing Tool: generate_synthetic_data ---")
     logger.info(
         f"Received parameters: project_id={config.project_id}, \
-            bq_dataset_id={config.DATASET}, seed_data_path={config.seed_queries}, \
+            bq_dataset_id={config.dataset}, seed_data_path={config.seed_queries}, \
                 target_examples={config.initial_target_examples}, \
                     gcs_bucket_name={config.bucket_name}"
     )
@@ -185,9 +189,13 @@ def generate_synthetic_data(
                             all_generated_examples.append(item)
                             generated_questions_set.add(item["question"])
             except json.JSONDecodeError as e:
-                logger.error(f"Warning: Failed to decode JSON from model response: {e}")
+                logger.error(
+                    f"Warning: Failed to decode JSON from model response: {e}"
+                )
 
-        logger.info(f"Total examples generated so far: {len(all_generated_examples)}")
+        logger.info(
+            f"Total examples generated so far: {len(all_generated_examples)}"
+        )
         if len(all_generated_examples) < target_examples:
             time.sleep(5)
 
@@ -199,7 +207,9 @@ def generate_synthetic_data(
         for example in all_generated_examples:
             f.write(json.dumps(example) + "\n")
     logger.info(f"Successfully generated raw data file: {raw_output_filename}")
-    raw_gcs_path = _upload_to_gcs(raw_output_filename, gcs_bucket_name, folder_name)
+    raw_gcs_path = _upload_to_gcs(
+        raw_output_filename, gcs_bucket_name, folder_name
+    )
     logger.info(
         f"Sample from raw data file:\n{pd.read_json(raw_output_filename, lines=True).head()}\n"
     )
@@ -236,7 +246,10 @@ def _prepare_finetuning_data_chat_format(
         f"Preparing data from '{input_jsonl_path}' into multi-turn chat format..."
     )
     count = 0
-    with open(input_jsonl_path, "r") as infile, open(output_jsonl_path, "w") as outfile:
+    with (
+        open(input_jsonl_path, "r") as infile,
+        open(output_jsonl_path, "w") as outfile,
+    ):
         for line in infile:
             original_data = json.loads(line)
             question = original_data.get("question")

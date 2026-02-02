@@ -12,5 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-PROMPT = """You are an expert in Machine Learningmodel evaluation. 
+PROMPT = """You are an expert in Machine Learning model evaluation. 
 Call the `evaluate_model` tool with the provided parameters."""

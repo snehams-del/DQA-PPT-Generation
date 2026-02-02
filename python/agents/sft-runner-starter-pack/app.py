@@ -43,7 +43,8 @@ os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "True"
 
 # Logging Setup
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -55,7 +56,9 @@ def initialize_agent():
     Initializes the Vertex AI SDK, session service, and the ADK runner.
     This function is cached to prevent re-initialization on every user interaction.
     """
-    logger.info("Application starting up... Initializing Vertex AI and ADK Runner.")
+    logger.info(
+        "Application starting up... Initializing Vertex AI and ADK Runner."
+    )
     try:
         vertexai.init(project=_PROJECT_ID, location=_REGION)
         logger.info("Vertex AI SDK initialized.")
@@ -97,7 +100,9 @@ async def _run_agent_async_task(
         )
 
         if not session:
-            logger.info(f"Session '{session_id}' not found. Creating a new one.")
+            logger.info(
+                f"Session '{session_id}' not found. Creating a new one."
+            )
             await runner.session_service.create_session(
                 app_name=runner.app_name, user_id=user_id, session_id=session_id
             )
@@ -116,7 +121,9 @@ async def _run_agent_async_task(
                     final_answer = event.content.parts[0].text.strip()
                     logger.info("Final answer extracted.")
                 else:
-                    logger.warning("Received final response with empty content parts.")
+                    logger.warning(
+                        "Received final response with empty content parts."
+                    )
                 break  # Stop after the final response
 
         return final_answer
@@ -127,7 +134,9 @@ async def _run_agent_async_task(
 
 
 # Synchronous Wrapper for Agent Calls
-def call_agent_sync(runner: Runner, user_id: str, session_id: str, query: str) -> str:
+def call_agent_sync(
+    runner: Runner, user_id: str, session_id: str, query: str
+) -> str:
     """
     Synchronously calls the agent runner by managing the asyncio event loop.
     This function is responsible for ensuring the event loop is correctly
@@ -139,7 +148,9 @@ def call_agent_sync(runner: Runner, user_id: str, session_id: str, query: str) -
         loop = get_or_create_managed_loop()
 
         # Run the asynchronous task
-        logger.info(f"Running agent task on managed loop for session '{session_id}'")
+        logger.info(
+            f"Running agent task on managed loop for session '{session_id}'"
+        )
         final_answer = loop.run_until_complete(
             _run_agent_async_task(runner, user_id, session_id, query)
         )
@@ -162,7 +173,9 @@ def get_or_create_managed_loop():
         or st.session_state.asyncio_event_loop is None
         or st.session_state.asyncio_event_loop.is_closed()
     ):
-        logger.info("Creating or resetting asyncio event loop in session state.")
+        logger.info(
+            "Creating or resetting asyncio event loop in session state."
+        )
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         st.session_state.asyncio_event_loop = loop
@@ -177,7 +190,10 @@ def close_managed_loop():
     """
     Safely closes the asyncio event loop stored in session state if it's being managed.
     """
-    if "loop_is_managed" in st.session_state and st.session_state.loop_is_managed:
+    if (
+        "loop_is_managed" in st.session_state
+        and st.session_state.loop_is_managed
+    ):
         if (
             "asyncio_event_loop" in st.session_state
             and st.session_state.asyncio_event_loop
@@ -188,7 +204,9 @@ def close_managed_loop():
                 try:
                     loop.close()
                 except Exception as e:
-                    logger.error(f"Error closing asyncio loop: {e}", exc_info=True)
+                    logger.error(
+                        f"Error closing asyncio loop: {e}", exc_info=True
+                    )
             st.session_state.asyncio_event_loop = None  # Clear the reference
             st.session_state.loop_is_managed = False  # Reset flag
 
@@ -239,7 +257,9 @@ with st.sidebar:
         close_managed_loop()
 
         # Reset session state for a new chat
-        st.session_state.session_id = f"session_{str(uuid.uuid4())}"  # New session ID
+        st.session_state.session_id = (
+            f"session_{str(uuid.uuid4())}"  # New session ID
+        )
         st.session_state.messages = []
         st.success("New chat session started!")
         st.rerun()  # Rerun the app

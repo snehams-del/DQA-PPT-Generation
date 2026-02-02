@@ -29,28 +29,29 @@ if env_path.exists():
 class Config:
     def __init__(self):
         # Google Cloud Configuration
-        self.project_id: Optional[str] = os.getenv("GOOGLE_CLOUD_PROJECT") or os.getenv(
-            "GCP_PROJECT_ID"
-        )
+        self.project_id: Optional[str] = os.getenv(
+            "GOOGLE_CLOUD_PROJECT"
+        ) or os.getenv("GCP_PROJECT_ID")
         self.location: Optional[str] = os.getenv(
             "GOOGLE_CLOUD_LOCATION", "us-central1"
         ).lower()
-        self.use_vertex_ai: bool = os.getenv("GOOGLE_GENAI_USE_VERTEXAI", "0") == "1"
+        self.use_vertex_ai: bool = (
+            os.getenv("GOOGLE_GENAI_USE_VERTEXAI", "0") == "1"
+        )
 
         # Bigquery configurations
-        self.BQ_LOCATION: Optional[str] = os.getenv("BQ_LOCATION") or os.getenv(
-            "BQ_LOCATION"
-        )
-        self.PROJECT: Optional[str] = os.getenv("PROJECT") or os.getenv("PROJECT")
-        self.DATASET: Optional[str] = os.getenv("DATASET") or os.getenv("DATASET")
-
+        self.bq_location: Optional[str] = os.getenv("BQ_LOCATION")
+        self.project: Optional[str] = os.getenv("PROJECT")
+        self.dataset: Optional[str] = os.getenv("DATASET")
         # Model and Service Configuration
         self.flash_model: str = os.getenv("FLASH_MODEL")
         self.pro_model: str = os.getenv("PRO_MODEL")
         self.bucket_name: str = os.getenv("GCS_BUCKET_NAME")
 
         # Parameters for overall fine tuning process
-        self.initial_target_examples: int = int(os.getenv("INITIAL_TARGET_EXAMPLES"))
+        self.initial_target_examples: int = int(
+            os.getenv("INITIAL_TARGET_EXAMPLES")
+        )
         self.seed_queries: str = os.getenv("SEED_QUERIES")
         self.eval_dataset: str = os.getenv("EVAL_DATASET")
         # TODO: Refactor to GCS/BigQuery Table
@@ -69,18 +70,10 @@ class Config:
     def validate(self) -> bool:
         """Validate that all required configuration is present."""
         if not self.project_id:
-            raise ValueError("GOOGLE_CLOUD_PROJECT environment variable is required")
+            raise ValueError(
+                "GOOGLE_CLOUD_PROJECT environment variable is required"
+            )
         return True
-
-    @property
-    def project_location(self) -> str:
-        """Get the project location in the format required by BigQuery and Dataform."""
-        return f"{self.project_id}.{self.location}"
-
-    @property
-    def vertex_project_location(self) -> str:
-        """Get the project location in the format required by Vertex AI."""
-        return f"{self.project_id}.{self.location}"
 
 
 # Create a global config instance
