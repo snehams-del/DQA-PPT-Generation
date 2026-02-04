@@ -1,0 +1,140 @@
+package agent
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"strings"
+
+	"navallist/internal/data"
+
+	adkagent "google.golang.org/adk/agent"
+	"google.golang.org/adk/runner"
+	"google.golang.org/adk/session"
+	"google.golang.org/genai"
+)
+
+// LocalAgentClient implements data.AgentClient by calling the agent directly via ADK runner.
+type LocalAgentClient struct {
+	Runner   *runner.Runner
+	Sessions session.Service
+	Agent    adkagent.Agent
+}
+
+// NewLocalClient creates a new LocalAgentClient.
+func NewLocalClient(a adkagent.Agent, s session.Service) (*LocalAgentClient, error) {
+	r, err := runner.New(runner.Config{
+		AppName:        a.Name(),
+		Agent:          a,
+		SessionService: s,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &LocalAgentClient{
+		Runner:   r,
+		Sessions: s,
+		Agent:    a,
+	}, nil
+}
+
+// CreateSession ensures the session exists in the session service.
+func (c *LocalAgentClient) CreateSession(ctx context.Context, appName, userID, sessionID string) error {
+	// Check name match
+	if c.Agent.Name() != appName {
+		// Log warning or error? For now just proceed as we only have one agent.
+	}
+
+	_, err := c.Sessions.Create(ctx, &session.CreateRequest{
+		AppName:   appName,
+		UserID:    userID,
+		SessionID: sessionID,
+	})
+	return err
+}
+
+// GetSession retrieves the session state.
+func (c *LocalAgentClient) GetSession(ctx context.Context, appName, userID, sessionID string) (map[string]interface{}, error) {
+	resp, err := c.Sessions.Get(ctx, &session.GetRequest{
+		AppName:   appName,
+		UserID:    userID,
+		SessionID: sessionID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// We need to return a map that represents the session or its state.
+	// The ADK REST API returns the session object.
+	// We'll marshal the session to JSON and back to map.
+	b, err := json.Marshal(resp.Session)
+	if err != nil {
+		return nil, err
+	}
+	var result map[string]interface{}
+	err = json.Unmarshal(b, &result)
+	return result, err
+}
+
+// RunInteraction sends an interaction payload to the agent.
+func (c *LocalAgentClient) RunInteraction(ctx context.Context, payload interface{}) (interface{}, error) {
+	// Marshall payload to JSON then Unmarshal to a struct that matches /run body
+	b, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+
+	var req struct {
+		AppName      string         `json:"app_name"`
+		AppNameCamel string         `json:"appName"`
+		UserID       string         `json:"user_id"`
+		UserIDCamel  string         `json:"userId"`
+		SessionID    string         `json:"session_id"`
+		SessionIDCamel string       `json:"sessionId"`
+		NewMessage   *genai.Content `json:"new_message"`
+		NewMessageCamel *genai.Content `json:"newMessage"`
+	}
+	if err := json.Unmarshal(b, &req); err != nil {
+		return nil, fmt.Errorf("invalid payload structure: %w", err)
+	}
+
+	// Coalesce
+	finalAppName := req.AppName
+	if finalAppName == "" {
+		finalAppName = req.AppNameCamel
+	}
+	finalUserID := req.UserID
+	if finalUserID == "" {
+		finalUserID = req.UserIDCamel
+	}
+	finalSessionID := req.SessionID
+	if finalSessionID == "" {
+		finalSessionID = req.SessionIDCamel
+	}
+	finalMsg := req.NewMessage
+	if finalMsg == nil {
+		finalMsg = req.NewMessageCamel
+	}
+
+	if finalAppName == "" || finalUserID == "" || finalSessionID == "" {
+		return nil, fmt.Errorf("app_name, user_id, session_id are required, got app_name: %q, user_id: %q, session_id: %q", finalAppName, finalUserID, finalSessionID)
+	}
+
+	if finalAppName != c.Agent.Name() {
+		// Verify?
+	}
+
+	// Run
+	var events []*session.Event
+	for event, err := range c.Runner.Run(ctx, finalUserID, finalSessionID, finalMsg, adkagent.RunConfig{}) {
+		if err != nil {
+			if strings.Contains(err.Error(), "session") && strings.Contains(err.Error(), "not found") {
+				return nil, data.ErrNotFound
+			}
+			return nil, err
+		}
+		events = append(events, event)
+	}
+
+	return events, nil
+}
