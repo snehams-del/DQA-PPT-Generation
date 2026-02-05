@@ -13,88 +13,50 @@
 # limitations under the License.
 
 import asyncio
-import json
 import os
 
+import pytest
 import vertexai
 from dotenv import load_dotenv
 from google.adk.sessions import VertexAiSessionService
 from vertexai import agent_engines
 
-MAX_ARGS = 100
-MAX_RESPONSE = 100
-
-
-def pretty_print_event(event):
-    """Pretty prints an event with truncation for long content."""
-    if "content" not in event:
-        print(f"[{event.get('author', 'unknown')}]: {event}")
-        return
-
-    author = event.get("author", "unknown")
-    parts = event["content"].get("parts", [])
-
-    for part in parts:
-        if "text" in part:
-            text = part["text"]
-            print(f"[{author}]: {text}")
-        elif "functionCall" in part:
-            func_call = part["functionCall"]
-            print(
-                f"[{author}]: Function call: {func_call.get('name', 'unknown')}"
-            )
-            # Truncate args if too long
-            args = json.dumps(func_call.get("args", {}))
-            if len(args) > MAX_ARGS:
-                args = args[: MAX_ARGS - 3] + "..."
-            print(f"  Args: {args}")
-        elif "functionResponse" in part:
-            func_response = part["functionResponse"]
-            print(
-                f"[{author}]: Function response: {func_response.get('name', 'unknown')}"
-            )
-            # Truncate response if too long
-            response = json.dumps(func_response.get("response", {}))
-            if len(response) > MAX_RESPONSE:
-                response = response[: MAX_RESPONSE - 3] + "..."
-            print(f"  Response: {response}")
-
-
 load_dotenv()
 
-vertexai.init(
-    project=os.getenv("GOOGLE_CLOUD_PROJECT"),
-    location=os.getenv("GOOGLE_CLOUD_LOCATION"),
-)
-
-session_service = VertexAiSessionService(
-    project=os.getenv("GOOGLE_CLOUD_PROJECT"),
-    location=os.getenv("GOOGLE_CLOUD_LOCATION"),
-)
+PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT")
+LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION") or "global"
 AGENT_ENGINE_ID = os.getenv("AGENT_ENGINE_ID")
 
-session = asyncio.run(
-    session_service.create_session(
-        app_name=AGENT_ENGINE_ID,
-        user_id="123",
+# Skip by default unless the environment is configured for live deployment testing.
+if not PROJECT or not AGENT_ENGINE_ID:
+    pytest.skip(
+        "Skipping deployment integration test: set GOOGLE_CLOUD_PROJECT and AGENT_ENGINE_ID to run.",
+        allow_module_level=True,
     )
-)
 
-agent_engine = agent_engines.get(AGENT_ENGINE_ID)
 
-print("Type 'quit' to exit.")
-while True:
-    user_input = input("Input: ")
-    if user_input == "quit":
-        break
+def test_deployment_smoke():
+    """Smoke test that a session can be created and the agent engine is reachable."""
+    vertexai.init(project=PROJECT, location=LOCATION)
 
-    for event in agent_engine.stream_query(
-        user_id="123", session_id=session.id, message=user_input
-    ):
-        pretty_print_event(event)
-
-asyncio.run(
-    session_service.delete_session(
-        app_name=AGENT_ENGINE_ID, user_id=123, session_id=session.id
+    session_service = VertexAiSessionService(project=PROJECT, location=LOCATION)
+    session = asyncio.run(
+        session_service.create_session(app_name=AGENT_ENGINE_ID, user_id="123")
     )
-)
+
+    try:
+        engine = agent_engines.get(AGENT_ENGINE_ID)
+        events = list(
+            engine.stream_query(
+                user_id="123",
+                session_id=session.id,
+                message="Hello",
+            )
+        )
+        assert events is not None
+    finally:
+        asyncio.run(
+            session_service.delete_session(
+                app_name=AGENT_ENGINE_ID, user_id="123", session_id=session.id
+            )
+        )

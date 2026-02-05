@@ -114,6 +114,19 @@ Then select the `order-processing` from the dropdown.
 
 ## Deploying the Agent Remotely
 
+### Alternative: Using Agent Starter Pack
+
+You can also use the [Agent Starter Pack](https://goo.gle/agent-starter-pack) to create a production-ready version of this agent with additional deployment options:
+
+```bash
+# Create and activate a virtual environment
+python -m venv .venv && source .venv/bin/activate # On Windows: .venv\Scripts\activate
+
+# Install the starter pack and create your project
+pip install --upgrade agent-starter-pack
+agent-starter-pack create my-order-processing-agent -a adk@order-processing
+
+
 ### To Agent Engine
 
 Create a service account and assign it `Vertex AI User` and `Application Integration Invoker` roles
