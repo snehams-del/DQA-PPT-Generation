@@ -1,0 +1,47 @@
+[project]
+name = "game-assist-agent"
+version = "0.1.0"
+description = "Multi-agent system for game asset generation and code analysis."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.123.10",
+    "google-adk>=1.21.0",
+    "google-cloud-aiplatform>=1.132.0",
+    "google-cloud-storage>=3.7.0",
+    "google-genai>=1.56.0",
+    "mcp>=1.25.0",
+    "python-dotenv>=1.2.1",
+    "unicorn>=2.1.4",
+]
+
+[project.optional-dependencies]
+# Tools for development and code quality
+dev = [
+    "ruff",         # Modern, fast linter and formatter
+    "pytest",       # Testing framework
+    "pytest-asyncio" # Support for testing async ADK tools
+]
+
+[tool.setuptools]
+packages = ["sub_agents"]
+
+[tool.ruff]
+# Linter and Formatter configuration
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+# Enable specific rule sets
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort (import sorting)
+    "B",  # flake8-bugbear
+]
+ignore = ["E501"] # Ignore line-length violations (let formatter handle it)
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

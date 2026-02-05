@@ -1,0 +1,37 @@
+# --- Environment & Secrets ---
+.env
+.env.*
+!.env.example
+secrets.json
+*.pem
+
+# --- Python Environment ---
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+build/
+dist/
+*.egg-info/
+
+# --- Google ADK Specifics ---
+# Local session storage and artifacts
+.adk/
+artifacts/
+sessions/
+*.log
+adk.db
+
+# --- OS Specifics ---
+.DS_Store
+Thumbs.db
+
+# --- Editors ---
+.vscode/
+.idea/
+
+repro_minimal.py
+uv.lock
+
