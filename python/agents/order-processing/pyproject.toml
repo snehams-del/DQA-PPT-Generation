@@ -35,6 +35,10 @@ known-first-party = ["order_processing"]
 
 [tool.pytest.ini_options]
 pythonpath = "."
+filterwarnings = [
+  "ignore::DeprecationWarning",
+  "ignore:Using `@model_validator`.*:pydantic.warnings.PydanticDeprecatedSince212",
+]
 
 
 [tool.agent-starter-pack]
