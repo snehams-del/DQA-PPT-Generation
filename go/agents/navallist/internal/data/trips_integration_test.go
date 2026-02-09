@@ -25,15 +25,9 @@ func TestTripOperations(t *testing.T) {
 	cleanupData(t, db, "trip", "users")
 	defer cleanupData(t, db, "trip", "users")
 
-	// 1. Create a User for the trip
-	user, err := store.GetOrCreateUser(ctx, "captain@example.com", "sub123", "Captain", "pic.jpg")
-	if err != nil {
-		t.Fatalf("Failed to create user: %v", err)
-	}
-
-	// 2. Test GetOrCreateTrip (New)
+	// 1. Test GetOrCreateTrip (New)
 	adkSession := "session_" + time.Now().Format("20060102150405")
-	trip, err := store.GetOrCreateTrip(ctx, adkSession, user.ID, "Captain Jack", "Departing")
+	trip, err := store.GetOrCreateTrip(ctx, adkSession, "", "Captain Jack", "Departing")
 	if err != nil {
 		t.Fatalf("GetOrCreateTrip failed: %v", err)
 	}
@@ -44,7 +38,7 @@ func TestTripOperations(t *testing.T) {
 		t.Errorf("Expected status 'Draft', got %s", trip.Status)
 	}
 
-	// 3. Test UpdateTripMetadata
+	// 2. Test UpdateTripMetadata
 	newBoat := "The Pearl"
 	updatedTrip, err := store.UpdateTripMetadata(ctx, adkSession, &newBoat, nil)
 	if err != nil {
@@ -54,7 +48,7 @@ func TestTripOperations(t *testing.T) {
 		t.Errorf("Expected boat name 'The Pearl', got %v", updatedTrip.BoatName)
 	}
 
-	// 4. Test UpdateTripStatus
+	// 3. Test UpdateTripStatus
 	err = store.UpdateTripStatus(ctx, trip.ID, "Ready")
 	if err != nil {
 		t.Fatalf("UpdateTripStatus failed: %v", err)
@@ -69,16 +63,7 @@ func TestTripOperations(t *testing.T) {
 		t.Errorf("Expected status 'Ready', got %s", fetchedTrip.Status)
 	}
 
-	// 5. Test ListUserTrips
-	trips, err := store.ListUserTrips(ctx, user.ID)
-	if err != nil {
-		t.Fatalf("ListUserTrips failed: %v", err)
-	}
-	if len(trips) == 0 {
-		t.Error("Expected at least one trip for user")
-	}
-
-	// 6. Test DeleteTrip
+	// 4. Test DeleteTrip
 	err = store.DeleteTrip(ctx, trip.ID)
 	if err != nil {
 		t.Fatalf("DeleteTrip failed: %v", err)

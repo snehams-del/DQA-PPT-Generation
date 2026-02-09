@@ -24,15 +24,14 @@ func TestChecklistOperations(t *testing.T) {
 	cleanupData(t, db, "artifact", "checklist_item", "trip", "users")
 	defer cleanupData(t, db, "artifact", "checklist_item", "trip", "users")
 
-	// Setup: Create a User and a Trip
-	user, _ := store.GetOrCreateUser(ctx, "checker@example.com", "sub1", "Checker", "")
-	trip, _ := store.GetOrCreateTrip(ctx, "session_checklist", user.ID, "Captain", "Returning")
+	// Setup: Create a Trip
+	trip, _ := store.GetOrCreateTrip(ctx, "session_checklist", "", "Captain", "Returning")
 
 	t.Run("UpdateItem (Insert and Update)", func(t *testing.T) {
 		itemName := "Engine Oil"
 
 		// 1. Insert
-		item, err := store.UpdateItem(ctx, trip.ID, itemName, true, "Engine Room", "", &user.ID, "Checker", nil, nil)
+		item, err := store.UpdateItem(ctx, trip.ID, itemName, true, "Engine Room", "", nil, "Checker", nil, nil)
 		if err != nil {
 			t.Fatalf("UpdateItem (Insert) failed: %v", err)
 		}
@@ -41,7 +40,7 @@ func TestChecklistOperations(t *testing.T) {
 		}
 
 		// 2. Update
-		updatedItem, err := store.UpdateItem(ctx, trip.ID, itemName, true, "Locker A", "", &user.ID, "Checker", nil, nil)
+		updatedItem, err := store.UpdateItem(ctx, trip.ID, itemName, true, "Locker A", "", nil, "Checker", nil, nil)
 		if err != nil {
 			t.Fatalf("UpdateItem (Update) failed: %v", err)
 		}

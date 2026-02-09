@@ -12,7 +12,6 @@ var ErrNotFound = errors.New("not found")
 // It consolidates all data access methods required by the agent and the server.
 type Store interface {
 	// User operations
-	GetOrCreateUser(ctx context.Context, email, googleSub, name, picture string) (*models.User, error)
 	GetUser(ctx context.Context, id string) (*models.User, error)
 	FindUserByName(ctx context.Context, name string) (*models.User, error)
 	UpdateUser(ctx context.Context, id, name string) error

@@ -8,7 +8,6 @@ import (
 
 // MockStore is a mock implementation of Store for testing.
 type MockStore struct {
-	GetOrCreateUserFunc          func(ctx context.Context, email, googleSub, name, picture string) (*models.User, error)
 	GetUserFunc                  func(ctx context.Context, id string) (*models.User, error)
 	UpdateUserFunc               func(ctx context.Context, id, name string) error
 	GetOrCreateTripFunc          func(ctx context.Context, adkSessionID, userID, captainName, tripType string) (*models.Trip, error)
@@ -32,6 +31,8 @@ type MockStore struct {
 	UpdateItemWithAssignmentFunc func(ctx context.Context, tripID, itemName string, isChecked bool, location, photoID, currentUserID, assignedToName string) (*models.ChecklistItem, error)
 }
 
+var _ Store = (*MockStore)(nil)
+
 func (m *MockStore) UpdateTripMetadata(ctx context.Context, adkSessionID string, boatName *string, captainName *string) (*models.Trip, error) {
 	return m.UpdateTripMetadataFunc(ctx, adkSessionID, boatName, captainName)
 }
@@ -46,10 +47,6 @@ func (m *MockStore) GetTripIDBySessionID(ctx context.Context, sessionID string) 
 
 func (m *MockStore) AddTripCrew(ctx context.Context, tripID, userID, displayName string) error {
 	return m.AddTripCrewFunc(ctx, tripID, userID, displayName)
-}
-
-func (m *MockStore) GetOrCreateUser(ctx context.Context, email, googleSub, name, picture string) (*models.User, error) {
-	return m.GetOrCreateUserFunc(ctx, email, googleSub, name, picture)
 }
 
 func (m *MockStore) FindUserByName(ctx context.Context, name string) (*models.User, error) {

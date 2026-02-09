@@ -24,13 +24,7 @@ func TestArtifactOperations(t *testing.T) {
 	cleanupData(t, db, "artifact", "trip", "users")
 	defer cleanupData(t, db, "artifact", "trip", "users")
 
-	// Create a user and a trip for testing
-	user, err := store.GetOrCreateUser(ctx, "test-artifact@example.com", "sub123", "Tester", "")
-	if err != nil {
-		t.Fatalf("Failed to create user: %v", err)
-	}
-
-	trip, err := store.GetOrCreateTrip(ctx, "session_artifact", user.ID, "Captain", "Leisure")
+	trip, err := store.GetOrCreateTrip(ctx, "session_artifact", "", "Captain", "Leisure")
 	if err != nil {
 		t.Fatalf("Failed to create trip: %v", err)
 	}

@@ -1,7 +1,6 @@
 package data
 
 import (
-	"context"
 	"log"
 	"time"
 
@@ -14,29 +13,11 @@ type SQLStore struct {
 	db *sqlx.DB
 }
 
+var _ Store = (*SQLStore)(nil)
+
 // NewSQLStore creates a new SQLStore with the given database connection.
 func NewSQLStore(db *sqlx.DB) *SQLStore {
 	return &SQLStore{db: db}
-}
-
-// TODO: Implement the actual ADK session.Service interface methods here.
-// e.g. Create, Get, Update, etc.
-// We need to know the exact signature to implement them correctly.
-
-// CreateSession initializes a new ADK session.
-
-func (s *SQLStore) CreateSession(_ context.Context, _ string) error {
-
-	return nil
-
-}
-
-// GetSession retrieves an ADK session by ID.
-
-func (s *SQLStore) GetSession(_ context.Context, _ string) (any, error) {
-
-	return nil, nil
-
 }
 
 // DB returns the underlying sqlx.DB connection.
