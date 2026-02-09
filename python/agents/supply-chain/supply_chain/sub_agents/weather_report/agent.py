@@ -14,15 +14,15 @@
 
 """Weather Report Agent: provides weather info for a specific location and date"""
 
-import time
 import warnings
-from google.genai import types
-from google.adk.planners import BuiltInPlanner
+
 from google.adk.agents import LlmAgent
+from google.adk.planners import BuiltInPlanner
+from google.genai import types
 
 from ...config import config
-from . import prompts
 from ...tools.analyse_weather_toolkit import WEATHER_REPORT_TOOLKIT
+from . import prompts
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -35,9 +35,7 @@ weather_report_agent = LlmAgent(
         temperature=config.temperature,
         top_p=config.top_p,
     ),
-    planner=BuiltInPlanner(
-        thinking_config=config.thinking_config
-    ),
+    planner=BuiltInPlanner(thinking_config=config.thinking_config),
     tools=WEATHER_REPORT_TOOLKIT,
-    output_key="weather_info_report"
+    output_key="weather_info_report",
 )

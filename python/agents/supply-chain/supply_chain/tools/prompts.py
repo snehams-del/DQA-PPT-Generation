@@ -14,7 +14,9 @@
 
 """Instructions for Weather Charts Summarization Tool"""
 
-WEATHER_CHARTS_SUMMARIZATION_SYSTEM_INSTRUCTIONS = """You are an expert Weather Analyst"""
+WEATHER_CHARTS_SUMMARIZATION_SYSTEM_INSTRUCTIONS = (
+    """You are an expert Weather Analyst"""
+)
 
 WEATHER_CHARTS_SUMMARIZATION_PROMPT = """Analyze the following weather charts and provide a concise weather report summary in 200 words or less.
 In your summary, please do the following:

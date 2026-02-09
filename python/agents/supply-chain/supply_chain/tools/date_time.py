@@ -15,16 +15,17 @@
 """Tool for getting current date and time"""
 
 from datetime import datetime
-from zoneinfo import ZoneInfo # for handling timezones
+from zoneinfo import ZoneInfo  # for handling timezones
 
-def get_current_date_time(time_zone: str = 'UTC') -> dict:
+
+def get_current_date_time(time_zone: str = "UTC") -> dict:
     """
     Gets the current date and time in the specified time zone.
     Defaults to UTC if no time zone is provided.
 
     Args:
         time_zone (str): The time zone to get the date and time for. Defaults to 'UTC'.
-    
+
     Returns:
         dict: A dictionary containing the current date, time, and time zone.
     """
@@ -32,11 +33,11 @@ def get_current_date_time(time_zone: str = 'UTC') -> dict:
         current_time = datetime.now(ZoneInfo(time_zone))
     except Exception:
         # Fallback to UTC if timezone is invalid
-        current_time = datetime.now(ZoneInfo('UTC'))
-        time_zone = 'UTC'
+        current_time = datetime.now(ZoneInfo("UTC"))
+        time_zone = "UTC"
 
     return {
         "current_date": current_time.strftime("%Y-%m-%d"),
         "current_time": current_time.strftime("%H:%M:%S"),
-        "time_zone": time_zone
+        "time_zone": time_zone,
     }

@@ -13,17 +13,18 @@
 # limitations under the License.
 
 """Deployment script for Supply Chain AI Agent."""
-import os
+
 import logging
+import os
 
 import vertexai
 from absl import app, flags
 from dotenv import load_dotenv
 from google.api_core import exceptions as google_exceptions
 from google.cloud import storage
+from supply_chain.agent import root_agent
 from vertexai import agent_engines
 from vertexai.preview.reasoning_engines import AdkApp
-from supply_chain.agent import root_agent
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string("project_id", None, "GCP project ID.")
@@ -32,7 +33,9 @@ flags.DEFINE_string(
     "bucket", None, "GCP bucket name (without gs:// prefix)."
 )  # Changed flag description
 flags.DEFINE_string("resource_id", None, "ReasoningEngine resource ID.")
-flags.DEFINE_string("display_name", "Supply Chain Agent", "Display name for the agent.")
+flags.DEFINE_string(
+    "display_name", "Supply Chain Agent", "Display name for the agent."
+)
 
 flags.DEFINE_bool("create", False, "Create a new agent.")
 flags.DEFINE_bool("delete", False, "Delete an existing agent.")
@@ -121,11 +124,10 @@ def setup_staging_bucket(
 
     return f"gs://{bucket_name}"
 
+
 def create(env_vars: dict[str, str]) -> None:
     """Creates and deploys the agent."""
-    adk_app = AdkApp(
-        agent=root_agent
-    )
+    adk_app = AdkApp(agent=root_agent)
 
     if not os.path.exists(AGENT_WHL_FILE):
         logger.error("Agent wheel file not found at: %s", AGENT_WHL_FILE)
@@ -162,6 +164,7 @@ def delete(resource_id: str) -> None:
         )
         print(f"\nError deleting agent {resource_id}: {e}")
 
+
 def list_agents() -> None:
     remote_agents = agent_engines.list()
     template = """
@@ -174,29 +177,10 @@ def list_agents() -> None:
     )
     print(f"All remote agents:\n{remote_agents_string}")
 
-def main(argv: list[str]) -> None:  # pylint: disable=unused-argument
-    """Main execution function."""
-    load_dotenv()
-    env_vars = {}
 
-    project_id = (
-        FLAGS.project_id
-        if FLAGS.project_id
-        else os.getenv("GOOGLE_CLOUD_PROJECT")
-    )
-    location = (
-        FLAGS.location if FLAGS.location else os.getenv("GOOGLE_CLOUD_LOCATION")
-    )
-    # Default bucket name convention if not provided
-    default_bucket_name = f"{project_id}-adk-staging" if project_id else None
-    bucket_name = (
-        FLAGS.bucket
-        if FLAGS.bucket
-        else os.getenv("GOOGLE_CLOUD_STORAGE_BUCKET", default_bucket_name)
-    )
-    # Don't set "GOOGLE_CLOUD_PROJECT" or "GOOGLE_CLOUD_LOCATION"
-    # when deploying to Agent Engine. Those are set by the backend.
-    # Collect environment variables, filtering out None values and empty strings
+def collect_env_vars() -> dict[str, str]:
+    """Collects and filters environment variables for the agent."""
+    env_vars = {}
     env_var_keys = [
         "GEMINI_MODEL_NAME",
         "GEMINI_MODEL_TEMPERATURE",
@@ -209,14 +193,12 @@ def main(argv: list[str]) -> None:  # pylint: disable=unused-argument
         "WEATHER_NEXT_BIGQUERY_DATASET_ID",
         "WEATHER_NEXT_BIGQUERY_TABLE_ID",
         "GOOGLE_GEOMAP_API_KEY",
-        "CODE_INTERPRETER_EXTENSION_NAME"
+        "CODE_INTERPRETER_EXTENSION_NAME",
     ]
 
     skipped_vars: list[str] = []
     for key in env_var_keys:
         value = os.getenv(key)
-        # Only add to env_vars if the value is not None/empty and not just
-        # whitespace
         if value and value.strip():
             env_vars[key] = value
         else:
@@ -231,12 +213,13 @@ def main(argv: list[str]) -> None:  # pylint: disable=unused-argument
     logger.info(
         "Environment variables to be passed to agent: %s", list(env_vars.keys())
     )
+    return env_vars
 
-    logger.info("Using PROJECT: %s", project_id)
-    logger.info("Using LOCATION: %s", location)
-    logger.info("Using BUCKET NAME: %s", bucket_name)
 
-    # --- Input Validation ---
+def validate_inputs(
+    project_id: str | None, location: str | None, bucket_name: str | None
+) -> None:
+    """Validates input arguments."""
     if not project_id:
         raise app.UsageError(
             "Missing required GCP Project ID. Set GOOGLE_CLOUD_PROJECT or "
@@ -260,14 +243,47 @@ def main(argv: list[str]) -> None:  # pylint: disable=unused-argument
         raise app.UsageError(
             "--resource_id is required when using the --delete flag."
         )
-    # --- End Input Validation ---
+
+
+def main(argv: list[str]) -> None:  # pylint: disable=unused-argument
+    """Main execution function."""
+    load_dotenv()
+
+    project_id = (
+        FLAGS.project_id
+        if FLAGS.project_id
+        else os.getenv("GOOGLE_CLOUD_PROJECT")
+    )
+    location = (
+        FLAGS.location if FLAGS.location else os.getenv("GOOGLE_CLOUD_LOCATION")
+    )
+    # Default bucket name convention if not provided
+    default_bucket_name = f"{project_id}-adk-staging" if project_id else None
+    bucket_name = (
+        FLAGS.bucket
+        if FLAGS.bucket
+        else os.getenv("GOOGLE_CLOUD_STORAGE_BUCKET", default_bucket_name)
+    )
+
+    logger.info("Using PROJECT: %s", project_id)
+    logger.info("Using LOCATION: %s", location)
+    logger.info("Using BUCKET NAME: %s", bucket_name)
+
+    validate_inputs(project_id, location, bucket_name)
+
+    # env_vars collection moved to helper_function
+    env_vars = collect_env_vars()
 
     try:
         # Setup staging bucket
         staging_bucket_uri = None
         if FLAGS.create:
+            # We know inputs are not None due to validate_inputs, but mypy might complain if we don't assert or cast.
+            # However, at runtime they are strings.
             staging_bucket_uri = setup_staging_bucket(
-                project_id, location, bucket_name
+                project_id,
+                location,
+                bucket_name,  # type: ignore
             )
 
         # Initialize Vertex AI *after* bucket setup and validation

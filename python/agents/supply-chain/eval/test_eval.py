@@ -31,6 +31,8 @@ async def test_eval_simple():
     """Test the agent's basic ability via a session file."""
     await AgentEvaluator.evaluate(
         "supply_chain",
-        os.path.join(os.path.dirname(__file__), "eval_data/happy_path.test.json"),
+        os.path.join(
+            os.path.dirname(__file__), "eval_data/happy_path.test.json"
+        ),
         num_runs=1,
     )

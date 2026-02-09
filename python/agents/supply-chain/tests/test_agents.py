@@ -16,30 +16,30 @@
 
 import os
 import sys
-import pytest
 import unittest
 import warnings
 
-sys.path.append(os.path.abspath(
-  os.path.join(os.path.dirname(__file__), "..")))
-  
-from google.genai import types
+import pytest
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from google.adk.artifacts import InMemoryArtifactService
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
-
+from google.genai import types
 from supply_chain.agent import root_agent
-from supply_chain.sub_agents.demand_sense.agent import demand_sense_agent
-from supply_chain.sub_agents.ops_insight.agent import ops_insight_agent
-from supply_chain.sub_agents.market_pulse.agent import market_pulse_agent
-from supply_chain.sub_agents.weather_report.agent import weather_report_agent
 from supply_chain.sub_agents.chart_generator.agent import chart_generator_agent
+from supply_chain.sub_agents.demand_sense.agent import demand_sense_agent
+from supply_chain.sub_agents.market_pulse.agent import market_pulse_agent
+from supply_chain.sub_agents.ops_insight.agent import ops_insight_agent
+from supply_chain.sub_agents.weather_report.agent import weather_report_agent
 
 # Suppress all warnings to clean up test output
 warnings.filterwarnings("ignore")
 
 session_service = InMemorySessionService()
 artifact_service = InMemoryArtifactService()
+
 
 class TestAgents(unittest.IsolatedAsyncioTestCase):
     """Test cases for the supply chain agent and its sub-agents."""
@@ -69,7 +69,7 @@ class TestAgents(unittest.IsolatedAsyncioTestCase):
             self.runner.run(
                 user_id=self.user_id,
                 session_id=self.session_id,
-                new_message=content
+                new_message=content,
             )
         )
 
@@ -110,7 +110,7 @@ class TestAgents(unittest.IsolatedAsyncioTestCase):
         response = self._run_agent(ops_insight_agent, query)
         print(response)
         self.assertIsNotNone(response)
-    
+
     @pytest.mark.weather
     async def test_weather_agent_can_fetch_report(self):
         """Test the weather_report_agent."""
@@ -126,6 +126,7 @@ class TestAgents(unittest.IsolatedAsyncioTestCase):
         response = self._run_agent(chart_generator_agent, query)
         print(response)
         self.assertIsNotNone(response)
+
 
 if __name__ == "__main__":
     unittest.main()

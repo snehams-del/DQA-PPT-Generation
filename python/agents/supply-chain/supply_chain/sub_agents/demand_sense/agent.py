@@ -14,16 +14,16 @@
 
 """Demand Sense Agent: gets power consumption demand forecasting"""
 
-import time
 import warnings
-from google.genai import types
-from google.adk.planners import BuiltInPlanner
+
 from google.adk.agents import LlmAgent
+from google.adk.planners import BuiltInPlanner
 from google.adk.tools import FunctionTool
+from google.genai import types
 
 from ...config import config
-from . import prompts
 from ...tools.demand_forecast import get_demand_forecast
+from . import prompts
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -36,11 +36,7 @@ demand_sense_agent = LlmAgent(
         temperature=config.temperature,
         top_p=config.top_p,
     ),
-    planner=BuiltInPlanner(
-        thinking_config=config.thinking_config
-    ),
-    tools=[
-       FunctionTool(func=get_demand_forecast)
-    ],
-    output_key="demand_sense_report"
+    planner=BuiltInPlanner(thinking_config=config.thinking_config),
+    tools=[FunctionTool(func=get_demand_forecast)],
+    output_key="demand_sense_report",
 )

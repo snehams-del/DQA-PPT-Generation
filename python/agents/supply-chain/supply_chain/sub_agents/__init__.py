@@ -18,6 +18,10 @@ from .market_pulse.agent import market_pulse_agent
 from .ops_insight.agent import ops_insight_agent
 from .weather_report.agent import weather_report_agent
 
-__all__ = ["chart_generator_agent", "demand_sense_agent",
-           "market_pulse_agent", "ops_insight_agent",
-           "weather_report_agent"]
+__all__ = [
+    "chart_generator_agent",
+    "demand_sense_agent",
+    "market_pulse_agent",
+    "ops_insight_agent",
+    "weather_report_agent",
+]

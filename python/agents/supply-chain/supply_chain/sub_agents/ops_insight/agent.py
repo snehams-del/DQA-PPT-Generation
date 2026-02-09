@@ -14,16 +14,16 @@
 
 """Ops Insight Agent: gets power consumption and generation information using BQ NL2SQL"""
 
-import time
 import warnings
-from google.genai import types
-from google.adk.planners import BuiltInPlanner
+
 from google.adk.agents import LlmAgent
+from google.adk.planners import BuiltInPlanner
 from google.adk.tools import FunctionTool
+from google.genai import types
 
 from ...config import config
-from . import prompts
 from ...tools.execute_sql import execute_sql_query, load_table_schema
+from . import prompts
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -38,11 +38,7 @@ ops_insight_agent = LlmAgent(
         temperature=config.temperature,
         top_p=config.top_p,
     ),
-    planner=BuiltInPlanner(
-        thinking_config=config.thinking_config
-    ),
-    tools=[
-      FunctionTool(func=execute_sql_query)
-    ],
-    output_key="ops_insight_report"
+    planner=BuiltInPlanner(thinking_config=config.thinking_config),
+    tools=[FunctionTool(func=execute_sql_query)],
+    output_key="ops_insight_report",
 )

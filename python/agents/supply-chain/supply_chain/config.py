@@ -14,49 +14,56 @@
 
 """Config module for the supply chain agent."""
 
-import os
 import logging
-from google.genai import types
+import os
 from pathlib import Path
-from typing import Optional
 
 from dotenv import load_dotenv
+from google.genai import types
 
 # Load environment variables from .env file if it exists
 env_path = Path(__file__).parent.parent / ".env"
 if env_path.exists():
-  load_dotenv(env_path)
+    load_dotenv(env_path)
 
 logger = logging.getLogger(__name__)
+
 
 class AgentConfig:
     """
     Configuration for the Agent.
     """
+
     # GCP project id and location
-    project_id: str = os.getenv('GOOGLE_CLOUD_PROJECT')
-    location: str = os.getenv('GOOGLE_CLOUD_LOCATION')
+    project_id: str = os.getenv("GOOGLE_CLOUD_PROJECT")
+    location: str = os.getenv("GOOGLE_CLOUD_LOCATION")
 
     # Gemini model config
-    model_name: str = os.getenv('GEMINI_MODEL_NAME')
-    temperature: float = os.getenv('GEMINI_MODEL_TEMPERATURE')
-    top_p: str = os.getenv('GEMINI_MODEL_TOP_P')
-    include_thoughts: bool = os.getenv('GEMINI_MODEL_INCLUDE_THOUGHTS')
-    thinking_level: str = os.getenv('GEMINI_MODEL_THINKING_LEVEL')
-    thinking_budget: int = os.getenv('GEMINI_MODEL_THINKING_BUDGET')
-   
+    model_name: str = os.getenv("GEMINI_MODEL_NAME")
+    temperature: float = os.getenv("GEMINI_MODEL_TEMPERATURE")
+    top_p: str = os.getenv("GEMINI_MODEL_TOP_P")
+    include_thoughts: bool = os.getenv("GEMINI_MODEL_INCLUDE_THOUGHTS")
+    thinking_level: str = os.getenv("GEMINI_MODEL_THINKING_LEVEL")
+    thinking_budget: int = os.getenv("GEMINI_MODEL_THINKING_BUDGET")
+
     # supply chain table
-    dataset_id: str = os.getenv('BIGQUERY_DATASET_ID')
-    table_id: str = os.getenv('BIGQUERY_TABLE_ID')
+    dataset_id: str = os.getenv("BIGQUERY_DATASET_ID")
+    table_id: str = os.getenv("BIGQUERY_TABLE_ID")
 
     # weather next table (Optional)
-    weather_next_dataset_id: str | None = os.getenv('WEATHER_NEXT_BIGQUERY_DATASET_ID')
-    weather_next_table_id: str | None = os.getenv('WEATHER_NEXT_BIGQUERY_TABLE_ID')
+    weather_next_dataset_id: str | None = os.getenv(
+        "WEATHER_NEXT_BIGQUERY_DATASET_ID"
+    )
+    weather_next_table_id: str | None = os.getenv(
+        "WEATHER_NEXT_BIGQUERY_TABLE_ID"
+    )
     # geo maps api key (Optional)
-    geo_maps_api_key: str | None = os.getenv('GOOGLE_GEOMAP_API_KEY')
+    geo_maps_api_key: str | None = os.getenv("GOOGLE_GEOMAP_API_KEY")
 
     # code interpreter extension name (Optional)
-    code_interpreter_extension_name: str | None = os.getenv('CODE_INTERPRETER_EXTENSION_NAME')
+    code_interpreter_extension_name: str | None = os.getenv(
+        "CODE_INTERPRETER_EXTENSION_NAME"
+    )
 
     # Gemini thinking config
     _thinking_config: types.ThinkingConfig | None = None
@@ -66,12 +73,12 @@ class AgentConfig:
         if "gemini-2.5" in self.model_name:
             return types.ThinkingConfig(
                 include_thoughts=self.include_thoughts,
-                thinking_budget=self.thinking_budget
+                thinking_budget=self.thinking_budget,
             )
         else:
             return types.ThinkingConfig(
                 include_thoughts=self.include_thoughts,
-                thinking_level=self.thinking_level
+                thinking_level=self.thinking_level,
             )
 
     @property

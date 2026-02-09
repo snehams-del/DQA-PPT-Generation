@@ -14,15 +14,15 @@
 
 """Market Pulse Agent: gets real-time info using Google Search"""
 
-import time
 import warnings
-from google.genai import types
-from google.adk.planners import BuiltInPlanner
+
 from google.adk.agents import LlmAgent
+from google.adk.planners import BuiltInPlanner
+from google.genai import types
 
 from ...config import config
-from . import prompts
 from ...tools.search import google_search_grounding
+from . import prompts
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -35,11 +35,7 @@ market_pulse_agent = LlmAgent(
         temperature=config.temperature,
         top_p=config.top_p,
     ),
-    planner=BuiltInPlanner(
-        thinking_config=config.thinking_config
-    ),
-    tools=[
-       google_search_grounding
-    ],
-    output_key="market_pulse_report"
+    planner=BuiltInPlanner(thinking_config=config.thinking_config),
+    tools=[google_search_grounding],
+    output_key="market_pulse_report",
 )

@@ -14,12 +14,12 @@
 
 """Tool for demand forecasting"""
 
-import logging
 import json
-import pandas as pd
+import logging
 from datetime import datetime
+
+import pandas as pd
 from google.cloud import bigquery
-from typing import Optional, Dict
 from statsmodels.tsa.api import ExponentialSmoothing
 
 from ..config import config
@@ -28,20 +28,26 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 try:
-    bigquery_client = bigquery.Client(project=config.project_id)  # Initialize client once
+    bigquery_client = bigquery.Client(
+        project=config.project_id
+    )  # Initialize client once
 except Exception as e:
     print(f"Error initializing BigQuery client: {e}")
     bigquery_client = None  # Set client to None if initialization fails
 
+MIN_HISTORY_DAYS = 14 # 2 weeks
+
 class DemandForecast:
     """
     A class to handle demand forecasting using data from BigQuery.
-    
+
     This class connects to a BigQuery table, fetches historical data,
     and uses a Triple Exponential Smoothing model to generate forecasts.
     """
-    def __init__(self, project_id: str,
-                 dataset_id: str, table_id: str, **kwargs):
+
+    def __init__(
+        self, project_id: str, dataset_id: str, table_id: str, **kwargs
+    ):
         """
         Initializes the DemandForecaster.
 
@@ -56,10 +62,10 @@ class DemandForecast:
     def forecast(
         self,
         period: int,
-        state: Optional[str] = None,
-        region: Optional[str] = None,
-        power_supplier: Optional[str] = None,
-        history_days: Optional[int] = 90
+        state: str | None = None,
+        region: str | None = None,
+        power_supplier: str | None = None,
+        history_days: int | None = 90,
     ) -> str:
         """
         Generates a demand forecast based on the provided filters.
@@ -77,24 +83,38 @@ class DemandForecast:
         # 1. Dynamically build the query based on optional filters
         logger.info("Building dynamic BigQuery query...")
         where_clauses = []
-        params = [bigquery.ScalarQueryParameter("history_days", "INT64", history_days)]
-        
+        params = [
+            bigquery.ScalarQueryParameter("history_days", "INT64", history_days)
+        ]
+
         if state:
             where_clauses.append("state = @state")
-            params.append(bigquery.ScalarQueryParameter("state", "STRING", state))
+            params.append(
+                bigquery.ScalarQueryParameter("state", "STRING", state)
+            )
         if region:
             where_clauses.append("region = @region")
-            params.append(bigquery.ScalarQueryParameter("region", "STRING", region))
+            params.append(
+                bigquery.ScalarQueryParameter("region", "STRING", region)
+            )
         if power_supplier:
             where_clauses.append("power_supplier = @power_supplier")
-            params.append(bigquery.ScalarQueryParameter("power_supplier", "STRING", power_supplier))
-        
+            params.append(
+                bigquery.ScalarQueryParameter(
+                    "power_supplier", "STRING", power_supplier
+                )
+            )
+
         where_clauses.append("date <= @current_date")
         current_date = str(datetime.now().strftime("%Y-%m-%d"))
-        params.append(bigquery.ScalarQueryParameter("current_date", "DATE", current_date))
+        params.append(
+            bigquery.ScalarQueryParameter("current_date", "DATE", current_date)
+        )
 
-        where_sql = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
-        
+        where_sql = (
+            f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
+        )
+
         query = f"""
             SELECT
                 date,
@@ -107,56 +127,77 @@ class DemandForecast:
             LIMIT @history_days
         """
         logger.info(f"SQL query: {query}")
-        
+
         # 2. Execute the query
         logger.info(f"Fetching {history_days} most recent data points...")
         job_config = bigquery.QueryJobConfig(query_parameters=params)
         try:
-            df = bigquery_client.query(query, job_config=job_config).to_dataframe()
+            df = bigquery_client.query(
+                query, job_config=job_config
+            ).to_dataframe()
         except Exception as e:
-            raise ConnectionError(f"Failed to query BigQuery. Error: {e}")
+            raise ConnectionError(
+                f"Failed to query BigQuery. Error: {e}"
+            ) from e
 
-        if len(df) < 14:
-            raise ValueError(f"Insufficient data for forecast. Need at least 14 days, but found {len(df)}.")
+        if len(df) < MIN_HISTORY_DAYS:
+            raise ValueError(
+                f"Insufficient data for forecast. Need at least {MIN_HISTORY_DAYS} days, but found {len(df)}."
+            )
 
         # 3. Prepare the time-series and fit the model
-        df['date'] = pd.to_datetime(df['date'])
-        df = df.sort_values('date')
-        time_series = pd.Series(df['consumption_mega_units'].values, index=df['date'])
-        
+        df["date"] = pd.to_datetime(df["date"])
+        df = df.sort_values("date")
+        time_series = pd.Series(
+            df["consumption_mega_units"].values, index=df["date"]
+        )
+
         logger.info("Fitting Holt-Winters model...")
-        model = ExponentialSmoothing(time_series, trend='add', seasonal='add', seasonal_periods=7).fit()
+        model = ExponentialSmoothing(
+            time_series, trend="add", seasonal="add", seasonal_periods=7
+        ).fit()
 
         # 4. Generate forecast and format output
         forecast_values = model.forecast(steps=period)
         last_date = time_series.index.max()
-        forecast_dates = pd.date_range(start=last_date + pd.Timedelta(days=1), periods=period, freq='D')
+        forecast_dates = pd.date_range(
+            start=last_date + pd.Timedelta(days=1), periods=period, freq="D"
+        )
         forecast_list = [
-            {"date": date.strftime('%Y-%m-%d'), "forecasted_consumption_mega_units": round(value, 2)}
-            for date, value in zip(forecast_dates, forecast_values)
+            {
+                "date": date.strftime("%Y-%m-%d"),
+                "forecasted_consumption_mega_units": round(value, 2),
+            }
+            for date, value in zip(forecast_dates, forecast_values, strict=True)
         ]
 
-        scope = {"state": state, "region": region, "power_supplier": power_supplier}
+        scope = {
+            "state": state,
+            "region": region,
+            "power_supplier": power_supplier,
+        }
         output_json = {
             "forecast_parameters": {
-                "scope": {k: v for k, v in scope.items() if v is not None} or "National",
+                "scope": {k: v for k, v in scope.items() if v is not None}
+                or "National",
                 "forecast_days": period,
                 "method": "Triple Exponential Smoothing (Holt-Winters)",
                 "historical_days_used": len(time_series),
-                "based_on_last_date": last_date.strftime('%Y-%m-%d')
+                "based_on_last_date": last_date.strftime("%Y-%m-%d"),
             },
-            "demand_forecast": forecast_list
+            "demand_forecast": forecast_list,
         }
         logger.info(f"Demand Forecast Output: {output_json}")
 
         return json.dumps(output_json, indent=2)
 
+
 def get_demand_forecast(
     period: int,
-    state: Optional[str] = None,
-    region: Optional[str] = None,
-    power_supplier: Optional[str] = None,
-    history_days: Optional[int] = 365
+    state: str | None = None,
+    region: str | None = None,
+    power_supplier: str | None = None,
+    history_days: int | None = 365,
 ) -> str:
     """
     Forecasts demand using Triple Exponential Smoothing.
@@ -179,16 +220,18 @@ def get_demand_forecast(
         forecaster = DemandForecast(
             project_id=config.project_id,
             dataset_id=config.dataset_id,
-            table_id=config.table_id
+            table_id=config.table_id,
         )
         return forecaster.forecast(
             period=period,
             state=state,
             region=region,
             power_supplier=power_supplier,
-            history_days=history_days
+            history_days=history_days,
         )
     except (ValueError, ConnectionError) as e:
         return json.dumps({"error": str(e)}, indent=2)
     except Exception as e:
-        return json.dumps({"error": f"An unexpected error occurred: {e}"},  indent=2)
+        return json.dumps(
+            {"error": f"An unexpected error occurred: {e}"}, indent=2
+        )

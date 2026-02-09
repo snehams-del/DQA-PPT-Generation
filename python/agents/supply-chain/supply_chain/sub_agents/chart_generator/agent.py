@@ -14,14 +14,13 @@
 
 """Chart Generator Agent: provides relevant charts from the available data"""
 
-import time
 import logging
 import warnings
-from google.genai import types
-from google.adk.planners import BuiltInPlanner
+
 from google.adk.agents import LlmAgent
-from google.adk.tools import agent_tool
 from google.adk.code_executors import VertexAiCodeExecutor
+from google.adk.planners import BuiltInPlanner
+from google.genai import types
 
 from ...config import config
 from . import prompts
@@ -32,14 +31,17 @@ warnings.filterwarnings("ignore", category=UserWarning)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 def create_safe_executor(kwargs):
     return SafeVertexAiCodeExecutor(**kwargs)
 
+
 class SafeVertexAiCodeExecutor(VertexAiCodeExecutor):
     """
-    A wrapper around VertexAiCodeExecutor that implements __deepcopy__ and __reduce__ 
+    A wrapper around VertexAiCodeExecutor that implements __deepcopy__ and __reduce__
     to fix RecursionError and SerializationError during agent deployment.
     """
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._kwargs = kwargs
@@ -51,14 +53,21 @@ class SafeVertexAiCodeExecutor(VertexAiCodeExecutor):
         # Capture the resource_name from the created extension to avoid re-creation on remote
         kwargs = self._kwargs.copy()
         try:
-            if hasattr(self, '_extension') and hasattr(self._extension, 'resource_name'):
-                logger.debug(f"DEBUG: Capturing resource_name in pickle: {self._extension.resource_name}")
-                kwargs['resource_name'] = self._extension.resource_name
+            if hasattr(self, "_extension") and hasattr(
+                self._extension, "resource_name"
+            ):
+                logger.debug(
+                    f"DEBUG: Capturing resource_name in pickle: {self._extension.resource_name}"
+                )
+                kwargs["resource_name"] = self._extension.resource_name
             else:
-                logger.debug("DEBUG: No extension or resource_name found in SafeVertexAiCodeExecutor")
+                logger.debug(
+                    "DEBUG: No extension or resource_name found in SafeVertexAiCodeExecutor"
+                )
         except Exception:
             pass
         return (create_safe_executor, (kwargs,))
+
 
 chart_generator_agent = LlmAgent(
     model=config.model_name,
@@ -74,8 +83,6 @@ chart_generator_agent = LlmAgent(
         temperature=config.temperature,
         top_p=config.top_p,
     ),
-    planner=BuiltInPlanner(
-        thinking_config=config.thinking_config
-    ),
-    output_key="chart_generator_result"
+    planner=BuiltInPlanner(thinking_config=config.thinking_config),
+    output_key="chart_generator_result",
 )

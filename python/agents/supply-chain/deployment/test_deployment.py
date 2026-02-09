@@ -37,10 +37,51 @@ flags.DEFINE_string("user_id", None, "User ID (can be any string).")
 flags.mark_flag_as_required("resource_id")
 flags.mark_flag_as_required("user_id")
 
-def main(argv: list[str]) -> None:  # pylint: disable=unused-argument
 
+def validate_env(
+    project_id: str | None, location: str | None, bucket: str | None
+) -> bool:
+    """Validates required environment variables."""
+    if not project_id:
+        print("Missing required environment variable: GOOGLE_CLOUD_PROJECT")
+        return False
+    elif not location:
+        print("Missing required environment variable: GOOGLE_CLOUD_LOCATION")
+        return False
+    elif not bucket:
+        print(
+            "Missing required environment variable: GOOGLE_CLOUD_STORAGE_BUCKET"
+        )
+        return False
+    return True
+
+
+def run_chat_loop(agent, session, user_id: str) -> None:
+    """Runs the interactive chat loop."""
+    print(f"Created session for user ID: {user_id}")
+    print("Type 'quit' to exit.")
+    while True:
+        user_input = input("Input: ")
+        if user_input == "quit":
+            break
+
+        for event in agent.stream_query(
+            user_id=user_id, session_id=session.id, message=user_input
+        ):
+            if "content" in event:
+                if "parts" in event["content"]:
+                    parts = event["content"]["parts"]
+                    for part in parts:
+                        if "text" in part:
+                            text_part = part["text"]
+                            print(f"Response: {text_part}")
+
+
+def main(argv: list[str]) -> None:  # pylint: disable=unused-argument
+    """Main execution function."""
     load_dotenv()
 
+    # Prioritize flags, fallback to env vars
     project_id = (
         FLAGS.project_id
         if FLAGS.project_id
@@ -55,20 +96,7 @@ def main(argv: list[str]) -> None:  # pylint: disable=unused-argument
         else os.getenv("GOOGLE_CLOUD_STORAGE_BUCKET")
     )
 
-    project_id = os.getenv("GOOGLE_CLOUD_PROJECT")
-    location = os.getenv("GOOGLE_CLOUD_LOCATION")
-    bucket = os.getenv("GOOGLE_CLOUD_STORAGE_BUCKET")
-
-    if not project_id:
-        print("Missing required environment variable: GOOGLE_CLOUD_PROJECT")
-        return
-    elif not location:
-        print("Missing required environment variable: GOOGLE_CLOUD_LOCATION")
-        return
-    elif not bucket:
-        print(
-            "Missing required environment variable: GOOGLE_CLOUD_STORAGE_BUCKET"
-        )
+    if not validate_env(project_id, location, bucket):
         return
 
     vertexai.init(
@@ -77,40 +105,25 @@ def main(argv: list[str]) -> None:  # pylint: disable=unused-argument
         staging_bucket=f"gs://{bucket}",
     )
 
-    session_service = VertexAiSessionService(project_id, location)
-    session = asyncio.run(session_service.create_session(
-        app_name=FLAGS.resource_id,
-        user_id=FLAGS.user_id)
+    session_service = VertexAiSessionService(project_id, location)  # type: ignore
+    session = asyncio.run(
+        session_service.create_session(
+            app_name=FLAGS.resource_id, user_id=FLAGS.user_id
+        )
     )
 
     agent = agent_engines.get(FLAGS.resource_id)
     print(f"Found agent with resource ID: {FLAGS.resource_id}")
 
-    print(f"Created session for user ID: {FLAGS.user_id}")
-    print("Type 'quit' to exit.")
-    while True:
-        user_input = input("Input: ")
-        if user_input == "quit":
-            break
+    run_chat_loop(agent, session, FLAGS.user_id)
 
-        for event in agent.stream_query(
+    asyncio.run(
+        session_service.delete_session(
+            app_name=FLAGS.resource_id,
             user_id=FLAGS.user_id,
             session_id=session.id,
-            message=user_input
-        ):
-            if "content" in event:
-                if "parts" in event["content"]:
-                    parts = event["content"]["parts"]
-                    for part in parts:
-                        if "text" in part:
-                            text_part = part["text"]
-                            print(f"Response: {text_part}")
-
-    asyncio.run(session_service.delete_session(
-        app_name=FLAGS.resource_id,
-        user_id=FLAGS.user_id,
-        session_id=session.id
-    ))
+        )
+    )
     print(f"Deleted session for user ID: {FLAGS.user_id}")
 
 

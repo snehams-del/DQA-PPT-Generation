@@ -14,11 +14,10 @@
 
 """Tool for executing SQL queries on BigQuery database"""
 
-import logging
 import json
-import pandas as pd
+import logging
+
 from google.cloud import bigquery
-from typing import Optional, Dict
 
 from ..config import config
 
@@ -26,10 +25,13 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 try:
-    bigquery_client = bigquery.Client(project=config.project_id)  # Initialize client once
+    bigquery_client = bigquery.Client(
+        project=config.project_id
+    )  # Initialize client once
 except Exception as e:
     print(f"Error initializing BigQuery client: {e}")
     bigquery_client = None  # Set client to None if initialization fails
+
 
 def execute_sql_query(sql_query: str) -> str:
     """
@@ -37,7 +39,7 @@ def execute_sql_query(sql_query: str) -> str:
 
     Args:
         sql_query (str): The SQL query to execute.
-        
+
     Returns:
         str: A JSON containing the query results.
     """
@@ -45,9 +47,10 @@ def execute_sql_query(sql_query: str) -> str:
     try:
         query_job = bigquery_client.query_and_wait(sql_query)
         results_df = query_job.to_dataframe()
-        return json.dumps(results_df.to_dict(orient='records'), indent=2)
+        return json.dumps(results_df.to_dict(orient="records"), indent=2)
     except Exception as e:
         return json.dumps({"error": f"Error executing query: {e}"}, indent=2)
+
 
 def load_table_schema() -> str:
     """
@@ -58,11 +61,13 @@ def load_table_schema() -> str:
         table_id = f"{config.project_id}.{config.dataset_id}.{config.table_id}"
         table = bigquery_client.get_table(table=table_id)
 
-        schema_info = [f"{field.name}:{field.field_type}" for field in table.schema]
+        schema_info = [
+            f"{field.name}:{field.field_type}" for field in table.schema
+        ]
         table_schema = f"Schema for `{table_id}`:\n\n{', '.join(schema_info)}"
         print(f"Loaded the table schema {table_schema}\n")
     except Exception as e:
         print(f"Error loading graph schema: {e}\n")
         table_schema = "[Graph schema not available]"
-    
+
     return table_schema

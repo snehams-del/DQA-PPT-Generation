@@ -15,21 +15,21 @@
 """Agent module for the supply chain agent."""
 
 import logging
-from google.genai import types
-from google.adk.planners import BuiltInPlanner
+
 from google.adk.agents import LlmAgent
-from google.adk.tools.agent_tool import AgentTool
+from google.adk.planners import BuiltInPlanner
 from google.adk.tools import FunctionTool
+from google.adk.tools.agent_tool import AgentTool
+from google.genai import types
 
-from .config import config
 from . import prompts
-
-from .tools.date_time import get_current_date_time
-from .sub_agents.demand_sense.agent import demand_sense_agent
-from .sub_agents.ops_insight.agent import ops_insight_agent
-from .sub_agents.market_pulse.agent import market_pulse_agent
+from .config import config
 from .sub_agents.chart_generator.agent import chart_generator_agent
+from .sub_agents.demand_sense.agent import demand_sense_agent
+from .sub_agents.market_pulse.agent import market_pulse_agent
+from .sub_agents.ops_insight.agent import ops_insight_agent
 from .sub_agents.weather_report.agent import weather_report_agent
+from .tools.date_time import get_current_date_time
 
 # Configure logging for debug purposes
 logging.basicConfig(level=logging.INFO)
@@ -43,15 +43,13 @@ root_agent = LlmAgent(
         temperature=config.temperature,
         top_p=config.top_p,
     ),
-    planner=BuiltInPlanner(
-        thinking_config=config.thinking_config
-    ),
+    planner=BuiltInPlanner(thinking_config=config.thinking_config),
     tools=[
         AgentTool(agent=demand_sense_agent),
         AgentTool(agent=ops_insight_agent),
         AgentTool(agent=market_pulse_agent),
         AgentTool(agent=chart_generator_agent),
         AgentTool(agent=weather_report_agent),
-        FunctionTool(func=get_current_date_time)
-    ]
+        FunctionTool(func=get_current_date_time),
+    ],
 )
