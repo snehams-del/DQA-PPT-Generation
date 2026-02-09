@@ -56,7 +56,7 @@ class TestAgents(unittest.IsolatedAsyncioTestCase):
 
         self.runner = Runner(
             app_name="SupplyChainAgent",
-            agent=None,
+            agent=root_agent,
             artifact_service=artifact_service,
             session_service=session_service,
         )
