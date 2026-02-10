@@ -13,7 +13,7 @@ from google.adk.runners import InMemoryRunner
 from google.genai import types
 
 # Set credentials for REAL execution if available
-PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT", "ag-llm-test-proj")
+PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT")
 LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
 os.environ["GOOGLE_CLOUD_PROJECT"] = PROJECT_ID
 os.environ["GOOGLE_CLOUD_LOCATION"] = LOCATION
