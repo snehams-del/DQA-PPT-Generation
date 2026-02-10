@@ -167,7 +167,10 @@ async def main():
     
     print("Starting Vertex AI Evaluation...")
     # Re-init to ensure correct location for Eval Service
-    from ..config import GOOGLE_CLOUD_LOCATION
+    try:
+        from ..config import GOOGLE_CLOUD_LOCATION
+    except ImportError:
+        from podcast_agent.config import GOOGLE_CLOUD_LOCATION
     print(f"Re-initializing Vertex AI for Eval in {GOOGLE_CLOUD_LOCATION}...")
     init_vertex_eval()
     
