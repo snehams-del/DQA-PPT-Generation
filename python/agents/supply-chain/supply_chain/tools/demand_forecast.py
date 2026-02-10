@@ -193,7 +193,6 @@ class DemandForecast:
             },
             "demand_forecast": forecast_list,
         }
-        logger.info(f"Demand Forecast Output: {output_json}")
 
         return json.dumps(output_json, indent=2)
 
@@ -203,7 +202,7 @@ def get_demand_forecast(
     state: str | None = None,
     region: str | None = None,
     power_supplier: str | None = None,
-    history_days: int | None = 365,
+    history_days: int | None = 180,
 ) -> str:
     """
     Forecasts demand using Triple Exponential Smoothing.
@@ -217,7 +216,7 @@ def get_demand_forecast(
         state (Optional[str]): A state to filter by.
         region (Optional[str]): A region to filter by.
         power_supplier (Optional[str]): A power supplier to filter by.
-        history_days (int): Number of most recent days of data to use. Defaults to 90.
+        history_days (int): Number of most recent days of data to use. Defaults to 180.
 
     Returns:
         str: The report JSON containing the detailed forecast.

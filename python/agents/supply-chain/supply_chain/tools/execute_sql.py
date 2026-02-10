@@ -56,7 +56,7 @@ def execute_sql_query(sql_query: str) -> str:
     try:
         query_job = bigquery_client.query_and_wait(sql_query)
         results_df = query_job.to_dataframe()
-        return json.dumps(results_df.to_dict(orient="records"), indent=2)
+        return json.dumps(results_df.to_dict(orient="records"), indent=2, default=str)
     except google.api_core.exceptions.GoogleAPICallError as e:
         return json.dumps({"error": f"BigQuery API error: {e}"}, indent=2)
 
