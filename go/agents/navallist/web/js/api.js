@@ -52,9 +52,9 @@ export const api = {
                 method: 'POST', 
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
-                    sessionId: sessionId, 
-                    userId: userId,
-                    displayName: displayName
+                    session_id: sessionId, 
+                    user_id: userId,
+                    display_name: displayName
                 }) 
             });
 
@@ -89,14 +89,14 @@ export const api = {
     // Send an event (Text, Checkbox Toggle, or Multimodal)
     async sendInteraction(sessionId, userId, text, imageBlob = null, audioBlob = null) {
         
-        // Construct ADK Event Payload (CamelCase required)
+        // Construct ADK Event Payload (snake_case)
         // Endpoint: POST /api/run
         
         const payload = {
-            appName: AGENT_APP_NAME,
-            sessionId: sessionId,
-            userId: userId,
-            newMessage: {
+            app_name: AGENT_APP_NAME,
+            session_id: sessionId,
+            user_id: userId,
+            new_message: {
                 role: "user",
                 parts: []
             }
@@ -104,15 +104,15 @@ export const api = {
 
         // Add Text Part
         if (text) {
-            payload.newMessage.parts.push({ text: text });
+            payload.new_message.parts.push({ text: text });
         }
 
         // Add Image Part (if exists)
         if (imageBlob) {
             const base64 = await blobToBase64(imageBlob);
-            payload.newMessage.parts.push({
-                inlineData: {
-                    mimeType: imageBlob.type,
+            payload.new_message.parts.push({
+                inline_data: {
+                    mime_type: imageBlob.type,
                     data: base64
                 }
             });
@@ -121,9 +121,9 @@ export const api = {
         // Add Audio Part (if exists)
         if (audioBlob) {
              const base64 = await blobToBase64(audioBlob);
-             payload.newMessage.parts.push({
-                inlineData: {
-                    mimeType: audioBlob.type,
+             payload.new_message.parts.push({
+                inline_data: {
+                    mime_type: audioBlob.type,
                     data: base64
                 }
              });

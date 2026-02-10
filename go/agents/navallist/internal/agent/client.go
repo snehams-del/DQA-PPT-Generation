@@ -85,48 +85,26 @@ func (c *LocalAgentClient) RunInteraction(ctx context.Context, payload interface
 	}
 
 	var req struct {
-		AppName      string         `json:"app_name"`
-		AppNameCamel string         `json:"appName"`
-		UserID       string         `json:"user_id"`
-		UserIDCamel  string         `json:"userId"`
-		SessionID    string         `json:"session_id"`
-		SessionIDCamel string       `json:"sessionId"`
-		NewMessage   *genai.Content `json:"new_message"`
-		NewMessageCamel *genai.Content `json:"newMessage"`
+		AppName    string         `json:"app_name"`
+		UserID     string         `json:"user_id"`
+		SessionID  string         `json:"session_id"`
+		NewMessage *genai.Content `json:"new_message"`
 	}
 	if err := json.Unmarshal(b, &req); err != nil {
 		return nil, fmt.Errorf("invalid payload structure: %w", err)
 	}
 
-	// Coalesce
-	finalAppName := req.AppName
-	if finalAppName == "" {
-		finalAppName = req.AppNameCamel
-	}
-	finalUserID := req.UserID
-	if finalUserID == "" {
-		finalUserID = req.UserIDCamel
-	}
-	finalSessionID := req.SessionID
-	if finalSessionID == "" {
-		finalSessionID = req.SessionIDCamel
-	}
-	finalMsg := req.NewMessage
-	if finalMsg == nil {
-		finalMsg = req.NewMessageCamel
+	if req.AppName == "" || req.UserID == "" || req.SessionID == "" {
+		return nil, fmt.Errorf("app_name, user_id, session_id are required, got app_name: %q, user_id: %q, session_id: %q", req.AppName, req.UserID, req.SessionID)
 	}
 
-	if finalAppName == "" || finalUserID == "" || finalSessionID == "" {
-		return nil, fmt.Errorf("app_name, user_id, session_id are required, got app_name: %q, user_id: %q, session_id: %q", finalAppName, finalUserID, finalSessionID)
-	}
-
-	if finalAppName != c.Agent.Name() {
+	if req.AppName != c.Agent.Name() {
 		// Verify?
 	}
 
 	// Run
 	var events []*session.Event
-	for event, err := range c.Runner.Run(ctx, finalUserID, finalSessionID, finalMsg, adkagent.RunConfig{}) {
+	for event, err := range c.Runner.Run(ctx, req.UserID, req.SessionID, req.NewMessage, adkagent.RunConfig{}) {
 		if err != nil {
 			if strings.Contains(err.Error(), "session") && strings.Contains(err.Error(), "not found") {
 				return nil, data.ErrNotFound

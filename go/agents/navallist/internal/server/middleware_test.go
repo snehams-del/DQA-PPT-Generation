@@ -13,6 +13,9 @@ import (
 )
 
 func TestAuthMiddleware_Unit(t *testing.T) {
+	// AuthLevelUser requires a valid user session.
+	const AuthLevelUser = 1
+
 	mockStore := &data.MockStore{
 		GetUserFunc: func(_ context.Context, id string) (*models.User, error) {
 			if id == "user_123" {

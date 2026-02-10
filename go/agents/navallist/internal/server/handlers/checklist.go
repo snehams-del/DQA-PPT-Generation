@@ -28,9 +28,9 @@ func NewChecklistHandler(client *agent.LocalAgentClient, store data.Store) *Chec
 // CreateSession - POST /api/agent/sessions
 func (h *ChecklistHandler) CreateSession(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		SessionID   string `json:"sessionID"`
-		UserID      string `json:"userId"`
-		DisplayName string `json:"displayName"`
+		SessionID   string `json:"session_id"`
+		UserID      string `json:"user_id"`
+		DisplayName string `json:"display_name"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -38,7 +38,7 @@ func (h *ChecklistHandler) CreateSession(w http.ResponseWriter, r *http.Request)
 	}
 
 	if req.SessionID == "" || req.UserID == "" {
-		http.Error(w, "sessionID and userId are required", http.StatusBadRequest)
+		http.Error(w, "session_id and user_id are required", http.StatusBadRequest)
 		return
 	}
 
@@ -94,13 +94,13 @@ func (h *ChecklistHandler) RunInteraction(w http.ResponseWriter, r *http.Request
 	}
 
 	// For logging and self-healing
-	sessionID, _ := payload["sessionID"].(string)
+	sessionID, _ := payload["session_id"].(string)
 	if sessionID == "" {
 		sessionID, _ = payload["sessionId"].(string)
 	}
-	userID, _ := payload["userId"].(string)
+	userID, _ := payload["user_id"].(string)
 	if userID == "" {
-		userID, _ = payload["user_id"].(string)
+		userID, _ = payload["userId"].(string)
 	}
 
 	resp, err := h.Client.RunInteraction(r.Context(), payload)

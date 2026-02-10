@@ -34,10 +34,6 @@ type route struct {
 const (
 	// AuthLevelPublic allows access without authentication.
 	AuthLevelPublic = 0
-	// AuthLevelUser requires a valid user session.
-	AuthLevelUser = 1
-	// AuthLevelAdmin requires a valid user session with admin privileges.
-	AuthLevelAdmin = 2
 )
 
 // NewServer initializes the server with routes.
