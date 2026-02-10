@@ -36,12 +36,8 @@ The tools are provided by custom APIs. The specifications are imported to [API h
 ### Prerequisites
 
 - Python 3.12+
--   Poetry for dependency management and packaging
-    -   See the official
-        [Poetry website](https://python-poetry.org/docs/) for more information. To install Poetry run:
-    ```bash
-    pip install poetry
-    ```
+- [uv](https://github.com/astral-sh/uv) for dependency management and packaging
+  - Install uv with `pip install uv` or see the [uv installation guide](https://docs.astral.sh/uv/getting-started/installation/)
 - Google Cloud Project with the following roles assigned
   - Apigee Organization Admin
   - Secret Manager Admin
@@ -49,9 +45,10 @@ The tools are provided by custom APIs. The specifications are imported to [API h
   - Service Usage Consumer
   - Logs Viewer
 
-Once you have created your project, [install the Google Cloud SDK](https://cloud.google.com/sdk/docs/install). Then run the following command to authenticate:
+Once you have created your project, [install the Google Cloud SDK](https://cloud.google.com/sdk/docs/install). Then run the following commands to authenticate (for both gcloud and Application Default Credentials used by the agent and deployment scripts):
 ```bash
 gcloud auth login
+gcloud auth application-default login
 ```
 You also need to enable certain APIs. Run the following command to enable:
 ```bash
@@ -86,14 +83,8 @@ Follow the instructions in this GCP Cloud Shell tutorial.
 
 2.  Install the dependencies:
 
-    **Note for Linux users:** If you get an error related to `keyring` during the installation, you can disable it by running the following command:
     ```bash
-    poetry config keyring.enabled false
-    ```
-    This is a one-time setup.
-
-    ```bash
-    poetry install
+    uv sync
     ```
 
 3.  Configure settings:
@@ -132,8 +123,8 @@ The agent can also be deployed to [Vertex AI Agent Engine](https://cloud.google.
 commands:
 
 ```bash
-poetry install --with deployment
-python3 deployment/deploy.py
+uv sync --group deployment
+uv run python deployment/deploy.py
 ```
 
 When the deployment finishes, it will output the resource ID of the remote agent deployment, for example:
@@ -145,10 +136,42 @@ For more information on deploying to Agent Engine, see [here](https://google.git
 
 The deployment script adds the `AGENT_ENGINE_ID` to your `.env` file. To test the remote agent, simply run:
 ```bash
-python3 deployment/test_deployment.py
+uv run python deployment/test_deployment.py
+```
+To run the integration test (pytest) for the deployment script:
+```bash
+uv run pytest deployment/test_deployment.py -v
 ```
 
 You may then interact with the deployed agent from the shell. You can type `quit` at any point to exit.
+
+### Alternative: Using Agent Starter Pack
+
+You can use the [Agent Starter Pack](https://goo.gle/agent-starter-pack) to create a production-ready version of this agent with deployment options (Agent Engine, Cloud Run) and CI/CD scripts.
+
+**Create a new project from this agent (using uv):**
+
+```bash
+uvx agent-starter-pack create my-auto-insurance-agent -a adk@auto-insurance-agent
+```
+
+Or with pip:
+
+```bash
+pip install --upgrade agent-starter-pack
+agent-starter-pack create my-auto-insurance-agent -a adk@auto-insurance-agent
+```
+
+The starter pack will prompt you to select deployment targets and adds production-ready features. After creating the project, run the integration tests in the generated project:
+
+```bash
+cd my-auto-insurance-agent
+uv sync
+uv run pytest
+# Or use the generated Makefile: make install && make test
+```
+
+Pull requests that change this agent trigger the templated-agent workflow, which generates a project from this template and runs integration tests (lint, test, backend startup) for each deployment target.
 
 ## Example Interaction
 
