@@ -60,10 +60,10 @@ Ensure your `.env` includes the following:
 
 ```ini
 GOOGLE_GENAI_USE_VERTEXAI=TRUE
-GOOGLE_CLOUD_PROJECT="your-gcp-project-id"
+GOOGLE_CLOUD_PROJECT="your-google-cloud-project-id"
 GOOGLE_CLOUD_LOCATION="us-central1"
-
-# Optional: TTS Configuration
+MODEL_GOOGLE_CLOUD_LOCATION="global"
+PODCAST_TRANSCRIPT_MODEL_NAME="gemini-2.5-flash"
 TTS_MODEL_NAME="gemini-2.5-pro-tts"
 TTS_LOCATION="us-central1"
 ```

@@ -2,8 +2,14 @@ import os
 import argparse
 import json
 import asyncio
+import sys
 from pathlib import Path
 from typing import List, Dict, Any
+
+# Add src to path if running as script
+if __name__ == "__main__" and __package__ is None:
+    sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
+    sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 import pandas as pd
 import dotenv
@@ -11,20 +17,39 @@ dotenv.load_dotenv()
 
 from google.adk.runners import InMemoryRunner
 from google.genai import types
-from ..agent import podcast_agent
-from ..config import PODCAST_MODEL_GOOGLE_CLOUD_LOCATION, GOOGLE_CLOUD_LOCATION as EVAL_LOCATION, PODCAST_TRANSCRIPT_MODEL_NAME
-from evals.eval_utils import init_vertex_eval, get_pointwise_metrics
+
+# Conditional imports based on execution context
+try:
+    # Try relative imports (Package mode)
+    from ..agent import podcast_agent
+    from ..config import PODCAST_MODEL_GOOGLE_CLOUD_LOCATION, GOOGLE_CLOUD_LOCATION as EVAL_LOCATION, PODCAST_TRANSCRIPT_MODEL_NAME
+    from evals.eval_utils import init_vertex_eval, get_pointwise_metrics
+except ImportError:
+    # Fallback to absolute imports (Script mode)
+    from podcast_agent.agent import podcast_agent
+    from podcast_agent.config import PODCAST_MODEL_GOOGLE_CLOUD_LOCATION, GOOGLE_CLOUD_LOCATION as EVAL_LOCATION, PODCAST_TRANSCRIPT_MODEL_NAME
+    from evals.eval_utils import init_vertex_eval, get_pointwise_metrics
+
 from vertexai.preview.evaluation import EvalTask
 
 print(f"DEBUG: Config PODCAST_TRANSCRIPT_MODEL_NAME={PODCAST_TRANSCRIPT_MODEL_NAME}")
 print(f"DEBUG: Config PODCAST_MODEL_GOOGLE_CLOUD_LOCATION={PODCAST_MODEL_GOOGLE_CLOUD_LOCATION}")
 print(f"DEBUG: Config EVAL_LOCATION={EVAL_LOCATION}")
+
 # Inspect agent model if possible
 try:
+    # Try relative import
     from ..sub_agents.podcast_transcript_writer.agent import podcast_transcript_writer_agent
-    print(f"DEBUG: Agent podcast_transcript_writer_agent.model={getattr(podcast_transcript_writer_agent, 'model', 'cloud-not-found')}")
 except ImportError:
-    print("DEBUG: Could not import podcast_transcript_writer_agent directly")
+    try:
+        # Try absolute import
+        from podcast_agent.sub_agents.podcast_transcript_writer.agent import podcast_transcript_writer_agent
+    except ImportError:
+         print("DEBUG: Could not import podcast_transcript_writer_agent directly")
+         podcast_transcript_writer_agent = None
+
+if podcast_transcript_writer_agent:
+    print(f"DEBUG: Agent podcast_transcript_writer_agent.model={getattr(podcast_transcript_writer_agent, 'model', 'cloud-not-found')}")
 
 async def run_agent(source_text: str) -> str:
     """Runs the podcast agent on the source text and returns the transcript."""
@@ -88,6 +113,7 @@ async def run_agent(source_text: str) -> str:
 async def main():
     parser = argparse.ArgumentParser(description="Run Podcast Agent Evaluation")
     parser.add_argument("--mode", choices=["fast", "detailed"], default="fast", help="Evaluation mode")
+    parser.add_argument("--repeats", type=int, default=1, help="Number of times to repeat evaluation for each item (Stability Testing)")
     args = parser.parse_args()
 
     # Init Vertex AI
@@ -106,24 +132,35 @@ async def main():
             if line.strip():
                 item = json.loads(line)
                 eval_data.append(item)
-
-    print(f"Running evaluation on {len(eval_data)} examples...")
     
+    # Rationale:
+    # 1. Dataset Diversity: The dataset contains distinct topics (e.g. detailed.jsonl has a tech paper and a music bio) 
+    #    to ensure the agent works across different domains.
+    # 2. Stability Testing: We use the '--repeats' argument (default=1) to run the same input multiple times.
+    #    This allows us to measure non-determinism and pass rate (e.g. "it succeeds 80% of the time") without
+    #    bloating the dataset file with duplicate lines.
+
+    print(f"Running evaluation on {len(eval_data)} distinct examples.")
+    if args.repeats > 1:
+        print(f"STABILITY TEST ACTIVE: Repeating each example {args.repeats} times.")
+
     # Run Agent and Collect Results
     results = []
     for item in eval_data:
         context = item["context"]
-        print("Running agent on item...")
-        response = await run_agent(context)
-        if not response:
-             print("Warning: Empty response from src.agent.")
-             response = "No transcript generated."
         
-        results.append({
-            "context": context,
-            "response": response,
-            # "instruction" is sometimes required by Faithfulness but context/response usually sufficient for RAG style
-        })
+        for i in range(args.repeats):
+            print(f"Running agent on item (Run {i+1}/{args.repeats})...")
+            response = await run_agent(context)
+            if not response:
+                 print("Warning: Empty response from src.agent.")
+                 response = "No transcript generated."
+            
+            results.append({
+                "context": context,
+                "response": response,
+                # "instruction" is sometimes required by Faithfulness but context/response usually sufficient for RAG style
+            })
 
     # Evaluate using Vertex AI
     metrics = get_pointwise_metrics()
@@ -137,7 +174,7 @@ async def main():
     eval_task = EvalTask(
         dataset=pd.DataFrame(results),
         metrics=metrics,
-        experiment=f"podcast-eval-{args.mode}"
+        experiment=f"podcast-eval-{args.mode}-r{args.repeats}"
     )
     
     eval_result = eval_task.evaluate()
