@@ -4,9 +4,14 @@ from vertexai.preview.evaluation import (
     MetricPromptTemplateExamples,
     EvalTask,
 )
-from ..config import (
-    GOOGLE_CLOUD_LOCATION,
-)
+try:
+    from ..config import (
+        GOOGLE_CLOUD_LOCATION,
+    )
+except ImportError:
+    from podcast_agent.config import (
+        GOOGLE_CLOUD_LOCATION,
+    )
 
 def init_vertex_eval():
     """Initializes Vertex AI for evaluation."""
