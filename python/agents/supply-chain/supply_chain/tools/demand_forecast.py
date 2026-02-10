@@ -18,6 +18,8 @@ import json
 import logging
 from datetime import datetime
 
+import google.api_core.exceptions
+import google.auth.exceptions
 import pandas as pd
 from google.cloud import bigquery
 from statsmodels.tsa.api import ExponentialSmoothing
@@ -31,9 +33,9 @@ try:
     bigquery_client = bigquery.Client(
         project=config.project_id
     )  # Initialize client once
-except Exception as e:
+except google.auth.exceptions.DefaultCredentialsError as e:
     logger.error(f"Error initializing BigQuery client: {e}")
-    bigquery_client = None  # Set client to None if initialization fails
+    bigquery_client = None
 
 MIN_HISTORY_DAYS = 14  # 2 weeks
 
@@ -232,7 +234,5 @@ def get_demand_forecast(
         )
     except (ValueError, ConnectionError) as e:
         return json.dumps({"error": str(e)}, indent=2)
-    except Exception as e:
-        return json.dumps(
-            {"error": f"An unexpected error occurred: {e}"}, indent=2
-        )
+    except google.api_core.exceptions.GoogleAPICallError as e:
+        return json.dumps({"error": f"BigQuery API error: {e}"}, indent=2)

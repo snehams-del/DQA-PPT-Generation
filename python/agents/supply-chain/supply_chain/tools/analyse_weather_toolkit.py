@@ -72,7 +72,7 @@ class AnalyseWeatherToolkit:
             "https://geocoding-api.open-meteo.com/v1/search"
         )
 
-        self.model_name = kwargs.get("model_name", "gemini-3-flash-preview")
+        self.model_name = kwargs.get("model_name", config.model_name)
         self.gen_client = genai.Client(
             vertexai=True,
             project=project_id,
@@ -86,33 +86,35 @@ class AnalyseWeatherToolkit:
         self.generation_config = types.GenerateContentConfig(
             system_instruction=prompts.WEATHER_CHARTS_SUMMARIZATION_SYSTEM_INSTRUCTIONS,
             safety_settings=self.safety_settings,
-            temperature=config.temperature,
-            top_p=config.top_p,
+            temperature=kwargs.get("temperature", config.temperature),
+            top_p=kwargs.get("top_p", config.top_p),
             response_mime_type="text/plain",
         )
 
     def load_safety_config(self) -> list[types.SafetySetting]:
         """Set Safety Settings for a Gemini instance using genai types."""
         return [
+            # RELAX THESE (To prevent blocking legitimate reports on severe weather and supply chain disruptions)
             types.SafetySetting(
                 category=types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-                threshold=types.HarmBlockThreshold.BLOCK_NONE,
-            ),
-            types.SafetySetting(
-                category=types.HarmCategory.HARM_CATEGORY_HARASSMENT,
-                threshold=types.HarmBlockThreshold.BLOCK_NONE,
-            ),
-            types.SafetySetting(
-                category=types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-                threshold=types.HarmBlockThreshold.BLOCK_NONE,
-            ),
-            types.SafetySetting(
-                category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-                threshold=types.HarmBlockThreshold.BLOCK_NONE,
+                threshold=types.HarmBlockThreshold.BLOCK_ONLY_HIGH,
             ),
             types.SafetySetting(
                 category=types.HarmCategory.HARM_CATEGORY_CIVIC_INTEGRITY,
-                threshold=types.HarmBlockThreshold.BLOCK_NONE,
+                threshold=types.HarmBlockThreshold.BLOCK_ONLY_HIGH,
+            ),
+            # KEEP THESE STRICT (Standard guardrails to block non-weather policy violations)
+            types.SafetySetting(
+                category=types.HarmCategory.HARM_CATEGORY_HARASSMENT,
+                threshold=types.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+            ),
+            types.SafetySetting(
+                category=types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                threshold=types.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+            ),
+            types.SafetySetting(
+                category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                threshold=types.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
             ),
         ]
 
@@ -233,7 +235,7 @@ class AnalyseWeatherToolkit:
 
             return df[required_cols]
 
-        except Exception as e:
+        except (requests.RequestException, KeyError, ValueError) as e:
             logger.error(f"Failed to fetch from Open-Meteo: {e}")
             return pd.DataFrame()
 
@@ -303,7 +305,7 @@ class AnalyseWeatherToolkit:
             )
             logger.info(f"Fetch weather data from API: {report}")
             return {"status": "success", "report": report}
-        except Exception as e:
+        except (requests.RequestException, ValueError, KeyError) as e:
             logger.error(f"Weather API failed: {e}")
             return {
                 "status": "error",
@@ -396,7 +398,7 @@ class AnalyseWeatherToolkit:
             )
             logger.info(f"Filter weather data from BigQuery: {report}")
             return {"status": "success", "report": report}
-        except Exception as e:
+        except (ValueError, KeyError, TypeError) as e:
             logger.error(f"Failed to filter data: {e}")
             return {
                 "status": "error",
@@ -504,7 +506,7 @@ class AnalyseWeatherToolkit:
             report = f"Successfully generated and saved {len(filenames)} charts as artifacts: {', '.join(filenames)}"
             logger.info(f"Generate weather info charts: {report}")
             return {"status": "success", "report": report}
-        except Exception as e:
+        except (OSError, ValueError, KeyError) as e:
             logger.error(f"Failed to generate charts: {e}")
             return {
                 "status": "error",
@@ -573,11 +575,17 @@ class AnalyseWeatherToolkit:
             )
             logger.info(f"Summarize weather from plots: {response.text}")
             return {"status": "success", "summary": response.text}
-        except Exception as e:
+        except (OSError, ValueError) as e:
             logger.error(f"Failed to generate summary: {e}")
             return {
                 "status": "error",
                 "error_message": f"Failed to generate summary: {e}",
+            }
+        except Exception as e:
+            logger.error(f"Unexpected error in summary generation: {e}")
+            return {
+                "status": "error",
+                "error_message": f"Unexpected error in summary generation: {e}",
             }
 
     def get_lat_long_from_address(
@@ -625,7 +633,7 @@ class AnalyseWeatherToolkit:
                     logger.warning(
                         f"Google Maps API error: {data.get('error_message', data['status'])}"
                     )
-            except Exception as e:
+            except requests.RequestException as e:
                 logger.warning(
                     f"Google Maps API failed: {e}. Attempting fallback."
                 )
@@ -696,4 +704,6 @@ WEATHER_REPORT_TOOLKIT = AnalyseWeatherToolkit(
     location=config.location,
     geo_maps_api_key=config.geo_maps_api_key,
     model_name=config.model_name,
+    temperature=config.temperature,
+    top_p=config.top_p,
 ).get_weather_next_forecast_toolkit()
