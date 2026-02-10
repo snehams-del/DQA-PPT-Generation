@@ -19,7 +19,7 @@ os.environ["GOOGLE_CLOUD_PROJECT"] = PROJECT_ID
 os.environ["GOOGLE_CLOUD_LOCATION"] = LOCATION
 os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "1"
 
-class TestKillingJokePodcastReal(unittest.TestCase):
+class TestMusicBioPodcastReal(unittest.TestCase):
     def test_voice_randomization_check(self):
         """Checks the voice randomization (just config check, no API)."""
         print("\n--- Checking Voice Randomization ---")
@@ -43,7 +43,7 @@ class TestKillingJokePodcastReal(unittest.TestCase):
         with open(artifact_path, 'r') as f:
             artifact_content = f.read()[:2000] # Limit content for speed/cost if large
 
-        combined_input = f"The History of Killing Joke\n\nHere is the source material:\n{artifact_content}"
+        combined_input = f"The History Of Killing Joke\n\nHere is the source material:\n{artifact_content}"
 
         print(f"Artifact Size: {len(artifact_content)} chars")
 

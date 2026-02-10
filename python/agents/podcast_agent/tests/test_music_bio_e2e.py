@@ -10,7 +10,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
 from podcast_agent.agent import podcast_agent as PodcastAgent
 from podcast_agent.sub_agents.podcast_audio_generator.agent import gemini_tts_tool
 
-class TestKillingJokePodcast(unittest.TestCase):
+class TestMusicBioPodcast(unittest.TestCase):
     def test_voice_randomization(self):
         """Verifies that the voices are randomized and different."""
         print("\n--- Verifying Voice Randomization ---")
@@ -37,7 +37,7 @@ class TestKillingJokePodcast(unittest.TestCase):
         self.assertNotEqual(host_gender, expert_gender, "Host and Expert should have different genders")
 
     @patch('podcast_agent.sub_agents.podcast_audio_generator.agent.gemini_tts_tool.generate_audio')
-    def test_end_to_end_killing_joke(self, mock_generate_audio):
+    def test_end_to_end_music_bio(self, mock_generate_audio):
         """
         Runs the PodcastAgent end-to-end with mocked TTS to avoid API costs/latency.
         """
@@ -50,7 +50,7 @@ class TestKillingJokePodcast(unittest.TestCase):
         if not os.path.exists(artifact_path):
             self.fail(f"Test artifact not found: {artifact_path}")
             
-        topic = "The History of Killing Joke"
+        topic = "The History Of Killing Joke"
         print(f"Input Topic: {topic}")
         print(f"Input File: {artifact_path}")
         
