@@ -33,6 +33,9 @@ try:
 except google.auth.exceptions.DefaultCredentialsError as e:
     logger.error(f"Error initializing BigQuery client: {e}")
     bigquery_client = None
+except google.api_core.exceptions.GoogleAPICallError as e:
+    logger.error(f"BigQuery API error initializing client: {e}")
+    bigquery_client = None
 
 
 def execute_sql_query(sql_query: str) -> str:

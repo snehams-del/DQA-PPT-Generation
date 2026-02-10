@@ -36,6 +36,9 @@ try:
 except google.auth.exceptions.DefaultCredentialsError as e:
     logger.error(f"Error initializing BigQuery client: {e}")
     bigquery_client = None
+except google.api_core.exceptions.GoogleAPICallError as e:
+    logger.error(f"BigQuery API error initializing client: {e}")
+    bigquery_client = None
 
 MIN_HISTORY_DAYS = 14  # 2 weeks
 
@@ -138,7 +141,7 @@ class DemandForecast:
             df = bigquery_client.query(
                 query, job_config=job_config
             ).to_dataframe()
-        except Exception as e:
+        except google.api_core.exceptions.GoogleAPICallError as e:
             raise ConnectionError(
                 f"Failed to query BigQuery. Error: {e}"
             ) from e
