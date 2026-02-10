@@ -49,4 +49,5 @@ def get_environment():
         def get_policy(self):
             return "You are a helpful assistant."
 
+    # pylint: disable=unnecessary-lambda
     return lambda: MockEnv()
