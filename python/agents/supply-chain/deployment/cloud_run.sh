@@ -8,6 +8,10 @@ source .env
 set +a
 # ---------------------------------
 
+# Generate requirements.txt from uv.lock (best practice for reproducibility)
+echo "Generating requirements.txt from uv.lock..."
+uv export --no-hashes --format requirements-txt > requirements.txt
+
 # Deploy to Cloud Run
 adk deploy cloud_run \
 --project=$GOOGLE_CLOUD_PROJECT \
