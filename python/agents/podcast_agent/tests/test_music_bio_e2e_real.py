@@ -3,6 +3,8 @@ import os
 import sys
 import unittest
 import asyncio
+import dotenv
+dotenv.load_dotenv()
 
 # Add parent directory to path
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
@@ -15,8 +17,11 @@ from google.genai import types
 # Set credentials for REAL execution if available
 PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT")
 LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
-os.environ["GOOGLE_CLOUD_PROJECT"] = PROJECT_ID
-os.environ["GOOGLE_CLOUD_LOCATION"] = LOCATION
+
+if PROJECT_ID:
+    os.environ["GOOGLE_CLOUD_PROJECT"] = PROJECT_ID
+if LOCATION:
+    os.environ["GOOGLE_CLOUD_LOCATION"] = LOCATION
 os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "1"
 
 class TestMusicBioPodcastReal(unittest.TestCase):
