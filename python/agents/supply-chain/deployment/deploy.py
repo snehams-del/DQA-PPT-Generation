@@ -29,9 +29,7 @@ from vertexai.preview.reasoning_engines import AdkApp
 FLAGS = flags.FLAGS
 flags.DEFINE_string("project_id", None, "GCP project ID.")
 flags.DEFINE_string("location", None, "GCP location.")
-flags.DEFINE_string(
-    "bucket", None, "GCP bucket name (without gs:// prefix)."
-)  # Changed flag description
+flags.DEFINE_string("bucket", None, "GCP bucket name (without gs:// prefix).")
 flags.DEFINE_string("resource_id", None, "ReasoningEngine resource ID.")
 flags.DEFINE_string(
     "display_name", "Supply Chain Agent", "Display name for the agent."
@@ -131,7 +129,6 @@ def create(env_vars: dict[str, str]) -> None:
 
     if not os.path.exists(AGENT_WHL_FILE):
         logger.error("Agent wheel file not found at: %s", AGENT_WHL_FILE)
-        # Consider adding instructions here on how to build the wheel file
         raise FileNotFoundError(f"Agent wheel file not found: {AGENT_WHL_FILE}")
 
     logger.info("Using agent wheel file: %s", AGENT_WHL_FILE)
@@ -143,8 +140,7 @@ def create(env_vars: dict[str, str]) -> None:
         env_vars=env_vars,
         display_name=FLAGS.display_name,
     )
-    logger.info("Created remote agent: %s", remote_agent.resource_name)
-    print(f"\nSuccessfully created agent: {remote_agent.resource_name}")
+    logger.info("Successfully created agent: %s", remote_agent.resource_name)
 
 
 def delete(resource_id: str) -> None:
@@ -154,15 +150,12 @@ def delete(resource_id: str) -> None:
         remote_agent = agent_engines.get(resource_id)
         remote_agent.delete(force=True)
         logger.info("Successfully deleted remote agent: %s", resource_id)
-        print(f"\nSuccessfully deleted agent: {resource_id}")
     except google_exceptions.NotFound:
         logger.error("Agent with resource ID %s not found.", resource_id)
-        print(f"\nAgent not found: {resource_id}")
     except Exception as e:
         logger.error(
             "An error occurred while deleting agent %s: %s", resource_id, e
         )
-        print(f"\nError deleting agent {resource_id}: {e}")
 
 
 def list_agents() -> None:
@@ -175,7 +168,7 @@ def list_agents() -> None:
     remote_agents_string = "\n".join(
         template.format(agent=agent) for agent in remote_agents
     )
-    print(f"All remote agents:\n{remote_agents_string}")
+    logger.info("All remote agents:\n%s", remote_agents_string)
 
 
 def collect_env_vars() -> dict[str, str]:
@@ -299,20 +292,21 @@ def main(argv: list[str]) -> None:  # pylint: disable=unused-argument
             delete(FLAGS.resource_id)
 
     except google_exceptions.Forbidden as e:
-        print(
+        logger.error(
             "Permission Error: Ensure the service account/user has necessary "
             "permissions (e.g., Storage Admin, Vertex AI User)."
-            f"\nDetails: {e}"
+            "\nDetails: %s",
+            e,
         )
     except FileNotFoundError as e:
-        print(f"\nFile Error: {e}")
-        print(
+        logger.error("\nFile Error: %s", e)
+        logger.error(
             "Please ensure the agent wheel file exists in the 'deployment' "
             "directory and you have run the build script "
             "(e.g., poetry build --format=wheel --output=deployment')."
         )
     except Exception as e:
-        print(f"\nAn unexpected error occurred: {e}")
+        logger.error("An unexpected error occurred: %s", e)
         # Log the full traceback for debugging purposes
         logger.exception("Unhandled exception in main:")
 

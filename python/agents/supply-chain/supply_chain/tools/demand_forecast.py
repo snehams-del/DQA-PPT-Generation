@@ -32,7 +32,7 @@ try:
         project=config.project_id
     )  # Initialize client once
 except Exception as e:
-    print(f"Error initializing BigQuery client: {e}")
+    logger.error(f"Error initializing BigQuery client: {e}")
     bigquery_client = None  # Set client to None if initialization fails
 
 MIN_HISTORY_DAYS = 14  # 2 weeks

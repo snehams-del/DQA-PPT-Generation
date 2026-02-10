@@ -29,7 +29,7 @@ try:
         project=config.project_id
     )  # Initialize client once
 except Exception as e:
-    print(f"Error initializing BigQuery client: {e}")
+    logger.error(f"Error initializing BigQuery client: {e}")
     bigquery_client = None  # Set client to None if initialization fails
 
 
@@ -65,9 +65,9 @@ def load_table_schema() -> str:
             f"{field.name}:{field.field_type}" for field in table.schema
         ]
         table_schema = f"Schema for `{table_id}`:\n\n{', '.join(schema_info)}"
-        print(f"Loaded the table schema {table_schema}\n")
+        logger.error(f"Loaded the table schema {table_schema}\n")
     except Exception as e:
-        print(f"Error loading graph schema: {e}\n")
-        table_schema = "[Graph schema not available]"
+        logger.error(f"Error loading table schema: {e}\n")
+        table_schema = "[Table schema not available]"
 
     return table_schema

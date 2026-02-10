@@ -40,11 +40,13 @@ class AgentConfig:
 
     # Gemini model config
     model_name: str = os.getenv("GEMINI_MODEL_NAME")
-    temperature: float = os.getenv("GEMINI_MODEL_TEMPERATURE")
-    top_p: str = os.getenv("GEMINI_MODEL_TOP_P")
-    include_thoughts: bool = os.getenv("GEMINI_MODEL_INCLUDE_THOUGHTS")
-    thinking_level: str = os.getenv("GEMINI_MODEL_THINKING_LEVEL")
-    thinking_budget: int = os.getenv("GEMINI_MODEL_THINKING_BUDGET")
+    temperature: float = float(os.getenv("GEMINI_MODEL_TEMPERATURE") or 0.3)
+    top_p: float = float(os.getenv("GEMINI_MODEL_TOP_P") or 0.95)
+    include_thoughts: bool = (
+        os.getenv("GEMINI_MODEL_INCLUDE_THOUGHTS", "False").lower() == "true"
+    )
+    thinking_level: str = os.getenv("GEMINI_MODEL_THINKING_LEVEL") or "HIGH"
+    thinking_budget: int = int(os.getenv("GEMINI_MODEL_THINKING_BUDGET") or -1)
 
     # supply chain table
     dataset_id: str = os.getenv("BIGQUERY_DATASET_ID")

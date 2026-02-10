@@ -65,7 +65,10 @@ class SafeVertexAiCodeExecutor(VertexAiCodeExecutor):
                     "DEBUG: No extension or resource_name found in SafeVertexAiCodeExecutor"
                 )
         except Exception:
-            pass
+            logger.debug(
+                "DEBUG: Error capturing resource_name in SafeVertexAiCodeExecutor pickle",
+                exc_info=True,
+            )
         return (create_safe_executor, (kwargs,))
 
 
