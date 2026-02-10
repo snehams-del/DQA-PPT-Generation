@@ -68,35 +68,47 @@ def pretty_print_event(event):
 
 load_dotenv()
 
-vertexai.init(
-    project=os.getenv("GOOGLE_CLOUD_PROJECT"),
-    location=os.getenv("GOOGLE_CLOUD_LOCATION"),
-)
-
-session_service = VertexAiSessionService(
-    project=os.getenv("GOOGLE_CLOUD_PROJECT"),
-    location=os.getenv("GOOGLE_CLOUD_LOCATION"),
-)
-AGENT_ENGINE_ID = os.getenv("AGENT_ENGINE_ID")
-
-session = asyncio.run(
-    session_service.create_session(
-        app_name=AGENT_ENGINE_ID,
-        user_id="123",
+if __name__ == "__main__":
+    vertexai.init(
+        project=os.getenv("GOOGLE_CLOUD_PROJECT"),
+        location=os.getenv("GOOGLE_CLOUD_LOCATION"),
     )
-)
 
-agent_engine = agent_engines.get(AGENT_ENGINE_ID)
+    session_service = VertexAiSessionService(
+        project=os.getenv("GOOGLE_CLOUD_PROJECT"),
+        location=os.getenv("GOOGLE_CLOUD_LOCATION"),
+    )
+    AGENT_ENGINE_ID = os.getenv("AGENT_ENGINE_ID")
 
-print("Type 'quit' to exit.")
-while True:
-    user_input = input("Input: ")
-    if user_input == "quit":
-        break
+    session = asyncio.run(
+        session_service.create_session(
+            app_name=AGENT_ENGINE_ID,
+            user_id="123",
+        )
+    )
 
-    for event in agent_engine.stream_query(
-        user_id="123", session_id=session.id, message=user_input
-    ):
-        pretty_print_event(event)
+    agent_engine = agent_engines.get(AGENT_ENGINE_ID)
 
-asyncio.run(session_service.delete_session(session_id=session.id))
+    print("Type 'quit' to exit.")
+    while True:
+        user_input = input("Input: ")
+        if user_input == "quit":
+            break
+
+        for event in agent_engine.stream_query(
+            user_id="123", session_id=session.id, message=user_input
+        ):
+            pretty_print_event(event)
+
+    asyncio.run(session_service.delete_session(session_id=session.id))
+
+
+def test_agent_engine_id_configured():
+    """Skip if AGENT_ENGINE_ID is not set (deploy first with deployment/deploy.py)."""
+    import pytest
+
+    AGENT_ENGINE_ID = os.getenv("AGENT_ENGINE_ID")
+    if not AGENT_ENGINE_ID:
+        pytest.skip(
+            "AGENT_ENGINE_ID not set. Deploy the agent first: python3 deployment/deploy.py"
+        )
