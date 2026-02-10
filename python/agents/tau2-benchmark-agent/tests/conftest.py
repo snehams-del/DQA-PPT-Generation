@@ -49,5 +49,4 @@ def get_environment():
         def get_policy(self):
             return "You are a helpful assistant."
 
-    # noqa: PLW0108
-    return lambda: MockEnv()
+    return MockEnv
