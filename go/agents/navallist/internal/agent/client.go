@@ -2,6 +2,7 @@ package agent
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -84,11 +85,26 @@ func (c *LocalAgentClient) RunInteraction(ctx context.Context, payload interface
 		return nil, err
 	}
 
+	fmt.Printf("[DEBUG] Raw Interaction Payload: %s\n", string(b))
+
+	// Define a local struct that matches the incoming JSON exactly for debugging
+	type jsonPart struct {
+		Text       string `json:"text"`
+		InlineData *struct {
+			MIMEType string `json:"mime_type"`
+			Data     string `json:"data"`
+		} `json:"inline_data"`
+	}
+	type jsonContent struct {
+		Role  string     `json:"role"`
+		Parts []jsonPart `json:"parts"`
+	}
+
 	var req struct {
-		AppName    string         `json:"app_name"`
-		UserID     string         `json:"user_id"`
-		SessionID  string         `json:"session_id"`
-		NewMessage *genai.Content `json:"new_message"`
+		AppName    string       `json:"app_name"`
+		UserID     string       `json:"user_id"`
+		SessionID  string       `json:"session_id"`
+		NewMessage *jsonContent `json:"new_message"`
 	}
 	if err := json.Unmarshal(b, &req); err != nil {
 		return nil, fmt.Errorf("invalid payload structure: %w", err)
@@ -98,9 +114,36 @@ func (c *LocalAgentClient) RunInteraction(ctx context.Context, payload interface
 		return nil, fmt.Errorf("app_name, user_id, session_id are required, got app_name: %q, user_id: %q, session_id: %q", req.AppName, req.UserID, req.SessionID)
 	}
 
+	// Convert our debug struct back to the real genai.Content
+	var realNewMessage *genai.Content
+	if req.NewMessage != nil {
+		realNewMessage = &genai.Content{
+			Role: req.NewMessage.Role,
+		}
+		for i, p := range req.NewMessage.Parts {
+			if p.Text != "" {
+				fmt.Printf("[DEBUG] Part %d: Text: %q\n", i, p.Text)
+				realNewMessage.Parts = append(realNewMessage.Parts, &genai.Part{Text: p.Text})
+			}
+			if p.InlineData != nil {
+				fmt.Printf("[DEBUG] Part %d: InlineData MIMEType: %q, Data Length: %d\n", i, p.InlineData.MIMEType, len(p.InlineData.Data))
+				data, err := base64.StdEncoding.DecodeString(p.InlineData.Data)
+				if err != nil {
+					return nil, fmt.Errorf("failed to decode base64 data for part %d: %w", i, err)
+				}
+				realNewMessage.Parts = append(realNewMessage.Parts, &genai.Part{
+					InlineData: &genai.Blob{
+						MIMEType: p.InlineData.MIMEType,
+						Data:     data,
+					},
+				})
+			}
+		}
+	}
+
 	// Run
 	var events []*session.Event
-	for event, err := range c.Runner.Run(ctx, req.UserID, req.SessionID, req.NewMessage, adkagent.RunConfig{}) {
+	for event, err := range c.Runner.Run(ctx, req.UserID, req.SessionID, realNewMessage, adkagent.RunConfig{}) {
 		if err != nil {
 			if strings.Contains(err.Error(), "session") && strings.Contains(err.Error(), "not found") {
 				return nil, data.ErrNotFound

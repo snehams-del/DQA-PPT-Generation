@@ -28,7 +28,7 @@ type MockStore struct {
 	GetTripIDBySessionIDFunc     func(ctx context.Context, sessionID string) (string, error)
 	AddTripCrewFunc              func(ctx context.Context, tripID, userID, displayName string) error
 	UpdateTripMetadataFunc       func(ctx context.Context, adkSessionID string, boatName *string, captainName *string) (*models.Trip, error)
-	UpdateItemWithAssignmentFunc func(ctx context.Context, tripID, itemName string, isChecked bool, location, photoID, currentUserID, assignedToName string) (*models.ChecklistItem, error)
+	UpdateItemWithAssignmentFunc func(ctx context.Context, tripID, itemName string, isChecked bool, location, photoID, currentUserID, assignedToName string) (*models.ChecklistItem, bool, error)
 }
 
 var _ Store = (*MockStore)(nil)
@@ -37,7 +37,7 @@ func (m *MockStore) UpdateTripMetadata(ctx context.Context, adkSessionID string,
 	return m.UpdateTripMetadataFunc(ctx, adkSessionID, boatName, captainName)
 }
 
-func (m *MockStore) UpdateItemWithAssignment(ctx context.Context, tripID, itemName string, isChecked bool, location, photoID, currentUserID, assignedToName string) (*models.ChecklistItem, error) {
+func (m *MockStore) UpdateItemWithAssignment(ctx context.Context, tripID, itemName string, isChecked bool, location, photoID, currentUserID, assignedToName string) (*models.ChecklistItem, bool, error) {
 	return m.UpdateItemWithAssignmentFunc(ctx, tripID, itemName, isChecked, location, photoID, currentUserID, assignedToName)
 }
 

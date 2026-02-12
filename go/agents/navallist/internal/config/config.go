@@ -65,7 +65,7 @@ func Load(lookup EnvGetter) (*Config, error) {
 		Env:          get("ENV", DefaultEnv),
 		Port:         get("NAVALLIST_PORT", DefaultPort),
 		ModelName:    get("NAVALLIST_MODEL", "gemini-2.5-flash"),
-		GoogleAPIKey: getOptional("GOOGLE_API_KEY"),
+		GoogleAPIKey: getOptional("NAVALLIST_GOOGLE_API_KEY"),
 		FrontendDir:  get("NAVALLIST_FRONTEND_DIR", DefaultFrontendDir),
 		SiteURL:      siteURL,
 		DB: DBConfig{

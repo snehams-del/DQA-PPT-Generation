@@ -32,7 +32,7 @@ type Store interface {
 
 	// Checklist operations
 	UpdateItem(ctx context.Context, tripID, itemName string, isChecked bool, location string, photoArtifactID string, userID *string, completedByName string, assignedToUserID *string, assignedToName *string) (*models.ChecklistItem, error)
-	UpdateItemWithAssignment(ctx context.Context, tripID, itemName string, isChecked bool, location, photoID, currentUserID, assignedToName string) (*models.ChecklistItem, error)
+	UpdateItemWithAssignment(ctx context.Context, tripID, itemName string, isChecked bool, location, photoID, currentUserID, assignedToName string) (*models.ChecklistItem, bool, error)
 	AddItemPhoto(ctx context.Context, tripID, itemName string, photoArtifactID string) (*models.ChecklistItem, error)
 
 	// Artifact operations

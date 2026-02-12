@@ -93,25 +93,38 @@ func (t *ChecklistTool) UpdateItems(ctx tool.Context, args UpdateItemsArgs) (Too
 
 	var successes []string
 	var errors []string
+	var warnings []string
 
 	for _, update := range args.Updates {
 		// reuse the logic from updateItemInternal
-		_, err := t.updateItemInternal(ctx, update)
+		res, err := t.updateItemInternal(ctx, update)
 		if err != nil {
 			log.Error("Update failed for item", "item", update.ItemName, "error", err)
 			errors = append(errors, fmt.Sprintf("%s: %v", update.ItemName, err))
 		} else {
 			successes = append(successes, update.ItemName)
+			if res.Status == "warning" {
+				warnings = append(warnings, res.Message)
+			}
 		}
 	}
 
 	msg := fmt.Sprintf("Updated %d items: %s.", len(successes), strings.Join(successes, ", "))
+	status := "success"
+
 	if len(errors) > 0 {
 		msg += fmt.Sprintf(" Failed items: %s.", strings.Join(errors, ", "))
-		return ToolResult{Status: "partial_success", Message: msg}, nil
+		status = "partial_success"
 	}
 
-	return ToolResult{Status: "success", Message: msg}, nil
+	if len(warnings) > 0 {
+		msg += fmt.Sprintf(" Warnings: %s.", strings.Join(warnings, ", "))
+		if status == "success" {
+			status = "warning"
+		}
+	}
+
+	return ToolResult{Status: status, Message: msg}, nil
 }
 
 // updateItemInternal is the internal helper for updating checklist items.
@@ -135,7 +148,7 @@ func (t *ChecklistTool) updateItemInternal(ctx tool.Context, args UpdateChecklis
 		photoID = ""
 	}
 
-	updated, err := t.Store.UpdateItemWithAssignment(ctx, tripID, args.ItemName, args.IsChecked, args.Location, photoID, ctx.UserID(), args.AssignedToName)
+	updated, matchFound, err := t.Store.UpdateItemWithAssignment(ctx, tripID, args.ItemName, args.IsChecked, args.Location, photoID, ctx.UserID(), args.AssignedToName)
 	if err != nil {
 		return ToolResult{Status: "error"}, fmt.Errorf("failed to update: %w", err)
 	}
@@ -145,13 +158,19 @@ func (t *ChecklistTool) updateItemInternal(ctx tool.Context, args UpdateChecklis
 		loc = *updated.LocationText
 	}
 	msg := fmt.Sprintf("Updated %s: Checked=%v, Location=%s", updated.Name, updated.IsChecked, loc)
+	status := "success"
+
 	if updated.AssignedToName != nil {
 		msg += fmt.Sprintf(", Assigned To=%s", *updated.AssignedToName)
+		if !matchFound {
+			msg += " (Warning: Name not in crew list)"
+			status = "warning"
+		}
 	}
 	if photoID != "" {
 		msg += " (Photo attached)"
 	}
-	return ToolResult{Status: "success", Message: msg}, nil
+	return ToolResult{Status: status, Message: msg}, nil
 }
 
 // UpdateMetadata is the function called by the agent to update trip details.

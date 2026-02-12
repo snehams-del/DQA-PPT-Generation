@@ -899,9 +899,8 @@ function setupVoiceFab() {
         if (audioBlob) {
             console.log("Sending Audio...");
             try {
-                // Send "Process this" prompt with audio
-                // Inject identity so the agent knows who is speaking
-                const prompt = `This is ${state.displayName} speaking. Process this voice command.`;
+                // Use a simple prompt to anchor the audio turn
+                const prompt = `Voice command from ${state.displayName}`;
                 const events = await api.sendInteraction(
                     state.sessionId, 
                     state.userId, 
@@ -912,13 +911,16 @@ function setupVoiceFab() {
                 
                 console.log("Agent Replied:", events);
 
-                // Check for "I cannot assign" messages to surface to user
+                // Check for tool results with warnings or partial success
                 if (Array.isArray(events)) {
                     events.forEach(ev => {
                         if (ev.content && ev.content.parts) {
                             ev.content.parts.forEach(p => {
-                                if (p.text && p.text.includes("I cannot assign")) {
-                                    ui.showToast(p.text, "warning");
+                                if (p.function_response && p.function_response.response) {
+                                    const resp = p.function_response.response;
+                                    if (resp.status === "warning" || resp.status === "partial_success") {
+                                        ui.showToast(resp.message, "warning");
+                                    }
                                 }
                             });
                         }
@@ -928,7 +930,21 @@ function setupVoiceFab() {
                 ui.showToast("Got it!", "success");
             } catch (e) {
                 console.error(e);
-                if (e.message.includes("overloaded")) {
+                
+                // If it's a history/turn error, we might need a fresh session
+                if (e.message.includes("turn") || e.message.includes("INVALID_ARGUMENT")) {
+                    console.warn("History corruption detected, restarting session...");
+                    state.sessionId = 's' + Math.random().toString(36).substring(2, 11);
+                    localStorage.setItem('navallist_session_id', state.sessionId);
+                    ui.showToast("Session refreshed due to error. Please try again.", "info");
+                    // Re-sync session with backend
+                    api.createSession(state.sessionId, state.userId, state.displayName);
+                }
+
+                // Check for structured error from api.js
+                if (e.data && e.data.code === "overloaded") {
+                    ui.showToast("The AI is a bit busy right now. Please wait a few seconds and try again.", "warning");
+                } else if (e.message.includes("overloaded")) {
                     ui.showToast("The AI is a bit busy right now. Please wait a few seconds and try again.", "warning");
                 } else {
                     ui.showToast("Agent failed: " + e.message, "error");

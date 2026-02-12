@@ -120,10 +120,11 @@ export const api = {
         
         // Add Audio Part (if exists)
         if (audioBlob) {
+             console.log("Attaching audio blob", audioBlob.type, "size:", audioBlob.size);
              const base64 = await blobToBase64(audioBlob);
              payload.new_message.parts.push({
                 inline_data: {
-                    mime_type: audioBlob.type,
+                    mime_type: audioBlob.type || 'audio/webm',
                     data: base64
                 }
              });
@@ -138,12 +139,26 @@ export const api = {
             
             if (!res.ok) {
                 const txt = await res.text();
-                throw new Error(`Interaction failed: ${res.status} ${txt}`);
+                let errData;
+                try {
+                    errData = JSON.parse(txt);
+                } catch (e) {
+                    // Not JSON
+                }
+                
+                const err = new Error(errData ? errData.error || txt : txt);
+                err.status = res.status;
+                err.data = errData; // Attach structured data
+                throw err;
             }
             return await res.json(); // Returns events array
             
         } catch (e) {
-            console.error("Send failed", e);
+            if (e.status) {
+                console.error(`Send failed with status ${e.status}`, e);
+            } else {
+                console.error("Send failed", e);
+            }
             throw e;
         }
     },

@@ -298,9 +298,10 @@ func (s *SQLStore) GetOrCreateTrip(ctx context.Context, adkSessionID, userID, ca
 }
 
 // UpdateItemWithAssignment performs a higher-level update including resolving fuzzy matches for assignments.
-func (s *SQLStore) UpdateItemWithAssignment(ctx context.Context, tripID, itemName string, isChecked bool, location, photoID, currentUserID, assignedToName string) (*models.ChecklistItem, error) {
+func (s *SQLStore) UpdateItemWithAssignment(ctx context.Context, tripID, itemName string, isChecked bool, location, photoID, currentUserID, assignedToName string) (*models.ChecklistItem, bool, error) {
 	var assignedToUserID *string
 	var finalAssignedName *string
+	matchFound := true
 
 	if assignedToName != "" {
 		// 1. Try DB Fuzzy Match
@@ -331,6 +332,7 @@ func (s *SQLStore) UpdateItemWithAssignment(ctx context.Context, tripID, itemNam
 		} else {
 			// Assign by name only (for new/guest users)
 			finalAssignedName = &assignedToName
+			matchFound = false
 		}
 	}
 
@@ -339,5 +341,6 @@ func (s *SQLStore) UpdateItemWithAssignment(ctx context.Context, tripID, itemNam
 		uidPtr = &currentUserID
 	}
 
-	return s.UpdateItem(ctx, tripID, itemName, isChecked, location, photoID, uidPtr, currentUserID, assignedToUserID, finalAssignedName)
+	item, err := s.UpdateItem(ctx, tripID, itemName, isChecked, location, photoID, uidPtr, currentUserID, assignedToUserID, finalAssignedName)
+	return item, matchFound, err
 }
