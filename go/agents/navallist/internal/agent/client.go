@@ -98,10 +98,6 @@ func (c *LocalAgentClient) RunInteraction(ctx context.Context, payload interface
 		return nil, fmt.Errorf("app_name, user_id, session_id are required, got app_name: %q, user_id: %q, session_id: %q", req.AppName, req.UserID, req.SessionID)
 	}
 
-	if req.AppName != c.Agent.Name() {
-		// Verify?
-	}
-
 	// Run
 	var events []*session.Event
 	for event, err := range c.Runner.Run(ctx, req.UserID, req.SessionID, req.NewMessage, adkagent.RunConfig{}) {
