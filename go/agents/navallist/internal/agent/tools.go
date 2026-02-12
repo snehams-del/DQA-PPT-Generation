@@ -82,23 +82,23 @@ func (t *ChecklistTool) GetChecklistStatus(ctx tool.Context, _ struct{}) (interf
 	}, nil
 }
 
-// BulkUpdateArgs defines the input for the bulk update tool.
-type BulkUpdateArgs struct {
+// UpdateItemsArgs defines the input for the plural update tool.
+type UpdateItemsArgs struct {
 	Updates []UpdateChecklistArgs `json:"updates" jsonschema:"The list of individual item updates to apply."`
 }
 
-// BulkUpdateItems allows the agent to update multiple items in a single tool call.
-func (t *ChecklistTool) BulkUpdateItems(ctx tool.Context, args BulkUpdateArgs) (ToolResult, error) {
-	log.Info("Tool BulkUpdateItems called", "count", len(args.Updates), "session_id", ctx.SessionID())
+// UpdateItems allows the agent to update one or more items in a single tool call.
+func (t *ChecklistTool) UpdateItems(ctx tool.Context, args UpdateItemsArgs) (ToolResult, error) {
+	log.Info("Tool UpdateItems called", "count", len(args.Updates), "session_id", ctx.SessionID())
 
 	var successes []string
 	var errors []string
 
 	for _, update := range args.Updates {
-		// reuse the logic from UpdateItem
-		_, err := t.UpdateItem(ctx, update)
+		// reuse the logic from updateItemInternal
+		_, err := t.updateItemInternal(ctx, update)
 		if err != nil {
-			log.Error("Bulk update failed for item", "item", update.ItemName, "error", err)
+			log.Error("Update failed for item", "item", update.ItemName, "error", err)
 			errors = append(errors, fmt.Sprintf("%s: %v", update.ItemName, err))
 		} else {
 			successes = append(successes, update.ItemName)
@@ -114,9 +114,9 @@ func (t *ChecklistTool) BulkUpdateItems(ctx tool.Context, args BulkUpdateArgs) (
 	return ToolResult{Status: "success", Message: msg}, nil
 }
 
-// UpdateItem is the function called by the agent to update checklist items.
-func (t *ChecklistTool) UpdateItem(ctx tool.Context, args UpdateChecklistArgs) (result ToolResult, err error) {
-	log.Info("Tool UpdateItem called", "args", args, "session_id", ctx.SessionID())
+// updateItemInternal is the internal helper for updating checklist items.
+func (t *ChecklistTool) updateItemInternal(ctx tool.Context, args UpdateChecklistArgs) (result ToolResult, err error) {
+	log.Info("Internal updateItemInternal called", "args", args, "session_id", ctx.SessionID())
 
 	adkID := ctx.SessionID()
 	if adkID == "" {

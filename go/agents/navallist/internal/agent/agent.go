@@ -33,21 +33,10 @@ func NewChecklistAgent(ctx context.Context, store data.Store, modelName, apikey 
 	// Define Tools
 	updateTool, err := functiontool.New(
 		functiontool.Config{
-			Name:        "update_checklist_item",
-			Description: "Updates the status and location of a specific item on the boat's checklist. You can only assign items to names exactly as they appear in 'get_crew_list'. Assigning to anyone else is forbidden.",
+			Name:        "update_checklist_items",
+			Description: "Updates the status and location of one or more items on the boat's checklist. You can only assign items to names exactly as they appear in 'get_crew_list'. Assigning to anyone else is forbidden.",
 		},
-		handler.UpdateItem,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	bulkTool, err := functiontool.New(
-		functiontool.Config{
-			Name:        "bulk_update_items",
-			Description: "Updates multiple checklist items at once. Use this when the user says 'check all my items' or gives a list of updates. This is much more efficient than calling update_checklist_item multiple times.",
-		},
-		handler.BulkUpdateItems,
+		handler.UpdateItems,
 	)
 	if err != nil {
 		return nil, err
@@ -93,7 +82,6 @@ func NewChecklistAgent(ctx context.Context, store data.Store, modelName, apikey 
 		Model:       model,
 		Tools: []tool.Tool{
 			updateTool,
-			bulkTool,
 			crewTool,
 			statusTool,
 			metaTool,
