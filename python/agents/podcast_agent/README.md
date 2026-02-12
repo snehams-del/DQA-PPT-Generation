@@ -136,18 +136,8 @@ If you prefer to work with the API directly (e.g., for automation or testing), y
 
     The response will contain the path to the generated `podcast_output.wav` file.
 
-## Testing vs Evaluation
 
-It's important to distinguish between **Testing** and **Evaluation** in this project:
-
-*   **Testing** ensures the code is functionally correct. It verifies that the agents run without errors, tools are called correctly, and files are generated as expected.
-*   **Evaluation** measures the *quality* of the AI model's output. It assesses how well the generated transcript reflects the source material (Groundedness), how natural it sounds (Fluency), and how logically it flows (Coherence).
-
-## Testing
-
-The project includes both unit tests and end-to-end (E2E) tests to verify functional correctness.
-
-### Running Tests
+## Running Tests
 
 Use `pytest` to run the test suite:
 
