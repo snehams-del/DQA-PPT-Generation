@@ -10,6 +10,7 @@ from typing import List, Dict, Optional
 import google.auth
 from google.auth.transport.requests import Request
 import random
+from podcast_agent.models.media_script import MediaScript, SpeakerProfile, ScriptSegment
 
 # Gemini TTS REST API Implementation favoring "gemini-2.5-pro-tts" model features
 
@@ -78,50 +79,31 @@ class GeminiTtsTool:
         idx = int(hashlib.md5(speaker_alias.encode()).hexdigest(), 16) % len(self.voice_pool)
         return self.voice_pool[idx]
 
-    def generate_audio(self, transcript_json: str, output_file: str = "podcast.wav") -> str:
+    def generate_audio(self, script: MediaScript, output_file: str = "podcast.wav") -> str:
+        print(f"DEBUG: generate_audio called with script: {script}")
         """
         Generates audio using the Gemini TTS MultiSpeakerMarkup API via REST.
         Args:
-            transcript_json: JSON string containing the podcast transcript with 'segments'.
+            script: MediaScript object containing the podcast script.
             output_file: Path to the output WAV file.
         """
-        try:
-             # Handle cases where the LLM passes a python dict as string or wrapped in markdown
-             cleaned_json = transcript_json.strip()
-             if cleaned_json.startswith("```json"):
-                 cleaned_json = cleaned_json[7:]
-             if cleaned_json.endswith("```"):
-                 cleaned_json = cleaned_json[:-3]
-             cleaned_json = cleaned_json.strip()
-             
-             data = json.loads(cleaned_json)
-             if isinstance(data, list):
-                 transcript_segments = data
-             elif "segments" in data:
-                 transcript_segments = data["segments"]
-             else:
-                 # Fallback if structure is unknown, assume list of turns? 
-                 # Or just log warning and try usage
-                 transcript_segments = [data]
-        except json.JSONDecodeError as e:
-            self.logger.error(f"Failed to parse transcript JSON: {e}")
-            return f"Error: Invalid JSON provided. {e}"
+        # We expect a MediaScript object, but for safety in dynamic environments, we can check.
+        # If it's a dict (from JSON), we might need to cast it, but the agent should pass the object.
+        
+        # The script object has:
+        # script.speakers: List[SpeakerProfile]
+        # script.segments: List[ScriptSegment]
+        
+        return self._generate_audio_impl(script, output_file)
 
-        return self._generate_audio_impl(transcript_segments, output_file)
-
-    def _generate_audio_impl(self, transcript_segments: List[Dict], output_file: str = "podcast.wav") -> str:
+    def _generate_audio_impl(self, script, output_file: str = "podcast.wav") -> str:
         """
         Generates audio using the Gemini TTS MultiSpeakerMarkup API via REST.
         """
         token = self._get_auth_token()
         
-        # Endpoint: texttospeech.googleapis.com (Global usually works, or regional)
-        # Docs use standard client, which defaults to global unless client_options set.
-        # User linked docs suggest "gemini-2.5-pro-tts" model availability.
-        # Let's use the standard endpoint with the model param.
-        
+        # Endpoint: texttospeech.googleapis.com
         hostname = "texttospeech.googleapis.com"
-        # If user explicitly wants regional, we can use it, but global is safest for 404 avoidance unless strictly required.
         if self.location and self.location != "global":
              hostname = f"{self.location}-texttospeech.googleapis.com"
              
@@ -134,26 +116,17 @@ class GeminiTtsTool:
         }
 
         # 1. Flatten transcript into a single list of turns for MultiSpeakerMarkup
-        # Assuming we can send one large request if it fits (~5000 chars?). 
-        # If not, we chunk. Gemini TTS supports larger contexts but let's be safe (~4096 chars common limit).
-        
         all_turns = []
-        for seg in transcript_segments:
-            dialogues = getattr(seg, 'speaker_dialogues', [])
-            if not dialogues and isinstance(seg, dict):
-                dialogues = seg.get('speaker_dialogues', [])
-                
-            for turn in dialogues:
-                speaker_id = getattr(turn, 'speaker_id', None) or turn.get('speaker_id')
-                text = getattr(turn, 'text', None) or turn.get('text')
-                if text and speaker_id:
-                    all_turns.append({"speaker": speaker_id, "text": text})
+        
+        # In MediaScript, segments are already a flat list of ScriptSegment(speaker_id, text)
+        for segment in script.segments:
+            all_turns.append({"speaker": segment.speaker_id, "text": segment.text})
 
-        # Chunking strategy: Group turns until text length approaches safety limit (e.g. 4000 chars)
+        # Chunking strategy: Group turns until text length approaches safety limit
         inputs = []
         current_turns = []
         current_len = 0
-        MAX_CHAR_LIMIT = 500 # Reduced to 500 to avoid 502 timeouts aggressively
+        MAX_CHAR_LIMIT = 500 
         
         for turn in all_turns:
             turn_len = len(turn['text'])
@@ -173,29 +146,12 @@ class GeminiTtsTool:
         params = None
 
         for chunk_idx, turn_batch in enumerate(inputs):
-            # Construct MultiSpeakerMarkup
-            # API expects: input={"multiSpeakerMarkup": {"turns": [...]}}
-            # Each turn: {"text": "...", "speaker": "alias"}
-            # AND unique mappings in voice config
-            
             api_turns = []
             distinct_speakers = set()
-            
-            # Construct Voice Config map
             speaker_voice_configs = []
             seen_aliases = set()
             
-            # Map raw speaker IDs to safe aliases
-            # We need to maintain this mapping across chunks if we want consistency?
-            # Actually, we process all chunks in one go here, so we can just consistent map.
-            # But the speaker_voice_map is based on raw aliases? No, let's fix.
-            
-            # Improved mapping:
-            # 1. Sanitize the speaker ID to be strictly alphanumeric for the API.
-            # 2. Use the ORIGINAL ID to lookup the voice from self.speaker_voice_map.
-            
             def get_safe_alias(raw_id):
-                # Replace non-alnum with nothing (collapse)
                 import re
                 safe = re.sub(r'[^a-zA-Z0-9]', '', raw_id)
                 if not safe:
@@ -207,9 +163,7 @@ class GeminiTtsTool:
                 raw_speaker = t['speaker']
                 safe_alias = get_safe_alias(raw_speaker)
                 
-                # Update the turn to use the safe alias
                 t['speaker'] = safe_alias 
-                # Note: modifying 'turn_batch' dicts in place is fine as they are local to this loop context or copied
                 
                 api_turns.append({
                     "text": t['text'],
@@ -217,8 +171,20 @@ class GeminiTtsTool:
                 })
 
                 if safe_alias not in seen_aliases:
-                    # Use RAW speaker for voice lookup (e.g. "Host")
-                    voice_id = self._get_voice_id_for_speaker(raw_speaker)
+                    # Look up voice ID
+                    # 1. Try to find speaker name in script.speakers matching raw_speaker
+                    # 2. If found, check if mapped in self.speaker_voice_map
+                    # 3. Else fallback to deterministic assignment
+                    
+                    voice_id = None
+                    # Check pre-defined map first (Host/Expert)
+                    if raw_speaker in self.speaker_voice_map:
+                        voice_id = self.speaker_voice_map[raw_speaker]
+                    else:
+                        # Try to find common name in speakers list? 
+                        # For now, just use the deterministic fallback or existing map logic
+                        voice_id = self._get_voice_id_for_speaker(raw_speaker)
+                        
                     speaker_voice_configs.append({
                         "speakerAlias": safe_alias,
                         "speakerId": voice_id
@@ -226,22 +192,17 @@ class GeminiTtsTool:
                     seen_aliases.add(safe_alias)
 
             # Ensure at least 2 speakers to satisfy API requirement
-            # If the chunk only has 1 speaker, the API fails with "Multi-speaker synthesis requires two distinct speakers."
             if len(seen_aliases) < 2 and api_turns:
-                 # Find a speaker alias that isn't the current one
                  current_speaker = list(seen_aliases)[0]
                  dummy_speaker = "Expert" if current_speaker == "Host" else "Host"
-                 # Just in case current_speaker is something else
                  if dummy_speaker == current_speaker:
                      dummy_speaker = "SpeakerTwo"
                  
-                 # Append a dummy silent turn
                  api_turns.append({
                      "text": ".",
                      "speaker": dummy_speaker
                  })
                  
-                 # Register the dummy speaker's voice
                  if dummy_speaker not in seen_aliases:
                       if dummy_speaker in self.speaker_voice_map:
                           voice_id = self.speaker_voice_map[dummy_speaker]
@@ -263,7 +224,7 @@ class GeminiTtsTool:
                 },
                 "voice": {
                     "languageCode": "en-US",
-                    "modelName": self.model_name, # "gemini-2.5-flash-tts"
+                    "modelName": self.model_name,
                     "multiSpeakerVoiceConfig": {
                          "speakerVoiceConfigs": speaker_voice_configs
                     }
@@ -274,23 +235,18 @@ class GeminiTtsTool:
                 }
             }
             
-            # Rate limiting / Backoff for stability
             import time
             time.sleep(1)
 
-            # Debug Payload
-            if chunk_idx == 0:
-                print(f"DEBUG: Payload for chunk {chunk_idx}: {json.dumps(payload, indent=2)}")
+
 
             try:
-                # Retry logic for 500-level errors
                 max_retries = 3
                 for attempt in range(max_retries):
                     try:
-                        # print(f"DEBUG: Sending payload to {url}")
-                        response = requests.post(url, headers=headers, json=payload)
+                        response = requests.post(url, headers=headers, json=payload, timeout=60)
                         response.raise_for_status()
-                        break # Success
+                        break 
                     except requests.exceptions.HTTPError as e:
                         if e.response.status_code >= 500 and attempt < max_retries - 1:
                             import time
@@ -298,7 +254,7 @@ class GeminiTtsTool:
                             self.logger.warning(f"Got {e.response.status_code}, retrying in {wait}s...")
                             time.sleep(wait)
                             continue
-                        raise # Re-raise if not 5xx or retries exhausted
+                        raise 
                 
                 data = response.json()
                 
@@ -315,6 +271,7 @@ class GeminiTtsTool:
 
             except Exception as e:
                 self.logger.error(f"Failed to generate audio chunk {chunk_idx}: {e}")
+
                 if hasattr(e, 'response') and e.response is not None:
                      self.logger.error(f"API Error Response: {e.response.text}")
 

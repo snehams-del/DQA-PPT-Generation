@@ -24,6 +24,5 @@ podcast_transcript_writer_agent = Agent(
     model=PODCAST_TRANSCRIPT_MODEL_NAME,
     description="Writes the podcast transcript based on the podcast plan",
     instruction=prompt.PODCAST_TRANSCRIPT_WRITER_PROMPT,
-    output_schema=PodcastTranscript,
     output_key="podcast_episode_transcript",
 )
