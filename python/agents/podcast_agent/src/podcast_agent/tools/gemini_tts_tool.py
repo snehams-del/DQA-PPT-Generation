@@ -220,7 +220,7 @@ class GeminiTtsTool:
                     "multiSpeakerMarkup": {
                         "turns": api_turns
                     },
-                    "prompt": "Generate a podcast conversation."
+                    "prompt": "You are a professional podcast production engine. Ensure all speakers sound natural, take appropriate breaths, and react to each other's points with realistic human intonation."
                 },
                 "voice": {
                     "languageCode": "en-US",
