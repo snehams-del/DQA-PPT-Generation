@@ -16,7 +16,7 @@
 
 import unittest
 
-from swe_agent.orchestrator import Orchestrator
+from swe_benchmark_agent.orchestrator import Orchestrator
 
 
 class MockEnvironment:

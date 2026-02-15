@@ -4,6 +4,8 @@
 
 This agent is designed to show the basic principles for tackling software engineering problems from two prominent benchmarks: SWE-bench and TerminalBench. It is not meant to be a production ready implementation.
 
+This sample is compatible with the Agent Starter Pack (ASP) and can be used as a base for creating production-ready agent deployments.
+
 ## Agent Details
 
 | Feature | Description |
@@ -80,6 +82,19 @@ the `pytest` module:
 
 ```bash
 uv run pytest tests
+```
+
+## Alternative: Using Agent Starter Pack (ASP)
+
+You can also use the **Agent Starter Pack** to scaffold a production-ready version of this agent with additional deployment and configuration options.
+
+Create and activate a virtual environment:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+# Windows:
+.venv\Scripts\activate
 ```
 
 ## Running Evaluations

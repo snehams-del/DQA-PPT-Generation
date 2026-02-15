@@ -33,6 +33,7 @@ dependencies = [
 dev = [
     "pytest>=8.4.2",
     "pytest-asyncio>=0.23.0",
+    "agent-starter-pack>=0.32.0",
 ]
 
 [tool.ruff]
@@ -62,6 +63,9 @@ packages = ["swe_benchmark_agent"]
 [tool.pytest.ini_options]
 pythonpath = "."
 asyncio_default_fixture_loop_scope = "function"
+
+[tool.agent-starter-pack.settings]
+agent_directory = "swe_benchmark_agent"
 
 [build-system]
 requires = ["hatchling"]
