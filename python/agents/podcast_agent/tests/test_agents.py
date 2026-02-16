@@ -63,17 +63,34 @@ async def test_run_with_txt():
         new_message=content,
     ):
         print(f"DEBUG: Event from {event.author} (final={event.is_final_response()})")
-        if event.content and event.content.parts:
-             text = event.content.parts[0].text or "No Text"
-             print(f"DEBUG: Content: {text[:100]}...")
+        content = event.content
+        if content:
+            parts = (
+                content.parts if hasattr(content, "parts") else content.get("parts")
+            )
+            if parts:
+                text = (
+                    parts[0].text
+                    if hasattr(parts[0], "text")
+                    else parts[0].get("text", "No Text")
+                )
+                if text:
+                    print(f"DEBUG: Content: {text[:100]}...")
+                else:
+                    print("DEBUG: Content: [No Text Content]")
         if (
             event.is_final_response()
             and event.author == "podcast_audio_generator_agent"
         ):
-            if event.content and event.content.parts:
-                for part in event.content.parts:
-                    if part.text and "podcast_output.wav" in part.text:
-                        found_valid_transcript = True
+            if content:
+                parts = (
+                    content.parts if hasattr(content, "parts") else content.get("parts")
+                )
+                if parts:
+                    for part in parts:
+                        text = part.text if hasattr(part, "text") else part.get("text")
+                        if text and "podcast_output.wav" in text:
+                            found_valid_transcript = True
 
     assert found_valid_transcript, (
         "No final event found with valid transcript metadata"
