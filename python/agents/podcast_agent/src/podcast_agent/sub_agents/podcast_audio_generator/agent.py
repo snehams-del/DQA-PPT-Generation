@@ -2,12 +2,11 @@ from google.adk.agents import LlmAgent
 from podcast_agent.tools.gemini_tts_tool import GeminiTtsTool
 from podcast_agent.models.media_script import MediaScript, SpeakerProfile, ScriptSegment
 from podcast_agent.config import (
-    TTS_MODEL_NAME,
     TTS_LOCATION,
     PODCAST_TRANSCRIPT_MODEL_NAME,
 )
 
-gemini_tts_tool = GeminiTtsTool(model_name=TTS_MODEL_NAME, location=TTS_LOCATION)
+gemini_tts_tool = GeminiTtsTool(location=TTS_LOCATION)
 
 podcast_audio_generator_agent = LlmAgent(
     name="podcast_audio_generator_agent",

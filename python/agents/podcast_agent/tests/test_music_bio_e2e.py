@@ -26,8 +26,8 @@ from podcast_agent.sub_agents.podcast_audio_generator.agent import gemini_tts_to
 def test_voice_randomization():
     """Verifies that the voices are randomized and different."""
     print("\n--- Verifying Voice Randomization ---")
-    host_voice = gemini_tts_tool.speaker_voice_map.get("Host")
-    expert_voice = gemini_tts_tool.speaker_voice_map.get("Expert")
+    host_voice = gemini_tts_tool.host_voice
+    expert_voice = gemini_tts_tool.expert_voice
 
     print(f"Host Voice: {host_voice}")
     print(f"Expert Voice: {expert_voice}")
@@ -73,12 +73,12 @@ async def test_end_to_end_music_bio(mock_generate_audio):
     mock_generate_audio.return_value = "/tmp/podcast_output.wav"
 
     artifact_path = os.path.join(
-        os.path.dirname(__file__), "test_artifacts", "killing_joke.txt"
+        os.path.dirname(__file__), "test_artifacts", "music_bio.txt"
     )
     if not os.path.exists(artifact_path):
         pytest.fail(f"Test artifact not found: {artifact_path}")
 
-    topic = "The History Of Killing Joke"
+    topic = "The History Of Music Bio"
     print(f"Input Topic: {topic}")
     print(f"Input File: {artifact_path}")
 
