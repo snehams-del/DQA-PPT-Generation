@@ -21,6 +21,8 @@ dependencies = [
     "uvicorn>=0.36.0",
     "tenacity>=9.1.2",
     "google-cloud-texttospeech>=2.34.0",
+    "pydub>=0.25.1",
+    "audioop-lts>=0.2.2",
 ]
 
 [dependency-groups]

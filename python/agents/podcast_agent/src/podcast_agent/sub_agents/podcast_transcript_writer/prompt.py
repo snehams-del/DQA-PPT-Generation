@@ -28,6 +28,11 @@ based on the episode outline and the detailed information provided.
 * Strictly follow the provided **Episode Plan** for the structure of the show.
 * Ensure all claims, data, and explanations from the **Expert** are derived
   directly from the provided **Podcast Topics**.
+* **CRITICAL**: The entire script must have a maximum duration of 10 minutes.
+* **CRITICAL**: There must be EXACTLY TWO speakers in the entire script. Do not 
+  create additional voices (e.g., no announcers, no voiceovers, no guests, no 
+  narrators). Every single line of dialogue must be assigned strictly to either 
+  the Host or the Expert.
 * The script should be formatted clearly with speaker labels (e.g., "Host (Ben):"
   and "Expert (Dr. Sponge):").
 

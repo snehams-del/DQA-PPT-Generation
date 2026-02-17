@@ -14,8 +14,8 @@
 
 import os
 import io
-import wave
 import logging
+from pydub import AudioSegment
 import random
 import re
 from typing import List
@@ -216,29 +216,25 @@ class GeminiTtsTool:
         return [seg for seg in audio_segments_ordered if seg is not None]
 
     def _assemble_wav_file(self, audio_segments: List[bytes], output_path: str) -> str:
-        """Assembles the raw audio bytes into a continuous WAV file."""
+        """Assembles the raw audio bytes into a continuous, high-quality audio file."""
         if not audio_segments:
             self.logger.warning("No audio segments provided for assembly.")
             return ""
             
-        combined_chunks = []
-        params = None
+        combined_audio = AudioSegment.empty()
 
         for idx, segment_bytes in enumerate(audio_segments):
             try:
-                with wave.open(io.BytesIO(segment_bytes), 'rb') as wav_reader:
-                    if params is None:
-                        params = wav_reader.getparams()
-                    combined_chunks.append(wav_reader.readframes(wav_reader.getnframes()))
+                segment_audio = AudioSegment.from_file(io.BytesIO(segment_bytes), format="wav")
+                combined_audio += segment_audio
+                # Add a brief pause between segments for better pacing
+                combined_audio += AudioSegment.silent(duration=200)
             except Exception as e:
                 self.logger.error(f"Failed to read segment {idx} bytes: {e}")
 
-        # Export compiled chunks to WAV file
-        if params and combined_chunks:
-            with wave.open(output_path, 'wb') as wav_writer:
-                wav_writer.setparams(params)
-                for chunk in combined_chunks:
-                    wav_writer.writeframes(chunk)
+        if len(combined_audio) > 0:
+            file_format = output_path.split('.')[-1]
+            combined_audio.export(output_path, format=file_format)
             self.logger.info(f"Audio extraction complete. Saved to: {output_path}")
             return output_path
         else:

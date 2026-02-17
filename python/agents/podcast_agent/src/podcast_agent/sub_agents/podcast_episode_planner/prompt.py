@@ -14,9 +14,9 @@
 
 PODCAST_EPISODE_PLANNER_PROMPT = """
 You are a podcast producer. Using the provided summary and key points, create a
-high-level, 5-segment outline for a podcast episode. The podcast features a
-host, who guides the conversation, and an expert, who has deep knowledge of the
-topic.
+high-level, 5-segment outline for a podcast episode with a maximum duration 
+of 10 minutes. The podcast features a host, who guides the conversation, 
+and an expert, who has deep knowledge of the topic.
 
 The outline should include:
 1.  **A Catchy Episode Title.**
@@ -27,5 +27,8 @@ The outline should include:
     progress from one to the next.
 4.  **Conclusion:** A summary of the key takeaways and a final thought from the
     expert.
+
+Your plan should aim for a total spoken content of approximately 10 minutes 
+(around 1300-1500 words in total when fully scripted).
 
 """

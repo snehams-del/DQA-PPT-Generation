@@ -11,6 +11,11 @@ The Podcast Transcript Agent is a sequential agent that orchestrates a pipeline 
 3.  **Podcast Transcript Writer Agent**: Writes a full conversational script based on the episode plan, featuring distinct Host and Expert personas.
 4.  **Podcast Audio Generator Agent**: Converts the generated transcript into a multi-speaker audio file using Google's Gemini TTS.
 
+## Current Constraints
+
+The agent is currently configured with the following constraints:
+*   **Maximum Duration**: Podcasts produced by this agent are limited to approximately **10 minutes** of total spoken content.
+
 
 ## Agent Architecture & Processing Flow
 
