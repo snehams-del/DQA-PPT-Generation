@@ -11,7 +11,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_excep
 from google.cloud import texttospeech
 from google.api_core.exceptions import RetryError, TooManyRequests, ServiceUnavailable, InternalServerError
 
-from podcast_agent.models.media_script import MediaScript, SpeakerProfile, ScriptSegment
+from podcast_agent.models.podcast_transcript import PodcastTranscript, PodcastSegment, SpeakerDialogue, PodcastMetadata
 
 class GeminiTtsTool:
     def __init__(self, location: str = "us-central1"):
@@ -59,17 +59,21 @@ class GeminiTtsTool:
         retry=retry_if_exception_type((TooManyRequests, ServiceUnavailable, InternalServerError)),
         reraise=True
     )
-    def _synthesize_segment(self, segment: ScriptSegment, speaker_voice_configs: List[texttospeech.MultispeakerPrebuiltVoice]) -> bytes:
+    def _synthesize_segment(self, segment: PodcastSegment, speaker_voice_configs: List[texttospeech.MultispeakerPrebuiltVoice]) -> bytes:
         """
         Synthesizes a single segment leveraging the texttospeech SDK.
         Decorated with tenacity to retry on transient or quota errors.
         Returns raw audio bytes in WAV LINEAR16 format.
         """
         # Assemble MultiSpeakerMarkup.Turn
-        turn = texttospeech.MultiSpeakerMarkup.Turn(
-            speaker=segment.speaker_id,
-            text=segment.text
-        )
+        turns = []
+        for dialogue in segment.speaker_dialogues:
+            turns.append(
+                texttospeech.MultiSpeakerMarkup.Turn(
+                    speaker=dialogue.speaker_id,
+                    text=dialogue.text
+                )
+            )
         
         voice_selection = texttospeech.VoiceSelectionParams(
             language_code="en-US",
@@ -88,7 +92,8 @@ class GeminiTtsTool:
         
         request = texttospeech.SynthesizeSpeechRequest(
             input=texttospeech.SynthesisInput(
-                multi_speaker_markup=texttospeech.MultiSpeakerMarkup(turns=[turn])
+                multi_speaker_markup=texttospeech.MultiSpeakerMarkup(turns=turns),
+                prompt="You are a professional podcast production engine. Ensure all speakers sound natural, take appropriate breaths, and react to each other's points with realistic human intonation."
             ),
             voice=voice_selection,
             audio_config=audio_config
@@ -101,11 +106,11 @@ class GeminiTtsTool:
             self.logger.error(f"Error synthesizing segment: {e}")
             raise
 
-    def generate_audio(self, script: MediaScript, output_file: str = "podcast.wav") -> str:
+    def generate_audio(self, script: PodcastTranscript, output_file: str = "podcast.wav") -> str:
         """
         Generates audio using the Google Cloud Text-to-Speech SDK supporting MultiSpeakerMarkup.
         Args:
-            script: MediaScript object or equivalent dictionary containing the podcast script.
+            script: PodcastTranscript object or equivalent dictionary containing the podcast transcript.
             output_file: Path to the output WAV file.
         Returns:
             Absolute path to the generated audio file.
@@ -113,19 +118,33 @@ class GeminiTtsTool:
         # Handle case where input might be a dictionary (e.g. when called via ADK/LLM)
         if isinstance(script, dict):
             try:
-                script = MediaScript.model_validate(script)
+                script = PodcastTranscript.model_validate(script)
             except Exception as e:
-                self.logger.warning(f"Failed to validate MediaScript Pydantic model: {e}. Attempting manual extraction.")
+                self.logger.warning(f"Failed to validate PodcastTranscript Pydantic model: {e}. Attempting manual extraction.")
                 # Manual fallback if Pydantic validation fails
                 segments = script.get("segments", [])
-                # Filter out segments without text or speaker_id
-                filtered_segments = []
+                podcast_segments = []
                 for s in segments:
-                    if "text" in s and s.get("speaker_id"):
-                        filtered_segments.append(ScriptSegment(speaker_id=s["speaker_id"], text=s["text"]))
-                script = MediaScript(speakers=[], segments=filtered_segments)
+                    dialogues_data = s.get("speaker_dialogues", [])
+                    speaker_dialogues = []
+                    for d in dialogues_data:
+                        if d.get("text") and d.get("speaker_id"):
+                            speaker_dialogues.append(SpeakerDialogue(speaker_id=d["speaker_id"], text=d["text"]))
+                    if speaker_dialogues:
+                        podcast_segments.append(PodcastSegment(
+                            segment_title=s.get("segment_title", ""),
+                            title=s.get("title", ""),
+                            start_time=s.get("start_time", 0.0),
+                            end_time=s.get("end_time", 0.0),
+                            speaker_dialogues=speaker_dialogues
+                        ))
+                script = PodcastTranscript(
+                    metadata=PodcastMetadata(episode_title="Audio Generation", duration_seconds=0, summary="Audio gen fallback"),
+                    speakers=[],
+                    segments=podcast_segments
+                )
 
-        self.logger.info(f"Starting audio generation for podcast with {len(script.segments)} segments.")
+        self.logger.info(f"Starting audio generation for podcast transcript with {len(script.segments)} parts.")
         
         if not output_file.endswith(".wav"):
              output_file += ".wav"
@@ -135,8 +154,9 @@ class GeminiTtsTool:
         # For this podcast agent, we expect Host and Expert.
         unique_speakers = []
         for segment in script.segments:
-            if segment.speaker_id not in unique_speakers:
-                unique_speakers.append(segment.speaker_id)
+            for dialogue in segment.speaker_dialogues:
+                if dialogue.speaker_id not in unique_speakers:
+                    unique_speakers.append(dialogue.speaker_id)
         
         # Limit to 2 speakers as per API constraints
         if len(unique_speakers) > 2:
@@ -158,8 +178,9 @@ class GeminiTtsTool:
             )
             # Update the speaker name in segments to match the sanitized alias
             for segment in script.segments:
-                if segment.speaker_id == speaker_name:
-                    segment.speaker_id = sanitized_alias
+                for dialogue in segment.speaker_dialogues:
+                    if dialogue.speaker_id == speaker_name:
+                        dialogue.speaker_id = sanitized_alias
 
         # Execute synthesis across segments in parallel
         # Max workers set to 3 to prevent immediate aggressive ratelimiting while still gaining speed

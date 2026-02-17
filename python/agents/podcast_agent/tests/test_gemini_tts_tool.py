@@ -5,7 +5,7 @@ import io
 import wave
 import struct
 
-from podcast_agent.models.media_script import MediaScript, ScriptSegment
+from podcast_agent.models.podcast_transcript import PodcastTranscript, PodcastSegment, SpeakerDialogue, PodcastMetadata
 from podcast_agent.tools.gemini_tts_tool import GeminiTtsTool
 
 @pytest.fixture
@@ -34,12 +34,24 @@ def mock_sdk_client():
 
 @pytest.fixture
 def sample_script():
-    segments = [
-        ScriptSegment(speaker_id="Host", text="Welcome to the podcast."),
-        ScriptSegment(speaker_id="Expert", text="Thanks for having me."),
-        ScriptSegment(speaker_id="Host", text="Let's get started.")
+    dialogues = [
+        SpeakerDialogue(speaker_id="Host", text="Welcome to the podcast."),
+        SpeakerDialogue(speaker_id="Expert", text="Thanks for having me."),
+        SpeakerDialogue(speaker_id="Host", text="Let's get started.")
     ]
-    return MediaScript(speakers=[], segments=segments)
+    segment = PodcastSegment(
+        segment_title="Intro",
+        title="Intro title",
+        start_time=0.0,
+        end_time=10.0,
+        speaker_dialogues=dialogues
+    )
+    metadata = PodcastMetadata(
+        episode_title="Test Episode",
+        duration_seconds=10,
+        summary="Test summary"
+    )
+    return PodcastTranscript(metadata=metadata, speakers=[], segments=[segment])
 
 def test_gemini_tts_tool_initialization(mock_sdk_client):
     tool = GeminiTtsTool()
@@ -55,8 +67,8 @@ def test_generate_audio(mock_sdk_client, sample_script, tmp_path):
     
     result_path = tool.generate_audio(script=sample_script, output_file=output_file)
     
-    # Verify the SDK was called for each segment (3 total)
-    assert mock_sdk_client.synthesize_speech.call_count == 3
+    # Verify the SDK was called for each segment (1 total)
+    assert mock_sdk_client.synthesize_speech.call_count == 1
     
     # Verify the output file was created
     assert result_path == output_file
