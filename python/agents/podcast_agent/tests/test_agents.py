@@ -30,7 +30,13 @@ def load_env():
 
 @pytest.mark.asyncio
 async def test_run_with_txt():
-    """Tests that the agent can generate a transcript from a text file."""
+    """
+    Verifies that the podcast agent can process a plain text file input.
+    
+    This test uses the InMemoryRunner to execute the podcast_agent with a text artifact
+    containing pyramid facts. It validates that the agent successfully orchestrates
+    the flow and identifies the final audio output path.
+    """
     runner = InMemoryRunner(agent=podcast_agent)
     session = await runner.session_service.create_session(
         app_name=runner.app_name, user_id="test_user"
@@ -99,7 +105,13 @@ async def test_run_with_txt():
 
 @pytest.mark.asyncio
 async def test_run_with_pdf():
-    """Tests that the agent can generate a transcript from a PDF file."""
+    """
+    Verifies that the podcast agent can process a PDF document as input.
+    
+    Similar to the text test, this confirms the agent's ability to handle binary 
+    PDF data via inline_data parts. It ensures the end-to-end flow from PDF 
+    ingestion to audio file generation occurs correctly.
+    """
     runner = InMemoryRunner(agent=podcast_agent)
     session = await runner.session_service.create_session(
         app_name=runner.app_name, user_id="test_user"

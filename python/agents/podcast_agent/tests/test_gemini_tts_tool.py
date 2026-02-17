@@ -24,6 +24,13 @@ from podcast_agent.tools.gemini_tts_tool import GeminiTtsTool
 
 @pytest.fixture
 def mock_sdk_client():
+    """
+    Provides a mocked TextToSpeechClient for testing.
+    
+    This fixture mocks the Gemini TTS client and its synthesize_speech method,
+    returning a minimal valid WAV file to simulate successful audio generation
+    without making actual API calls.
+    """
     with patch("podcast_agent.tools.gemini_tts_tool.texttospeech.TextToSpeechClient") as mock_client_class:
         mock_client = Mock()
         mock_client_class.return_value = mock_client
@@ -48,6 +55,12 @@ def mock_sdk_client():
 
 @pytest.fixture
 def sample_script():
+    """
+    Generates a sample PodcastTranscript for testing.
+    
+    This script contains a few segments with multiple speakers (Host and Expert)
+    to verify that the TTS tool correctly handles multi-speaker synthesis.
+    """
     dialogues = [
         SpeakerDialogue(speaker_id="Host", text="Welcome to the podcast."),
         SpeakerDialogue(speaker_id="Expert", text="Thanks for having me."),
@@ -68,6 +81,12 @@ def sample_script():
     return PodcastTranscript(metadata=metadata, speakers=[], segments=[segment])
 
 def test_gemini_tts_tool_initialization(mock_sdk_client):
+    """
+    Tests the initialization of the GeminiTtsTool.
+    
+    Verifies that defaults like voice_name and model_id are correctly set,
+    and that host/expert voices are assigned according to gender rules.
+    """
     tool = GeminiTtsTool()
     assert tool.voice_name == "en-US-Studio-MultiSpeaker"
     assert tool.model_id == "gemini-2.5-pro-tts"
@@ -76,6 +95,12 @@ def test_gemini_tts_tool_initialization(mock_sdk_client):
            (tool.host_voice in tool.female_voices and tool.expert_voice in tool.male_voices)
 
 def test_generate_audio(mock_sdk_client, sample_script, tmp_path):
+    """
+    Tests the high-level generate_audio method of GeminiTtsTool.
+    
+    Verifies that the tool correctly orchestrates the synthesis process,
+    calls the internal parallel synthesis wrapper, and produces an output file.
+    """
     tool = GeminiTtsTool()
     output_file = str(tmp_path / "test_output.wav")
     

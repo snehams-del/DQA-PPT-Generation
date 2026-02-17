@@ -24,7 +24,12 @@ from podcast_agent.sub_agents.podcast_audio_generator.agent import gemini_tts_to
 
 
 def test_voice_randomization():
-    """Verifies that the voices are randomized and different."""
+    """
+    Verifies that the voices are randomized and different for Host and Expert.
+    
+    This ensures that each speaker is assigned a unique voice, and that their 
+    genders are different, providing a more natural podcast experience.
+    """
     print("\n--- Verifying Voice Randomization ---")
     host_voice = gemini_tts_tool.host_voice
     expert_voice = gemini_tts_tool.expert_voice
@@ -65,7 +70,15 @@ def test_voice_randomization():
 )
 async def test_end_to_end_music_bio(mock_generate_audio):
     """
-    Runs the PodcastAgent end-to-end with mocked TTS to avoid API costs/latency.
+    Runs the PodcastAgent end-to-end with mocked TTS.
+    
+    This test simulates a full user request for a music biography podcast.
+    It verifies the agent's ability to:
+    1. Receive a topic and source material.
+    2. Orchestrate sub-agents (planner, writer, generator).
+    3. Return a final response containing the path to the generated audio.
+    
+    TTS is mocked to avoid API costs and latency during testing.
     """
     print("\n--- Starting End-to-End Test: History of Killing Joke ---")
 
