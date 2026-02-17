@@ -1,17 +1,32 @@
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import os
-import hashlib
-import logging
 import io
 import wave
+import logging
 import random
-from typing import List, Dict, Optional
+import re
+from typing import List
 import concurrent.futures
 
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 from google.cloud import texttospeech
 from google.api_core.exceptions import RetryError, TooManyRequests, ServiceUnavailable, InternalServerError
 
-from podcast_agent.models.podcast_transcript import PodcastTranscript, PodcastSegment, SpeakerDialogue, PodcastMetadata
+from podcast_agent.models.podcast_transcript import PodcastTranscript, PodcastMetadata, PodcastSegment, SpeakerDialogue
+from podcast_agent.tools.voice_constants import MALE_VOICES, FEMALE_VOICES
 
 class GeminiTtsTool:
     def __init__(self, location: str = "us-central1"):
@@ -28,22 +43,12 @@ class GeminiTtsTool:
         # The SDK natively resolves Application Default Credentials (ADC).
         self.client = texttospeech.TextToSpeechClient()
 
-        # Database of Gemini Voices by Gender
-        self.male_voices = [
-            "Achird", "Algenib", "Algieba", "Alnilam", "Charon", "Enceladus", 
-            "Fenrir", "Iapetus", "Orus", "Puck", "Rasalgethi", "Sadachbia", 
-            "Sadaltager", "Schedar", "Umbriel", "Zubenelgenubi"
-        ]
-        self.female_voices = [
-            "Achernar", "Aoede", "Autonoe", "Callirrhoe", "Despina", "Erinome", 
-            "Gacrux", "Kore", "Laomedeia", "Leda", "Pulcherrima", "Sulafat", 
-            "Vindemiatrix", "Zephyr"
-        ]
+        self.male_voices = MALE_VOICES
+        self.female_voices = FEMALE_VOICES
 
         # Randomly assign genders to Host and Expert (one Male, one Female)
         # 50% chance Host is Female
         host_is_female = random.choice([True, False])
-
         if host_is_female:
             self.host_voice = random.choice(self.female_voices)
             self.expert_voice = random.choice(self.male_voices)
@@ -143,32 +148,37 @@ class GeminiTtsTool:
                     speakers=[],
                     segments=podcast_segments
                 )
-
+                
         self.logger.info(f"Starting audio generation for podcast transcript with {len(script.segments)} parts.")
         
         if not output_file.endswith(".wav"):
              output_file += ".wav"
         output_path = os.path.abspath(output_file)
         
-        # Determine unique speakers in this script to build the MultiSpeaker configuration
-        # For this podcast agent, we expect Host and Expert.
+        speaker_voice_configs = self._prepare_speaker_configs(script)
+        
+        valid_segments_bytes = self._synthesize_segments_parallel(script, speaker_voice_configs)
+        if not valid_segments_bytes:
+            self.logger.warning("No audio was successfully generated.")
+            return ""
+            
+        return self._assemble_wav_file(valid_segments_bytes, output_path)
+
+    def _prepare_speaker_configs(self, script: PodcastTranscript) -> List[texttospeech.MultispeakerPrebuiltVoice]:
+        """Extracts unique speakers and assigns them to the prebuilt voice configs."""
         unique_speakers = []
         for segment in script.segments:
             for dialogue in segment.speaker_dialogues:
                 if dialogue.speaker_id not in unique_speakers:
                     unique_speakers.append(dialogue.speaker_id)
         
-        # Limit to 2 speakers as per API constraints
         if len(unique_speakers) > 2:
             self.logger.warning(f"Found {len(unique_speakers)} speakers, but API only supports 2. Truncating.")
             unique_speakers = unique_speakers[:2]
             
-        # Build speaker configuration mapping transcript speaker names to our assigned voices
-        import re
         speaker_voice_configs = []
         for idx, speaker_name in enumerate(unique_speakers):
             voice_id = self.host_voice if idx == 0 else self.expert_voice
-            # Sanitize speaker alias: only alphanumeric, no whitespace
             sanitized_alias = re.sub(r'[^a-zA-Z0-9]', '', speaker_name)
             speaker_voice_configs.append(
                 texttospeech.MultispeakerPrebuiltVoice(
@@ -176,18 +186,18 @@ class GeminiTtsTool:
                     speaker_id=voice_id
                 )
             )
-            # Update the speaker name in segments to match the sanitized alias
             for segment in script.segments:
                 for dialogue in segment.speaker_dialogues:
                     if dialogue.speaker_id == speaker_name:
                         dialogue.speaker_id = sanitized_alias
+        
+        return speaker_voice_configs
 
-        # Execute synthesis across segments in parallel
-        # Max workers set to 3 to prevent immediate aggressive ratelimiting while still gaining speed
+    def _synthesize_segments_parallel(self, script: PodcastTranscript, speaker_voice_configs: List[texttospeech.MultispeakerPrebuiltVoice]) -> List[bytes]:
+        """Executes the synthesis of each segment in parallel and returns the ordered audio bytes."""
         audio_segments_ordered = [None] * len(script.segments)
         
         with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-            # Reconstruct ordered audio list
             future_to_idx = {
                 executor.submit(self._synthesize_segment, segment, speaker_voice_configs): idx
                 for idx, segment in enumerate(script.segments)
@@ -200,19 +210,21 @@ class GeminiTtsTool:
                     audio_segments_ordered[idx] = audio_bytes
                 except Exception as exc:
                     self.logger.error(f"Segment {idx} generated an exception: {exc}")
+                    import traceback
+                    self.logger.error(traceback.format_exc())
                     
-        # Filter out any failed segments (None)
-        valid_segments_bytes = [seg for seg in audio_segments_ordered if seg is not None]
-        
-        if not valid_segments_bytes:
-            self.logger.warning("No audio was successfully generated.")
+        return [seg for seg in audio_segments_ordered if seg is not None]
+
+    def _assemble_wav_file(self, audio_segments: List[bytes], output_path: str) -> str:
+        """Assembles the raw audio bytes into a continuous WAV file."""
+        if not audio_segments:
+            self.logger.warning("No audio segments provided for assembly.")
             return ""
             
-        # Assemble using raw wave library
         combined_chunks = []
         params = None
 
-        for idx, segment_bytes in enumerate(valid_segments_bytes):
+        for idx, segment_bytes in enumerate(audio_segments):
             try:
                 with wave.open(io.BytesIO(segment_bytes), 'rb') as wav_reader:
                     if params is None:

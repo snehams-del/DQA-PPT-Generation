@@ -95,3 +95,72 @@ async def test_run_with_txt():
     assert found_valid_transcript, (
         "No final event found with valid transcript metadata"
     )
+
+
+@pytest.mark.asyncio
+async def test_run_with_pdf():
+    """Tests that the agent can generate a transcript from a PDF file."""
+    runner = InMemoryRunner(agent=podcast_agent)
+    session = await runner.session_service.create_session(
+        app_name=runner.app_name, user_id="test_user"
+    )
+
+    file_path = Path("./tests/test_artifacts/test_paper.pdf")
+    file_content = file_path.read_bytes()
+
+    content = types.Content(
+        parts=[
+            types.Part(
+                text=(
+                    "Generate podcast from this document. Podcast host name is"
+                    " Charlotte, expert's name is Dr Joe Sponge"
+                )
+            ),
+            types.Part(
+                inline_data=types.Blob(
+                    mime_type="application/pdf", data=file_content
+                )
+            ),
+        ]
+    )
+
+    found_valid_transcript = False
+
+    async for event in runner.run_async(
+        user_id=session.user_id,
+        session_id=session.id,
+        new_message=content,
+    ):
+        print(f"DEBUG: Event from {event.author} (final={event.is_final_response()})")
+        content = event.content
+        if content:
+            parts = (
+                content.parts if hasattr(content, "parts") else content.get("parts")
+            )
+            if parts:
+                text = (
+                    parts[0].text
+                    if hasattr(parts[0], "text")
+                    else parts[0].get("text", "No Text")
+                )
+                if text:
+                    print(f"DEBUG: Content: {text[:100]}...")
+                else:
+                    print("DEBUG: Content: [No Text Content]")
+        if (
+            event.is_final_response()
+            and event.author == "podcast_audio_generator_agent"
+        ):
+            if content:
+                parts = (
+                    content.parts if hasattr(content, "parts") else content.get("parts")
+                )
+                if parts:
+                    for part in parts:
+                        text = part.text if hasattr(part, "text") else part.get("text")
+                        if text and "podcast_output.wav" in text:
+                            found_valid_transcript = True
+
+    assert found_valid_transcript, (
+        "No final event found with valid transcript metadata"
+    )
