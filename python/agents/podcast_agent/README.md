@@ -108,13 +108,8 @@ GOOGLE_GENAI_USE_VERTEXAI=TRUE
 GOOGLE_CLOUD_PROJECT="your-google-cloud-project-id"
 GOOGLE_CLOUD_LOCATION="us-central1"
 MODEL_GOOGLE_CLOUD_LOCATION="global"
-PODCAST_TRANSCRIPT_MODEL_NAME="gemini-2.5-flash"
-TTS_MODEL_NAME="en-US-Studio-MultiSpeaker"
 TTS_LOCATION="us-central1"
 ```
-
-> [!IMPORTANT]
-> The `TTS_MODEL_NAME` must be set to `en-US-Studio-MultiSpeaker` for high-quality multi-speaker support.
 
 Authenticate with Google Cloud:
 
