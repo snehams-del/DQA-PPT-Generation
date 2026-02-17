@@ -11,7 +11,8 @@ The Podcast Transcript Agent is a sequential agent that orchestrates a pipeline 
 3.  **Podcast Transcript Writer Agent**: Writes a full conversational script based on the episode plan, featuring distinct Host and Expert personas.
 4.  **Podcast Audio Generator Agent**: Converts the generated transcript into a multi-speaker audio file using Google's Gemini TTS.
 
-## Agent Architecture
+
+## Agent Architecture & Processing Flow
 
 The agent operates sequentially, passing data from one stage to the next to transform raw text into a polished audio production. Each step is handled by a specialized sub-agent:
 
@@ -19,16 +20,49 @@ The agent operates sequentially, passing data from one stage to the next to tran
 2.  **Topic Extraction**: The `podcast_topics_agent` analyzes the document and extracts key themes and interesting facts.
 3.  **Planning**: The `podcast_episode_planner_agent` takes these topics and creates a structured outline for the episode, defining the flow of conversation.
 4.  **Scripting**: The `podcast_transcript_writer_agent` writes the actual dialogue based on the plan, assigning lines to a Host ("Charlotte") and an Expert ("Dr. Joe Sponge").
-5.  **Audio Generation**: Finally, the `podcast_audio_generator_agent` converts the generated transcript into a high-fidelity multi-speaker audio file (`.wav`).
+5.  **Audio Generation & Chunking**: The `podcast_audio_generator_agent` processes the transcript. It synthesizes the speech and assembles the parts into a high-fidelity multi-speaker audio file (`.wav`).
+
+
+### High-Level Architecture
 
 ```mermaid
-graph LR
-    A[Source Document] --> B(podcast_topics_agent);
-    B --> C(podcast_episode_planner_agent);
-    C --> D(podcast_transcript_writer_agent);
-    D --> E(podcast_audio_generator_agent);
-    E --> F[Podcast Audio (.wav)];
+sequenceDiagram
+    participant User
+    participant Root as Podcast Agent (Sequential)
+    participant Topics as Topics Agent
+    participant Planner as Episode Planner Agent
+    participant Writer as Transcript Writer Agent
+    participant Audio as Audio Generator Agent
+
+    User->>Root: Topic / Source Document
+    activate Root
+    Root->>Topics: Source Content
+    activate Topics
+    Topics-->>Root: List of Themes/Topics
+    deactivate Topics
+    
+    Root->>Planner: Themes/Topics
+    activate Planner
+    Planner-->>Root: Episode Outline
+    deactivate Planner
+    
+    Root->>Writer: Episode Outline
+    activate Writer
+    Writer-->>Root: Conversational Transcript
+    deactivate Writer
+    
+    Root->>Audio: Transcript (Writers lines)
+    activate Audio
+    Note over Audio: Uses GeminiTtsTool
+    Audio-->>Root: Path to .wav
+    deactivate Audio
+    
+    Root-->>User: Final Podcast (.wav)
+    deactivate Root
 ```
+
+## Voice Selection
+Note: The agent intentionally alternates between Male and Female voices for the Host and Expert characters. Each time the agent runs, it randomly selects a "Studio" voice from a curated list of high-quality speakers. This ensures that every generated podcast has a unique acoustic profile while maintaining a consistent two-person conversational dynamic.
 
 ## Setup and Installation
 
