@@ -17,7 +17,6 @@ import argparse
 import json
 import logging
 import sys
-from typing import List
 
 from google import genai
 from google.api_core import exceptions
@@ -34,14 +33,14 @@ class Product(BaseModel):
     description: str
     brand: str
     image_gcs_uri: str
-    search_tags: List[str]
+    search_tags: list[str]
     last_updated: str
 
 
 class ProductList(BaseModel):
     """A list of products."""
 
-    products: List[Product]
+    products: list[Product]
 
 
 def list_gcs_files(bucket_name, prefix):
@@ -107,7 +106,9 @@ def generate_bq_data(product_files, schema):
     return json.loads(response.text)["products"]
 
 
-def create_and_populate_bq_table(project_id, dataset_id, table_id, schema_fields, data):
+def create_and_populate_bq_table(
+    project_id, dataset_id, table_id, schema_fields, data
+):
     """Creates and populates a BigQuery table."""
     client = bigquery.Client(project=project_id)
     table_ref = client.dataset(dataset_id).table(table_id)
@@ -136,7 +137,9 @@ def create_and_populate_bq_table(project_id, dataset_id, table_id, schema_fields
     row_count = next(results)[0]
 
     if row_count > 0:
-        logging.info("Table %s is not empty. Skipping data insertion.", table_id)
+        logging.info(
+            "Table %s is not empty. Skipping data insertion.", table_id
+        )
         return
 
     if not data:
@@ -160,7 +163,9 @@ def main():
     )
     parser.add_argument("--project_id", required=True, help="GCP Project ID")
     parser.add_argument("--bucket_name", required=True, help="GCS Bucket Name")
-    parser.add_argument("--dataset_id", required=True, help="BigQuery Dataset ID")
+    parser.add_argument(
+        "--dataset_id", required=True, help="BigQuery Dataset ID"
+    )
     parser.add_argument("--table_id", required=True, help="BigQuery Table ID")
     parser.add_argument("--region", default="us-central1", help="GCP Region")
     args = parser.parse_args()

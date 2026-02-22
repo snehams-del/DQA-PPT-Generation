@@ -17,10 +17,9 @@ import asyncio
 import logging
 import os
 import re
+from collections.abc import Coroutine
 from dataclasses import dataclass
-from typing import Coroutine, Dict, List, Optional, Tuple, Union
 
-from content_gen_agent.utils.images import load_image_resource
 from google import genai
 from google.adk.tools import ToolContext
 from google.api_core import exceptions as api_exceptions
@@ -28,6 +27,8 @@ from google.api_core import operation
 from google.cloud import storage
 from google.genai.types import GenerateVideosConfig
 from google.genai.types import Image as GenImage
+
+from content_gen_agent.utils.images import load_image_resource
 
 # --- Configuration ---
 logging.basicConfig(
@@ -39,6 +40,9 @@ GCS_TEMPLATE_IMAGE_FOLDER = "template_images/"
 ALLOWED_IMAGE_EXTENSIONS = (".png", ".jpg", ".jpeg")
 VIDEO_ASPECT_RATIO = "9:16"
 VIDEO_FPS = 24
+MIN_VID_LENGTH = 4
+MEDIAN_VID_LENGTH = 6
+MAX_VID_LENGTH = 8
 
 
 @dataclass
@@ -51,7 +55,7 @@ class VideoGenerationInput:
     duration: int
 
 
-def _get_gcs_files(folder_prefix: str) -> List[str]:
+def _get_gcs_files(folder_prefix: str) -> list[str]:
     """Fetches all image files from a specified GCS folder.
 
     Args:
@@ -80,8 +84,10 @@ def _get_gcs_files(folder_prefix: str) -> List[str]:
 
 
 async def _monitor_video_operation(
-    operation: operation.Operation, image_identifier: str, vertex_client: genai.Client
-) -> Tuple[Optional[GenImage], Optional[str]]:
+    operation: operation.Operation,
+    image_identifier: str,
+    vertex_client: genai.Client,
+) -> tuple[GenImage | None, str | None]:
     """Monitors a video generation operation until completion.
 
     Args:
@@ -117,7 +123,8 @@ async def _monitor_video_operation(
         return None, error_message
     if not (operation.result and hasattr(operation.result, "generated_videos")):
         logging.warning(
-            "No generated videos found in the response for %s.", image_identifier
+            "No generated videos found in the response for %s.",
+            image_identifier,
         )
         return None, "No videos found in the response."
     return operation.result.generated_videos[0], None
@@ -129,11 +136,11 @@ def _round_to_nearest_veo_duration(duration: int) -> int:
     Args:
         duration (int): The desired duration of the video in seconds.
     """
-    if duration <= 4:
-        return 4
-    if duration <= 6:
-        return 6
-    return 8
+    if duration <= MIN_VID_LENGTH:
+        return MIN_VID_LENGTH
+    if duration <= MEDIAN_VID_LENGTH:
+        return MEDIAN_VID_LENGTH
+    return MAX_VID_LENGTH
 
 
 # pylint: disable=too-many-arguments
@@ -141,7 +148,7 @@ async def _generate_single_video(
     video_input: VideoGenerationInput,
     tool_context: ToolContext,
     vertex_client: genai.Client,
-) -> Tuple[Optional[Dict[str, str]], Optional[str]]:
+) -> tuple[dict[str, str] | None, str | None]:
     """Generates a single video from a given image and prompt.
 
     Args:
@@ -163,7 +170,9 @@ async def _generate_single_video(
                 aspect_ratio=VIDEO_ASPECT_RATIO,
                 generate_audio=False,
                 number_of_videos=1,
-                duration_seconds=_round_to_nearest_veo_duration(video_input.duration),
+                duration_seconds=_round_to_nearest_veo_duration(
+                    video_input.duration
+                ),
                 fps=VIDEO_FPS,
                 person_generation="allow_all",
                 enhance_prompt=True,
@@ -209,8 +218,8 @@ def _initialize_vertex_client() -> genai.Client:
 
 
 def _get_image_sources(
-    scene_numbers: Optional[List[int]], num_images: int
-) -> List[Tuple[str, str]]:
+    scene_numbers: list[int] | None, num_images: int
+) -> list[tuple[str, str]]:
     """Determines the image sources based on scene numbers or total count."""
     if scene_numbers:
         image_filenames = [f"{i}_.png" for i in scene_numbers]
@@ -230,7 +239,7 @@ async def _process_video_source(
     *,
     is_last_image: bool,
     logo_prompt_present: bool,
-) -> Tuple[Optional[VideoGenerationInput], Optional[Dict[str, str]]]:
+) -> tuple[VideoGenerationInput | None, dict[str, str] | None]:
     """Loads image and prepares video generation input."""
     try:
         image_bytes, identifier, mime_type = await load_image_resource(
@@ -252,12 +261,12 @@ async def _process_video_source(
 
 
 async def _create_video_tasks(
-    image_sources: List[str],
-    video_queries: List[str],
+    image_sources: list[str],
+    video_queries: list[str],
     tool_context: ToolContext,
     vertex_client: genai.Client,
     logo_prompt_present: bool,
-) -> Tuple[List[Coroutine], List[str], List[Dict[str, str]]]:
+) -> tuple[list[Coroutine], list[str], list[dict[str, str]]]:
     """Creates video generation tasks for the given images.
 
     Returns:
@@ -296,10 +305,10 @@ async def _create_video_tasks(
 
 
 def _process_results(
-    results: List[Tuple[Optional[Dict[str, str]], Optional[str]]],
-    task_sources: List[str],
-    failed_videos: List[Dict[str, str]],
-) -> Tuple[List[Dict[str, str]], List[Dict[str, str]]]:
+    results: list[tuple[dict[str, str] | None, str | None]],
+    task_sources: list[str],
+    failed_videos: list[dict[str, str]],
+) -> tuple[list[dict[str, str]], list[dict[str, str]]]:
     """Processes the results of video generation tasks."""
     successful_videos = []
     for i, (res, error) in enumerate(results):
@@ -307,7 +316,10 @@ def _process_results(
             successful_videos.append(res)
         else:
             failed_videos.append(
-                {"source": task_sources[i], "reason": error or "Generation failed"}
+                {
+                    "source": task_sources[i],
+                    "reason": error or "Generation failed",
+                }
             )
 
     successful_videos.sort(
@@ -322,12 +334,12 @@ def _process_results(
 
 
 async def generate_video(
-    video_queries: List[str],
+    video_queries: list[str],
     tool_context: ToolContext,
     num_images: int,
-    scene_numbers: Optional[List[int]] = None,
+    scene_numbers: list[int] | None = None,
     logo_prompt_present: bool = True,
-) -> Dict[str, Union[str, List[Dict[str, str]]]]:
+) -> dict[str, str | list[dict[str, str]]]:
     """Generates videos in parallel from a list of prompts and images.
 
     Args:

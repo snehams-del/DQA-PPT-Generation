@@ -15,7 +15,6 @@
 
 import logging
 import os
-from typing import Optional, Tuple
 
 from google.adk.tools import ToolContext
 from google.cloud import storage
@@ -31,7 +30,7 @@ IMAGE_MIME_TYPE = "image/png"
 
 async def _load_gcs_image(
     gcs_uri: str, storage_client: storage.Client
-) -> Optional[types.Part]:
+) -> types.Part | None:
     """Loads an image from GCS and returns it as a Part object.
 
     Args:
@@ -45,7 +44,9 @@ async def _load_gcs_image(
         bucket_name, blob_name = gcs_uri.split("/", 1)
         blob = storage_client.bucket(bucket_name).blob(blob_name)
         image_bytes = blob.download_as_bytes()
-        return types.Part.from_bytes(data=image_bytes, mime_type=IMAGE_MIME_TYPE)
+        return types.Part.from_bytes(
+            data=image_bytes, mime_type=IMAGE_MIME_TYPE
+        )
     except Exception as e:
         logging.error(f"Failed to load image from '{gcs_uri}': {e}")
         return None
@@ -54,7 +55,7 @@ async def _load_gcs_image(
 async def ensure_image_artifact(
     image_filename: str,
     tool_context: ToolContext,
-) -> Optional[str]:
+) -> str | None:
     """Ensures the image artifact exists, creating it if necessary from GCS.
 
     If an `image_filename` is provided that starts with "gs://", it will be
@@ -117,7 +118,7 @@ async def ensure_image_artifact(
 async def load_image_resource(
     source_path: str,
     tool_context: "ToolContext",
-) -> Tuple[Optional[bytes], str, str]:
+) -> tuple[bytes | None, str, str]:
     """Loads image bytes from either a GCS path or a tool artifact.
 
     Args:
@@ -133,13 +134,15 @@ async def load_image_resource(
 
     if source_path.startswith("gs://"):
         gcs_uri = source_path.replace("gs://", "")
-        bucket_name, blob_name = gcs_uri.split("/", 1)
+        _bucket_name, _blob_name = gcs_uri.split("/", 1)
         storage_client = storage.Client()
         image_bytes = _load_gcs_image(gcs_uri, storage_client)
     else:
         artifact = await tool_context.load_artifact(source_path)
         image_bytes = (
-            artifact.inline_data.data if artifact and artifact.inline_data else None
+            artifact.inline_data.data
+            if artifact and artifact.inline_data
+            else None
         )
 
     return image_bytes, identifier, f"image/{mime_suffix}"
