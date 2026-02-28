@@ -160,3 +160,56 @@ class FundManagerDecision(BaseModel):
         default_factory=list,
         description="Conditions and guardrails for implementing the recommendation safely.",
     )
+
+
+class PortfolioConstructionPlan(BaseModel):
+    """Structured implementation plan derived from the final decision."""
+
+    recommendation: Literal["buy", "hold", "sell"] = Field(
+        description="Recommendation that the implementation plan is built to execute."
+    )
+    target_position_percent: int = Field(
+        ge=0,
+        le=100,
+        description="Target position size as a percentage of portfolio capital.",
+    )
+    maximum_position_percent: int = Field(
+        ge=0,
+        le=100,
+        description="Hard cap on position size as a percentage of portfolio capital.",
+    )
+    entry_approach: str = Field(
+        description="Practical entry approach, for example staged entry or waiting for confirmation."
+    )
+    exit_approach: str = Field(
+        description="Practical exit and de-risking approach for this recommendation."
+    )
+    risk_budget_percent: int = Field(
+        ge=0,
+        le=100,
+        description="Maximum portfolio risk budget allocated to this idea.",
+    )
+    stop_conditions: list[str] = Field(
+        default_factory=list,
+        description="Objective conditions that invalidate the thesis and require exit or reduction.",
+    )
+
+
+class MonitoringPlan(BaseModel):
+    """Structured monitoring and review plan for post-decision governance."""
+
+    review_cadence: str = Field(
+        description="Recommended review cadence, for example weekly or after each earnings release."
+    )
+    key_indicators: list[str] = Field(
+        default_factory=list,
+        description="Core indicators to track after entering or holding the position.",
+    )
+    catalyst_watchlist: list[str] = Field(
+        default_factory=list,
+        description="Upcoming events and catalysts that can change the recommendation.",
+    )
+    escalation_triggers: list[str] = Field(
+        default_factory=list,
+        description="Conditions that require immediate reassessment by the investment process.",
+    )

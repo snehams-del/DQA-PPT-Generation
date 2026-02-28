@@ -35,8 +35,10 @@ This package is organised to keep responsibilities clear and maintenance simple.
    - `risk_consensus_checker`
 10. `risk_management_summary_writer` prepares risk governance output.
 11. `fund_manager_agent` makes the final governance decision.
-12. `report_composer_with_citations` builds the final report.
-13. Citation callback replaces internal citation tags with markdown links.
+12. `portfolio_constructor` converts the decision into explicit position sizing and execution constraints.
+13. `monitoring_planner` defines review cadence, indicators, and escalation triggers.
+14. `report_composer_with_citations` builds the final report.
+15. Citation callback replaces internal citation tags with markdown links.
 
 ## Design principles
 

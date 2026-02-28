@@ -40,6 +40,8 @@ from .research_models import (
     DebateOutcome,
     Feedback,
     FundManagerDecision,
+    MonitoringPlan,
+    PortfolioConstructionPlan,
     RiskManagementOutcome,
     TraderProposal,
 )
@@ -696,6 +698,52 @@ fund_manager_agent = LlmAgent(
     output_key="fund_manager_decision",
 )
 
+portfolio_constructor = LlmAgent(
+    model=config.worker_model,
+    name="portfolio_constructor",
+    description="Converts the final decision into a concrete portfolio implementation plan.",
+    include_contents="none",
+    instruction="""
+    You are the Portfolio Construction Manager.
+    Inputs:
+    - fund_manager_decision: {fund_manager_decision}
+    - risk_management_outcome: {risk_management_outcome}
+    - section_research_findings: {section_research_findings}
+
+    Task:
+    1. Convert the final recommendation into explicit sizing and implementation guidance.
+    2. Keep position and risk budgets conservative when confidence is low or risks are unresolved.
+    3. Define practical entry and exit approaches.
+    4. Provide objective stop conditions tied to thesis invalidation.
+    5. Keep all outputs consistent with the structured schema.
+    """,
+    output_schema=PortfolioConstructionPlan,
+    output_key="portfolio_construction_plan",
+)
+
+monitoring_planner = LlmAgent(
+    model=config.high_throughput_model,
+    name="monitoring_planner",
+    description="Defines a post-decision monitoring and escalation plan.",
+    include_contents="none",
+    instruction="""
+    You are the Monitoring Planner.
+    Inputs:
+    - fund_manager_decision: {fund_manager_decision}
+    - portfolio_construction_plan: {portfolio_construction_plan}
+    - section_research_findings: {section_research_findings}
+
+    Task:
+    1. Define review cadence appropriate to horizon and risk.
+    2. List key indicators that should be monitored continuously.
+    3. Build a catalyst watchlist for upcoming decision-relevant events.
+    4. Define escalation triggers that require immediate reassessment.
+    5. Keep output concise and schema-compliant.
+    """,
+    output_schema=MonitoringPlan,
+    output_key="monitoring_plan",
+)
+
 report_composer = LlmAgent(
     model=config.critic_model,
     name="report_composer_with_citations",
@@ -714,6 +762,8 @@ report_composer = LlmAgent(
     *   Risk Governance Summary: `{risk_management_summary}`
     *   Risk Governance Outcome: `{risk_management_outcome}`
     *   Fund Manager Decision: `{fund_manager_decision}`
+    *   Portfolio Construction Plan: `{portfolio_construction_plan}`
+    *   Monitoring Plan: `{monitoring_plan}`
     *   Citation Sources: `{sources}`
     *   Report Structure: `{report_sections}`
 
@@ -735,10 +785,13 @@ report_composer = LlmAgent(
     - Investment horizon
     - Conviction level
     - Position sizing guidance
+    - Target and maximum position size
+    - Entry and exit approach
     - 3 strongest supporting arguments
     - 3 strongest counter-arguments and risks
     - Key catalysts to monitor
     - Execution guardrails
+    Include a short monitoring block with review cadence, key indicators, and escalation triggers.
     If data is uncertain or stale, state that explicitly.
     Do not include a separate references section; citations must be in-line.
     End with: "Detta ar informationsmaterial och inte personlig finansiell radgivning."
@@ -791,6 +844,8 @@ research_pipeline = SequentialAgent(
         ),
         risk_management_summary_writer,
         fund_manager_agent,
+        portfolio_constructor,
+        monitoring_planner,
         report_composer,
     ],
 )
