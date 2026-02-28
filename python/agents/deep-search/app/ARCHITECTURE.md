@@ -24,7 +24,7 @@ This package is organised to keep responsibilities clear and maintenance simple.
    - `bull_case_analyst`
    - `bear_case_analyst`
    - `debate_facilitator`
-   - `debate_consensus_checker`
+   - state-driven stop on `debate_outcome.consensus_reached`
 7. `debate_summary_writer` prepares debate output for reporting.
 8. `trader_agent` produces a structured preliminary recommendation.
 9. `risk_management_loop` runs:
@@ -32,7 +32,7 @@ This package is organised to keep responsibilities clear and maintenance simple.
    - `risk_balanced_manager`
    - `risk_defensive_manager`
    - `risk_management_facilitator`
-   - `risk_consensus_checker`
+   - state-driven stop on `risk_management_outcome.consensus_reached`
 10. `risk_management_summary_writer` prepares risk governance output.
 11. `fund_manager_agent` makes the final governance decision.
 12. `portfolio_constructor` converts the decision into explicit position sizing and execution constraints.
@@ -47,3 +47,4 @@ This package is organised to keep responsibilities clear and maintenance simple.
 - Separate schemas and callbacks from orchestration logic.
 - Prefer explicit, typed outputs for evaluator, debate, and governance stages.
 - Reduce burst load with staged parallelism and retry-aware high-volume agents.
+- Use state-driven loop exit conditions instead of escalation-based loop breaks.

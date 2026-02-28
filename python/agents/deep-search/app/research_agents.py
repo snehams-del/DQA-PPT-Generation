@@ -15,17 +15,18 @@
 import datetime
 import logging
 from collections.abc import AsyncGenerator
+from contextlib import aclosing
+from typing import Any
 
 from google.adk.agents import (
     BaseAgent,
     LlmAgent,
-    LoopAgent,
     ParallelAgent,
     SequentialAgent,
 )
 from google.adk.agents.invocation_context import InvocationContext
 from google.adk.apps.app import App
-from google.adk.events import Event, EventActions
+from google.adk.events import Event
 from google.adk.planners import BuiltInPlanner
 from google.adk.tools import google_search
 from google.adk.tools.agent_tool import AgentTool
@@ -47,82 +48,55 @@ from .research_models import (
 )
 
 
-# --- Custom Agent for Loop Control ---
-class EscalationChecker(BaseAgent):
-    """Checks research evaluation and escalates to stop the loop if grade is 'pass'."""
-
-    def __init__(self, name: str):
-        super().__init__(name=name)
-
-    async def _run_async_impl(
-        self, ctx: InvocationContext
-    ) -> AsyncGenerator[Event, None]:
-        evaluation_result = ctx.session.state.get("research_evaluation")
-        if evaluation_result and evaluation_result.get("grade") == "pass":
-            logging.info(
-                f"[{self.name}] Research evaluation passed. Escalating to stop loop."
-            )
-            yield Event(author=self.name, actions=EventActions(escalate=True))
-        else:
-            logging.info(
-                f"[{self.name}] Research evaluation failed or not found. Loop will continue."
-            )
-            # Yielding an event without content or actions just lets the flow continue.
-            yield Event(author=self.name)
+def _get_state_path_value(state: dict[str, Any], path: str) -> Any:
+    """Returns a nested state value from a dot-separated path."""
+    current: Any = state
+    for segment in path.split("."):
+        if not isinstance(current, dict) or segment not in current:
+            return None
+        current = current[segment]
+    return current
 
 
-class DebateConsensusChecker(BaseAgent):
-    """Stops the debate loop when facilitator reports consensus."""
+class StateDrivenLoopAgent(BaseAgent):
+    """Loops over sub-agents until state condition is met or max iterations reached."""
 
-    def __init__(self, name: str):
-        super().__init__(name=name)
+    max_iterations: int
+    stop_state_path: str
+    stop_state_value: str | bool
 
     async def _run_async_impl(
         self, ctx: InvocationContext
     ) -> AsyncGenerator[Event, None]:
-        debate_result = ctx.session.state.get("debate_outcome")
-        consensus_reached = bool(
-            debate_result and debate_result.get("consensus_reached")
-        )
-        if consensus_reached:
-            logging.info(
-                "[%s] Debate consensus reached. Escalating to stop debate loop.",
-                self.name,
-            )
-            yield Event(author=self.name, actions=EventActions(escalate=True))
+        if not self.sub_agents:
             return
 
-        logging.info(
-            "[%s] Debate consensus not reached. Loop continues.", self.name
-        )
-        yield Event(author=self.name)
+        for iteration in range(self.max_iterations):
+            logging.info("[%s] Starting iteration %d", self.name, iteration + 1)
+            should_stop = False
+            for sub_agent in self.sub_agents:
+                async with aclosing(sub_agent.run_async(ctx)) as event_stream:
+                    async for event in event_stream:
+                        yield event
 
+                state_value = _get_state_path_value(
+                    ctx.session.state, self.stop_state_path
+                )
+                if state_value == self.stop_state_value:
+                    logging.info(
+                        "[%s] Stop condition met (%s == %s).",
+                        self.name,
+                        self.stop_state_path,
+                        self.stop_state_value,
+                    )
+                    should_stop = True
+                    break
 
-class RiskConsensusChecker(BaseAgent):
-    """Stops the risk management loop when facilitator reports consensus."""
+            if should_stop:
+                return
 
-    def __init__(self, name: str):
-        super().__init__(name=name)
-
-    async def _run_async_impl(
-        self, ctx: InvocationContext
-    ) -> AsyncGenerator[Event, None]:
-        risk_result = ctx.session.state.get("risk_management_outcome")
-        consensus_reached = bool(
-            risk_result and risk_result.get("consensus_reached")
-        )
-        if consensus_reached:
-            logging.info(
-                "[%s] Risk consensus reached. Escalating to stop risk loop.",
-                self.name,
-            )
-            yield Event(author=self.name, actions=EventActions(escalate=True))
-            return
-
-        logging.info(
-            "[%s] Risk consensus not reached. Loop continues.", self.name
-        )
-        yield Event(author=self.name)
+            # Reset sub-agent states before next iteration.
+            ctx.reset_sub_agent_states(self.name)
 
 
 # --- AGENT DEFINITIONS ---
@@ -810,36 +784,39 @@ research_pipeline = SequentialAgent(
         section_planner,
         parallel_specialist_research,
         specialist_synthesizer,
-        LoopAgent(
+        StateDrivenLoopAgent(
             name="iterative_refinement_loop",
             max_iterations=config.max_search_iterations,
+            stop_state_path="research_evaluation.grade",
+            stop_state_value="pass",
             sub_agents=[
                 research_evaluator,
-                EscalationChecker(name="escalation_checker"),
                 enhanced_search_executor,
             ],
         ),
-        LoopAgent(
+        StateDrivenLoopAgent(
             name="investment_debate_loop",
             max_iterations=config.max_debate_iterations,
+            stop_state_path="debate_outcome.consensus_reached",
+            stop_state_value=True,
             sub_agents=[
                 bull_case_analyst,
                 bear_case_analyst,
                 debate_facilitator,
-                DebateConsensusChecker(name="debate_consensus_checker"),
             ],
         ),
         debate_summary_writer,
         trader_agent,
-        LoopAgent(
+        StateDrivenLoopAgent(
             name="risk_management_loop",
             max_iterations=config.max_risk_iterations,
+            stop_state_path="risk_management_outcome.consensus_reached",
+            stop_state_value=True,
             sub_agents=[
                 risk_aggressive_manager,
                 risk_balanced_manager,
                 risk_defensive_manager,
                 risk_management_facilitator,
-                RiskConsensusChecker(name="risk_consensus_checker"),
             ],
         ),
         risk_management_summary_writer,
