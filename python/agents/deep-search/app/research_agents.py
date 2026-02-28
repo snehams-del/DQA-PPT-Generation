@@ -124,6 +124,18 @@ class RiskConsensusChecker(BaseAgent):
 
 
 # --- AGENT DEFINITIONS ---
+# Retry settings reduce transient 429 failures under bursty multi-agent load.
+RETRY_GENERATE_CONTENT_CONFIG = genai_types.GenerateContentConfig(
+    http_options=genai_types.HttpOptions(
+        retry_options=genai_types.HttpRetryOptions(
+            attempts=3,
+            initial_delay=1,
+            max_delay=8,
+            http_status_codes=[429, 500, 503],
+        )
+    )
+)
+
 plan_generator = LlmAgent(
     model=config.worker_model,
     name="plan_generator",
@@ -203,7 +215,7 @@ section_planner = LlmAgent(
 
 
 section_researcher = LlmAgent(
-    model=config.worker_model,
+    model=config.high_throughput_model,
     name="section_researcher",
     description="Specialist analyst for news flow and near-term catalysts.",
     planner=BuiltInPlanner(
@@ -225,12 +237,13 @@ section_researcher = LlmAgent(
     5. Explicitly flag uncertain or conflicting signals.
     """,
     tools=[google_search],
+    generate_content_config=RETRY_GENERATE_CONTENT_CONFIG,
     output_key="news_catalyst_findings",
     after_agent_callback=collect_research_sources_callback,
 )
 
 technical_analyst = LlmAgent(
-    model=config.worker_model,
+    model=config.high_throughput_model,
     name="technical_analyst",
     description="Specialist analyst for technical price structure and momentum signals.",
     planner=BuiltInPlanner(
@@ -252,12 +265,13 @@ technical_analyst = LlmAgent(
     5. Mark all low-confidence observations clearly.
     """,
     tools=[google_search],
+    generate_content_config=RETRY_GENERATE_CONTENT_CONFIG,
     output_key="technical_analysis_findings",
     after_agent_callback=collect_research_sources_callback,
 )
 
 sentiment_analyst = LlmAgent(
-    model=config.worker_model,
+    model=config.high_throughput_model,
     name="sentiment_analyst",
     description="Specialist analyst for analyst positioning and market sentiment.",
     planner=BuiltInPlanner(
@@ -279,12 +293,13 @@ sentiment_analyst = LlmAgent(
     5. Explicitly note where sentiment evidence is sparse.
     """,
     tools=[google_search],
+    generate_content_config=RETRY_GENERATE_CONTENT_CONFIG,
     output_key="sentiment_analysis_findings",
     after_agent_callback=collect_research_sources_callback,
 )
 
 valuation_analyst = LlmAgent(
-    model=config.worker_model,
+    model=config.high_throughput_model,
     name="valuation_analyst",
     description="Specialist analyst for valuation context and peer-relative positioning.",
     planner=BuiltInPlanner(
@@ -305,12 +320,13 @@ valuation_analyst = LlmAgent(
     5. Mark stale data and unknown datapoints clearly.
     """,
     tools=[google_search],
+    generate_content_config=RETRY_GENERATE_CONTENT_CONFIG,
     output_key="valuation_analysis_findings",
     after_agent_callback=collect_research_sources_callback,
 )
 
 risk_analyst = LlmAgent(
-    model=config.worker_model,
+    model=config.high_throughput_model,
     name="risk_analyst",
     description="Specialist analyst for downside drivers, fragilities, and regime risks.",
     planner=BuiltInPlanner(
@@ -332,19 +348,32 @@ risk_analyst = LlmAgent(
     5. Call out unknowns that materially reduce decision confidence.
     """,
     tools=[google_search],
+    generate_content_config=RETRY_GENERATE_CONTENT_CONFIG,
     output_key="risk_analysis_findings",
     after_agent_callback=collect_research_sources_callback,
 )
 
-parallel_specialist_research = ParallelAgent(
+parallel_specialist_research = SequentialAgent(
     name="parallel_specialist_research",
-    description="Runs specialist analysts in parallel to build independent evidence streams.",
+    description=(
+        "Runs specialist analysts in staged parallel waves to reduce peak model concurrency."
+    ),
     sub_agents=[
-        section_researcher,
-        technical_analyst,
-        sentiment_analyst,
-        valuation_analyst,
-        risk_analyst,
+        ParallelAgent(
+            name="specialist_parallel_wave_one",
+            sub_agents=[
+                section_researcher,
+                technical_analyst,
+            ],
+        ),
+        ParallelAgent(
+            name="specialist_parallel_wave_two",
+            sub_agents=[
+                sentiment_analyst,
+                valuation_analyst,
+                risk_analyst,
+            ],
+        ),
     ],
 )
 
@@ -399,7 +428,7 @@ research_evaluator = LlmAgent(
 )
 
 enhanced_search_executor = LlmAgent(
-    model=config.worker_model,
+    model=config.high_throughput_model,
     name="enhanced_search_executor",
     description="Executes follow-up searches and integrates improved financial findings.",
     planner=BuiltInPlanner(
@@ -415,6 +444,7 @@ enhanced_search_executor = LlmAgent(
     5. Your output must be complete, corrected, and recommendation-ready.
     """,
     tools=[google_search],
+    generate_content_config=RETRY_GENERATE_CONTENT_CONFIG,
     output_key="section_research_findings",
     after_agent_callback=collect_research_sources_callback,
 )
@@ -483,7 +513,7 @@ debate_facilitator = LlmAgent(
 )
 
 debate_summary_writer = LlmAgent(
-    model=config.worker_model,
+    model=config.high_throughput_model,
     name="debate_summary_writer",
     description="Converts structured debate outcome into a concise narrative summary.",
     include_contents="none",
@@ -501,7 +531,7 @@ debate_summary_writer = LlmAgent(
 )
 
 trader_agent = LlmAgent(
-    model=config.worker_model,
+    model=config.high_throughput_model,
     name="trader_agent",
     description="Creates a structured preliminary recommendation before risk governance.",
     include_contents="none",
@@ -524,7 +554,7 @@ trader_agent = LlmAgent(
 )
 
 risk_aggressive_manager = LlmAgent(
-    model=config.worker_model,
+    model=config.high_throughput_model,
     name="risk_aggressive_manager",
     description="Risk manager with aggressive posture focusing on upside capture.",
     include_contents="none",
@@ -547,7 +577,7 @@ risk_aggressive_manager = LlmAgent(
 )
 
 risk_balanced_manager = LlmAgent(
-    model=config.worker_model,
+    model=config.high_throughput_model,
     name="risk_balanced_manager",
     description="Risk manager with balanced posture for risk-adjusted returns.",
     include_contents="none",
@@ -570,7 +600,7 @@ risk_balanced_manager = LlmAgent(
 )
 
 risk_defensive_manager = LlmAgent(
-    model=config.worker_model,
+    model=config.high_throughput_model,
     name="risk_defensive_manager",
     description="Risk manager with defensive posture focusing on capital preservation.",
     include_contents="none",
@@ -624,7 +654,7 @@ risk_management_facilitator = LlmAgent(
 )
 
 risk_management_summary_writer = LlmAgent(
-    model=config.worker_model,
+    model=config.high_throughput_model,
     name="risk_management_summary_writer",
     description="Converts structured risk governance outcome into a concise narrative.",
     include_contents="none",

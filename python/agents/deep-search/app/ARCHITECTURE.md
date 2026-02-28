@@ -15,12 +15,9 @@ This package is organised to keep responsibilities clear and maintenance simple.
 
 1. `interactive_planner_agent` creates and refines a tagged plan.
 2. On approval, control passes to `research_pipeline`.
-3. `parallel_specialist_research` runs specialist analysts in parallel:
-   - `section_researcher` (news and catalysts)
-   - `technical_analyst`
-   - `sentiment_analyst`
-   - `valuation_analyst`
-   - `risk_analyst`
+3. `parallel_specialist_research` runs specialist analysts in staged parallel waves:
+   - Wave 1: `section_researcher` (news and catalysts), `technical_analyst`
+   - Wave 2: `sentiment_analyst`, `valuation_analyst`, `risk_analyst`
 4. `specialist_synthesizer` merges specialist outputs into `section_research_findings`.
 5. `iterative_refinement_loop` runs research QA and follow-up search until pass or max iterations.
 6. `investment_debate_loop` runs:
@@ -47,3 +44,4 @@ This package is organised to keep responsibilities clear and maintenance simple.
 - Keep agent names stable to preserve frontend integration.
 - Separate schemas and callbacks from orchestration logic.
 - Prefer explicit, typed outputs for evaluator, debate, and governance stages.
+- Reduce burst load with staged parallelism and retry-aware high-volume agents.
