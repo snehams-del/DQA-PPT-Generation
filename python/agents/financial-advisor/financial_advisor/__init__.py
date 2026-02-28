@@ -20,7 +20,13 @@ import google.auth
 
 from . import agent
 
-_, project_id = google.auth.default()
-os.environ.setdefault("GOOGLE_CLOUD_PROJECT", project_id)
+try:
+    _, project_id = google.auth.default()
+    if project_id:
+        os.environ.setdefault("GOOGLE_CLOUD_PROJECT", project_id)
+except google.auth.exceptions.DefaultCredentialsError:
+    pass
+
 os.environ["GOOGLE_CLOUD_LOCATION"] = "global"
-os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "True")
+# If ADK picks up GOOGLE_API_KEY, we want Vertex to be False
+os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "False" if os.getenv("GOOGLE_API_KEY") else "True")

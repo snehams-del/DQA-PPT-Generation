@@ -35,3 +35,8 @@ indent-style = "space"
 ignore-words-list = "rouge"
 skip = "./locust_env/*,uv.lock,.venv,./frontend,**/*.ipynb"
 
+[tool.uv.workspace]
+members = [
+    "agent_engineering",
+]
+

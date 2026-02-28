@@ -58,6 +58,12 @@ Ensure all state keys are correctly used to pass information between subagents.
 Here's the step-by-step breakdown.
 For each step, explicitly call the designated subagent and adhere strictly to the specified input and output formats:
 
+* Review Current Portfolio (Subagent: portfolio_manager)
+
+Input: Ask the user if they'd like to review their current portfolio holdings first before proceeding with a new ticker analysis.
+Action: Call the portfolio_manager subagent. No input is needed as it fetches data automatically.
+Expected Output: The portfolio_manager subagent MUST return the user's current portfolio positions.
+
 * Gather Market Data Analysis (Subagent: data_analyst)
 
 Input: Prompt the user to provide the market ticker symbol they wish to analyze (e.g., AAPL, GOOGL, MSFT).

@@ -12,21 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""data_analyst_agent for finding information using google search"""
+"""Portfolio manager agent for retrieving current positions"""
 
-from google.adk import Agent
-from google.adk.tools import google_search
-from google.adk.tools.agent_tool import AgentTool
-
-from . import prompt
-from .price_agent import price_agent
-
-MODEL = "gemini-2.5-pro"
-
-data_analyst_agent = Agent(
-    model=MODEL,
-    name="data_analyst_agent",
-    instruction=prompt.DATA_ANALYST_PROMPT,
-    output_key="market_data_analysis_output",
-    tools=[google_search, AgentTool(agent=price_agent)],
-)
+from .agent import portfolio_manager_agent
