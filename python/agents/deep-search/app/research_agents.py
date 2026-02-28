@@ -16,7 +16,13 @@ import datetime
 import logging
 from collections.abc import AsyncGenerator
 
-from google.adk.agents import BaseAgent, LlmAgent, LoopAgent, SequentialAgent
+from google.adk.agents import (
+    BaseAgent,
+    LlmAgent,
+    LoopAgent,
+    ParallelAgent,
+    SequentialAgent,
+)
 from google.adk.agents.invocation_context import InvocationContext
 from google.adk.apps.app import App
 from google.adk.events import Event, EventActions
@@ -30,7 +36,13 @@ from .research_callbacks import (
     citation_replacement_callback,
     collect_research_sources_callback,
 )
-from .research_models import Feedback
+from .research_models import (
+    DebateOutcome,
+    Feedback,
+    FundManagerDecision,
+    RiskManagementOutcome,
+    TraderProposal,
+)
 
 
 # --- Custom Agent for Loop Control ---
@@ -55,6 +67,60 @@ class EscalationChecker(BaseAgent):
             )
             # Yielding an event without content or actions just lets the flow continue.
             yield Event(author=self.name)
+
+
+class DebateConsensusChecker(BaseAgent):
+    """Stops the debate loop when facilitator reports consensus."""
+
+    def __init__(self, name: str):
+        super().__init__(name=name)
+
+    async def _run_async_impl(
+        self, ctx: InvocationContext
+    ) -> AsyncGenerator[Event, None]:
+        debate_result = ctx.session.state.get("debate_outcome")
+        consensus_reached = bool(
+            debate_result and debate_result.get("consensus_reached")
+        )
+        if consensus_reached:
+            logging.info(
+                "[%s] Debate consensus reached. Escalating to stop debate loop.",
+                self.name,
+            )
+            yield Event(author=self.name, actions=EventActions(escalate=True))
+            return
+
+        logging.info(
+            "[%s] Debate consensus not reached. Loop continues.", self.name
+        )
+        yield Event(author=self.name)
+
+
+class RiskConsensusChecker(BaseAgent):
+    """Stops the risk management loop when facilitator reports consensus."""
+
+    def __init__(self, name: str):
+        super().__init__(name=name)
+
+    async def _run_async_impl(
+        self, ctx: InvocationContext
+    ) -> AsyncGenerator[Event, None]:
+        risk_result = ctx.session.state.get("risk_management_outcome")
+        consensus_reached = bool(
+            risk_result and risk_result.get("consensus_reached")
+        )
+        if consensus_reached:
+            logging.info(
+                "[%s] Risk consensus reached. Escalating to stop risk loop.",
+                self.name,
+            )
+            yield Event(author=self.name, actions=EventActions(escalate=True))
+            return
+
+        logging.info(
+            "[%s] Risk consensus not reached. Loop continues.", self.name
+        )
+        yield Event(author=self.name)
 
 
 # --- AGENT DEFINITIONS ---
@@ -139,57 +205,171 @@ section_planner = LlmAgent(
 section_researcher = LlmAgent(
     model=config.worker_model,
     name="section_researcher",
-    description="Performs the first comprehensive pass of Stockholm-focused financial research.",
+    description="Specialist analyst for news flow and near-term catalysts.",
     planner=BuiltInPlanner(
         thinking_config=genai_types.ThinkingConfig(include_thoughts=True)
     ),
     instruction="""
-    You are a highly capable financial research and synthesis agent focused on Stockholmsborsen.
-    Execute the provided plan with absolute fidelity: gather evidence first, then build deliverables.
+    You are the News and Catalyst Analyst for Stockholmsborsen.
+    Focus only on:
+    - latest company-specific and sector news
+    - earnings and guidance changes
+    - management statements and corporate actions
+    - macro events likely to move Swedish equities
 
-    You will be provided with a sequential list of research plan goals, stored in the `research_plan` state key. Each goal will be clearly prefixed with its primary task type: `[RESEARCH]` or `[DELIVERABLE]`.
-
-    **Hard constraints**
-    - Do not use external APIs. Only use the built-in `google_search` tool.
-    - Prioritise primary and credible sources: company reports, exchange notices, reputable financial newspapers, broker commentary with dates, and official macro data pages.
-    - Never invent numbers or indicators. If a datapoint cannot be validated, explicitly mark it as unavailable.
-    - When reporting time-sensitive data, always include date context.
-
-    Your execution process must strictly adhere to these two distinct and sequential phases:
-
-    ---
-
-    **Phase 1: Information Gathering (`[RESEARCH]` Tasks)**
-
-    *   **Execution Directive:** You **MUST** process every goal prefixed with `[RESEARCH]` before proceeding to Phase 2.
-    *   For each `[RESEARCH]` goal:
-        *   **Query Generation:** Formulate 4-6 targeted search queries that cover multiple angles of the goal.
-        *   **Execution:** Use `google_search` to execute all generated queries for the current goal.
-        *   **Summarisation:** Produce a detailed summary that directly addresses the goal.
-        *   **Coverage rule:** Ensure research spans news flow, technical context, sentiment cues, and fundamentals where relevant.
-        *   **Internal Storage:** Store each summary, clearly tied to its goal, for Phase 2.
-
-    ---
-
-    **Phase 2: Synthesis and Output Creation (`[DELIVERABLE]` Tasks)**
-
-    *   **Execution Prerequisite:** This phase must only start once all `[RESEARCH]` goals are completed.
-    *   **Execution Directive:** You **MUST** process every `[DELIVERABLE]` goal and produce the requested artifact.
-    *   For each `[DELIVERABLE]` goal:
-        *   **Instruction Interpretation:** Treat each goal as a direct instruction to produce a concrete artifact.
-        *   **Data Consolidation:** Use only Phase 1 summaries to fulfil each deliverable. Do not perform new searches.
-        *   **Output Generation:** Based on the specific instruction of the `[DELIVERABLE]` goal:
-            *   Carefully extract and synthesise relevant information.
-            *   Always produce explicit recommendation outputs when requested, including buy/hold/sell stance, confidence, and major risks.
-        *   **Output Accumulation:** Maintain and accumulate all generated deliverables.
-
-    ---
-
-    **Final Output:** Return the complete set of processed research summaries and all generated deliverables, clearly separated.
+    Execution rules:
+    1. Generate 5-7 targeted `google_search` queries with explicit date context.
+    2. Prioritise official disclosures and reputable financial sources.
+    3. Summarise findings as: key catalyst, directional impact, expected time horizon.
+    4. Avoid technical indicator analysis, valuation modelling, and final recommendation.
+    5. Explicitly flag uncertain or conflicting signals.
     """,
     tools=[google_search],
-    output_key="section_research_findings",
+    output_key="news_catalyst_findings",
     after_agent_callback=collect_research_sources_callback,
+)
+
+technical_analyst = LlmAgent(
+    model=config.worker_model,
+    name="technical_analyst",
+    description="Specialist analyst for technical price structure and momentum signals.",
+    planner=BuiltInPlanner(
+        thinking_config=genai_types.ThinkingConfig(include_thoughts=True)
+    ),
+    instruction="""
+    You are the Technical Analyst for Stockholmsborsen securities.
+    Focus only on technical structure:
+    - trend direction and structure
+    - support and resistance
+    - moving average context
+    - momentum and breakout or mean-reversion conditions
+
+    Execution rules:
+    1. Run 4-6 targeted `google_search` queries for price-action context and chart commentary.
+    2. Provide technical interpretation with explicit bullish and bearish triggers.
+    3. Include invalidation levels when possible.
+    4. Do not provide final buy or sell recommendations.
+    5. Mark all low-confidence observations clearly.
+    """,
+    tools=[google_search],
+    output_key="technical_analysis_findings",
+    after_agent_callback=collect_research_sources_callback,
+)
+
+sentiment_analyst = LlmAgent(
+    model=config.worker_model,
+    name="sentiment_analyst",
+    description="Specialist analyst for analyst positioning and market sentiment.",
+    planner=BuiltInPlanner(
+        thinking_config=genai_types.ThinkingConfig(include_thoughts=True)
+    ),
+    instruction="""
+    You are the Sentiment Analyst for Stockholmsborsen securities.
+    Focus on:
+    - analyst recommendation shifts
+    - institutional positioning signals
+    - media and market narrative tone
+    - risk-on and risk-off context affecting Swedish equities
+
+    Execution rules:
+    1. Run 4-6 targeted `google_search` queries with recency emphasis.
+    2. Report sentiment drivers and whether sentiment is accelerating or fading.
+    3. Separate evidence from interpretation.
+    4. Do not perform valuation modelling or final recommendation.
+    5. Explicitly note where sentiment evidence is sparse.
+    """,
+    tools=[google_search],
+    output_key="sentiment_analysis_findings",
+    after_agent_callback=collect_research_sources_callback,
+)
+
+valuation_analyst = LlmAgent(
+    model=config.worker_model,
+    name="valuation_analyst",
+    description="Specialist analyst for valuation context and peer-relative positioning.",
+    planner=BuiltInPlanner(
+        thinking_config=genai_types.ThinkingConfig(include_thoughts=True)
+    ),
+    instruction="""
+    You are the Valuation Analyst for Stockholmsborsen securities.
+    Focus on:
+    - relative valuation vs peers
+    - valuation regime vs own history
+    - key assumptions driving upside or downside
+
+    Execution rules:
+    1. Run 4-6 `google_search` queries targeting valuation commentary and comparable context.
+    2. Provide valuation interpretation with explicit bull and bear assumptions.
+    3. Avoid unsupported numerical precision.
+    4. Do not issue final buy or sell recommendation.
+    5. Mark stale data and unknown datapoints clearly.
+    """,
+    tools=[google_search],
+    output_key="valuation_analysis_findings",
+    after_agent_callback=collect_research_sources_callback,
+)
+
+risk_analyst = LlmAgent(
+    model=config.worker_model,
+    name="risk_analyst",
+    description="Specialist analyst for downside drivers, fragilities, and regime risks.",
+    planner=BuiltInPlanner(
+        thinking_config=genai_types.ThinkingConfig(include_thoughts=True)
+    ),
+    instruction="""
+    You are the Risk Analyst for Stockholmsborsen securities.
+    Focus on:
+    - downside catalysts and tail risks
+    - balance-sheet and funding fragilities
+    - macro sensitivity and scenario stress points
+    - thesis break conditions
+
+    Execution rules:
+    1. Run 4-6 `google_search` queries centred on risks and counter-cases.
+    2. Produce a ranked risk register with likelihood and impact labels.
+    3. Separate structural risks from short-term event risks.
+    4. Do not provide final recommendation.
+    5. Call out unknowns that materially reduce decision confidence.
+    """,
+    tools=[google_search],
+    output_key="risk_analysis_findings",
+    after_agent_callback=collect_research_sources_callback,
+)
+
+parallel_specialist_research = ParallelAgent(
+    name="parallel_specialist_research",
+    description="Runs specialist analysts in parallel to build independent evidence streams.",
+    sub_agents=[
+        section_researcher,
+        technical_analyst,
+        sentiment_analyst,
+        valuation_analyst,
+        risk_analyst,
+    ],
+)
+
+specialist_synthesizer = LlmAgent(
+    model=config.worker_model,
+    name="specialist_synthesizer",
+    description="Synthesises specialist outputs into a single research package.",
+    include_contents="none",
+    instruction="""
+    You are a synthesis analyst consolidating specialist findings into one coherent research package.
+
+    Inputs:
+    - News and catalysts: {news_catalyst_findings}
+    - Technical analysis: {technical_analysis_findings}
+    - Sentiment analysis: {sentiment_analysis_findings}
+    - Valuation analysis: {valuation_analysis_findings}
+    - Risk analysis: {risk_analysis_findings}
+
+    Output requirements:
+    1. Preserve disagreements across specialists.
+    2. Highlight the top 5 evidence-backed claims.
+    3. List key uncertainties and missing information.
+    4. Do not produce a final buy, hold, or sell call.
+    """,
+    output_key="section_research_findings",
 )
 
 research_evaluator = LlmAgent(
@@ -239,6 +419,253 @@ enhanced_search_executor = LlmAgent(
     after_agent_callback=collect_research_sources_callback,
 )
 
+bull_case_analyst = LlmAgent(
+    model=config.worker_model,
+    name="bull_case_analyst",
+    description="Builds the strongest possible bullish case from available evidence.",
+    include_contents="none",
+    instruction="""
+    You are the Bull Case Analyst.
+    Build the strongest evidence-backed bullish thesis using only:
+    - section_research_findings: {section_research_findings}
+    - research_evaluation: {research_evaluation}
+
+    Requirements:
+    - Present 3-5 strongest bullish arguments.
+    - Include expected catalysts and horizon.
+    - Explicitly cite the largest uncertainties that could weaken the bull case.
+    - Do not provide the final recommendation.
+    """,
+    output_key="bull_case_notes",
+)
+
+bear_case_analyst = LlmAgent(
+    model=config.worker_model,
+    name="bear_case_analyst",
+    description="Builds the strongest possible bearish and risk-focused case.",
+    include_contents="none",
+    instruction="""
+    You are the Bear Case Analyst.
+    Build the strongest evidence-backed bearish thesis using only:
+    - section_research_findings: {section_research_findings}
+    - research_evaluation: {research_evaluation}
+
+    Requirements:
+    - Present 3-5 strongest bearish arguments.
+    - Include key downside catalysts and thesis-break scenarios.
+    - Explicitly note where the bear case is weak or uncertain.
+    - Do not provide the final recommendation.
+    """,
+    output_key="bear_case_notes",
+)
+
+debate_facilitator = LlmAgent(
+    model=config.critic_model,
+    name="debate_facilitator",
+    description="Facilitates bull vs bear debate and decides if consensus is recommendation-ready.",
+    include_contents="none",
+    instruction="""
+    You are the debate facilitator.
+    Inputs:
+    - section_research_findings: {section_research_findings}
+    - bull_case_notes: {bull_case_notes}
+    - bear_case_notes: {bear_case_notes}
+    - previous debate outcome (if any): {debate_outcome?}
+
+    Task:
+    1. Evaluate whether current evidence supports a recommendation-ready consensus.
+    2. If consensus exists, set consensus_reached=true and provide recommendation plus confidence.
+    3. If not, set consensus_reached=false and provide unresolved questions that should be addressed next round.
+    4. Keep rationale concise and decision-oriented.
+    """,
+    output_schema=DebateOutcome,
+    output_key="debate_outcome",
+)
+
+debate_summary_writer = LlmAgent(
+    model=config.worker_model,
+    name="debate_summary_writer",
+    description="Converts structured debate outcome into a concise narrative summary.",
+    include_contents="none",
+    instruction="""
+    Summarise the facilitator result for downstream reporting.
+    Input:
+    - debate_outcome: {debate_outcome}
+
+    Output requirements:
+    - State whether consensus was reached.
+    - If reached, state recommendation and confidence.
+    - List unresolved questions if consensus was not reached.
+    """,
+    output_key="debate_summary",
+)
+
+trader_agent = LlmAgent(
+    model=config.worker_model,
+    name="trader_agent",
+    description="Creates a structured preliminary recommendation before risk governance.",
+    include_contents="none",
+    instruction="""
+    You are the Trader.
+    Build a preliminary, evidence-backed recommendation from:
+    - section_research_findings: {section_research_findings}
+    - debate_summary: {debate_summary}
+    - debate_outcome: {debate_outcome}
+
+    Requirements:
+    1. Select one recommendation: buy, hold, or sell.
+    2. Set confidence_score (0-100) reflecting evidence strength and uncertainty.
+    3. Provide an investment horizon suitable for the thesis.
+    4. List key_drivers and key_risks grounded in available findings.
+    5. Do not finalise portfolio governance decisions.
+    """,
+    output_schema=TraderProposal,
+    output_key="trader_proposal",
+)
+
+risk_aggressive_manager = LlmAgent(
+    model=config.worker_model,
+    name="risk_aggressive_manager",
+    description="Risk manager with aggressive posture focusing on upside capture.",
+    include_contents="none",
+    instruction="""
+    You are the Aggressive Risk Manager.
+    Inputs:
+    - trader_proposal: {trader_proposal}
+    - section_research_findings: {section_research_findings}
+    - risk_management_outcome (if any): {risk_management_outcome?}
+
+    Output:
+    - Provide a concise aggressive risk view with:
+      1) stance on recommendation,
+      2) acceptable drawdown and volatility tolerance,
+      3) what would justify increasing exposure,
+      4) key failure conditions.
+    - Do not provide final governance approval.
+    """,
+    output_key="risk_aggressive_view",
+)
+
+risk_balanced_manager = LlmAgent(
+    model=config.worker_model,
+    name="risk_balanced_manager",
+    description="Risk manager with balanced posture for risk-adjusted returns.",
+    include_contents="none",
+    instruction="""
+    You are the Balanced Risk Manager.
+    Inputs:
+    - trader_proposal: {trader_proposal}
+    - section_research_findings: {section_research_findings}
+    - risk_management_outcome (if any): {risk_management_outcome?}
+
+    Output:
+    - Provide a concise balanced risk view with:
+      1) stance on recommendation,
+      2) preferred exposure range,
+      3) required confirmation signals,
+      4) risk controls needed before execution.
+    - Do not provide final governance approval.
+    """,
+    output_key="risk_balanced_view",
+)
+
+risk_defensive_manager = LlmAgent(
+    model=config.worker_model,
+    name="risk_defensive_manager",
+    description="Risk manager with defensive posture focusing on capital preservation.",
+    include_contents="none",
+    instruction="""
+    You are the Defensive Risk Manager.
+    Inputs:
+    - trader_proposal: {trader_proposal}
+    - section_research_findings: {section_research_findings}
+    - risk_management_outcome (if any): {risk_management_outcome?}
+
+    Output:
+    - Provide a concise defensive risk view with:
+      1) stance on recommendation,
+      2) maximum acceptable downside,
+      3) reasons to reduce or avoid exposure,
+      4) strict stop conditions.
+    - Do not provide final governance approval.
+    """,
+    output_key="risk_defensive_view",
+)
+
+risk_management_facilitator = LlmAgent(
+    model=config.critic_model,
+    name="risk_management_facilitator",
+    description="Facilitates risk-manager views and produces risk-adjusted consensus.",
+    include_contents="none",
+    instruction="""
+    You are the Risk Management Facilitator.
+    Inputs:
+    - trader_proposal: {trader_proposal}
+    - risk_aggressive_view: {risk_aggressive_view}
+    - risk_balanced_view: {risk_balanced_view}
+    - risk_defensive_view: {risk_defensive_view}
+    - previous risk outcome (if any): {risk_management_outcome?}
+
+    Task:
+    1. Determine whether risk governance consensus is reached.
+    2. If reached:
+       - set consensus_reached=true,
+       - set adjusted_recommendation and adjusted_confidence_score,
+       - select risk_profile_alignment,
+       - provide practical position_sizing_guidance.
+    3. If not reached:
+       - set consensus_reached=false,
+       - keep recommendation/confidence/profile as null,
+       - provide unresolved_risks that next round must resolve.
+    4. Keep output strictly aligned with the schema.
+    """,
+    output_schema=RiskManagementOutcome,
+    output_key="risk_management_outcome",
+)
+
+risk_management_summary_writer = LlmAgent(
+    model=config.worker_model,
+    name="risk_management_summary_writer",
+    description="Converts structured risk governance outcome into a concise narrative.",
+    include_contents="none",
+    instruction="""
+    Summarise the risk governance status for downstream reporting.
+    Input:
+    - risk_management_outcome: {risk_management_outcome}
+
+    Output requirements:
+    - State whether consensus was reached.
+    - If reached, state risk-adjusted recommendation, confidence, and profile alignment.
+    - Include position sizing guidance.
+    - List unresolved risks if consensus was not reached.
+    """,
+    output_key="risk_management_summary",
+)
+
+fund_manager_agent = LlmAgent(
+    model=config.critic_model,
+    name="fund_manager_agent",
+    description="Makes the final portfolio decision after debate and risk governance.",
+    include_contents="none",
+    instruction="""
+    You are the Fund Manager with final investment authority.
+    Inputs:
+    - trader_proposal: {trader_proposal}
+    - debate_outcome: {debate_outcome}
+    - risk_management_outcome: {risk_management_outcome}
+    - section_research_findings: {section_research_findings}
+
+    Decision rules:
+    1. Use risk_management_outcome when consensus is reached.
+    2. If risk consensus is not reached, default to a conservative final stance unless evidence is overwhelmingly clear.
+    3. Return one final recommendation (buy/hold/sell), final confidence, and horizon.
+    4. Set conviction_level based on evidence quality and unresolved risks.
+    5. Provide execution_guardrails that reduce implementation risk.
+    """,
+    output_schema=FundManagerDecision,
+    output_key="fund_manager_decision",
+)
+
 report_composer = LlmAgent(
     model=config.critic_model,
     name="report_composer_with_citations",
@@ -251,6 +678,12 @@ report_composer = LlmAgent(
     ### INPUT DATA
     *   Research Plan: `{research_plan}`
     *   Research Findings: `{section_research_findings}`
+    *   Debate Summary: `{debate_summary}`
+    *   Debate Outcome: `{debate_outcome}`
+    *   Trader Proposal: `{trader_proposal}`
+    *   Risk Governance Summary: `{risk_management_summary}`
+    *   Risk Governance Outcome: `{risk_management_outcome}`
+    *   Fund Manager Decision: `{fund_manager_decision}`
     *   Citation Sources: `{sources}`
     *   Report Structure: `{report_sections}`
 
@@ -265,13 +698,17 @@ report_composer = LlmAgent(
     Generate a comprehensive report using ONLY the `<cite source="src-ID_NUMBER" />` tag system for citations.
     The report must follow the provided **Report Structure** outline.
     Write in Swedish unless the user explicitly asks for another language.
-    Include a concise recommendation block per analysed stock with:
-    - Recommendation: Kop / Behall / Salj
+    Use `fund_manager_decision` as the authoritative final call.
+    Include one concise final recommendation block with:
+    - Recommendation: Kop / Behall / Salj (mapped from buy / hold / sell)
     - Confidence score: 0-100
     - Investment horizon
+    - Conviction level
+    - Position sizing guidance
     - 3 strongest supporting arguments
     - 3 strongest counter-arguments and risks
     - Key catalysts to monitor
+    - Execution guardrails
     If data is uncertain or stale, state that explicitly.
     Do not include a separate references section; citations must be in-line.
     End with: "Detta ar informationsmaterial och inte personlig finansiell radgivning."
@@ -282,10 +719,14 @@ report_composer = LlmAgent(
 
 research_pipeline = SequentialAgent(
     name="research_pipeline",
-    description="Executes a pre-approved research plan. It performs iterative research, evaluation, and composes a final, cited report.",
+    description=(
+        "Executes a pre-approved research plan using specialist parallel analysis, "
+        "iterative refinement, debate-driven recommendation synthesis, and risk governance."
+    ),
     sub_agents=[
         section_planner,
-        section_researcher,
+        parallel_specialist_research,
+        specialist_synthesizer,
         LoopAgent(
             name="iterative_refinement_loop",
             max_iterations=config.max_search_iterations,
@@ -295,6 +736,31 @@ research_pipeline = SequentialAgent(
                 enhanced_search_executor,
             ],
         ),
+        LoopAgent(
+            name="investment_debate_loop",
+            max_iterations=config.max_debate_iterations,
+            sub_agents=[
+                bull_case_analyst,
+                bear_case_analyst,
+                debate_facilitator,
+                DebateConsensusChecker(name="debate_consensus_checker"),
+            ],
+        ),
+        debate_summary_writer,
+        trader_agent,
+        LoopAgent(
+            name="risk_management_loop",
+            max_iterations=config.max_risk_iterations,
+            sub_agents=[
+                risk_aggressive_manager,
+                risk_balanced_manager,
+                risk_defensive_manager,
+                risk_management_facilitator,
+                RiskConsensusChecker(name="risk_consensus_checker"),
+            ],
+        ),
+        risk_management_summary_writer,
+        fund_manager_agent,
         report_composer,
     ],
 )

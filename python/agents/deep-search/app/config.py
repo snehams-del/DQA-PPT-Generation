@@ -49,11 +49,15 @@ class ResearchConfiguration:
         critic_model (str): Model for evaluation tasks.
         worker_model (str): Model for working/generation tasks.
         max_search_iterations (int): Maximum search iterations allowed.
+        max_debate_iterations (int): Maximum debate rounds before forcing completion.
+        max_risk_iterations (int): Maximum risk management rounds before forcing completion.
     """
 
     critic_model: str = "gemini-3-pro-preview"
     worker_model: str = "gemini-3-pro-preview"
     max_search_iterations: int = 5
+    max_debate_iterations: int = 3
+    max_risk_iterations: int = 3
 
 
 config = ResearchConfiguration()
