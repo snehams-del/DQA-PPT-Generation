@@ -14,7 +14,7 @@
 
 import datetime
 import logging
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Mapping
 from contextlib import aclosing
 from typing import Any
 
@@ -48,13 +48,19 @@ from .research_models import (
 )
 
 
-def _get_state_path_value(state: dict[str, Any], path: str) -> Any:
+def _get_state_path_value(state: Any, path: str) -> Any:
     """Returns a nested state value from a dot-separated path."""
     current: Any = state
     for segment in path.split("."):
-        if not isinstance(current, dict) or segment not in current:
+        if isinstance(current, Mapping):
+            if segment not in current:
+                return None
+            current = current[segment]
+            continue
+
+        if not hasattr(current, segment):
             return None
-        current = current[segment]
+        current = getattr(current, segment)
     return current
 
 
@@ -75,9 +81,23 @@ class StateDrivenLoopAgent(BaseAgent):
             logging.info("[%s] Starting iteration %d", self.name, iteration + 1)
             should_stop = False
             for sub_agent in self.sub_agents:
-                async with aclosing(sub_agent.run_async(ctx)) as event_stream:
-                    async for event in event_stream:
-                        yield event
+                try:
+                    async with aclosing(sub_agent.run_async(ctx)) as event_stream:
+                        async for event in event_stream:
+                            yield event
+                except Exception as error:
+                    logging.exception(
+                        "[%s] Sub-agent '%s' failed during iteration %d: %s",
+                        self.name,
+                        sub_agent.name,
+                        iteration + 1,
+                        error,
+                    )
+                    ctx.session.state[f"{self.name}_last_error"] = (
+                        f"{sub_agent.name}: {error}"
+                    )
+                    # Continue with remaining sub-agents to avoid silent pipeline abort.
+                    continue
 
                 state_value = _get_state_path_value(
                     ctx.session.state, self.stop_state_path
