@@ -1,0 +1,58 @@
+{
+  "criteria": {
+    "tool_trajectory_avg_score": {
+      "threshold": 1.0,
+      "match_type": "IN_ORDER"
+    },
+    "rubric_based_final_response_quality_v1": {
+      "threshold": 0.8,
+      "judge_model_options": {
+        "judge_model": "gemini-2.5-flash",
+        "num_samples": 5
+      },
+      "rubrics": [
+        {
+          "rubric_id": "clear_final_recommendation",
+          "rubric_content": {
+            "text_property": "The final answer includes one explicit recommendation (buy, hold, or sell), confidence score, and horizon."
+          }
+        },
+        {
+          "rubric_id": "balanced_risk_communication",
+          "rubric_content": {
+            "text_property": "The final answer communicates both supporting arguments and downside risks with practical execution guardrails."
+          }
+        }
+      ]
+    },
+    "rubric_based_tool_use_quality_v1": {
+      "threshold": 0.8,
+      "judge_model_options": {
+        "judge_model": "gemini-2.5-flash",
+        "num_samples": 5
+      },
+      "rubrics": [
+        {
+          "rubric_id": "plan_before_execution",
+          "rubric_content": {
+            "text_property": "The agent produces or refines a research plan before attempting autonomous execution."
+          }
+        },
+        {
+          "rubric_id": "uses_search_for_market_claims",
+          "rubric_content": {
+            "text_property": "When market-sensitive claims are made, the agent uses search grounding and in-line citations."
+          }
+        }
+      ]
+    },
+    "hallucinations_v1": {
+      "threshold": 0.85,
+      "judge_model_options": {
+        "judge_model": "gemini-2.5-flash"
+      },
+      "evaluate_intermediate_nl_responses": true
+    },
+    "safety_v1": 0.9
+  }
+}

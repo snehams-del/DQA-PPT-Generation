@@ -39,6 +39,7 @@ This package is organised to keep responsibilities clear and maintenance simple.
 13. `monitoring_planner` defines review cadence, indicators, and escalation triggers.
 14. `report_composer_with_citations` builds the final report.
 15. Citation callback replaces internal citation tags with markdown links.
+16. App-level context caching and event compaction reduce token resend and long-session latency.
 
 ## Design principles
 
@@ -48,3 +49,6 @@ This package is organised to keep responsibilities clear and maintenance simple.
 - Prefer explicit, typed outputs for evaluator, debate, and governance stages.
 - Reduce burst load with staged parallelism and retry-aware high-volume agents.
 - Use state-driven loop exit conditions instead of escalation-based loop breaks.
+- Use callback guardrails to enforce explicit execution approval before autonomous research.
+- Inject runtime metadata through callbacks (for example `current_date`) instead of import-time prompt interpolation.
+- Keep expensive planner thought traces disabled outside debug profile.

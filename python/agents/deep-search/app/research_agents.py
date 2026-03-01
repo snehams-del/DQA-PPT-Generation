@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import datetime
 import logging
 from collections.abc import AsyncGenerator, Mapping
 from contextlib import aclosing
@@ -24,9 +23,12 @@ from google.adk.agents import (
     ParallelAgent,
     SequentialAgent,
 )
+from google.adk.agents.context_cache_config import ContextCacheConfig
 from google.adk.agents.invocation_context import InvocationContext
-from google.adk.apps.app import App
+from google.adk.apps.app import App, EventsCompactionConfig
+from google.adk.apps.llm_event_summarizer import LlmEventSummarizer
 from google.adk.events import Event
+from google.adk.models import Gemini
 from google.adk.planners import BuiltInPlanner
 from google.adk.tools import google_search
 from google.adk.tools.agent_tool import AgentTool
@@ -36,6 +38,8 @@ from .config import config
 from .research_callbacks import (
     citation_replacement_callback,
     collect_research_sources_callback,
+    enforce_execution_approval_callback,
+    prepare_runtime_metadata_callback,
 )
 from .research_models import (
     DebateOutcome,
@@ -119,6 +123,48 @@ class StateDrivenLoopAgent(BaseAgent):
             ctx.reset_sub_agent_states(self.name)
 
 
+def _thinking_config() -> genai_types.ThinkingConfig:
+    """Returns planner thinking configuration based on runtime profile."""
+    return genai_types.ThinkingConfig(include_thoughts=config.include_thoughts)
+
+
+def _build_events_compaction_config() -> EventsCompactionConfig:
+    """Builds App-level event compaction settings."""
+    summariser = LlmEventSummarizer(
+        llm=Gemini(model=config.compaction_summariser_model)
+    )
+    return EventsCompactionConfig(
+        compaction_interval=max(config.compaction_interval, 1),
+        overlap_size=max(config.compaction_overlap_size, 0),
+        summarizer=summariser,
+    )
+
+
+def _build_app(root: BaseAgent) -> App:
+    """Builds ADK app with optional context cache and compaction settings."""
+    app_kwargs: dict[str, Any] = {
+        "name": "app",
+        "root_agent": root,
+    }
+    if config.enable_context_caching:
+        app_kwargs["context_cache_config"] = ContextCacheConfig(
+            min_tokens=max(config.context_cache_min_tokens, 0),
+            ttl_seconds=max(config.context_cache_ttl_seconds, 1),
+            cache_intervals=max(config.context_cache_intervals, 1),
+        )
+    if config.enable_context_compaction:
+        app_kwargs["events_compaction_config"] = _build_events_compaction_config()
+
+    app_instance = App(**app_kwargs)
+    logging.info(
+        "Deep-search app configured with runtime_profile=%s, context_caching=%s, context_compaction=%s",
+        config.runtime_profile,
+        bool(app_kwargs.get("context_cache_config")),
+        bool(app_kwargs.get("events_compaction_config")),
+    )
+    return app_instance
+
+
 # --- AGENT DEFINITIONS ---
 # Retry settings reduce transient 429 failures under bursty multi-agent load.
 RETRY_GENERATE_CONTENT_CONFIG = genai_types.GenerateContentConfig(
@@ -136,13 +182,13 @@ plan_generator = LlmAgent(
     model=config.worker_model,
     name="plan_generator",
     description="Generates or refines a Stockholm-focused equity research plan with explicit analysis pillars.",
-    instruction=f"""
+    instruction="""
     You are a senior equity research strategist focused on Stockholmsborsen (Nasdaq Stockholm).
     Your job is to create a high-level RESEARCH PLAN, not a summary.
     If there is already a RESEARCH PLAN in the session state, improve it based on user feedback.
 
     RESEARCH PLAN(SO FAR):
-    {{ research_plan? }}
+    {research_plan?}
 
     **DOMAIN AND SCOPE RULES**
     - Prioritise Swedish-listed equities and indices on Stockholmsborsen.
@@ -180,7 +226,7 @@ plan_generator = LlmAgent(
     Your goal is to create a high-quality plan without unnecessary searching.
     Only use `google_search` if the ticker, company identity, or market context is ambiguous.
     You are forbidden from deep content research at this stage; detailed analysis is the next agent's job.
-    Current date: {datetime.datetime.now().strftime("%Y-%m-%d")}
+    Current date: {current_date}
     """,
     tools=[google_search],
 )
@@ -214,9 +260,7 @@ section_researcher = LlmAgent(
     model=config.high_throughput_model,
     name="section_researcher",
     description="Specialist analyst for news flow and near-term catalysts.",
-    planner=BuiltInPlanner(
-        thinking_config=genai_types.ThinkingConfig(include_thoughts=True)
-    ),
+    planner=BuiltInPlanner(thinking_config=_thinking_config()),
     instruction="""
     You are the News and Catalyst Analyst for Stockholmsborsen.
     Focus only on:
@@ -242,9 +286,7 @@ technical_analyst = LlmAgent(
     model=config.high_throughput_model,
     name="technical_analyst",
     description="Specialist analyst for technical price structure and momentum signals.",
-    planner=BuiltInPlanner(
-        thinking_config=genai_types.ThinkingConfig(include_thoughts=True)
-    ),
+    planner=BuiltInPlanner(thinking_config=_thinking_config()),
     instruction="""
     You are the Technical Analyst for Stockholmsborsen securities.
     Focus only on technical structure:
@@ -270,9 +312,7 @@ sentiment_analyst = LlmAgent(
     model=config.high_throughput_model,
     name="sentiment_analyst",
     description="Specialist analyst for analyst positioning and market sentiment.",
-    planner=BuiltInPlanner(
-        thinking_config=genai_types.ThinkingConfig(include_thoughts=True)
-    ),
+    planner=BuiltInPlanner(thinking_config=_thinking_config()),
     instruction="""
     You are the Sentiment Analyst for Stockholmsborsen securities.
     Focus on:
@@ -298,9 +338,7 @@ valuation_analyst = LlmAgent(
     model=config.high_throughput_model,
     name="valuation_analyst",
     description="Specialist analyst for valuation context and peer-relative positioning.",
-    planner=BuiltInPlanner(
-        thinking_config=genai_types.ThinkingConfig(include_thoughts=True)
-    ),
+    planner=BuiltInPlanner(thinking_config=_thinking_config()),
     instruction="""
     You are the Valuation Analyst for Stockholmsborsen securities.
     Focus on:
@@ -325,9 +363,7 @@ risk_analyst = LlmAgent(
     model=config.high_throughput_model,
     name="risk_analyst",
     description="Specialist analyst for downside drivers, fragilities, and regime risks.",
-    planner=BuiltInPlanner(
-        thinking_config=genai_types.ThinkingConfig(include_thoughts=True)
-    ),
+    planner=BuiltInPlanner(thinking_config=_thinking_config()),
     instruction="""
     You are the Risk Analyst for Stockholmsborsen securities.
     Focus on:
@@ -401,7 +437,7 @@ research_evaluator = LlmAgent(
     model=config.critic_model,
     name="research_evaluator",
     description="Critically evaluates financial research quality and generates follow-up queries.",
-    instruction=f"""
+    instruction="""
     You are a meticulous quality assurance analyst evaluating the research findings in 'section_research_findings'.
 
     **CRITICAL RULES:**
@@ -414,7 +450,7 @@ research_evaluator = LlmAgent(
     Be strict on quality. If there are meaningful gaps, assign grade "fail", explain what is missing, and generate 5-8 follow-up queries.
     Only assign "pass" when the research is decision-grade and recommendation-ready.
 
-    Current date: {datetime.datetime.now().strftime("%Y-%m-%d")}
+    Current date: {current_date}
     Your response must be a single, raw JSON object validating against the 'Feedback' schema.
     """,
     output_schema=Feedback,
@@ -427,9 +463,7 @@ enhanced_search_executor = LlmAgent(
     model=config.high_throughput_model,
     name="enhanced_search_executor",
     description="Executes follow-up searches and integrates improved financial findings.",
-    planner=BuiltInPlanner(
-        thinking_config=genai_types.ThinkingConfig(include_thoughts=True)
-    ),
+    planner=BuiltInPlanner(thinking_config=_thinking_config()),
     instruction="""
     You are a specialist financial researcher running a refinement pass because the prior draft was graded 'fail'.
 
@@ -820,8 +854,13 @@ research_pipeline = SequentialAgent(
             stop_state_path="debate_outcome.consensus_reached",
             stop_state_value=True,
             sub_agents=[
-                bull_case_analyst,
-                bear_case_analyst,
+                ParallelAgent(
+                    name="debate_parallel_views",
+                    sub_agents=[
+                        bull_case_analyst,
+                        bear_case_analyst,
+                    ],
+                ),
                 debate_facilitator,
             ],
         ),
@@ -833,9 +872,14 @@ research_pipeline = SequentialAgent(
             stop_state_path="risk_management_outcome.consensus_reached",
             stop_state_value=True,
             sub_agents=[
-                risk_aggressive_manager,
-                risk_balanced_manager,
-                risk_defensive_manager,
+                ParallelAgent(
+                    name="risk_parallel_views",
+                    sub_agents=[
+                        risk_aggressive_manager,
+                        risk_balanced_manager,
+                        risk_defensive_manager,
+                    ],
+                ),
                 risk_management_facilitator,
             ],
         ),
@@ -845,13 +889,17 @@ research_pipeline = SequentialAgent(
         monitoring_planner,
         report_composer,
     ],
+    before_agent_callback=[
+        prepare_runtime_metadata_callback,
+        enforce_execution_approval_callback,
+    ],
 )
 
 interactive_planner_agent = LlmAgent(
     name="interactive_planner_agent",
     model=config.worker_model,
     description="Primary Stockholm equity research assistant that plans, refines, and executes only after user approval.",
-    instruction=f"""
+    instruction="""
     You are a financial research planning assistant for Stockholmsborsen analysis.
     Your primary function is to convert any user request into a research plan.
 
@@ -866,13 +914,14 @@ interactive_planner_agent = LlmAgent(
     If the user request lacks key scope details (ticker, time horizon, risk level), include those clarifications in the proposed plan and continue.
     Ensure planning tags are never translated: keep `[RESEARCH]`, `[DELIVERABLE]`, `[NEW]`, `[MODIFIED]`, and `[IMPLIED]` exactly as written.
 
-    Current date: {datetime.datetime.now().strftime("%Y-%m-%d")}
+    Current date: {current_date}
     Do not perform full research yourself. Your job is to plan, refine, and delegate.
     """,
     sub_agents=[research_pipeline],
     tools=[AgentTool(plan_generator)],
     output_key="research_plan",
+    before_agent_callback=prepare_runtime_metadata_callback,
 )
 
 root_agent = interactive_planner_agent
-app = App(root_agent=root_agent, name="app")
+app = _build_app(root_agent)
