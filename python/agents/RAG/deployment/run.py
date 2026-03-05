@@ -50,7 +50,10 @@ def pretty_print_event(event):
             print(f"  Response: {response}")
 
 
-load_dotenv()
+ENV_FILE_PATH = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", ".env")
+)
+load_dotenv(ENV_FILE_PATH, override=True)
 
 vertexai.init(
     project=os.getenv("GOOGLE_CLOUD_PROJECT"),
