@@ -1,3 +1,5 @@
+import pytest
+
 from bigquery_data_agent.agent import app
 
 
@@ -18,7 +20,7 @@ def test_plugins_and_tools():
 
 def test_plugin_configuration():
     """Test that the BigQuery analytics plugin is properly configured."""
-    from google.adk.plugins.bigquery_agent_analytics_plugin import (  # noqa: PLC0415
+    from google.adk.plugins.bigquery_agent_analytics_plugin import (
         BigQueryAgentAnalyticsPlugin,
     )
 
