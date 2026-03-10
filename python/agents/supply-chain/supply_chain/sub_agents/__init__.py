@@ -1,4 +1,4 @@
-# Copyright 2025 Google LLC
+# Copyright 2026 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,13 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
+from .chart_generator.agent import chart_generator_agent
+from .demand_sense.agent import demand_sense_agent
+from .market_pulse.agent import market_pulse_agent
+from .ops_insight.agent import ops_insight_agent
+from .weather_report.agent import weather_report_agent
 
-import google.auth
-
-_, project_id = google.auth.default()
-os.environ.setdefault("GOOGLE_CLOUD_PROJECT", project_id)
-os.environ.setdefault("GOOGLE_CLOUD_LOCATION", "global")
-os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "True")
-
-from .agent import root_agent  # noqa: E402
+__all__ = [
+    "chart_generator_agent",
+    "demand_sense_agent",
+    "market_pulse_agent",
+    "ops_insight_agent",
+    "weather_report_agent",
+]
