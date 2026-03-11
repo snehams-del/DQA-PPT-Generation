@@ -16,7 +16,7 @@ import logging
 import os
 
 import vertexai
-from dotenv import set_key
+from dotenv import load_dotenv, set_key
 from vertexai import agent_engines
 from vertexai.preview.reasoning_engines import AdkApp
 
@@ -25,13 +25,15 @@ from rag.agent import root_agent
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT")
-GOOGLE_CLOUD_LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION")
-STAGING_BUCKET = os.getenv("STAGING_BUCKET")
 # Define the path to the .env file relative to this script
 ENV_FILE_PATH = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", ".env")
 )
+load_dotenv(ENV_FILE_PATH, override=True)
+
+GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT")
+GOOGLE_CLOUD_LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION")
+STAGING_BUCKET = os.getenv("STAGING_BUCKET")
 
 vertexai.init(
     project=GOOGLE_CLOUD_PROJECT,
