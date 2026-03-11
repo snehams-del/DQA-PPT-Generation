@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Financial coordinator: provide reasonable investment strategies"""
+"""Financial coordinator: provide reasonable investment strategies."""
 
 from google.adk.agents import LlmAgent
 from google.adk.tools.agent_tool import AgentTool

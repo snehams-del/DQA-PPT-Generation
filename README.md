@@ -6,16 +6,24 @@
 
 Welcome to the ADK Sample Agents repository! This collection provides ready-to-use agents built on top of the [Agent Development Kit](https://google.github.io/adk-docs/), designed to accelerate your development process. These agents cover a range of common use cases and complexities, from simple conversational bots to complex multi-agent workflows.
 
-## ✨ Getting Started 
-This repo contains ADK sample agents for both **Python** and **Java.** Navigate to the **[Python](python/)** and **[Java](java/)** subfolders to see language-specific setup instructions, and learn more about the available sample agents. 
+## ✨ Getting Started
+This repo contains ADK sample agents for **Python**, **TypeScript**, **Go** and **Java.** Navigate to the **[Python](python/)**, **[TypeScript](typescript/)**, **[Go](go/)**, and **[Java](java/)** subfolders to see language-specific setup instructions, and learn more about the available sample agents.
 
 > [!IMPORTANT]
-> The agents in this repository are built using the **Agent Development Kit (ADK)**. Before you can run any of the samples, you must have the ADK installed. For instructions, please refer to the [**ADK Installation Guide**](https://google.github.io/adk-docs/get-started/installation).
+> The agents in this repository are built using the **Agent Development Kit (ADK)**. Before you can run any of the samples, you must have the ADK installed. For instructions, please refer to the [**ADK Installation Guide**](https://google.github.io/adk-docs/get-started).
 
-To learn more, check out the [ADK Documentation](https://google.github.io/adk-docs/), and the GitHub repositories for [ADK Python](https://github.com/google/adk-python) and [ADK Java](https://github.com/google/adk-java). 
+To learn more, check out the [ADK Documentation](https://google.github.io/adk-docs/), and the GitHub repositories for each language:
+- [ADK Python](https://github.com/google/adk-python)
+- [ADK Typescript](https://github.com/google/adk-js)
+- [ADK Go](https://github.com/google/adk-go)
+- [ADK Java](https://github.com/google/adk-java)
 
 ## 🌳 Repository Structure
 ```bash
+├── go
+│   ├── agents
+│   │   ├── llm-auditor
+│   └── README.md
 ├── java
 │   ├── agents
 │   │   ├── software-bug-assistant
@@ -24,7 +32,9 @@ To learn more, check out the [ADK Documentation](https://google.github.io/adk-do
 ├── python
 │   ├── agents
 │   │   ├── academic-research
+│   │   ├── antom-payment
 │   │   ├── blog-writer
+│   │   ├── brand-aligner
 │   │   ├── brand-search-optimization
 │   │   ├── camel
 │   │   ├── customer-service
@@ -33,16 +43,29 @@ To learn more, check out the [ADK Documentation](https://google.github.io/adk-do
 │   │   ├── financial-advisor
 │   │   ├── fomc-research
 │   │   ├── gemini-fullstack
+│   │   ├── deep-search
+│   │   ├── google-trends-agent
 │   │   ├── image-scoring
 │   │   ├── llm-auditor
 │   │   ├── machine-learning-engineering
 │   │   ├── marketing-agency
+│   │   ├── medical-pre-authorization
 │   │   ├── personalized-shopping
+│   │   ├── plumber-data-engineering-assistant
 │   │   ├── RAG
-│   │   ├── README.md
-│   │   ├── software-bug-assistant  
-│   │   └── travel-concierge
+│   │   ├── realtime-conversational-agent
+│   │   ├── safety-plugins
+│   │   ├── short-movie-agents
+│   │   ├── software-bug-assistant
+│   │   ├── story_teller
+│   │   ├── supply-chain
+│   │   ├── travel-concierge
+│   │   └── README.md
 │   └── README.md
+├── typescript
+│   ├── agents
+│   │   ├── customer_service
+│   └── README.md
 └── README.md
 ```
 
