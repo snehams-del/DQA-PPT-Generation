@@ -2,7 +2,7 @@
 name = "persona-ad-gen"
 version = "0.1.0"
 description = "Personalized Ad Creation Engine: An AI agent that generates advertising assets from your photos."
-authors = ["Michael Bettan <mbettan@google.com>"]
+authors = ["Michael Bettan"]
 license = "Apache License 2.0"
 readme = "README.md"
 packages = [{include = "persona_ad_gen", from = "src"}]
