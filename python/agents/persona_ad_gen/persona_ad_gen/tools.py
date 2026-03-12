@@ -12,7 +12,7 @@ import google.genai as genai
 from google.genai.types import GenerateContentConfig, Part
 
 # Use the image generation model with Google Gen AI SDK
-EDIT_MODEL = "gemini-2.5-flash-image-preview"
+EDIT_MODEL = "gemini-3.1-flash-image-preview"
 
 def confirm_and_save_persona_brief(
     ideal_customer: str, core_message: str, tone_of_voice: str, 
@@ -242,10 +242,24 @@ async def edit_scene_image(
         print(f"🎨 Editing image '{base_image_filename}' for scene '{output_filename}'...")
         
         # Load the base image artifact
+        # We try to load the provided filename, but also fallback to the base_image_filename in state
+        # in case the agent is using a generic name like 'input_file_0.png'
         base_image_part = await tool_context.load_artifact(filename=base_image_filename)
+        
+        if not base_image_part and "base_image_filename" in tool_context.state:
+            fallback_filename = tool_context.state["base_image_filename"]
+            print(f"⚠️ Could not load artifact '{base_image_filename}', trying fallback '{fallback_filename}' from state...")
+            base_image_part = await tool_context.load_artifact(filename=fallback_filename)
             
         if not base_image_part:
-            raise ValueError(f"Could not load base image artifact: {base_image_filename}")
+            # Last resort: try to find ANY image artifact if we're stuck
+            print("⚠️ Could not load artifact from state, checking for any available image artifacts...")
+            # This is a bit of a hack but helps recovery
+            if "input_file_0.png" != base_image_filename:
+                 base_image_part = await tool_context.load_artifact(filename="input_file_0.png")
+
+        if not base_image_part:
+            raise ValueError(f"Could not load base image artifact: {base_image_filename}. I tried fallback names but none were found.")
 
         # Debug: Check what type of object we got from load_artifact
         print(f"Base image part type: {type(base_image_part)}")

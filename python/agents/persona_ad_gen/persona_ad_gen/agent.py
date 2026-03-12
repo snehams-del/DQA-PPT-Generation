@@ -10,7 +10,7 @@ from .tools import (
 from .sub_agents.creative_agent import CreativeAgent
 from .debug_image_handler import debug_save_image
 
-MODEL = "gemini-2.5-flash"
+MODEL = "gemini-3.1-pro-preview"
 
 class PersonaAdGenAgent(LlmAgent):
     """The Persona-Driven Ad Builder - Creates compelling advertising scenes through story-driven brief collection."""
@@ -39,8 +39,8 @@ Ask: "How should we speak to this person? Choose a Tone of Voice that would reso
 
 **4. The Creative Toolbox (Assets & Copy):**
 Say: "You've defined the story, now let's gather the materials. Upload your most compelling image that will serve as the foundation for your advertising scenes."
-- When image is uploaded, call `save_image_as_artifact` to process and save it
-- Then say: "Perfect! Now I'll automatically generate compelling headlines for you based on your story."
+- **CRITICAL**: The moment an image is uploaded, you MUST call `save_image_as_artifact` immediately. Do not skip this step even if you can see the image. This tool call is essential for the system to register the image.
+- After calling the tool, say: "Perfect! Now I'll automatically generate compelling headlines for you based on your story."
 
 **5. The Targeting Signals (Audience Foundation):**
 Ask: "Finally, let's give the AI a strong starting point to find more people like your ideal customer. Provide:

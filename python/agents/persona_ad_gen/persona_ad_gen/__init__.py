@@ -1,1 +1,1 @@
-from .agent import PersonaAdGenAgent
+from .agent import PersonaAdGenAgent, root_agent

@@ -5,7 +5,7 @@ from google.adk.tools import FunctionTool
 # Import the new editing tool
 from ..tools import edit_scene_image
 
-MODEL = "gemini-2.5-flash"
+MODEL = "gemini-3.1-pro-preview"
 
 class CreativeAgent(LlmAgent):
     """A sub-agent specializing in generating editing plans and executing them."""

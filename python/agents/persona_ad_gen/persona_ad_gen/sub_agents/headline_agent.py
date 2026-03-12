@@ -4,7 +4,7 @@ from google.adk.tools import ToolContext
 import google.genai as genai
 import os
 
-MODEL = "gemini-2.5-flash"
+MODEL = "gemini-3.1-pro-preview"
 
 async def generate_headlines_from_brief(tool_context: ToolContext) -> str:
     """

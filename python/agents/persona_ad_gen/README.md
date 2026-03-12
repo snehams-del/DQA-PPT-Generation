@@ -154,7 +154,7 @@ The agent has access to the following tools:
 
    Create a `.env` file in the project root with the following variables:
    ```bash
-   # Google Cloud Project Configuration (global is must have for Gemini 2.5 Flash Images)
+   # Google Cloud Project Configuration (global is must have for Gemini 3 Flash Images)
    export GOOGLE_CLOUD_PROJECT=your-project-id
    export GOOGLE_CLOUD_LOCATION=global
    
@@ -291,13 +291,13 @@ Evaluation tests assess the agent's conversation flow and response accuracy.
 ### Model Configuration
 
 The agent uses the following models:
-- **Main Agent:** `gemini-2.5-flash` for conversation and reasoning
-- **Image Generation:** `gemini-2.5-flash-image-preview` for creating advertising scenes
+- **Main Agent:** `gemini-3.1-pro-preview` for conversation and reasoning
+- **Image Generation:** `gemini-3.1-flash-image-preview` for creating advertising scenes
 
 You can modify these in `persona_ad_gen/agent.py`:
 
 ```python
-MODEL = "gemini-2.5-flash"  # Change this to use a different model (e.g., Gemini 2.5 Pro)
+MODEL = "gemini-3.1-pro-preview"  # Change this to use a different model (e.g., Gemini 3.1 Pro)
 ```
 
 ### Session State Structure
@@ -417,7 +417,7 @@ eval/
 3. **Image generation failures:**
    - Verify that `GOOGLE_GENAI_USE_VERTEXAI` is correctly set
    - Check API quotas and limits in your Google Cloud project
-   - Ensure the model `gemini-2.5-flash-image-preview` is available in your region
+   - Ensure the model `gemini-3.1-flash-image-preview` is available in your region
 
 4. **Missing environment variables:**
    - Ensure all required variables are set in your `.env` file
