@@ -20,13 +20,18 @@ set -e
 
 # Load environment variables from .env file
 SCRIPT_DIR="$(dirname "$0")"
-ENV_FILE="${SCRIPT_DIR}/../.env"
-if [ -f "$ENV_FILE" ]; then
-  source "$ENV_FILE"
+
+# Prioritize .env in the current working directory (e.g., when run inside a scaffolded project)
+if [ -f "$PWD/.env" ]; then
+  ENV_FILE="$PWD/.env"
+elif [ -f "${SCRIPT_DIR}/../.env" ]; then
+  ENV_FILE="${SCRIPT_DIR}/../.env"
 else
-  echo "Error: .env file not found at $ENV_FILE"
+  echo "Error: .env file not found"
   exit 1
 fi
+
+source "$ENV_FILE"
 
 # Get the project ID from environment variable
 PROJECT_ID="$GOOGLE_CLOUD_PROJECT"

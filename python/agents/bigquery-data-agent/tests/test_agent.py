@@ -1,5 +1,9 @@
-import pytest
+from google.adk.plugins.bigquery_agent_analytics_plugin import (
+    BigQueryAgentAnalyticsPlugin,
+)
+
 from bigquery_data_agent.agent import app
+
 
 def test_app_initialization():
     """Test that the application and agent initialize correctly."""
@@ -18,8 +22,6 @@ def test_plugins_and_tools():
 
 def test_plugin_configuration():
     """Test that the BigQuery analytics plugin is properly configured."""
-    from google.adk.plugins.bigquery_agent_analytics_plugin import BigQueryAgentAnalyticsPlugin
-    
     # Assert that at least one plugin is the analytics plugin
     analytics_plugins = [p for p in app.plugins if isinstance(p, BigQueryAgentAnalyticsPlugin)]
     assert len(analytics_plugins) == 1
