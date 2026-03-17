@@ -40,12 +40,14 @@ if not PROJECT_ID:
     print("Warning: Could not determine GOOGLE_CLOUD_PROJECT from credentials or environment. Agent may fail.", file=sys.stderr)
 
 DATASET_ID = os.environ.get("BQ_ANALYTICS_DATASET_ID", "adk_agent_analytics")
+TABLE_ID = os.environ.get("BQ_ANALYTICS_TABLE_ID", "agent_events")
 
 # --- Initialize the Plugin ---
 plugins = []
 bq_logging_plugin = BigQueryAgentAnalyticsPlugin(
     project_id=PROJECT_ID,
     dataset_id=DATASET_ID,
+    table_id=TABLE_ID,
 )
 plugins.append(bq_logging_plugin)
 

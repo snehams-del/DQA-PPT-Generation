@@ -34,6 +34,7 @@ example_question = "What are the most popular programming languages on GitHub ba
 
 [tool.agent-starter-pack.settings]
 agent_directory = "bigquery_data_agent"
+bq_analytics = true
 
 [build-system]
 requires = ["hatchling"]
