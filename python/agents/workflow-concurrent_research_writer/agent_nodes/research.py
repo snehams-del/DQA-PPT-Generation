@@ -1,6 +1,5 @@
 from google.adk.agents.llm_agent import LlmAgent
 from google.adk.agents.workflow.parallel_worker import ParallelWorker
-
 from src.prompts import (
     JOIN_AND_DISTILL_PROMPT,
 )
