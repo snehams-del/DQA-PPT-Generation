@@ -41,8 +41,8 @@ async def length_router_node(
 
 
 async def post_node(
-        platform: str, node_input: str
-) -> AsyncGenerator[Union[Event, str], None]:
+    platform: str, node_input: str
+) -> AsyncGenerator[Event | str, None]:
     """Posts the main article to a platform and yields a single Event with a list of routes for shoutouts."""
     blog_post = node_input
     await post_to_platform(platform, blog_post)
