@@ -17,7 +17,9 @@ async def start_research_node(
     yield platforms_to_research
 
 
-async def combine_reports_node(node_input: Content) -> AsyncGenerator[str, None]:
+async def combine_reports_node(
+    node_input: Content,
+) -> AsyncGenerator[str, None]:
     """Takes the Content object from parallel agents and joins their text parts into a single string."""
     if node_input.parts is None:
         yield "No reports received from"
