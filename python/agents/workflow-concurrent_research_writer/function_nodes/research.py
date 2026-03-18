@@ -1,9 +1,8 @@
 from collections.abc import AsyncGenerator
 
 from google.adk.agents.workflow.events.event import Event
-from google.genai.types import Part, ModelContent, Content
-
-from src.tools import execute_search
+from google.adk.agents.workflow.function_node import FunctionNode
+from google.genai.types import Content, ModelContent, Part
 
 
 async def start_research_node(
