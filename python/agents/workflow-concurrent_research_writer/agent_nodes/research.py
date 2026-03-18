@@ -5,7 +5,6 @@ from src.prompts import (
 )
 from src.tools import execute_search
 
-
 # The LlmAgent that will be run in parallel for each platform.
 _research_worker_llm_agent = LlmAgent(
     # The name for the inner agent is not strictly necessary for the
