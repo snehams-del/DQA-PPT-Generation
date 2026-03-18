@@ -7,7 +7,7 @@ from google.genai.types import Content, ModelContent, Part
 
 async def start_research_node(
     node_input: Content,
-) -> AsyncGenerator[Union[Event, list[str]], None]:
+) -> AsyncGenerator[Event | list[str], None]:
     """Entry node for the research workflow. Puts the topic in state and yields a list of platforms to research."""
     topic = str(node_input.parts[0].text if node_input.parts else "")
     print(f"START_WORKFLOW 1: Research for topic: '{topic}'")
