@@ -1,6 +1,5 @@
 from collections.abc import AsyncGenerator
 
-from google.adk.agents.workflow.function_node import FunctionNode
 from google.adk.agents.workflow.events.event import Event
 
 from src.tools import post_to_platform
