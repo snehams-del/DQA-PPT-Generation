@@ -23,7 +23,7 @@ async def start_blog_node(
 
 async def length_router_node(
     node_input: str,
-) -> AsyncGenerator[Union[Event, str], None]:
+) -> AsyncGenerator[Event | str, None]:
     """Routes the blog post based on its word count."""
     blog_post = node_input
     num_words = len(blog_post.split())
