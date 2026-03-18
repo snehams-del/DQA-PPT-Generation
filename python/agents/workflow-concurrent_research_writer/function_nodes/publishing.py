@@ -1,5 +1,4 @@
-import asyncio
-from typing import AsyncGenerator, Union
+from collections.abc import AsyncGenerator
 
 from google.adk.agents.workflow.function_node import FunctionNode
 from google.adk.agents.workflow.events.event import Event
