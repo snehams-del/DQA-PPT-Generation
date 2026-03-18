@@ -3,6 +3,7 @@ from collections.abc import AsyncGenerator
 from google.adk.agents.workflow.events.event import Event
 from google.adk.agents.workflow.function_node import FunctionNode
 from google.genai.types import Content
+from src.tools import post_to_platform
 
 # --- Workflow 2 Nodes: Blog and Publish ---
 
