@@ -33,7 +33,9 @@ async def combine_reports_node(
         yield "\n\n---\n\n".join(report_texts)
 
 
-async def save_report_node(node_input: str) -> AsyncGenerator[Union[Event, ModelContent], None]:
+async def save_report_node(
+    node_input: str,
+) -> AsyncGenerator[Event | ModelContent, None]:
     """Saves the generated report to state and yields it for the user."""
     print("STATE_UPDATE: Saving generated report to session state.")
     yield Event(state={"research_report": node_input})
@@ -42,15 +44,11 @@ async def save_report_node(node_input: str) -> AsyncGenerator[Union[Event, Model
 
 # Node Wrappers
 start_node = FunctionNode(
-    start_research_node, 
-    name="Start Research Node", 
-    rerun_on_resume=True
+    start_research_node, name="Start Research Node", rerun_on_resume=True
 )
 
 combine_reports = FunctionNode(combine_reports_node, name="Combine Reports")
 
 save_node = FunctionNode(
-    save_report_node,
-    name="Save Report Node",
-    rerun_on_resume=False
+    save_report_node, name="Save Report Node", rerun_on_resume=False
 )

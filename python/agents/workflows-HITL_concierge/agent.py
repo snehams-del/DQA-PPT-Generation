@@ -1,19 +1,17 @@
-import json
-from typing import List, Dict, Any
+from google.adk.agents.llm_agent import LlmAgent
+from google.adk.agents.workflow.events.request_input import RequestInput
+from google.adk.agents.workflow.workflow_agent import WorkflowAgent
+from google.adk.agents.workflow.workflow_context import Context
+from google.genai.types import UserContent
 from pydantic import BaseModel
 
-from google.adk.agents.llm_agent import LlmAgent
-from google.adk.agents.workflow.workflow_agent import WorkflowAgent
-from google.adk.agents.workflow.events.request_input import RequestInput
-from google.adk.agents.workflow.workflow_context import Context
-
-from google.genai.types import UserContent
 
 # --- Data classes ---
 class ActivitiesList(BaseModel):
     """Itinerary should be a list of dictionaries for each activity. Each
     activity has a name and a description"""
-    itinerary: List[Dict[str, str]]
+
+    itinerary: list[dict[str, str]]
 
 
 # --- Agents ---
@@ -30,7 +28,7 @@ concierge_agent = LlmAgent(
         If the user gives you more details about themselves then take those into 
         account when compiling a list of activities to do for the user.
     """,
-    output_schema=ActivitiesList
+    output_schema=ActivitiesList,
 )
 
 
@@ -54,23 +52,23 @@ async def initial_prompt(ctx: Context):
 
     yield RequestInput(message=input_message, response_schema=resp)
 
+
 async def get_user_feedback(node_input: ActivitiesList):
     """
-    Retrieves the user's thoughts on the agents initial itinerary in order to 
+    Retrieves the user's thoughts on the agents initial itinerary in order to
     either expand on, change the list, or exit the loop
     """
-    message = (
-        f"""
+    message = f"""
         Here is your recommended base itinerary:\n{node_input}\n\n
         Which of these items appeal to you (if any)?
         """
-    )
 
     yield RequestInput(
-        message=message, 
-        payload=node_input, 
-        response_schema={"user":"response"}
+        message=message,
+        payload=node_input,
+        response_schema={"user": "response"},
     )
+
 
 async def process_feedback(node_input: str):
     yield UserContent(f"Feedback: {node_input}.")
@@ -82,14 +80,12 @@ root_agent = WorkflowAgent(
     rerun_on_resume=True,
     edges=[
         (
-            "START", 
-            initial_prompt, 
-            concierge_agent, 
-            get_user_feedback, 
-            process_feedback
+            "START",
+            initial_prompt,
+            concierge_agent,
+            get_user_feedback,
+            process_feedback,
         ),
-        (process_feedback, concierge_agent)
-    ]
+        (process_feedback, concierge_agent),
+    ],
 )
-
-
