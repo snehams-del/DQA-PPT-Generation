@@ -11,7 +11,9 @@ X_MAX_WORDS = 100
 LINKEDIN_MAX_WORDS = 300
 
 
-async def start_blog_node(node_input: Content) -> AsyncGenerator[Union[Event, str], None]:
+async def start_blog_node(
+    node_input: Content,
+) -> AsyncGenerator[Event | str, None]:
     """Entry node for the blog workflow, takes user thesis from Content object."""
     thesis = str(node_input.parts[0].text if node_input.parts else "")
     print(f"START_WORKFLOW 2: Blog post with thesis: '{thesis}'")
