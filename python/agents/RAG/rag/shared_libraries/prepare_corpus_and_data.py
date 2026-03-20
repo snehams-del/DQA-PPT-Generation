@@ -22,10 +22,18 @@ from google.api_core.exceptions import ResourceExhausted
 from google.auth import default
 from vertexai.preview import rag
 
-# Load environment variables from .env file
-load_dotenv()
-
 # --- Please fill in your configurations ---
+# Load environment variables from .env file
+# Try finding .env in the current working directory first (e.g. scaffolded project)
+cwd_env = os.path.join(os.getcwd(), ".env")
+if os.path.exists(cwd_env):
+    ENV_FILE_PATH = cwd_env
+else:
+    ENV_FILE_PATH = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "..", ".env")
+    )
+load_dotenv(ENV_FILE_PATH)
+
 # Retrieve the PROJECT_ID from the environmental variables.
 PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT")
 if not PROJECT_ID:
@@ -37,13 +45,10 @@ if not LOCATION:
     raise ValueError(
         "GOOGLE_CLOUD_LOCATION environment variable not set. Please set it in your .env file."
     )
-CORPUS_DISPLAY_NAME = "Alphabet_10K_2024_corpus"
-CORPUS_DESCRIPTION = "Corpus containing Alphabet's 10-K 2024 document"
-PDF_URL = "https://abc.xyz/assets/77/51/9841ad5c4fbe85b4440c47a4df8d/goog-10-k-2024.pdf"
-PDF_FILENAME = "goog-10-k-2024.pdf"
-ENV_FILE_PATH = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..", "..", ".env")
-)
+CORPUS_DISPLAY_NAME = "Alphabet_10K_2025_corpus"
+CORPUS_DESCRIPTION = "Corpus containing Alphabet's 10-K 2025 document"
+PDF_URL = "https://s206.q4cdn.com/479360582/files/doc_financials/2025/q4/GOOG-10-K-2025.pdf"
+PDF_FILENAME = "goog-10-k-2025.pdf"
 
 
 # --- Start of the script ---
@@ -155,7 +160,7 @@ def main():
             corpus_name=corpus.name,
             pdf_path=pdf_path,
             display_name=PDF_FILENAME,
-            description="Alphabet's 10-K 2024 document",
+            description="Alphabet's 10-K 2025 document",
         )
 
     # List all files in the corpus
