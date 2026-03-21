@@ -270,7 +270,7 @@ CRITICAL: Call the tool exactly ONCE and return the result. Do not loop or retry
 # stricter or domain-specific policy is required.
 
 MODEL_ARMOR_CONFIG = {
-    # Master switch — set MODEL_ARMOR_ENABLED=true in Cloud Run / .env
+    # Primary switch — set MODEL_ARMOR_ENABLED=true in Cloud Run / .env
     "enabled": os.environ.get("MODEL_ARMOR_ENABLED", "false").lower() == "true",
     # Optional template for fine-grained per-deployment policy
     # Format: projects/{project}/locations/{location}/templates/{template_id}
