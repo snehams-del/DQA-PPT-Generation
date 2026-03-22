@@ -11,8 +11,18 @@ jobs:
     outputs:
       # The output is a JSON array of agent directories to be built, e.g., ["agents/agent-a", "agents/agent-c"]
       matrix: ${{ steps.set-matrix.outputs.matrix }}
+      is_fork: ${{ steps.fork-check.outputs.is_fork }}
 
     steps:
+      - name: Check if PR is from a fork
+        id: fork-check
+        run: |
+          if [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]; then
+            echo "is_fork=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_fork=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Checkout code
         uses: actions/checkout@v5
         with:
@@ -65,11 +75,35 @@ jobs:
         env:
           STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES: ${{ steps.changed_files.outputs.all_changed_files }}
 
-  # JOB 2: Build, test, and interact with GCP for each changed agent.
+  # JOB 2: Notify when GCP checks are skipped for fork PRs.
+  fork-pr-notice:
+    name: Fork PR Notice
+    needs: discover-changed-agents
+    if: needs.discover-changed-agents.outputs.is_fork == 'true' && needs.discover-changed-agents.outputs.matrix != '[]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fork PR — GCP checks skipped
+        run: |
+          echo "============================================================"
+          echo "  This PR is from a fork."
+          echo ""
+          echo "  GCP-authenticated checks (lint via ASP, integration tests)"
+          echo "  have been skipped because GitHub Actions does not provide"
+          echo "  OIDC tokens to workflows triggered by fork PRs."
+          echo ""
+          echo "  This is expected and does not indicate a problem with your"
+          echo "  code. The ruff-checks workflow still runs and provides"
+          echo "  lint feedback."
+          echo ""
+          echo "  A maintainer can re-run the full CI suite by pushing your"
+          echo "  changes to a branch within the upstream repository."
+          echo "============================================================"
+
+  # JOB 3: Build, test, and interact with GCP for each changed agent.
   test-agent-template:
     name: ${{ matrix.task }} | ${{ matrix.agent_path }} (${{ matrix.deployment_target }})
     needs: discover-changed-agents
-    if: needs.discover-changed-agents.outputs.matrix != '[]'
+    if: needs.discover-changed-agents.outputs.is_fork != 'true' && needs.discover-changed-agents.outputs.matrix != '[]'
     runs-on: ubuntu-latest
 
     # --- PERMISSIONS BLOCK FOR OIDC AUTHENTICATION ---
