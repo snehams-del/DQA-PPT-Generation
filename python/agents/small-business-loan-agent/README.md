@@ -384,12 +384,11 @@ uv run pytest tests/integration
 
 ## F. Evaluation
 
-The agent includes an ADK evaluation notebook with 4 test cases covering:
+The agent includes an ADK evaluation notebook with 3 test cases covering:
 
 | Test Case                            | Description                                 | Turns |
 | ------------------------------------ | ------------------------------------------- | ----- |
 | `happy_path_with_approval`           | Full end-to-end flow with user approval     | 2     |
-| `check_process_status_completed`     | Status check for a completed loan           | 1     |
 | `stop_for_reparation_missing_fields` | Incomplete application triggers repair      | 1     |
 | `resume_after_repair`                | Resume from checkpoint after offline repair | 1     |
 
