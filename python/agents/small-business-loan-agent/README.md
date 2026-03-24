@@ -17,16 +17,16 @@ A multi-agent system built with the [Google Agent Development Kit (ADK)](https:/
 
 ### Key Features
 
-| Feature                            | Description                                                                                          |
-| ---------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| **Multi-Agent Orchestration**      | Orchestrator coordinates 4 specialized sub-agents via `AgentTool` in a sequential workflow           |
-| **Multimodal Document Extraction** | Gemini 3.1 Pro Preview reads loan application PDFs natively                                          |
-| **Structured Output**              | Each sub-agent returns validated Pydantic models via `output_schema` / `output_key`                  |
-| **Human-in-the-Loop (HITL)**       | Orchestrator pauses after pricing to present results and wait for explicit user approval             |
-| **LLM-as-Judge Gate**              | After-agent callback validates trajectory correctness and data grounding before showing responses    |
+| Feature                            | Description                                                                                             |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| **Multi-Agent Orchestration**      | Orchestrator coordinates 4 specialized sub-agents via `AgentTool` in a sequential workflow              |
+| **Multimodal Document Extraction** | Gemini 3.1 Pro Preview reads loan application PDFs natively                                             |
+| **Structured Output**              | Each sub-agent returns validated Pydantic models via `output_schema` / `output_key`                     |
+| **Human-in-the-Loop (HITL)**       | Orchestrator pauses after pricing to present results and wait for explicit user approval                |
+| **LLM-as-Judge Gate**              | After-agent callback validates trajectory correctness and data grounding before showing responses       |
 | **Repair & Resume**                | Firestore workflow management tracks each step; workflow can pause on errors and resume from checkpoint |
-| **Before/After Callbacks**         | State checks before each sub-agent; state logging and issue detection after each sub-agent           |
-| **Before-Tool Callback**           | Process halt check prevents agents from executing when workflow is in error/pending state            |
+| **Before/After Callbacks**         | State checks before each sub-agent; state logging and issue detection after each sub-agent              |
+| **Before-Tool Callback**           | Process halt check prevents agents from executing when workflow is in error/pending state               |
 
 ### Example Interaction
 
@@ -65,6 +65,7 @@ Agent: [Calls LoanDecisionAgent -> finalizes decision]
 **Pause, Repair & Resume example** (using `data/sample_application_incomplete.pdf` which has missing fields):
 
 A. submit the incomplete application
+
 ```
 User: Process this application for SBL-2025-00391
       [uploads sample_application_incomplete.pdf]
@@ -83,12 +84,15 @@ Agent: [check_process_status -> initializes new process]
 
        Reference: SBL-2025-00391
 ```
+
 B. Repair the data in Firestore:
 
 1. Open the [Firestore Console](https://console.cloud.google.com/firestore) and select the `session-states` database
 2. Navigate to **`process_states`** collection → document **`SBL-2025-00391`**
 3. Under `steps.DocumentExtractionAgent.data`, fill in the missing field:
-  - Set `loan_amount_requested` to the correct value (e.g., `150000`)
+
+- Set `loan_amount_requested` to the correct value (e.g., `150000`)
+
 4. Update `steps.DocumentExtractionAgent.status` from `pending_approval` → `completed`
 5. Update the root `overall_status` from `pending_approval` → `active`
 
@@ -238,13 +242,14 @@ Process State (per loan_request_id)
 
 - Python 3.11+
 - uv
-    * For dependency management and packaging. Please follow the
-        instructions on the official
-        [uv website](https://docs.astral.sh/uv/) for installation.
+  - For dependency management and packaging. Please follow the
+    instructions on the official
+    [uv website](https://docs.astral.sh/uv/) for installation.
 
-    ```bash
-    curl -LsSf https://astral.sh/uv/install.sh | sh
-    ```
+  ```bash
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+  ```
+
 - Google Cloud project with Vertex AI API and Firestore enabled
 - `gcloud` CLI authenticated
 
@@ -415,10 +420,10 @@ See [ADK Evaluation docs](https://google.github.io/adk-docs/evaluate/) for more 
 
 ## G. Deploy
 
-Use the [Agent Starter Pack](https://goo.gle/agent-starter-pack) to create a production-ready version of this agent with deployment options:
+Use the [Agent Starter Pack](https://goo.gle/agent-starter-pack) to create a production-ready version of this agent with deployment options. Run this command from the root of the `adk-samples` repository:
 
 ```bash
-uvx agent-starter-pack create my-loan-agent -a adk@small-business-loan-agent
+uvx agent-starter-pack create my-loan-agent -a local@python/agents/small-business-loan-agent
 ```
 
 <details>
@@ -427,17 +432,24 @@ uvx agent-starter-pack create my-loan-agent -a adk@small-business-loan-agent
 ```bash
 python -m venv .venv && source .venv/bin/activate # On Windows: .venv\Scripts\activate
 pip install --upgrade agent-starter-pack
-agent-starter-pack create my-loan-agent -a adk@small-business-loan-agent
+agent-starter-pack create my-loan-agent -a local@python/agents/small-business-loan-agent
 ```
 
 </details>
 
 The starter pack will prompt you to select deployment options and provides additional production-ready features including automated CI/CD deployment scripts.
 
-When deploying to Agent Engine via the starter pack, pass the required environment variables:
+When deploying to Agent Engine, pass the required environment variables using `--set-env-vars` directly via the deploy script (the Makefile does not forward this flag):
 
 ```bash
-make deploy -- --set-env-vars "GCP_FIRESTORE_DB=session-states,GOOGLE_CLOUD_LOCATION=global"
+cd my-loan-agent && \
+uv export --no-hashes --no-header --no-dev --no-emit-project --no-annotate > small_business_loan_agent/app_utils/.requirements.txt && \
+uv run -m small_business_loan_agent.app_utils.deploy \
+    --source-packages=./small_business_loan_agent \
+    --entrypoint-module=small_business_loan_agent.agent_engine_app \
+    --entrypoint-object=agent_engine \
+    --requirements-file=small_business_loan_agent/app_utils/.requirements.txt \
+    --set-env-vars="GCP_FIRESTORE_DB=session-states,GOOGLE_CLOUD_LOCATION=global"
 ```
 
 > **Note:** `GOOGLE_CLOUD_LOCATION=global` is required because the Gemini preview model used by this agent is only available in the `global` region, while Agent Engine deploys to a specific region (e.g., `us-central1`). The starter pack preserves this value for model calls.
