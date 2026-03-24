@@ -38,25 +38,18 @@ def inject_document_into_request(
         logger.error(f"Failed to decode document base64: {e}")
         return None
 
-    doc_part = types.Part(
-        inline_data=types.Blob(mime_type=mime_type, data=raw_bytes)
-    )
+    doc_part = types.Part(inline_data=types.Blob(mime_type=mime_type, data=raw_bytes))
 
     # Append the document as a user content entry so the model can see it
     llm_request.contents.append(
         types.Content(
             role="user",
             parts=[
-                types.Part(
-                    text="Here is the loan application document to extract data from:"
-                ),
+                types.Part(text="Here is the loan application document to extract data from:"),
                 doc_part,
             ],
         )
     )
 
-    logger.info(
-        f"Injected document into LLM request: "
-        f"mime_type={mime_type}, size={len(raw_bytes)} bytes"
-    )
+    logger.info(f"Injected document into LLM request: mime_type={mime_type}, size={len(raw_bytes)} bytes")
     return None

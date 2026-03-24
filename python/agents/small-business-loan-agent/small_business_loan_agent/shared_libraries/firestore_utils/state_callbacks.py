@@ -45,14 +45,10 @@ def _get_agent_name(callback_context: CallbackContext) -> str:
     return agent.name if agent else "UnknownAgent"
 
 
-def _build_cannot_proceed_error(
-    agent_name: str, process_state: dict | None, request_id: str
-) -> str:
+def _build_cannot_proceed_error(agent_name: str, process_state: dict | None, request_id: str) -> str:
     """Build a descriptive error message when an agent cannot proceed."""
     if not process_state:
-        return (
-            f"Cannot proceed to {agent_name}: Process state not found for {request_id}"
-        )
+        return f"Cannot proceed to {agent_name}: Process state not found for {request_id}"
 
     overall_status = process_state.get("overall_status")
 
@@ -79,17 +75,14 @@ async def before_agent_callback_with_state_check(
 
     if not enterprise_id:
         raise ValueError(
-            f"No loan_request_id found for {agent_name}. "
-            f"Please provide a request ID in the format SBL-YYYY-XXXXX."
+            f"No loan_request_id found for {agent_name}. Please provide a request ID in the format SBL-YYYY-XXXXX."
         )
 
     state_service = ProcessStateService()
 
     if not state_service.can_proceed_to_step(enterprise_id, agent_name):
         process_state = state_service.get_process_status(enterprise_id)
-        error_msg = _build_cannot_proceed_error(
-            agent_name, process_state, enterprise_id
-        )
+        error_msg = _build_cannot_proceed_error(agent_name, process_state, enterprise_id)
         raise Exception(error_msg)
 
     process_state = state_service.get_process_status(enterprise_id)
@@ -132,9 +125,7 @@ def _check_for_issues(agent_name: str, output_data) -> tuple[bool, str, list]:
         eligibility_status = output_data.get("eligibility_status")
         if eligibility_status == "INELIGIBLE":
             requires_review = True
-            issue_description = (
-                "Application failed eligibility check - requires manual review"
-            )
+            issue_description = "Application failed eligibility check - requires manual review"
 
     return requires_review, issue_description, missing_fields
 
@@ -146,9 +137,7 @@ def _persist_step_result(
     output_data,
 ) -> None:
     """Persist the agent step result to Firestore."""
-    requires_review, issue_description, missing_fields = _check_for_issues(
-        agent_name, output_data
-    )
+    requires_review, issue_description, missing_fields = _check_for_issues(agent_name, output_data)
     data = output_data if isinstance(output_data, dict) else None
 
     if requires_review:
@@ -171,9 +160,7 @@ def _persist_step_result(
 
         if agent_name == ProcessStateService.STEP_LOAN_DECISION:
             state_service.mark_process_complete(request_id)
-            logger.info(
-                f"All steps completed - marked process {request_id} as complete"
-            )
+            logger.info(f"All steps completed - marked process {request_id} as complete")
 
 
 async def after_agent_callback_with_state_logging(
@@ -185,18 +172,14 @@ async def after_agent_callback_with_state_logging(
         agent_name = _get_agent_name(callback_context)
 
         if not request_id:
-            logger.warning(
-                f"No loan_request_id found for {agent_name} - skipping state logging"
-            )
+            logger.warning(f"No loan_request_id found for {agent_name} - skipping state logging")
             return
 
         output_key = AGENT_OUTPUT_KEY_MAP.get(agent_name)
         output_data = callback_context.state.get(output_key) if output_key else None
 
         if not output_data:
-            logger.warning(
-                f"No output data found for {agent_name} with key {output_key}"
-            )
+            logger.warning(f"No output data found for {agent_name} with key {output_key}")
 
         state_service = ProcessStateService()
         _persist_step_result(state_service, request_id, agent_name, output_data)

@@ -129,21 +129,15 @@ async def llm_judge_gate(
     request_id = callback_context.state.get("loan_request_id")
 
     try:
-        tool_sequence, final_response, user_message = (
-            _extract_tool_sequence_and_messages(callback_context)
-        )
+        tool_sequence, final_response, user_message = _extract_tool_sequence_and_messages(callback_context)
         agent_outputs = _collect_agent_outputs(callback_context)
 
         logger.info(f"LLM Judge evaluating response for {request_id}")
         logger.info(f"Tool sequence: {' -> '.join(tool_sequence)}")
 
         judge_input = JUDGE_PROMPT.format(
-            agent_outputs=json.dumps(agent_outputs, indent=2, default=str)
-            if agent_outputs
-            else "No agent outputs",
-            tool_sequence=" -> ".join(tool_sequence)
-            if tool_sequence
-            else "No tools called",
+            agent_outputs=json.dumps(agent_outputs, indent=2, default=str) if agent_outputs else "No agent outputs",
+            tool_sequence=" -> ".join(tool_sequence) if tool_sequence else "No tools called",
             user_message=user_message or "No user message",
             final_response=final_response or "No response",
         )

@@ -62,21 +62,11 @@ def finalize_loan_decision(tool_context: ToolContext) -> dict:
         decision_letter_id = f"DL-{loan_request_id.replace('SBL-', '')}-001"
 
         # Extract approved terms from pricing
-        approved_rate = (
-            pricing_data.get("interest_rate", "N/A")
-            if isinstance(pricing_data, dict)
-            else "N/A"
-        )
+        approved_rate = pricing_data.get("interest_rate", "N/A") if isinstance(pricing_data, dict) else "N/A"
         loan_amount = (
-            application_data.get("loan_amount_requested", "N/A")
-            if isinstance(application_data, dict)
-            else "N/A"
+            application_data.get("loan_amount_requested", "N/A") if isinstance(application_data, dict) else "N/A"
         )
-        loan_term = (
-            application_data.get("loan_term_months", "N/A")
-            if isinstance(application_data, dict)
-            else "N/A"
-        )
+        loan_term = application_data.get("loan_term_months", "N/A") if isinstance(application_data, dict) else "N/A"
 
         return {
             "status": "success",

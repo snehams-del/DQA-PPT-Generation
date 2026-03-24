@@ -35,17 +35,11 @@ def _build_application_pdf(filename: str, data: dict) -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     filepath = OUTPUT_DIR / filename
 
-    doc = SimpleDocTemplate(
-        str(filepath), pagesize=letter, topMargin=0.75 * inch, bottomMargin=0.75 * inch
-    )
+    doc = SimpleDocTemplate(str(filepath), pagesize=letter, topMargin=0.75 * inch, bottomMargin=0.75 * inch)
     styles = getSampleStyleSheet()
 
-    title_style = ParagraphStyle(
-        "Title2", parent=styles["Title"], fontSize=16, spaceAfter=6
-    )
-    section_style = ParagraphStyle(
-        "Section", parent=styles["Heading2"], fontSize=12, spaceAfter=8, spaceBefore=16
-    )
+    title_style = ParagraphStyle("Title2", parent=styles["Title"], fontSize=16, spaceAfter=6)
+    section_style = ParagraphStyle("Section", parent=styles["Heading2"], fontSize=12, spaceAfter=8, spaceBefore=16)
 
     elements = []
 
@@ -160,9 +154,7 @@ def _build_application_pdf(filename: str, data: dict) -> None:
     elements.append(
         Paragraph(
             "This is a sample document for demonstration purposes only. All data is fictional.",
-            ParagraphStyle(
-                "Footer", parent=styles["Normal"], fontSize=8, textColor=colors.grey
-            ),
+            ParagraphStyle("Footer", parent=styles["Normal"], fontSize=8, textColor=colors.grey),
         )
     )
 

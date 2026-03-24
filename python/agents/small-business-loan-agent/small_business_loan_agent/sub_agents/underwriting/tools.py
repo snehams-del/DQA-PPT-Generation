@@ -81,9 +81,7 @@ def get_internal_business_data(tool_context: ToolContext) -> dict:
             # Fall back to default mock record for any loan ID (demo purposes)
             default_record = next(iter(MOCK_INTERNAL_RECORDS.values()))
             internal_data = {**default_record}
-            logger.info(
-                f"No exact match for {loan_request_id}, using default mock record"
-            )
+            logger.info(f"No exact match for {loan_request_id}, using default mock record")
 
         return {
             "status": "success",

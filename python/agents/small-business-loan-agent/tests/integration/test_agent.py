@@ -32,9 +32,7 @@ def load_env():
 async def _run_agent(user_input: str) -> str:
     """Helper to run the agent and return the final response text."""
     runner = InMemoryRunner(agent=root_agent)
-    session = await runner.session_service.create_session(
-        app_name=runner.app_name, user_id="test_user"
-    )
+    session = await runner.session_service.create_session(app_name=runner.app_name, user_id="test_user")
     content = UserContent(parts=[Part(text=user_input)])
     response = ""
     async for event in runner.run_async(

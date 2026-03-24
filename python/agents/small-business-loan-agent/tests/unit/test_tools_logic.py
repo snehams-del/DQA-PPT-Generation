@@ -14,8 +14,6 @@
 
 """Unit tests for pure business logic functions (no GCP dependencies)."""
 
-import pytest
-
 from small_business_loan_agent.sub_agents.pricing.tools import (
     _determine_risk_tier,
     _parse_dollar_amount,

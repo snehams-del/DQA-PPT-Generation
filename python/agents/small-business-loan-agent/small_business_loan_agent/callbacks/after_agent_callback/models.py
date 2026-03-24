@@ -20,16 +20,8 @@ from pydantic import BaseModel, Field
 class JudgeVerdict(BaseModel):
     """Structured output for the LLM judge decision."""
 
-    is_valid: bool = Field(
-        description="Whether the response should be shown to the user"
-    )
-    trajectory_correct: bool = Field(
-        description="Whether the tool sequence follows expected patterns"
-    )
-    grounded_in_context: bool = Field(
-        description="Whether all values are traceable to agent outputs"
-    )
-    response_complete: bool = Field(
-        description="Whether the response includes all required information"
-    )
+    is_valid: bool = Field(description="Whether the response should be shown to the user")
+    trajectory_correct: bool = Field(description="Whether the tool sequence follows expected patterns")
+    grounded_in_context: bool = Field(description="Whether all values are traceable to agent outputs")
+    response_complete: bool = Field(description="Whether the response includes all required information")
     reasoning: str = Field(description="Brief explanation of the verdict")

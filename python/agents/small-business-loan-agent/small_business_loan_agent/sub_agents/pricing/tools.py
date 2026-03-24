@@ -86,14 +86,10 @@ def calculate_loan_pricing(tool_context: ToolContext) -> dict:
         logger.info(f"Calculating pricing for: {loan_request_id}")
 
         # Parse loan details
-        loan_amount = _parse_dollar_amount(
-            application_data.get("loan_amount_requested", "0")
-        )
+        loan_amount = _parse_dollar_amount(application_data.get("loan_amount_requested", "0"))
         term_months_str = application_data.get("loan_term_months", "60")
         try:
-            term_months = (
-                int(re.sub(r"[^\d]", "", term_months_str)) if term_months_str else 60
-            )
+            term_months = int(re.sub(r"[^\d]", "", term_months_str)) if term_months_str else 60
         except ValueError:
             term_months = 60
 

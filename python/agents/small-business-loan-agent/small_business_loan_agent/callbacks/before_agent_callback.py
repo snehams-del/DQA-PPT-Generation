@@ -114,9 +114,7 @@ async def _store_inline_document_if_needed(callback_context: CallbackContext) ->
     inline_doc = _extract_inline_document_from_user_content(callback_context)
     if inline_doc:
         callback_context.state["inline_document"] = inline_doc
-        logger.info(
-            f"Stored inline document in session state: {inline_doc['filename']}"
-        )
+        logger.info(f"Stored inline document in session state: {inline_doc['filename']}")
 
 
 async def extract_request_id_from_request(
@@ -176,9 +174,5 @@ async def extract_request_id_from_request(
         logger.error(f"Error in extract_request_id_from_request: {e}")
         return types.Content(
             role="model",
-            parts=[
-                types.Part(
-                    text=f"An error occurred while processing your request: {e!s}"
-                )
-            ],
+            parts=[types.Part(text=f"An error occurred while processing your request: {e!s}")],
         )

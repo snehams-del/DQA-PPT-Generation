@@ -112,9 +112,7 @@ def check_process_status(tool_context: ToolContext) -> dict:
                 output_key = OUTPUT_KEY_MAP.get(step_name)
                 if output_key:
                     tool_context.state[output_key] = step_output
-                    logger.info(
-                        f"Loaded {step_name} data into session state for resume"
-                    )
+                    logger.info(f"Loaded {step_name} data into session state for resume")
 
             return result
 

@@ -22,15 +22,9 @@ from pydantic import BaseModel, Field
 class LoanDecisionResult(BaseModel):
     """Structured output model for the final loan decision."""
 
-    status: Literal["success", "error"] = Field(
-        description="Status of the decision operation"
-    )
-    decision: Literal["APPROVED", "DENIED", "CONDITIONAL"] = Field(
-        description="Final loan decision"
-    )
-    decision_letter_id: str = Field(
-        description="Generated decision letter reference ID (e.g., 'DL-2025-00142-001')"
-    )
+    status: Literal["success", "error"] = Field(description="Status of the decision operation")
+    decision: Literal["APPROVED", "DENIED", "CONDITIONAL"] = Field(description="Final loan decision")
+    decision_letter_id: str = Field(description="Generated decision letter reference ID (e.g., 'DL-2025-00142-001')")
     approved_amount: str = Field(
         default="",
         description="Approved loan amount (may differ from requested amount)",

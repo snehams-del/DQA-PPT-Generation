@@ -145,9 +145,7 @@ class ProcessStateService:
                 update_data["current_step"] = next_step
 
         doc_ref.update(update_data)
-        logger.info(
-            f"Updated step {step_name} to status {status} for request_id: {request_id}"
-        )
+        logger.info(f"Updated step {step_name} to status {status} for request_id: {request_id}")
 
     def mark_step_for_review(
         self,

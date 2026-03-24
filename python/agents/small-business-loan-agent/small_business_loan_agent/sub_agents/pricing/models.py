@@ -22,21 +22,9 @@ from pydantic import BaseModel, Field
 class PricingResult(BaseModel):
     """Structured output model for the pricing calculation."""
 
-    status: Literal["success", "error"] = Field(
-        description="Status of the pricing calculation"
-    )
-    interest_rate: str = Field(
-        description="Calculated annual interest rate (e.g., '7.25%')"
-    )
-    monthly_payment: str = Field(
-        description="Estimated monthly payment (e.g., '$2,985')"
-    )
-    total_interest: str = Field(
-        description="Total interest over the loan term (e.g., '$29,100')"
-    )
-    risk_tier: str = Field(
-        description="Risk tier used for pricing (e.g., 'Tier 2 - Moderate Risk')"
-    )
-    rate_justification: str = Field(
-        description="Brief explanation of how the rate was determined"
-    )
+    status: Literal["success", "error"] = Field(description="Status of the pricing calculation")
+    interest_rate: str = Field(description="Calculated annual interest rate (e.g., '7.25%')")
+    monthly_payment: str = Field(description="Estimated monthly payment (e.g., '$2,985')")
+    total_interest: str = Field(description="Total interest over the loan term (e.g., '$29,100')")
+    risk_tier: str = Field(description="Risk tier used for pricing (e.g., 'Tier 2 - Moderate Risk')")
+    rate_justification: str = Field(description="Brief explanation of how the rate was determined")

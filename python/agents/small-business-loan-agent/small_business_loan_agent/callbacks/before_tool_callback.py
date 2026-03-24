@@ -30,9 +30,7 @@ from small_business_loan_agent.shared_libraries.logging_config import get_logger
 logger = get_logger(__name__)
 
 
-def determine_halt_action(
-    tool_name: str, overall_status: str | None, issues: list
-) -> dict | None:
+def determine_halt_action(tool_name: str, overall_status: str | None, issues: list) -> dict | None:
     """Determine whether a tool execution should be halted (pure function)."""
     if overall_status == ProcessStateService.OVERALL_STATUS_PENDING_APPROVAL:
         issue_desc = "Unknown issue"
@@ -40,9 +38,7 @@ def determine_halt_action(
             if not issue.get("resolved", False):
                 issue_desc = issue.get("description", "Unknown issue")
                 break
-        return {
-            "error": f"Cannot proceed to {tool_name}: Pending approval - {issue_desc}"
-        }
+        return {"error": f"Cannot proceed to {tool_name}: Pending approval - {issue_desc}"}
 
     if overall_status == ProcessStateService.OVERALL_STATUS_FAILED:
         return {"error": f"Cannot proceed to {tool_name}: Process has failed"}

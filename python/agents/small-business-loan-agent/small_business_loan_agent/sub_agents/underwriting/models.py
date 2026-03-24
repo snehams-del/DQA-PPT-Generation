@@ -23,13 +23,9 @@ class FieldComparison(BaseModel):
     """Comparison of a field between the application and internal records."""
 
     field_name: str = Field(description="Name of the field being compared")
-    application_value: str = Field(
-        description="Value from the loan application document"
-    )
+    application_value: str = Field(description="Value from the loan application document")
     internal_value: str = Field(description="Value from Cymbal Bank's internal records")
-    match_status: Literal["Match", "No Match", "Partial Match"] = Field(
-        description="Whether the values match"
-    )
+    match_status: Literal["Match", "No Match", "Partial Match"] = Field(description="Whether the values match")
     notes: str = Field(default="", description="Additional notes about the comparison")
 
 
@@ -63,6 +59,4 @@ class UnderwritingReport(BaseModel):
     )
 
     summary: str = Field(description="Executive summary of the underwriting assessment")
-    recommendation: str = Field(
-        description="Recommendation on whether to proceed with the loan"
-    )
+    recommendation: str = Field(description="Recommendation on whether to proceed with the loan")
