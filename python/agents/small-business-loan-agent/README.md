@@ -256,7 +256,8 @@ Process State (per loan_request_id)
 ### Google Cloud Setup
 
 ```bash
-# Set your project
+# Login and set your project
+gcloud auth application-default login
 export PROJECT_ID=your-project-id
 gcloud config set project $PROJECT_ID
 
