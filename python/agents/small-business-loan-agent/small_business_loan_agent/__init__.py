@@ -17,13 +17,13 @@
 import os
 import sys
 
+import google.auth
+
 # Ensure the parent directory is on sys.path so the package is importable
 # (required for `adk eval` which doesn't set up sys.path like `adk web` does)
 _parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _parent_dir not in sys.path:
     sys.path.insert(0, _parent_dir)
-
-import google.auth
 
 _, project_id = google.auth.default()
 os.environ.setdefault("GOOGLE_CLOUD_PROJECT", project_id)
