@@ -469,4 +469,4 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
 
 ## License
 
-Copyright 2025 Google LLC. Licensed under the Apache License, Version 2.0.
+Copyright 2026 Google LLC. Licensed under the Apache License, Version 2.0.
