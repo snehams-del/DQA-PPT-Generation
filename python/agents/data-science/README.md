@@ -179,7 +179,7 @@ set up the data sources to be used with the agent.
 
 1. **NL2SQL Configuration:**
 
-    For BigQuery NL2SQL generation, the gent can use one of two methods: either
+    For BigQuery NL2SQL generation, the agent can use one of two methods: either
     querying Gemini directly, or [CHASE-SQL](https://arxiv.org/abs/2410.01943).
     Set the variable `NL2SQL_METHOD` to either `BASELINE` (to use Gemini) or
     `CHASE` to use CHASE-SQL.
