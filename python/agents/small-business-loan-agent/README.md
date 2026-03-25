@@ -390,34 +390,90 @@ uv run pytest tests/integration
 
 ## F. Evaluation
 
-The agent includes an ADK evaluation notebook with 3 test cases covering:
+Ensuring the reliability and accuracy of the Small Business Loan Agent is critical before deploying it in a live lending environment. We use the [ADK evaluation framework](https://google.github.io/adk-docs/evaluate/) with an LLM-as-Judge approach to validate both the intermediate steps (sub-agent orchestration) and the final outcome (response quality).
 
-| Test Case                            | Description                                 | Turns |
-| ------------------------------------ | ------------------------------------------- | ----- |
-| `happy_path_with_approval`           | Full end-to-end flow with user approval     | 2     |
-| `stop_for_reparation_missing_fields` | Incomplete application triggers repair      | 1     |
-| `resume_after_repair`                | Resume from checkpoint after offline repair | 1     |
+### Evaluation Methodology
 
-**Run the evaluation notebook:**
+Our evaluation treats the multi-agent system as a complete pipeline, measuring its performance against a curated dataset of loan application scenarios. We evaluate both the tool call trajectory (did the orchestrator call the right agents in the right order?) and the final response (is the output complete, clear, and semantically correct?).
 
-Install dev dependencies and register the Jupyter kernel:
+**The process involves:**
 
-```bash
-uv sync --dev
-uv run python -m ipykernel install --user --name small-business-loan-agent
-```
+1. **Dataset Ingestion**: Feeding test cases — complete applications, incomplete applications, and resume-after-repair scenarios — into the agent as multi-turn conversations.
+2. **Execution Tracing**: Logging the orchestrator's routing decisions, sub-agent calls, and tool invocations for each turn.
+3. **LLM-as-Judge Assertion**: Using Gemini as a judge model to evaluate tool ordering against rubrics and compare final responses against expected outputs.
 
-Then open `eval/small_business_loan_agent_eval.ipynb` to generate the eval set and run evaluations interactively. If the kernel is not automatically detected or visible, reload window of your IDE
+### Test Cases
 
-**Evaluation criteria:**
+| Test Case | Description | Turns |
+| --- | --- | --- |
+| `happy_path_with_approval` | Full end-to-end flow: submit complete PDF, process through all 4 sub-agents, user approves, loan decision finalized | 2 |
+| `stop_for_reparation_missing_fields` | Incomplete PDF (missing `loan_amount_requested`): agent stops after DocumentExtraction, reports missing fields, halts workflow | 1 |
+| `resume_after_repair` | Pre-repaired state in Firestore: agent detects completed DocumentExtraction, resumes from UnderwritingAgent, processes through Pricing | 1 |
 
-| Criterion                                | Purpose                                     | Reference Required |
-| ---------------------------------------- | ------------------------------------------- | ------------------ |
-| `rubric_based_tool_use_quality_v1`       | Validates tool call ordering (LLM judge)    | No                 |
-| `rubric_based_final_response_quality_v1` | Evaluates response completeness and clarity | No                 |
-| `final_response_match_v2`                | Semantic equivalence to expected response   | Yes                |
+### Evaluation Criteria
 
-See [ADK Evaluation docs](https://google.github.io/adk-docs/evaluate/) for more details.
+| Criterion | Purpose | Threshold | Reference Required |
+| --- | --- | --- | --- |
+| `rubric_based_tool_use_quality_v1` | Validates tool call ordering using LLM judge against rubrics | 0.8 | No |
+| `rubric_based_final_response_quality_v1` | Evaluates response completeness and clarity using LLM judge | 0.8 | No |
+| `final_response_match_v2` | Semantic equivalence of response to expected output (LLM-based) | 0.7 | Yes |
+
+### Key Metrics
+
+- **Routing Accuracy (Tool Use Rubrics)**: Did the orchestrator call sub-agents in the correct order? The following ordering rules are enforced:
+
+  | Rubric | Rule |
+  | --- | --- |
+  | `status_first` | `check_process_status` is called before any agent tools on the initial request |
+  | `extraction_before_underwriting` | `DocumentExtractionAgent` is called before `UnderwritingAgent` |
+  | `underwriting_before_pricing` | `UnderwritingAgent` is called before `PricingAgent` |
+  | `pricing_before_decision` | `PricingAgent` is called before `LoanDecisionAgent` |
+  | `approval_required` | `LoanDecisionAgent` is only called after user approval |
+
+- **Response Quality (Final Response Rubrics)**: Is the agent's output complete and actionable?
+
+  | Rubric | Rule |
+  | --- | --- |
+  | `loan_summary_completeness` | Response includes business name, owner, loan amount, revenue, eligibility, risk tier, rate, and payment |
+  | `clear_next_step` | Response clearly indicates next action: approval prompt, completion confirmation, status report, or missing info request |
+  | `error_handling_clarity` | When data is missing or an error occurs, the response clearly identifies what is missing or wrong |
+
+- **Semantic Response Match**: Does the agent's final response convey the same information as the expected reference response? Threshold set to 0.7 to account for natural LLM wording variation.
+
+### Design Decisions
+
+1. **`rubric_based_tool_use_quality_v1` over `tool_trajectory_avg_score`**: When using `AgentTool` wrappers, the orchestrator LLM dynamically generates `request` args containing context from previous steps. Since these args are LLM-generated and unpredictable, we use rubric-based LLM judging to validate tool ordering semantically rather than exact argument matching.
+
+2. **`final_response_match_v2` for semantic matching**: More flexible than exact string matching. The LLM judge evaluates whether the actual response is semantically equivalent to the expected reference, accommodating natural variation in phrasing while catching meaningful omissions.
+
+3. **`rubric_based_final_response_quality_v1` for reference-free evaluation**: Evaluates quality using custom rubrics without requiring a reference response. This catches issues like missing summary fields or unclear next steps even when the overall meaning is correct.
+
+### Building Your Own Eval Set
+
+To implement evaluation for this agent:
+
+1. **Use the sample documents as test inputs.** The synthetic PDFs in `data/sample_applications/` are designed for evaluation:
+   - `sample_application_complete.pdf` — all fields present, use for happy-path and approval test cases
+   - `sample_application_incomplete.pdf` — missing `loan_amount_requested`, use for repair-flow test cases
+
+2. **Pass documents as `inline_data` in user content.** Gemini reads PDFs natively — base64-encode the file and include it alongside the text prompt in the eval case's `user_content.parts` array.
+
+3. **Use randomly generated SBL IDs** (e.g., `SBL-2025-XXXXX`) for each eval run to avoid Firestore state collisions between runs.
+
+4. **For resume-after-repair test cases**, pre-populate Firestore with a repaired process state (DocumentExtractionAgent marked `completed` with filled-in data, `overall_status` set to `active`) before running the eval. The agent will then skip DocumentExtraction and resume from UnderwritingAgent.
+
+5. **Define expected tool sequences in `intermediate_data.tool_uses`.** For a complete application, the expected sequence is:
+   ```
+   check_process_status → DocumentExtractionAgent → UnderwritingAgent → PricingAgent
+   ```
+   For a second turn with user approval:
+   ```
+   LoanDecisionAgent
+   ```
+
+6. **Set the judge model** in your eval config (e.g., `gemini-3.1-pro-preview`) for rubric-based criteria. Both tool use and response quality rubrics use this judge.
+
+See [ADK Evaluation docs](https://google.github.io/adk-docs/evaluate/) and [Evaluation Criteria](https://google.github.io/adk-docs/evaluate/criteria/) for the full evalset schema and available criteria.
 
 ## G. Deploy
 

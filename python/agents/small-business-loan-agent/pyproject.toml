@@ -5,6 +5,12 @@ description = "A multi-agent system that automates small business loan processin
 readme = "README.md"
 requires-python = ">=3.11,<3.13"
 license = "Apache-2.0"
+authors = [
+    { name = "Nora Filali", email = "nora.filali@google.com" },
+]
+maintainers = [
+    { name = "Nora Filali", email = "nora.filali@google.com" },
+]
 dependencies = [
     "google-adk>=1.27.2",
     "google-cloud-firestore>=2.21.0",
