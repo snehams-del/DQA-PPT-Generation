@@ -150,9 +150,9 @@ async def execute_matplotlib_code(
 
         # Save to ADK Context as a PNG artifact
         if tool_context:
+            buf = io.BytesIO()
             try:
                 # Save to in-memory bytes buffer for the artifact API
-                buf = io.BytesIO()
                 fig.savefig(buf, format="png", bbox_inches="tight")
                 image_bytes = buf.getvalue()
 
