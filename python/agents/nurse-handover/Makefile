@@ -29,11 +29,15 @@ test: ## Run all tests
 
 .PHONY: web
 web: ## Run the ADK web demo server
-	@uv run adk web --reload src/agents/
+	@uv run adk web --reload agents/
 
 .PHONY: api_server
 api_server: ## Run the ADK FastAPI server
-	@uv run adk api_server src/agents/
+	@uv run adk api_server agents/
+
+.PHONY: cli
+cli: ## Run the ADK CLI interface
+	@uv run adk run agents/nurse_handover
 
 .PHONY: help
 help:
