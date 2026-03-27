@@ -5,10 +5,10 @@ from datetime import datetime
 from typing import Any
 
 from google import genai
-from google.adk.tools import ToolContext
+from google.adk.tools.tool_context import ToolContext
 from google.genai import types
 
-from agents.nurse_handover import summary
+from nurse_handover import summary
 
 PATIENT_FILE_DIR = pathlib.Path(__file__).parent.parent.parent.parent / "data"
 

@@ -3,7 +3,7 @@ from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai import types
 
-from agents.nurse_handover import agent
+from nurse_handover import agent
 
 
 def test_agent_stream() -> None:
