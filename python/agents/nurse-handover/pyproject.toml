@@ -58,6 +58,7 @@ reportMissingTypeStubs = false
 reportUnknownMemberType = false
 reportUnknownVariableType = false
 typeCheckingMode = "basic"
+include = [".", "./agents"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
