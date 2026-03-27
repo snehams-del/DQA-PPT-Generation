@@ -24,10 +24,13 @@ gym.envs.registration.register(
 
 
 def init_env(num_products):
+    # WebAgentTextEnv predates Gym 0.26's PassiveEnvChecker; it does not set
+    # action_space / observation_space (actions are free-form strings).
     return gym.make(
         "WebAgentTextEnv-v0",
         observation_mode="text",
         num_products=num_products,
+        disable_env_checker=True,
     )
 
 

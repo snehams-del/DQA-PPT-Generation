@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Copyright 2025 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,8 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "${SCRIPT_DIR}"
+# uv discovers pyproject.toml in a parent directory; cwd must stay here for
+# resources_* and indexes_* paths.
+PYTHON=(uv run python)
 
-python -m pyserini.index.lucene \
+"${PYTHON[@]}" -m pyserini.index.lucene \
   --collection JsonCollection \
   --input resources_100 \
   --index indexes_100 \
@@ -22,7 +28,7 @@ python -m pyserini.index.lucene \
   --threads 1 \
   --storePositions --storeDocvectors --storeRaw
 
-python -m pyserini.index.lucene \
+"${PYTHON[@]}" -m pyserini.index.lucene \
   --collection JsonCollection \
   --input resources_1k \
   --index indexes_1k \
@@ -30,7 +36,7 @@ python -m pyserini.index.lucene \
   --threads 1 \
   --storePositions --storeDocvectors --storeRaw
 
-python -m pyserini.index.lucene \
+"${PYTHON[@]}" -m pyserini.index.lucene \
   --collection JsonCollection \
   --input resources_10k \
   --index indexes_10k \
@@ -38,7 +44,7 @@ python -m pyserini.index.lucene \
   --threads 1 \
   --storePositions --storeDocvectors --storeRaw
 
-python -m pyserini.index.lucene \
+"${PYTHON[@]}" -m pyserini.index.lucene \
   --collection JsonCollection \
   --input resources_50k \
   --index indexes_50k \
