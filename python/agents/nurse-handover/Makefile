@@ -4,7 +4,7 @@ TESTPATH := "tests/"
 .PHONY: install
 install: ## Install virtual environment with uv
 	@echo "🚀 Creating virtual environment using uv"
-	@uv sync --all-groups
+	@uv sync --all-groups --frozen
 
 .PHONY: check
 check: ## Check lock file consistency and run static code analysis
@@ -13,9 +13,9 @@ check: ## Check lock file consistency and run static code analysis
 	@echo "🚀 Linting code: Running ruff"
 	@uvx ruff check --fix
 	@echo "🚀 Static type checking: Running basedpyright"
-	@uv run basedpyright src
+	@uv run basedpyright agents
 	@echo "🚀 Checking for obsolete dependencies: Running deptry"
-	@uv run deptry src
+	@uv run deptry agents
 
 .PHONY: test
 test: ## Run all tests
@@ -29,11 +29,15 @@ test: ## Run all tests
 
 .PHONY: web
 web: ## Run the ADK web demo server
-	@uv run adk web --reload src/agents/
+	@uv run adk web --reload agents/
 
 .PHONY: api_server
 api_server: ## Run the ADK FastAPI server
-	@uv run adk api_server src/agents/
+	@uv run adk api_server agents/
+
+.PHONY: cli
+cli: ## Run the ADK CLI interface
+	@uv run adk run agents/nurse_handover
 
 .PHONY: help
 help:

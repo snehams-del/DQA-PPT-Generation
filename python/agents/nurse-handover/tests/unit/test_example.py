@@ -1,4 +1,4 @@
-from agents.nurse_handover import agent
+from nurse_handover import agent
 
 
 def test_load_agent() -> None:

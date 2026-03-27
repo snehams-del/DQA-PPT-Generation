@@ -25,7 +25,7 @@ requires = ["uv_build>=0.8.14,<0.9.0"]
 build-backend = "uv_build"
 
 [tool.uv.build-backend]
-module-root = ""
+module-root = "agents"
 
 [dependency-groups]
 dev = [
@@ -79,3 +79,8 @@ omit = ["server.py"]
 
 [tool.deptry.per_rule_ignores]
 DEP002 = ["uvicorn"]
+
+[[tool.uv.index]]
+name = "default"
+url = "https://pypi.org/simple"
+default = true
