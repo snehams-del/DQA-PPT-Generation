@@ -1,0 +1,9 @@
+# Changes here will be overwritten by Copier
+_src_path: /Users/aadilajasmin/agent-packs/agent-packs/src/agent_packs/adk/template
+author: Gopala Dhar
+email: gopalad@google.com
+project_description: "An ADK agent for generating nurse shift handover reports."
+project_name: nurse-handover
+project_short_description: "An ADK agent for generating nurse shift handover reports."
+project_slug: nurse_handover
+python_version: "3.13"
