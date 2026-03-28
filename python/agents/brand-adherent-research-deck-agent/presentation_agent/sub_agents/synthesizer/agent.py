@@ -23,7 +23,13 @@ from google.adk.tools import AgentTool, FunctionTool
 from google.adk.tools.tool_context import ToolContext
 from google.genai import types
 
-from ...shared_libraries.config import ROOT_MODEL, initialize_genai_client, get_logger
+from ...shared_libraries.config import (
+    ROOT_MODEL,
+    initialize_genai_client,
+    get_logger,
+    PRESENTATION_SPEC_ARTIFACT,
+    RESEARCH_SUMMARY_ARTIFACT,
+)
 from ...shared_libraries.models import SlideSpec, SynthesizerResponse, PresentationOutline
 from .prompt import SYNTHESIZER_OUTLINE_INSTRUCTION, SYNTHESIZER_SLIDE_INSTRUCTION
 
@@ -46,11 +52,11 @@ slide_writer_agent = LlmAgent(
 )
 
 async def generate_and_save_outline(
+    tool_context: ToolContext,
     topic: str,
     slide_count: int,
     narrative_outline: str,
     research_summary: str,
-    tool_context: ToolContext
 ) -> Dict[str, Any]:
     """
     Consolidated tool that generates a presentation outline AND saves it to session state.
@@ -68,14 +74,16 @@ async def generate_and_save_outline(
     )
     
     try:
-        # 2. Call the Outliner directly via the GenAI client for maximum control
+        # 2. Call the Outliner. Using synchronous call to avoid event loop conflicts 
+        # when called from within another ADK Runner task.
         config = types.GenerateContentConfig(
             system_instruction=SYNTHESIZER_OUTLINE_INSTRUCTION,
             response_mime_type="application/json",
             response_schema=SynthesizerResponse,
         )
         
-        response = await client.aio.models.generate_content(
+        # models.generate_content is thread-safe and reliable for nested calls
+        response = client.models.generate_content(
             model=ROOT_MODEL,
             contents=prompt,
             config=config
@@ -90,20 +98,8 @@ async def generate_and_save_outline(
         # 3. SAVE TO STATE (Invisible persistence)
         # This keeps the huge JSON out of the Orchestrator's immediate context
         tool_context.state["current_deck_spec"] = outline.model_dump()
-        log.info("Outline generated and saved to session state successfully.")
-        
-        # 3.5 SAVE TO ARTIFACT (Persistence for Enterprise)
-        from ...shared_libraries.config import PRESENTATION_SPEC_ARTIFACT
-        spec_bytes = json.dumps(outline.model_dump(), indent=2).encode("utf-8")
-        # Use Part wrapper for Enterprise stability
-        artifact = types.Part(
-            inline_data=types.Blob(
-                data=spec_bytes,
-                mime_type="application/json"
-            )
-        )
-        await tool_context.save_artifact(PRESENTATION_SPEC_ARTIFACT, artifact)
-        log.info(f"Outline also saved to artifact '{PRESENTATION_SPEC_ARTIFACT}'.")
+        tool_context.state["research_summary"] = research_summary
+        log.info("Outline and research summary saved to session state successfully (invisible to UI).")
         
         # 4. Return ONLY the data needed for the Markdown summary
         return {
@@ -122,66 +118,54 @@ async def generate_and_save_outline(
 
 async def batch_generate_slides(
     tool_context: ToolContext,
-    research_summary: str,
     *,
+    research_summary: Optional[str] = None,
     slides: Optional[List[Dict[str, Any]]] = None,
     spec_artifact_name: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Generates detailed content for MULTIPLE slides in parallel with performance tuning.
-    Prioritizes: 1. Direct 'slides' list, 2. Session STATE, 3. ARTIFACT fallback.
+    Prioritizes: 1. Direct inputs, 2. Session STATE.
     """
     log = get_logger("batch_generate_slides")
     client = initialize_genai_client()
-    from ...shared_libraries.config import PRESENTATION_SPEC_ARTIFACT
     
-    # 1. Resolve Slides (Priority: Direct List > Session State > Named Artifact > Default Artifact)
+    # 1. Resolve Research Summary (Priority: Session State > Direct Input)
+    # We prioritize State to ensure the rich Phase 1 research (with URLs) isn't 
+    # overwritten by a generic summary provided during a revision turn.
+    active_summary = tool_context.state.get("research_summary")
+    
+    if active_summary:
+        log.info("Loaded rich research summary from session state.")
+        # If a new summary was provided, we only update if it's significantly different/newer
+        if research_summary and len(research_summary) > len(active_summary) * 1.2:
+             active_summary = research_summary
+             tool_context.state["research_summary"] = active_summary
+             log.info("Updated session state with a more substantial research summary.")
+    elif research_summary:
+        active_summary = research_summary
+        tool_context.state["research_summary"] = active_summary
+        log.info("Populated session state with provided research summary.")
+                
+    if not active_summary:
+        return {"status": "Error", "message": "Missing research data. Please provide research_summary or ensure research was conducted."}
+    
+    print (f"Research summary: {active_summary}")
+    # 2. Resolve Slides (Priority: Direct List > Session State)
     active_slides = slides or []
+    state_spec = None
     
     # Check Session State (Invisible persistence)
-    if not active_slides and not spec_artifact_name:
+    if not active_slides:
         state_spec = tool_context.state.get("current_deck_spec")
         if state_spec:
             active_slides = state_spec.get("slides", [])
             log.info(f"Loaded {len(active_slides)} slides from session state.")
 
-    # Check Explicitly Named Artifact
-    if not active_slides and spec_artifact_name:
-        try:
-            artifact = await tool_context.load_artifact(spec_artifact_name)
-            if artifact:
-                spec_json = artifact.inline_data.data if isinstance(artifact, types.Part) else artifact
-                if isinstance(spec_json, (str, bytes, bytearray)):
-                    spec_dict = json.loads(spec_json)
-                else:
-                    spec_dict = spec_json
-                
-                active_slides = spec_dict.get("slides", [])
-                log.info(f"Loaded {len(active_slides)} slides from artifact '{spec_artifact_name}'.")
-        except Exception as e:
-            log.error(f"Failed to load named spec artifact: {e}")
-
-    # Check Default Artifact Fallback (Enterprise reliability)
     if not active_slides:
-        log.info(f"Checking default artifact '{PRESENTATION_SPEC_ARTIFACT}'...")
-        try:
-            artifact = await tool_context.load_artifact(PRESENTATION_SPEC_ARTIFACT)
-            if artifact:
-                spec_json = artifact.inline_data.data if isinstance(artifact, types.Part) else artifact
-                if isinstance(spec_json, (str, bytes, bytearray)):
-                    spec_dict = json.loads(spec_json)
-                else:
-                    spec_dict = spec_json
-                
-                active_slides = spec_dict.get("slides", [])
-                log.info("Loaded slides from default artifact.")
-        except Exception as e:
-            log.warning(f"Could not load fallback artifact: {e}")
+        return {"status": "Error", "message": "No slide plan found in session state. Please provide slides or ensure an outline was generated."}
 
-    if not active_slides:
-        return {"status": "Error", "message": "No slide plan found. Please provide slides or ensure an outline was generated."}
-
-    # 2. Performance Tuning: Allow 5 concurrent generations
+    # 3. Performance Tuning: Allow 5 concurrent generations
     semaphore = asyncio.Semaphore(5)
 
     config = types.GenerateContentConfig(
@@ -207,7 +191,7 @@ async def batch_generate_slides(
                 f"Title: {t_title}\n"
                 f"Planned Layout: {t_layout}\n"
                 f"Planned Visual: {visual_prompt}\n"
-                f"Research Summary: {research_summary}"
+                f"Research Summary: {active_summary}"
             )
             
             try:
@@ -222,14 +206,43 @@ async def batch_generate_slides(
                         exclude_none=True
                     )
                     
-                    # MANDATORY LAYOUT SAFETY: If visual exists
-                    res_v = res_dict.get("visual_prompt")
-                    if visual_prompt or (isinstance(res_v, str) and res_v.lower() not in ["none", "null", "n/a", ""]):
-                        res_dict["layout_name"] = "Title and Image"
-                    else:
-                        res_dict["layout_name"] = "Title and Content"
-                    
+                    # 1. PRESERVE CRITICAL FIELDS
                     res_dict["title"] = t_title
+                    
+                    # 2. CITATION RECOVERY: If the outline already had citations, ensure they are kept
+                    # unless the writer provided a more specific/updated list.
+                    existing_citations = topic.get("citations")
+                    if existing_citations and not res_dict.get("citations"):
+                        res_dict["citations"] = existing_citations
+                        log.info(f"Recovered {len(existing_citations)} citations from outline for slide '{t_title}'.")
+                    
+                    # Determine if we should keep the planned layout or override it
+                    planned_layout = t_layout
+                    
+                    # 1. Sanitize the generated visual prompt
+                    # We prioritize the writer's decision. If it says null, there is NO visual.
+                    generated_v = res_dict.get("visual_prompt")
+                    if isinstance(generated_v, str) and generated_v.lower() in ["none", "null", "n/a", ""]:
+                        generated_v = None
+                        res_dict["visual_prompt"] = None
+                    
+                    # 2. Decide if we have an effective visual to account for
+                    # If generated_v is None, it means the writer explicitly chose NOT to have a visual.
+                    has_visual = bool(generated_v)
+                    
+                    if has_visual:
+                        # If we have a visual, ensure the layout supports it.
+                        if planned_layout not in ["Title and Image", "Two Content", "Comparison", "Title and Content", "Content with Caption", "Picture with Caption"]:
+                             res_dict["layout_name"] = "Title and Image"
+                        else:
+                             res_dict["layout_name"] = planned_layout
+                    else:
+                        # No visual, strictly follow planned layout unless it's an image-only layout
+                        if planned_layout in ["Title and Image", "Picture with Caption"]:
+                            res_dict["layout_name"] = "Title and Content"
+                        else:
+                            res_dict["layout_name"] = planned_layout
+                            
                     return res_dict
             except Exception as e:
                 return {
@@ -263,8 +276,9 @@ async def batch_generate_slides(
         else:
             final_slides.append(r)
             
-    # 3. SAVE TO STATE (Invisible persistence)
+    # 4. SAVE TO STATE (Invisible persistence)
     # This replaces the placeholder slides from the outline with fully written content.
+    state_spec = None
     if tool_context:
         # Load full spec to ensure we don't overwrite other fields (cover, briefing)
         state_spec = tool_context.state.get("current_deck_spec")
@@ -280,28 +294,20 @@ async def batch_generate_slides(
         
         # FINAL FALLBACK: Ensure state_spec is never None before assignment
         if not state_spec:
-             state_spec = {"cover": {"title": "Presentation"}, "closing_title": "Thank You"}
+             default_title = "Strategic Research Presentation"
+             if final_slides:
+                 default_title = final_slides[0].get("title", default_title)
+             state_spec = {"cover": {"title": default_title}, "closing_title": "Thank You"}
 
         state_spec["slides"] = final_slides
         tool_context.state["current_deck_spec"] = state_spec
-        log.info(f"Successfully saved {len(final_slides)} slides to session state.")
-        
-        # SAVE TO ARTIFACT (Persistence for Enterprise)
-        spec_bytes = json.dumps(state_spec, indent=2).encode("utf-8")
-        # Use Part wrapper for Enterprise stability
-        artifact = types.Part(
-            inline_data=types.Blob(
-                data=spec_bytes,
-                mime_type="application/json"
-            )
-        )
-        await tool_context.save_artifact(PRESENTATION_SPEC_ARTIFACT, artifact)
-        log.info(f"Slides also saved to artifact '{PRESENTATION_SPEC_ARTIFACT}'.")
+        log.info(f"Successfully saved {len(final_slides)} slides to session state (invisible to UI).")
 
     return {
         "status": "Success",
         "message": f"Successfully generated content for {len(final_slides)} slides and saved to session state.",
-        "slides_count": len(final_slides)
+        "slides_count": len(final_slides),
+        "deck_spec": state_spec
     }
 
 # Create the tools to expose to the Orchestrator

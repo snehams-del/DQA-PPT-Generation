@@ -30,10 +30,11 @@ from pptx.util import Inches
 from ..shared_libraries.config import (
     GCS_BUCKET_NAME,
     get_logger,
+    DEFAULT_TEMPLATE_URI
 )
 from ..shared_libraries.models import CoverSpec, DeckSpec, SlideSpec
 from ..shared_libraries.utils import _insert_image
-from .artifact_utils import save_presentation
+from .artifact_utils import save_presentation, get_gcs_file_as_local_path
 from .pptx_editor import _insert_visual_into_slide
 from .visual_generator import generate_visual
 
@@ -45,7 +46,7 @@ def get_smart_layout(prs: Presentation, requested_name: str):
     log = get_logger("layout_mapper")
     requested_name = requested_name.lower()
     
-    # FORCED OVERRIDE: Avoid "Title and Chart" as it often has squeezed text placeholders
+    #  Avoid "Title and Chart" as it requies data (demo ignore this) placeholders
     if "chart" in requested_name:
         log.info(f"Overriding layout request '{requested_name}' to 'Title and Image' for better spacing.")
         requested_name = "title and image"
@@ -296,7 +297,7 @@ async def render_deck_from_spec(
         # If it's empty, we create a new Cover Slide.
 
         # Cover
-        cover_data = spec_dict.get("cover", {"title": "Presentation"})
+        cover_data = spec_dict.get("cover", {"title": "Strategic Research & Analysis"})
         cover_spec = CoverSpec(**cover_data)
 
         # Remove all existing slides except the cover (or remove all if we are building a new deck from scratch)
@@ -377,7 +378,6 @@ async def render_deck_from_spec(
         log.error(f"Render failed: {e}", exc_info=True)
         return f"Error: Render failed. {e}"
 
-
 async def generate_and_render_deck(
     tool_context: ToolContext,
     deck_spec: Optional[dict] = None,
@@ -386,7 +386,7 @@ async def generate_and_render_deck(
 ) -> dict:
     """
     Orchestrates the entire deck generation process.
-    Prioritizes: 1. Direct Input, 2. Session STATE, 3. ARTIFACT Fallback.
+    Prioritizes: 1. Direct Input, 2. Session STATE.
     """
     log = get_logger("generate_and_render_deck_tool")
     try:
@@ -397,30 +397,24 @@ async def generate_and_render_deck(
             spec_dict = tool_context.state.get("current_deck_spec")
             if spec_dict:
                 log.info("Loaded DeckSpec from session state.")
-            else:
-                # 1.5 FALLBACK: Load from the default artifact (Enterprise reliability)
-                from ..shared_libraries.config import PRESENTATION_SPEC_ARTIFACT
-                log.info(f"Session state empty. Attempting to load from '{PRESENTATION_SPEC_ARTIFACT}'...")
-                try:
-                    artifact = await tool_context.load_artifact(PRESENTATION_SPEC_ARTIFACT)
-                    if artifact:
-                        spec_json = artifact.inline_data.data if isinstance(artifact, types.Part) else artifact
-                        if isinstance(spec_json, (str, bytes, bytearray)):
-                            spec_dict = json.loads(spec_json)
-                        else:
-                            spec_dict = spec_json
-                        log.info("Loaded DeckSpec from default artifact.")
-                except Exception as e:
-                    log.warning(f"Could not load fallback artifact: {e}")
 
-        # 2. FALLBACK: Load from Artifact Store (Explicitly named file)
+        # 2. FALLBACK: Load from Artifact Store (Explicitly named file - for manually uploaded plans)
         if not spec_dict and spec_artifact_name:
             log.info(f"Loading DeckSpec from artifact: '{spec_artifact_name}'")
             try:
                 artifact = await tool_context.load_artifact(spec_artifact_name)
+                
+                # Propagation Retry for named artifacts too
+                if not artifact:
+                    log.warning(f"Artifact '{spec_artifact_name}' not found. Waiting 2s...")
+                    await asyncio.sleep(2.0)
+                    artifact = await tool_context.load_artifact(spec_artifact_name)
+
                 if artifact:
                     spec_json = artifact.inline_data.data if isinstance(artifact, types.Part) else artifact
-                    if isinstance(spec_json, (str, bytes, bytearray)):
+                    if isinstance(spec_json, (bytes, bytearray)):
+                        spec_dict = json.loads(spec_json.decode("utf-8"))
+                    elif isinstance(spec_json, str):
                         spec_dict = json.loads(spec_json)
                     else:
                         spec_dict = spec_json
@@ -428,7 +422,14 @@ async def generate_and_render_deck(
                 log.error(f"Failed to load named spec artifact: {e}")
 
         if not spec_dict:
-            return {"status": "Failed", "message": "No active presentation plan found. Please provide deck_spec, or ensure a plan exists in session state or artifacts."}
+            return {"status": "Failed", "message": "No active presentation plan found in session state. Please provide deck_spec or ensure an outline was generated."}
+        
+        # 3. GCS-FALLBACK TEMPLATE RECOVERY
+        working_template = template_path
+        if not working_template or not os.path.exists(working_template):
+            log.info("Template path invalid or lost. Re-downloading from GCS...")
+            working_template = await get_gcs_file_as_local_path(DEFAULT_TEMPLATE_URI)
+            
         # Standardize structure
         if isinstance(spec_dict.get("slides"), dict):
             spec_dict["slides"] = list(spec_dict["slides"].values())
@@ -439,7 +440,6 @@ async def generate_and_render_deck(
 
         all_content = [validated_spec.cover] + validated_spec.slides
 
-        # --- 100% PYTHON GUARANTEE: LIMITS & LAYOUTS ---
         # Allow up to 5 visuals per presentation
         hard_limit = 5
 
@@ -458,7 +458,6 @@ async def generate_and_render_deck(
                 else:
                     # Strip excess visuals programmatically
                     slide.visual_prompt = None
-        # -----------------------------------------------
 
         tasks = []
         slides = []
@@ -478,11 +477,10 @@ async def generate_and_render_deck(
             if not isinstance(img, Exception):
                 s.image_data = img
 
-        #out_name = f"{validated_spec.cover.title.replace(' ', '_')}_{uuid.uuid4().hex[:6]}.pptx"
         out_name = f"{validated_spec.cover.title}_{uuid.uuid4().hex[:6]}.pptx"
 
         local_path = await render_deck_from_spec(
-            validated_spec.model_dump(), out_name, tool_context, template_path
+            validated_spec.model_dump(), out_name, tool_context, working_template
         )
         if local_path.startswith("Error:"):
              return {"status": "Failed", "message": local_path}

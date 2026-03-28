@@ -1,6 +1,5 @@
 # Brand-Adherent Research & Deck Agent
 
-**Maintainers:** Renee Zhang
 **Last Updated:** March 2026  
 **Architecture:** Multi-Agent System on Vertex AI  
 **Model:** Gemini 2.5 Flash  
@@ -28,10 +27,12 @@ This project implements an advanced AI multi-agent system designed to automate t
 | Feature | Description |
 | :--- | :--- |
 | **Interactive Workflow** | Supports a "Pause & Review" protocol, allowing users to approve research and briefings before slide generation. Includes editing tools to modify text, layouts, and visuals on demand. |
-| **Multi-Agent Core** | Orchestrates specialist agents for Deep Research, Synthesis, and Deck Specification. |
-| **Internal RAG** | Connects to Vertex AI Search to retrieve proprietary case studies, previous investment proposals, and frameworks relevant to the specific prompt. |
-| **External Grounding** | Uses Google Search and Deep Research API to validate market trends, competitor insights, and economic data. |
-| **Brand Compliance** | Renders final assets using an official `.pptx` template (e.g., `Proposal_Template.pptx`) via a dedicated Python rendering engine, matching enterprise slide masters. |
+| **Multi-Agent Core** | Orchestrates specialist agents for Deep Research, Synthesis, and Deck Specification with strict data provenance. |
+| **Programmatic Citation Integrity** | Uses custom tool wrappers to programmatically extract verified URLs from grounding metadata, ensuring 100% citation accuracy in speaker notes. |
+| **Research Continuity** | Implements a "Research Anchor" logic in session state, strictly preserving Phase 1 research results and raw URLs across all subsequent outline revisions and slide generation turns. |
+| **Internal RAG** | Connects to Vertex AI Search to retrieve proprietary case studies and frameworks. |
+| **External Grounding** | Uses Google Search and Deep Research API to validate market trends and competitor insights. |
+| **Brand Compliance** | Renders final assets using an official `.pptx` template via a dedicated Python rendering engine, matching enterprise slide masters. |
 | **Enterprise Scale** | Built on Google Cloud Vertex AI and deployed via Agent Engine for security and scalability.|
 
 ---
@@ -120,11 +121,35 @@ Ensure your service account (or user account) has the following permissions:
 3. **Install Dependencies**
     Using `uv` (recommended):
     ```bash
-    uv init
-    uv sync
-    source .venv/bin/activate
+    uv sync --dev
     gcloud auth application-default login
     ```
+
+### Alternative: Using Agent Starter Pack
+
+You can also use the [Agent Starter Pack](https://goo.gle/agent-starter-pack) to create a production-ready version of this agent with additional deployment options:
+
+```bash
+# Create and activate a virtual environment
+python -m venv .venv && source .venv/bin/activate # On Windows: .venv\Scripts\activate
+
+# Install the starter pack and create your project
+pip install --upgrade agent-starter-pack
+agent-starter-pack create my-research-deck-agent -a adk@brand-adherent-research-deck-agent
+```
+
+<details>
+<summary>⚡️ Alternative: Using uv</summary>
+
+If you have [`uv`](https://github.com/astral-sh/uv) installed, you can create and set up your project with a single command:
+```bash
+uvx agent-starter-pack create my-research-deck-agent -a adk@brand-adherent-research-deck-agent
+```
+This command handles creating the project without needing to pre-install the package into a virtual environment.
+
+</details>
+
+The starter pack will prompt you to select deployment options and provides additional production-ready features including automated CI/CD deployment scripts.
 
 ---
 
@@ -133,7 +158,7 @@ Ensure your service account (or user account) has the following permissions:
 ### Running the Agent Locally
 Start the agent's web server locally:
 ```bash
-adk web --port 8000 .
+uv run adk web --port 8000 .
 ```
 You can now interact with the agent by sending prompts to `http://localhost:8000`.
 
@@ -142,12 +167,12 @@ We use a dual-evaluation approach testing both structural integrity and narrativ
 
 1. **Structural & Unit Tests (Pytest)**: Ensures the agent's internal logic, configuration, and PPTX rendering tools handle edge cases gracefully without crashing. Evaluates the `get_smart_layout` fallback logic.
     ```bash
-    python -m pytest tests/
+    uv run pytest tests/
     ```
 
 2. **End-to-End Lifecycle Evaluation**: A full mock session testing the multi-agent delegation, JSON generation, physical `.pptx` artifact creation, and subsequent interactive surgical edits. Evaluated via an LLM-as-a-judge framework.
     ```bash
-    python -m eval.eval_pipeline
+    uv run python -m eval.eval_pipeline
     ```
 ---
 
@@ -172,13 +197,13 @@ Use the `deploy.py` script located in the `deployment/` folder to containerize a
 
 **To Create a New App:**
 ```bash
-python deployment/deploy.py --mode create
+uv run python deployment/deploy.py --mode create
 ```
 *Note: This will automatically update the `AGENT_ENGINE_ID` in your `.env` file.*
 
 **To Update an Existing App:**
 ```bash
-python deployment/deploy.py --mode update
+uv run python deployment/deploy.py --mode update
 ```
 
 #### 2. Register to Gemini Enterprise
@@ -196,35 +221,15 @@ Once deployed, register the agent so it can be discovered as a Tool/Agent in Gem
     ```
 
 ---
-## 9. Demo Flow
-The following script demonstrates the standard interacting with the agent via the Gemini Enterprise UI. This 5-turn interaction highlights the iterative "Pause & Review" protocol.
+## 9. Example
+**User Prompt:** "Create a 10-slide presentation for analyzing investment opportunities in the biotech industry. Use the default template. Don’t generate the presentation until I ask, I need to check the presentation outline first."
 
-### Turn 1: Initialization & Research Planning
-**User Prompt:**
-> "I need to build a 15-slide investment proposal for a solar infrastructure project in Irvine. Show me a research plan for how you will validate market growth and ROI using internal data sources and external search results."
+**Agent Output:**
+Inspect the template and plan the deck outline.
+Research investment opportunities  in the biotech industry. (external search)
+Search internal docs for methodology.(internal search if provided)
+Show the outline of presentation for user approval
+ 
+**User Prompt:** “Outline approved. Please generate the presentation now. Make sure to use my default template, follow the research plan, and use the same layout as the presentation outline above.”
 
-**Agent Output:**The agent outlines its strategy, planning to query Vertex AI internal knowledge if have. It pauses for your approval.
-
-### Turn 2: Executing External Research
-**User Prompt:**
-> "The plan looks good. Execute the research and show me specific findings and citations. Pause here. Do not create the slides until I approve the research results. I want to verify the citations and content quality first."
-
-**Agent Output:**The agent returns a detailed,  markdown summary of solar incentives in Irvine and projected ROI figures based on its web searches. It pauses for your review.
-
-### Turn 3: Outline & Synthesis
-**User Prompt:**
-> "Looks good. Please generate the slide-by-slide outline using my default template from GCS. Do not generate the final PowerPoint file yet, I want to review the draft outline first."
-
-**Agent Output:**The agent drafts the presentation structure and returns a detailed text-based outline. It pauses for your review.
-
-### Turn 4: Refining the Outline
-**User Follow-up Prompt:**
-> "Actually, before we generate the slides, can you change the title of slide 6 to 'Projected 5-Year Returns'?"
-
-**Agent Output:**  The agent updates the internal DeckSpec JSON with the requested change.
-
-### Turn 5: Final Presentation Generation
-**User Prompt:**
-> "The outline is perfect now. Go ahead and generate the final PowerPoint presentation."
-
-**Agent Output:** The agent generate final powerpoint that user can download.
+**Agent Output:** Agent generates the powerpoint file and provides a Google Cloud Storage (GCS) URI and a direct download link for the completed PowerPoint presentation.

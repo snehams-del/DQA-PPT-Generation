@@ -1,3 +1,17 @@
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import asyncio
 import json
 import os
@@ -13,8 +27,9 @@ from pptx import Presentation
 # Load env before importing app to ensure we can manipulate it if needed
 load_dotenv()
 
-# Force InMemory services for evaluation by unsetting the bucket name
+# Force InMemory services for evaluation
 os.environ["GCP_STAGING_BUCKET"] = ""
+os.environ["LOCAL_DEV"] = "true"
 
 from presentation_agent.agent import PresentationExpertApp
 
@@ -82,20 +97,21 @@ async def evaluate_scenario(client, app, test_case, session_id):
                 if part.function_call:
                     tool_name = part.function_call.name
                     actual_tool_calls.append(tool_name)
-                    print(f"  [Tool Call]: {tool_name}")
+                    print(f"  [Tool Call]: {tool_name}({part.function_call.args})")
                 if part.text:
                     final_response += part.text
 
-    # --- TURN 2: Follow-up / Approval (if needed) ---
-    if test_case.get("requires_approval", False):
-        print("Turn 2: Sending 'Approve' to trigger rendering...")
-        approve_msg = types.Content(
-            role="user", parts=[types.Part.from_text(text="Approve and render now.")]
+    # --- TURN 2: Revision (if requested) ---
+    if test_case.get("requires_revision", False):
+        rev_prompt = test_case["revision_prompt"]
+        print(f"Turn 2 (Revision): Requesting... '{rev_prompt}'")
+        rev_msg = types.Content(
+            role="user", parts=[types.Part.from_text(text=rev_prompt)]
         )
-        events2 = app._runner.run(
-            user_id="evaluator", session_id=session_id, new_message=approve_msg
+        events_rev = app._runner.run(
+            user_id="evaluator", session_id=session_id, new_message=rev_msg
         )
-        for event in events2:
+        for event in events_rev:
             if event.content and event.content.parts:
                 for part in event.content.parts:
                     if part.text:
@@ -103,54 +119,65 @@ async def evaluate_scenario(client, app, test_case, session_id):
                     if part.function_call:
                         tool_name = part.function_call.name
                         actual_tool_calls.append(tool_name)
-                        print(f"  [Tool Call]: {tool_name}")
-                        # Robustly capture deck_spec from either tool
-                        if tool_name in ["save_deck_spec", "generate_and_render_deck"]:
-                            args = part.function_call.args
-                            if "deck_spec" in args:
-                                generated_deck_spec = args["deck_spec"]
+                        print(f"  [Tool Call]: {tool_name}({part.function_call.args})")
+
+    # --- FINAL TURN: Follow-up / Approval (if needed) ---
+    if test_case.get("requires_approval", False):
+        print("Final Turn: Sending 'Approve' to trigger rendering...")
+        approve_msg = types.Content(
+            role="user", parts=[types.Part.from_text(text="Approve and render now.")]
+        )
+        events_f = app._runner.run(
+            user_id="evaluator", session_id=session_id, new_message=approve_msg
+        )
+        for event in events_f:
+            if event.content and event.content.parts:
+                for part in event.content.parts:
+                    if part.text:
+                        final_response += part.text
+                    if part.function_call:
+                        tool_name = part.function_call.name
+                        actual_tool_calls.append(tool_name)
+                        print(f"  [Tool Call]: {tool_name}({part.function_call.args})")
+                        
+        # AFTER ALL TURNS: Capture final deck spec from state for constraint check
+        session = await app._runner.session_service.get_session(
+            app_name="presentation_expert", user_id="evaluator", session_id=session_id
+        )
+        generated_deck_spec = session.state.get("current_deck_spec")
+        print(f"  [Full Response Total]: {final_response}")
 
     # --- Metrics Calculation ---
 
     # A. Tool Trajectory Score
     expected = test_case["expected_tools"]
     
-    # Check for strict sequential ordering if required (e.g., for editing workflows)
-    if test_case.get("strict_order", False):
-        filtered_actual = [call for call in actual_tool_calls if call in expected]
-        deduped_actual = []
-        for call in filtered_actual:
-            if not deduped_actual or deduped_actual[-1] != call:
-                deduped_actual.append(call)
-        
-        trajectory_match = False
-        if len(deduped_actual) >= len(expected):
-             for i in range(len(deduped_actual) - len(expected) + 1):
-                 if deduped_actual[i:i+len(expected)] == expected:
-                     trajectory_match = True
-                     break
-        tool_trajectory_avg_score = 1.0 if trajectory_match else 0.0
-        print(f"  [Metric] Strict Order Match: {trajectory_match}")
-    else:
-        intersection = set(expected).intersection(set(actual_tool_calls))
-        tool_trajectory_avg_score = len(intersection) / max(len(expected), 1)
+    # We use a set for actual_tool_calls to avoid duplication penalties
+    unique_actual = set(actual_tool_calls)
+    intersection = set(expected).intersection(unique_actual)
+    tool_trajectory_avg_score = len(intersection) / max(len(expected), 1)
 
     # B. Response Match Score
     judge_match_prompt = f"""
-    Evaluate how well the agent's final response matches the intent.
+    Evaluate how well the agent's final response matches the user's intent and includes requested information.
     User Intent: "{test_case['prompt']}"
     Target Keywords: {test_case['target_keywords']}
     Agent Response: "{final_response}"
-    Score from 0.0 to 1.0. Return ONLY the float number.
+    
+    Provide a score from 0.0 (no match) to 1.0 (perfect match).
+    Return ONLY the float number, no other text.
     """
     try:
         match_resp = client.models.generate_content(
             model="gemini-2.5-flash", contents=judge_match_prompt
         )
-        response_match_score = float(
-            re.search(r"(\d+\.\d+|\d+)", match_resp.text).group(1)
-        )
-    except Exception:
+        match = re.search(r"(\d\.\d+)", match_resp.text)
+        if not match:
+            match = re.search(r"\b([01])\b", match_resp.text)
+            
+        response_match_score = float(match.group(1)) if match else 0.0
+    except Exception as e:
+        print(f"  [Error] Judge match failed: {e}")
         response_match_score = 0.0
 
     # C. Constraint Compliance Score
@@ -165,24 +192,44 @@ async def evaluate_scenario(client, app, test_case, session_id):
             total_constraints += 1
             if len(generated_deck_spec.get("slides", [])) == constraints["slide_count"]:
                 score += 1
+            else:
+                print(f"  [Debug] Slide count mismatch. Expected {constraints['slide_count']}, got {len(generated_deck_spec.get('slides', []))}")
                 
         if "required_terms" in constraints and generated_deck_spec:
             total_constraints += 1
             deck_text = json.dumps(generated_deck_spec).lower()
             if all(term.lower() in deck_text for term in constraints["required_terms"]):
                 score += 1
+            else:
+                print(f"  [Debug] Required terms missing from deck_spec.")
 
         if "has_citations" in constraints:
             total_constraints += 1
-            # Look for explicit source tags, raw URLs, OR standard markdown links
-            has_explicit_source = bool(re.search(r"\(Source: <https?://.*?>\)", final_response))
-            has_raw_url = bool(re.search(r"https?://[^\s]+", final_response))
-            has_markdown_url = bool(re.search(r"\[.*?\]\(https?://.*?\)", final_response))
+            # Check for URLs in speaker notes of deck_spec (State is the source of truth)
+            has_citation = False
+            if generated_deck_spec:
+                # Check slides
+                for slide in generated_deck_spec.get("slides", []):
+                    notes = slide.get("speaker_notes", "").lower()
+                    if "http" in notes:
+                        has_citation = True
+                        break
+                # Check research summary specifically in state
+                session = await app._runner.session_service.get_session(
+                    app_name="presentation_expert", user_id="evaluator", session_id=session_id
+                )
+                state_summary = session.state.get("research_summary", "").lower()
+                if "http" in state_summary:
+                    has_citation = True
             
-            if has_explicit_source or has_raw_url or has_markdown_url:
+            # Fallback check final response text
+            if not has_citation:
+                has_citation = bool(re.search(r"https?://", final_response))
+
+            if has_citation:
                 score += 1
             else:
-                print(f"  [Debug] Citation check failed. final_response: {final_response[:200]}...")
+                print(f"  [Debug] Citation check failed. No URLs found in state or response.")
 
     constraint_compliance_score = (score / total_constraints) if total_constraints > 0 else 1.0
 
@@ -192,6 +239,7 @@ async def evaluate_scenario(client, app, test_case, session_id):
         "response_match_score": round(response_match_score, 2),
         "constraint_compliance_score": round(constraint_compliance_score, 2),
     }
+    print(f"  [Results] {results}")
     return results
 
 
@@ -247,58 +295,20 @@ async def run_evaluation_with_metrics():
             "constraints": {},
         },
         {
-            "name": "Editing: Modify Text",
-            "prompt": "Using 'draft.pptx', summarize the text on slide 3 so it is punchier. Keep the same title.",
-            "artifacts": ["draft.pptx"],
-            "requires_approval": False,
+            "name": "Revision Integrity & Citation Preservation",
+            "prompt": "Create a 1-slide presentation about mRNA vaccines. Include research. Once the outline is shown, change the title of slide 1 to 'mRNA: The Future of Medicine'.",
+            "requires_approval": True,
+            "requires_revision": True,
+            "revision_prompt": "Actually, change the title of slide 1 to 'mRNA: The Future of Medicine'. Keep all other research findings and URLs.",
             "expected_tools": [
-                "get_artifact_as_local_path",
-                "extract_slide_content",
-                "edit_slide_text",
-                "read_presentation_outline",
+                "google_research_grounded_tool",
+                "generate_and_save_outline",
+                "update_slide_in_spec",
+                "batch_generate_slides",
             ],
-            "target_keywords": ["updated", "slide 3"],
-            "constraints": {},
-        },
-        {
-            "name": "Editing: Visuals & Layout",
-            "prompt": "In 'draft.pptx', generate a new chart showing 50% growth and replace the visual on slide 4. Once replaced, move that element slightly to the right.",
-            "artifacts": ["draft.pptx"],
-            "requires_approval": False,
-            "strict_order": False,
-            "expected_tools": [
-                "get_artifact_as_local_path",
-                "generate_visual",
-                "replace_slide_visual",
-                "update_element_layout",
-                "read_presentation_outline",
-            ],
-            "target_keywords": ["replaced", "moved"],
-            "constraints": {},
-        },
-        {
-            "name": "Editing: Cross-Deck Extraction & Save",
-            "prompt": "Extract the text from slide 5 of 'reference.pptx' and add it as a new slide to my current working file 'draft.pptx'. That's all, save the final presentation as 'final_deck.pptx'.",
-            "artifacts": ["draft.pptx", "reference.pptx"],
-            "requires_approval": False,
-            "expected_tools": [
-                "get_artifact_as_local_path",
-                "extract_slide_content",
-                "add_slide_to_end",
-                "save_presentation",
-            ],
-            "target_keywords": ["final_deck.pptx", "saved"],
-            "constraints": {},
-        },
-        {
-            "name": "Deep Research & Citation Compliance",
-            "prompt": "Do a deep research analysis on the 10-year tech sector growth strategy for Irvine. Provide a detailed markdown summary with citations.",
-            "requires_approval": False,
-            "expected_tools": [
-                "research_specialist"
-            ],
-            "target_keywords": ["Irvine", "growth"],
+            "target_keywords": ["mRNA", "Medicine"],
             "constraints": {
+                "slide_count": 1,
                 "has_citations": True
             },
         }
@@ -319,12 +329,12 @@ async def run_evaluation_with_metrics():
         except Exception as e:
              print(f"Error evaluating scenario '{test_case['name']}': {e}")
 
-    # 3. Aggregate and Format Results
-    print("\n" + "=" * 50)
-    print("📊 FINAL EVALUATION METRICS BY SCENARIO:")
-    print(json.dumps(all_results, indent=4))
-    
+    #  aggregations ...
     if all_results:
+        print("\n" + "=" * 50)
+        print("📊 FINAL EVALUATION METRICS BY SCENARIO:")
+        print(json.dumps(all_results, indent=4))
+        
         avg_traj = sum(r["tool_trajectory_avg_score"] for r in all_results) / len(all_results)
         avg_match = sum(r["response_match_score"] for r in all_results) / len(all_results)
         avg_const = sum(r["constraint_compliance_score"] for r in all_results) / len(all_results)

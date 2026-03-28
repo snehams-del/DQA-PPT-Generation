@@ -66,7 +66,6 @@ def update_env_file(agent_engine_id, env_file_path):
     except Exception as e:
         print(f"Error updating .env file: {e}")
 
-
 def load_requirements():
     """Loads requirements from pyproject.toml."""
     pyproject_path = os.path.abspath(
@@ -107,7 +106,7 @@ def main(mode):
             engine = agent_engines.get(AGENT_ENGINE_ID)
             engine.update(
                 agent_engine=app,
-                display_name="presentation_expert_agent",
+                display_name="presentation_expert",
                 requirements=load_requirements(),
                 extra_packages=[
                     "./presentation_agent",
@@ -127,7 +126,7 @@ def main(mode):
 
         remote_app = agent_engines.create(
             app,
-            display_name="presentation_expert_agent",
+            display_name="presentation_expert",
             requirements=load_requirements(),
             extra_packages=[
                 "./presentation_agent",
@@ -148,7 +147,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--mode",
         type=str,
-        default="update",
+        default="create",
         help="Select if the deplying for the first time or updating existing",
     )
     args = parser.parse_args()

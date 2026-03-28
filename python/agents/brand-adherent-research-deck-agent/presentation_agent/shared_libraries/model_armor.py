@@ -27,8 +27,6 @@ from presentation_agent.shared_libraries.config import (
 )
 
 logger = get_logger("model_armor")
-
-
 async def _call_model_armor_api(endpoint_suffix: str, payload: dict) -> dict | None:
     """Helper to call Model Armor REST API."""
     try:

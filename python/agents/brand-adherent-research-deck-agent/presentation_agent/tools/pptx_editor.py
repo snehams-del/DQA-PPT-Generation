@@ -20,6 +20,9 @@ from pptx import Presentation
 from pptx.enum.shapes import MSO_SHAPE_TYPE, PP_PLACEHOLDER_TYPE
 from pptx.util import Inches
 
+# --- ADK Imports ---
+from google.adk.tools.tool_context import ToolContext
+
 # --- Local Application Imports ---
 from ..shared_libraries.config import get_logger
 from ..shared_libraries.models import StyleProfile
@@ -137,8 +140,6 @@ def add_slide_to_end(
         return f"Successfully added new slide '{title}'."
     except Exception as e:
         return f"Error: Could not add new slide. {e}"
-
-
 
 def delete_slide(pptx_path: str, slide_number_to_delete: int) -> str:
     """Deletes a specific slide. Modifies the file IN-PLACE."""
@@ -258,10 +259,12 @@ async def update_element_layout(
         return f"Error: Could not update layout. {e}"
 
 
-async def inspect_template_style(template_pptx: str) -> dict:
+async def inspect_template_style(
+    tool_context: ToolContext, template_pptx: str
+) -> dict:
     """
     Extracts style information (fonts, colors) from a template's slide master.
-    Returns a dictionary, not a StyleProfile object.
+    Can accept a local path or an artifact name.
     """
     log = get_logger("style_tool")
 
@@ -275,8 +278,23 @@ async def inspect_template_style(template_pptx: str) -> dict:
         "body_font_color_rgb": (40, 40, 40),
     }
 
+    resolved_path = template_pptx
+
     try:
-        prs = Presentation(template_pptx)
+        # 1. Resolve if it's not a local file
+        if not os.path.exists(template_pptx):
+            log.info(f"Path '{template_pptx}' not found locally. Attempting artifact resolution...")
+            from .artifact_utils import get_artifact_as_local_path
+            res = await get_artifact_as_local_path(tool_context, template_pptx)
+            if not res.startswith("Error"):
+                resolved_path = res
+            else:
+                log.warning(f"Could not resolve '{template_pptx}' as artifact. Using defaults.")
+                defaults["supports_subtitles"] = False
+                return defaults
+
+        # 2. Inspect the file
+        prs = Presentation(resolved_path)
         master = prs.slide_masters[0]
 
         def get_font_style(placeholder_type, type_key):
@@ -410,6 +428,7 @@ def get_safe_layout(prs, requested_layout_name):
     # 2. Key-word Based Mapping
     mapping = [
         ("two", ["two content", "comparison", "side by side", "dual", "split"]),
+        ("chart", ["chart", "graph", "plot", "data", "statistic"]),
         ("image", ["image", "picture", "visual", "photo", "graphic"]),
         (
             "content",

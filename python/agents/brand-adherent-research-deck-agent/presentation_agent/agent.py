@@ -12,16 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import google.auth
 
-# --- ADK Imports ---
+_, project_id = google.auth.default()
+os.environ.setdefault("GOOGLE_CLOUD_PROJECT", project_id)
+os.environ.setdefault("GOOGLE_CLOUD_LOCATION", "global")
+os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "True")
 
+# --- ADK Imports ---
 from google.adk.agents import LlmAgent
 from google.adk.artifacts import GcsArtifactService, InMemoryArtifactService
 from google.adk.memory import InMemoryMemoryService
 from google.adk.runners import Runner
 from google.adk.plugins.save_files_as_artifacts_plugin import SaveFilesAsArtifactsPlugin
-from google.adk.sessions import InMemorySessionService
+from google.adk.sessions import InMemorySessionService,VertexAiSessionService
 
 from presentation_agent.prompt import final_instruction
 
@@ -65,7 +70,7 @@ class PresentationExpertApp:
         agent_tools = ALL_STANDARD_TOOLS + [
             # --- Specialist / Research Tools ---
             outline_specialist_tool,
-            generate_outline_and_save_tool, # Atomic Hub
+            generate_outline_and_save_tool,
             slide_writer_specialist_tool,
             batch_slide_writer_tool,
             google_research_tool, # Always include standard Google Search (Fast)
@@ -127,12 +132,25 @@ class PresentationExpertApp:
             )
             artifact_service = InMemoryArtifactService()
 
+        # Configure Session Service (Persistent Vertex AI or Local In-Memory)
+        is_local = os.getenv("LOCAL_DEV", "false").lower() == "true"
+        if not is_local and os.getenv("GOOGLE_CLOUD_PROJECT"):
+            session_service = VertexAiSessionService(
+                project=os.getenv("GOOGLE_CLOUD_PROJECT"),
+                location=os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1"),
+            )
+            get_logger("agent").info(
+                f"Using VertexAiSessionService (Project: {os.getenv('GOOGLE_CLOUD_PROJECT')})"
+            )
+        else:
+            session_service = InMemorySessionService()
+            get_logger("agent").info("Using InMemorySessionService for local development.")
+
         # Configure and Run the Runner
         self._runner = Runner(
             agent=self._agent,
             app_name="presentation_expert",
-            session_service=InMemorySessionService(),
-            plugins=[SaveFilesAsArtifactsPlugin()],
+            session_service=session_service,
             artifact_service=artifact_service,
             memory_service=InMemoryMemoryService(),
         )
@@ -142,3 +160,7 @@ class PresentationExpertApp:
 # This global instance is what the ADK CLI will look for and run.
 coordinator_wrapper = PresentationExpertApp()
 root_agent = coordinator_wrapper._agent
+
+from google.adk.apps import App
+
+app = App(root_agent=root_agent, name="presentation_agent")

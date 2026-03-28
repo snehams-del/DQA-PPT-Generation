@@ -63,7 +63,12 @@ class SlideSpec(BaseModel):
     ] = "Title and Content"
     image_data: Optional[Union[str, bytes]] = None
     visual_prompt: Optional[str] = None
-    citations: Optional[List[str]] = Field(default=None, min_length=1, max_length=10, description="List of URL citations supporting the facts on this slide.")
+    citations: Optional[List[str]] = Field(
+        default=None, 
+        min_length=1, 
+        max_length=10, 
+        description="List of URL citations supporting the facts on this slide."
+    )
     image_position: Optional[Dict[str, float]] = None
     image_file_path: Optional[str] = None
     speaker_notes: Optional[str] = None
@@ -74,7 +79,6 @@ class DeckSpec(BaseModel):
     cover: CoverSpec
     slides: List[SlideSpec]
     closing_title: str
-
 
 class PresentationOutline(BaseModel):
     """The initial structural plan for the presentation."""

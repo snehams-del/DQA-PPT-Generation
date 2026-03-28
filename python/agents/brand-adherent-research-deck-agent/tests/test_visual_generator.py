@@ -1,3 +1,17 @@
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import pytest
 import asyncio
 from unittest.mock import patch, MagicMock, AsyncMock
@@ -14,86 +28,90 @@ class MockResponse:
             self.candidates = []
 
 @pytest.mark.asyncio
-@patch("presentation_agent.tools.visual_generator.initialize_genai_client")
+@patch("presentation_agent.tools.visual_generator.genai.Client")
 @patch("presentation_agent.tools.visual_generator.GCS_BUCKET_NAME", "my-bucket")
 @patch("presentation_agent.tools.visual_generator.get_gcs_client")
-async def test_generate_visual_success_gcs(mock_get_gcs_client, mock_initialize_genai_client):
+async def test_generate_visual_success_gcs(mock_get_gcs_client, mock_genai_client_class):
     mock_client = MagicMock()
-    mock_initialize_genai_client.return_value = mock_client
+    mock_genai_client_class.return_value = mock_client
     
-    mock_client.models.generate_content = MagicMock(return_value=MockResponse(b"image_data"))
+    # Force _genai_client to be None so it re-initializes and uses our mock class
+    with patch("presentation_agent.tools.visual_generator._genai_client", None):
+        mock_client.models.generate_content = MagicMock(return_value=MockResponse(b"image_data"))
 
-    mock_storage_client = MagicMock()
-    mock_get_gcs_client.return_value = mock_storage_client
+        mock_storage_client = MagicMock()
+        mock_get_gcs_client.return_value = mock_storage_client
 
-    result = await generate_visual("chart: A test chart")
+        result = await generate_visual("chart: A test chart")
 
-    # With the new Hybrid logic, it should STILL return the local filepath even if GCS is configured
-    assert not result.startswith("Error:")
-    assert result.endswith(".png") 
-    mock_client.models.generate_content.assert_called_once()
-    mock_storage_client.bucket().blob().upload_from_string.assert_called_once()
+        assert result.startswith("gs://my-bucket/")
+        mock_client.models.generate_content.assert_called_once()
+        mock_storage_client.bucket().blob().upload_from_string.assert_called_once()
 
 @pytest.mark.asyncio
-@patch("presentation_agent.tools.visual_generator.initialize_genai_client")
+@patch("presentation_agent.tools.visual_generator.genai.Client")
 @patch("presentation_agent.tools.visual_generator.GCS_BUCKET_NAME", None)
-async def test_generate_visual_success_local(mock_initialize_genai_client):
+async def test_generate_visual_success_local(mock_genai_client_class):
     mock_client = MagicMock()
-    mock_initialize_genai_client.return_value = mock_client
+    mock_genai_client_class.return_value = mock_client
 
-    mock_client.models.generate_content = MagicMock(return_value=MockResponse(b"image_data"))
+    with patch("presentation_agent.tools.visual_generator._genai_client", None):
+        mock_client.models.generate_content = MagicMock(return_value=MockResponse(b"image_data"))
 
-    result = await generate_visual("image: A test image")
+        result = await generate_visual("image: A test image")
 
-    assert not result.startswith("Error:")
-    assert not result.startswith("gs://")
-    assert result.endswith(".png") # Temp file path
-    mock_client.models.generate_content.assert_called_once()
+        assert not result.startswith("Error:")
+        assert not result.startswith("gs://")
+        assert result.endswith(".png") # Temp file path
+        mock_client.models.generate_content.assert_called_once()
 
 
 @pytest.mark.asyncio
-@patch("presentation_agent.tools.visual_generator.initialize_genai_client")
-async def test_generate_visual_no_candidates(mock_initialize_genai_client):
+@patch("presentation_agent.tools.visual_generator.genai.Client")
+@patch("presentation_agent.tools.visual_generator.GCS_BUCKET_NAME", None)
+async def test_generate_visual_no_candidates(mock_genai_client_class):
     mock_client = MagicMock()
-    mock_initialize_genai_client.return_value = mock_client
+    mock_genai_client_class.return_value = mock_client
 
-    mock_client.models.generate_content = MagicMock(return_value=MockResponse())
+    with patch("presentation_agent.tools.visual_generator._genai_client", None):
+        mock_client.models.generate_content = MagicMock(return_value=MockResponse())
 
-    result = await generate_visual("test prompt")
+        result = await generate_visual("test prompt")
 
-    assert result.startswith("Error: Visual generation failed.")
+        assert result.startswith("Error: Visual generation failed.")
 
 
 @pytest.mark.asyncio
-@patch("presentation_agent.tools.visual_generator.initialize_genai_client")
+@patch("presentation_agent.tools.visual_generator.genai.Client")
 @patch("presentation_agent.tools.visual_generator.GCS_BUCKET_NAME", "my-bucket")
 @patch("presentation_agent.tools.visual_generator.get_gcs_client")
-async def test_generate_visual_gcs_no_client(mock_get_gcs_client, mock_initialize_genai_client):
+async def test_generate_visual_gcs_no_client(mock_get_gcs_client, mock_genai_client_class):
     mock_client = MagicMock()
-    mock_initialize_genai_client.return_value = mock_client
+    mock_genai_client_class.return_value = mock_client
 
-    mock_client.models.generate_content = MagicMock(return_value=MockResponse(b"image_data"))
+    with patch("presentation_agent.tools.visual_generator._genai_client", None):
+        mock_client.models.generate_content = MagicMock(return_value=MockResponse(b"image_data"))
 
-    mock_get_gcs_client.return_value = None
+        mock_get_gcs_client.return_value = None
 
-    result = await generate_visual("chart: A test chart")
+        result = await generate_visual("chart: A test chart")
 
-    # If GCS fails, it logs a warning but STILL returns the local file path
-    assert not result.startswith("Error:")
-    assert result.endswith(".png")
+        assert result.startswith("Error: Visual generation failed.") # It fails if storage_client is None
 
 
 @pytest.mark.asyncio
-@patch("presentation_agent.tools.visual_generator.initialize_genai_client")
-async def test_generate_visual_exception(mock_initialize_genai_client):
+@patch("presentation_agent.tools.visual_generator.genai.Client")
+@patch("presentation_agent.tools.visual_generator.GCS_BUCKET_NAME", None)
+async def test_generate_visual_exception(mock_genai_client_class):
     mock_client = MagicMock()
-    mock_initialize_genai_client.return_value = mock_client
+    mock_genai_client_class.return_value = mock_client
 
-    mock_client.models.generate_content = MagicMock(side_effect=Exception("API Error"))
+    with patch("presentation_agent.tools.visual_generator._genai_client", None):
+        mock_client.models.generate_content = MagicMock(side_effect=Exception("API Error"))
 
-    result = await generate_visual("test prompt")
+        result = await generate_visual("test prompt")
 
-    assert result.startswith("Error: Visual generation failed.")
+        assert result.startswith("Error: Visual generation failed.")
 
 @pytest.mark.asyncio
 async def test_generate_visual_empty_prompt():

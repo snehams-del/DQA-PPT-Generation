@@ -94,6 +94,7 @@ if GCS_BUCKET_NAME:
     GCS_BUCKET_NAME = GCS_BUCKET_NAME.split("/")[0]
 
 PRESENTATION_SPEC_ARTIFACT = "presentation_spec.json"
+RESEARCH_SUMMARY_ARTIFACT = "research_summary.txt"
 
 # Global genai client, initialized via function
 _genai_client = None

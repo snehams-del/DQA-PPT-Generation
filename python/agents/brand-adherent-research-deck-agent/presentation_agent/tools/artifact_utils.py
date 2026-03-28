@@ -15,6 +15,7 @@
 import json
 import os
 import tempfile
+import asyncio
 import uuid
 from typing import Any, Dict, Optional
 
@@ -176,7 +177,6 @@ async def save_presentation(
                 bucket = storage_client.bucket(gcs_bucket_name)
                 blob = bucket.blob(new_artifact_name)
                 # Run sync GCS upload in a thread
-                import asyncio
                 await asyncio.to_thread(blob.upload_from_filename, local_path)
                 gcs_message = f" It was also saved to GCS bucket '{gcs_bucket_name}'."
             except Exception as e:
@@ -188,10 +188,9 @@ async def save_presentation(
         log.error(f"An unexpected error occurred during save: {e}", exc_info=True)
         return f"Error: An unexpected error occurred during save. Details: {e}"
 
-
 async def save_deck_spec(tool_context: ToolContext, deck_spec: dict) -> str:
     """
-    Saves the deck_spec to persistent session STATE and ARTIFACT. 
+    Saves the deck_spec to persistent session STATE.
     Returns an invisible confirmation instead of a visible filename.
     """
     log = get_logger("save_deck_spec")
@@ -212,18 +211,7 @@ async def save_deck_spec(tool_context: ToolContext, deck_spec: dict) -> str:
         # 1. PERSISTENCE: Save directly to ctx.state (Invisible in UI)
         tool_context.state["current_deck_spec"] = validated_spec.model_dump()
         
-        # 2. SAVE TO ARTIFACT (Persistence for Enterprise)
-        spec_bytes = json.dumps(validated_spec.model_dump(), indent=2).encode("utf-8")
-        # Use Part wrapper for Enterprise stability
-        artifact = types.Part(
-            inline_data=types.Blob(
-                data=spec_bytes,
-                mime_type="application/json"
-            )
-        )
-        await tool_context.save_artifact(PRESENTATION_SPEC_ARTIFACT, artifact)
-        
-        log.info(f"Successfully persisted deck_spec to session state and artifact '{PRESENTATION_SPEC_ARTIFACT}'.")
+        log.info("Successfully persisted deck_spec to session state (invisible to UI).")
         return "Success: Presentation plan has been securely saved to the session state."
     except ValidationError as e:
         log.error(f"Validation error: {e.errors()}")
@@ -239,30 +227,16 @@ async def update_slide_in_spec(
     updated_slide_topic: Dict[str, Any],
 ) -> str:
     """
-    Surgically updates a slide in the session STATE and ARTIFACT. 
+    Surgically updates a slide in the session STATE. 
     Automatically grows the deck if needed.
     """
     log = get_logger("update_slide_in_spec")
     try:
         # 1. Load from State (Primary)
         spec_dict = tool_context.state.get("current_deck_spec")
-        
-        # 1.5 Fallback: Load from Artifact (Enterprise Stability)
-        if not spec_dict:
-            log.info(f"State empty. Loading from artifact '{PRESENTATION_SPEC_ARTIFACT}'...")
-            try:
-                artifact = await tool_context.load_artifact(PRESENTATION_SPEC_ARTIFACT)
-                if artifact:
-                    spec_json = artifact.inline_data.data if isinstance(artifact, types.Part) else artifact
-                    if isinstance(spec_json, (str, bytes, bytearray)):
-                        spec_dict = json.loads(spec_json)
-                    else:
-                        spec_dict = spec_json
-            except Exception as e:
-                log.warning(f"Could not load fallback artifact: {e}")
 
         if not spec_dict:
-            return "Error: No active presentation plan found in session state or artifacts."
+            return "Error: No active presentation plan found in session state. Revision failed."
             
         # 2. Update or Append
         slides = spec_dict.get("slides", [])
@@ -279,17 +253,7 @@ async def update_slide_in_spec(
             
         # 3. Save back to State
         tool_context.state["current_deck_spec"] = spec_dict
-        
-        # 4. SAVE TO ARTIFACT (Persistence for Enterprise)
-        spec_bytes = json.dumps(spec_dict, indent=2).encode("utf-8")
-        # Use Part wrapper for Enterprise stability
-        artifact = types.Part(
-            inline_data=types.Blob(
-                data=spec_bytes,
-                mime_type="application/json"
-            )
-        )
-        await tool_context.save_artifact(PRESENTATION_SPEC_ARTIFACT, artifact)
+        log.info(f"Slide {slide_index} updated in session state successfully.")
         
         return "Success: The slide has been updated in the session state."
         
@@ -317,3 +281,28 @@ async def read_file_content(tool_context: ToolContext, artifact_name: str) -> st
     except Exception as e:
         log.error(f"Failed to read artifact '{artifact_name}': {e}", exc_info=True)
         return f"Error reading file: {e}"
+
+
+async def read_deck_spec(tool_context: ToolContext) -> Dict[str, Any]:
+    """
+    Retrieves the current presentation plan (deck_spec) directly from session state.
+    """
+    log = get_logger("read_deck_spec")
+    try:
+        # 1. Try State (Primary Source of Truth)
+        spec_dict = tool_context.state.get("current_deck_spec")
+
+        if not spec_dict:
+            return {"status": "Error", "message": "No active presentation plan found in session state. Please ensure an outline was generated."}
+
+        log.info("Successfully loaded DeckSpec from session state.")
+        return {
+            "status": "Success",
+            "strategic_briefing": spec_dict.get("strategic_briefing"),
+            "cover": spec_dict.get("cover"),
+            "slides": spec_dict.get("slides", []),
+            "closing_title": spec_dict.get("closing_title"),
+        }
+    except Exception as e:
+        log.error(f"Failed to read deck_spec: {e}")
+        return {"status": "Error", "message": f"Internal failure while reading plan from state: {e}"}

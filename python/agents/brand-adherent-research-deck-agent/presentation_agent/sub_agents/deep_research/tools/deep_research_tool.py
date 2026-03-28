@@ -58,7 +58,7 @@ def _parse_deep_research_stream(response_stream) -> tuple[str, list[str], str]:
     Returns: (report_text, citations_list, interaction_id)
     """
     report_parts = []
-    citations = []
+    citations = []  # Stores rich Markdown links [Title](URL)
     interaction_id = None
 
     for chunk in response_stream:
@@ -86,12 +86,26 @@ def _parse_deep_research_stream(response_stream) -> tuple[str, list[str], str]:
                         url = getattr(citation, "source", None) or getattr(
                             citation, "url", None
                         )
+                        title = getattr(citation, "title", None)
                         if url:
-                            citations.append(url)
+                            if title:
+                                citations.append(f"[{title}]({url})")
+                            else:
+                                citations.append(url)
 
     full_report = "".join(report_parts)
     # Clean LaTeX formatting
     full_report = latex_to_text(full_report)
+
+    # REINFORCEMENT: If no citations found in annotations, try to extract URLs from text
+    if not citations:
+        url_pattern = r"https?://[^\s\]\)\>]+"
+        found_urls = re.findall(url_pattern, full_report)
+        for url in found_urls:
+            # Clean trailing punctuation
+            clean_url = re.sub(r"[\.\,\)\}\]]$", "", url)
+            if clean_url not in citations:
+                citations.append(clean_url)
 
     return full_report, citations, interaction_id
 
@@ -141,14 +155,13 @@ async def deep_research_search(query: str) -> str:
     Includes a timeout and conciseness injection for performance.
     """
     # Enforcing 'Fast Mode' via strict behavioral constraints
+    # AND emphasizing citations
     optimized_query = (
         f"{query}\n\n"
-        "CRITICAL TIME & SCOPE CONSTRAINT (FAST MODE): You must execute this research quickly. "
-        "1. Limit your search depth. Do NOT perform exhaustive, multi-layered deep dives.\n"
-        "2. Limit your reading to a MAXIMUM of 3 to 4 high-quality sources.\n"
-        "3. Synthesize the data immediately once you have baseline statistics.\n"
-        "Return a highly concise, bulleted summary of ONLY the most important facts, numbers, and statistics. "
-        "Limit output to 800 words maximum."
+        "CRITICAL RESEARCH CONSTRAINTS:\n"
+        "1. FAST MODE: Execute research quickly. Limit search depth. MAXIMUM of 4 high-quality sources.\n"
+        "2. INLINE CITATIONS: You MUST include the raw URL citation [https://...] inline immediately following EVERY fact, number, or finding you report. This is non-negotiable.\n"
+        "3. OUTPUT: Return a highly concise, bulleted summary of ONLY the most important facts. Limit output to 800 words maximum.\n"
     )
 
     loop = asyncio.get_running_loop()

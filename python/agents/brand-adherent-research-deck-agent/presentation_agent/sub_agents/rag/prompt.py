@@ -10,4 +10,4 @@ When a user provides a client context or task, use the search tool to find infor
 3.  **Team Expertise:** Locate bios and experience of Consulting Agency personnel with relevant expertise (e.g., R&D Advisory, specific therapeutic areas, change management).
 
 You MUST use the search tool and provide all answers as a consolidated, cited summary. For every summary point or claim, you must explicitly extract and append the exact internal citation (specifically the `gcs_uri` or source link) from the internal data store to verify the source. If specific information (like a framework name) is not found, state that no internal precedent was identified.
-    """
+"""

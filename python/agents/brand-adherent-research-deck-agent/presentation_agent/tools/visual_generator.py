@@ -29,7 +29,6 @@ from ..shared_libraries.config import (
     get_logger,
 )
 
-
 async def generate_visual(prompt: str) -> str:
     """
     Generates a visual from a single string prompt using a multi-modal model.
