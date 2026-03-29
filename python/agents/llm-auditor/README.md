@@ -39,90 +39,60 @@ This diagram shows the detailed architecture of the agents and tools used
 to implement this workflow.
 <img src="llm_auditor_architecture.png" alt="LLM Auditor Architecture" width="800"/>
 
-## Setup and Installation
+## Quick start (Agent Starter Pack — primary path)
 
-1.  **Prerequisites**
+This sample is set up for **[Agent Starter Pack](https://google.github.io/adk-docs/)** (`agent-starter-pack` **0.32.x** in `pyproject.toml`) and **[uv](https://docs.astral.sh/uv/)**. The `[tool.agent-starter-pack]` section defines an `example_question` for templating and discovery.
 
-    *   Python 3.11+
-    *   Poetry
-        *   For dependency management and packaging. Please follow the
-            instructions on the official
-            [Poetry website](https://python-poetry.org/docs/) for installation.
+### Prerequisites
 
-        ```bash
-        pip install poetry
-        ```
+- Python 3.10+
+- [uv](https://docs.astral.sh/uv/getting-started/installation/)
+- Google Cloud project (for Vertex AI) **or** a [Gemini API key](https://ai.google.dev/gemini-api/docs/quickstart?lang=python#make-first-request) for the Developer API
+- [Google Cloud CLI](https://cloud.google.com/sdk/docs/install) when using Vertex / Application Default Credentials (ADC)
 
-    * A project on Google Cloud Platform
-    * Google Cloud CLI
-        *   For installation, please follow the instruction on the official
-            [Google Cloud website](https://cloud.google.com/sdk/docs/install).
-
-2.  **Installation**
-
-    ```bash
-    # Clone this repository.
-    git clone https://github.com/google/adk-samples.git
-    cd adk-samples/python/agents/llm-auditor
-    # Install the package and dependencies.
-    # Note for Linux users: If you get an error related to `keyring` during the installation, you can disable it by running the following command:
-    # poetry config keyring.enabled false
-    # This is a one-time setup.
-    poetry install
-    ```
-
-3.  **Configuration**
-
-    *   Set up Google Cloud credentials.
-
-        *   You may set the following environment variables in your shell, or in
-            a `.env` file instead.
-
-        ```bash
-        export GOOGLE_GENAI_USE_VERTEXAI=true
-        export GOOGLE_CLOUD_PROJECT=<your-project-id>
-        export GOOGLE_CLOUD_LOCATION=<your-project-location>
-        export GOOGLE_CLOUD_STORAGE_BUCKET=<your-storage-bucket>  # Only required for deployment on Agent Engine
-        ```
-
-    *   Authenticate your GCloud account.
-
-        ```bash
-        gcloud auth application-default login
-        gcloud auth application-default set-quota-project $GOOGLE_CLOUD_PROJECT
-        ```
-
-    *   If you'd prefer to run the agent locally without using Google Vertex AI or Cloud dependencies, you may set the following 
-        environment variables in your shell, or in a `.env` file instead.
-
-        ```bash
-        export GOOGLE_GENAI_USE_VERTEXAI=false
-        export GOOGLE_API_KEY=PASTE_YOUR_ACTUAL_API_KEY_HERE
-        ```
-
-        Refer to the [Google Gemini API Quickstart](https://ai.google.dev/gemini-api/docs/quickstart?lang=python#make-first-request) for instructions on obtaining a Google Gemini API key.
-
-## Running the Agent
-
-**Using `adk`**
-
-ADK provides convenient ways to bring up agents locally and interact with them.
-You may talk to the agent using the CLI:
+### Install
 
 ```bash
-adk run llm_auditor
+git clone https://github.com/google/adk-samples.git
+cd adk-samples/python/agents/llm-auditor
+uv sync
 ```
 
-Or on a web interface:
+### Google auth (ADC for Vertex / ASP-generated projects)
+
+For Vertex AI, use Application Default Credentials and align the quota project:
 
 ```bash
-adk web
+gcloud auth application-default login
+gcloud auth application-default set-quota-project YOUR_PROJECT_ID
 ```
 
-The command `adk web` will start a web server on your machine and print the URL.
-You may open the URL, select "llm_auditor" in the top-left drop-down menu, and
-a chatbot interface will appear on the right. The conversation is initially
-blank. Here are some example requests you may ask the LLM Auditor to verify:
+`llm_auditor/__init__.py` loads `.env` then calls **`google.auth.default()`** and sets **`GOOGLE_CLOUD_PROJECT`** via `os.environ.setdefault` when ADC provides a project—matching the pattern used for ASP-generated deployments (see [#1286](https://github.com/google/adk-samples/issues/1286)). Defaults are also applied for `GOOGLE_GENAI_USE_VERTEXAI` and `GOOGLE_CLOUD_LOCATION` only when those variables are unset (so your `.env` still wins).
+
+Copy `.env.example` to `.env` and set variables as needed, for example:
+
+```bash
+export GOOGLE_GENAI_USE_VERTEXAI=true
+export GOOGLE_CLOUD_PROJECT=<your-project-id>
+export GOOGLE_CLOUD_LOCATION=<your-project-location>
+export GOOGLE_CLOUD_STORAGE_BUCKET=<your-storage-bucket>  # Agent Engine deployment only
+```
+
+**Gemini Developer API (no Vertex):** in `.env` set `GOOGLE_GENAI_USE_VERTEXAI=false` and `GOOGLE_API_KEY=...`.
+
+### Run with ADK (local)
+
+```bash
+uv run adk run llm_auditor
+```
+
+Or the web UI:
+
+```bash
+uv run adk web
+```
+
+Select **llm_auditor** in the app dropdown. Example prompts you can try:
 
 *   `Double check this: Earth is further away from the Sun than Mars.`
 *   `Q: Why the blueberries are blue? A: Because blueberries have pigments on
@@ -131,13 +101,19 @@ blank. Here are some example requests you may ask the LLM Auditor to verify:
 Sampled responses of these requests are shown below in the [Example
 Interaction](#example-interaction) section.
 
-**Programmatic Access**
+### Agent Starter Pack CLI
 
-Below is an example of interacting with the agent using Python:
+Scaffold or deploy from this template (see upstream ASP docs for flags):
+
+```bash
+uvx agent-starter-pack --help
+```
+
+### Programmatic access
+
+Below is an example of interacting with the agent using Python (importing `llm_auditor` runs the `__init__.py` auth bootstrap):
 
 ```python
-import dotenv
-dotenv.load_dotenv()  # May skip if you have exported environment variables.
 from google.adk.runners import InMemoryRunner
 from google.genai.types import Part, UserContent
 from llm_auditor.agent import root_agent
@@ -266,20 +242,20 @@ Reference:
 scatters blue light. They also have pigments on their skin.
 ```
 
-## Running Tests
+## Running tests
 
-For running tests and evaluation, install the extra dependencies:
+Unit / smoke tests under `tests/` only need the **dev** group (no SciPy stack):
 
 ```bash
-poetry install --with dev
+uv sync --group dev
+uv run pytest tests
 ```
 
-Then the tests and evaluation can be run from the `llm-auditor` directory using
-the `pytest` module:
+Evaluation under `eval/` uses `AgentEvaluator` and requires **`google-adk[eval]`** (pulls `scikit-learn` / **SciPy**). On Windows, use **Python 3.10–3.13** (this project caps at `<3.14` in `pyproject.toml` so SciPy wheels resolve). Then:
 
 ```bash
-python3 -m pytest tests
-python3 -m pytest eval
+uv sync --group dev --group eval
+uv run pytest eval
 ```
 
 `tests` runs the agent on a sample request, and makes sure that every component
@@ -290,12 +266,11 @@ that the agent's responses match a pre-defined response reasonably well.
 
 ## Deployment
 
-The LLM Auditor can be deployed to Vertex AI Agent Engine using the following
-commands:
+The LLM Auditor can be deployed to Vertex AI Agent Engine using:
 
 ```bash
-poetry install --with deployment
-python3 deployment/deploy.py --create
+uv sync --group deployment
+uv run python deployment/deploy.py --create
 ```
 
 When the deployment finishes, it will print a line like this:
@@ -307,7 +282,7 @@ Created remote agent: projects/<PROJECT_NUMBER>/locations/<PROJECT_LOCATION>/rea
 If you forgot the AGENT_ENGINE_ID, you can list existing agents using:
 
 ```bash
-python3 deployment/deploy.py --list
+uv run python deployment/deploy.py --list
 ```
 
 The output will be like:
@@ -323,8 +298,6 @@ All remote agents:
 You may interact with the deployed agent programmatically in Python:
 
 ```python
-import dotenv
-dotenv.load_dotenv()  # May skip if you have exported environment variables.
 from vertexai import agent_engines
 
 agent_engine_id = "AGENT_ENGINE_ID"
@@ -342,8 +315,12 @@ for event in agent_engine.stream_query(
 To delete the deployed agent, you may run the following command:
 
 ```bash
-python3 deployment/deploy.py --delete --resource_id=${AGENT_ENGINE_ID}
+uv run python deployment/deploy.py --delete --resource_id=${AGENT_ENGINE_ID}
 ```
+
+## Legacy: Poetry
+
+If you use Poetry instead of uv: `poetry install`, then `poetry run adk web` / `python -m pytest tests` as before. Configuration and ADC steps are the same as above.
 
 ## Customization
 

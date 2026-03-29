@@ -10,10 +10,14 @@ authors = [
 ]
 license = {text = "Apache License 2.0"}
 readme = "README.md"
-requires-python = ">=3.10"
+# SciPy (via google-adk[eval] → aiplatform[evaluation]) has no Windows wheels for
+# Python 3.14 yet; cap keeps `uv` on 3.10–3.12/3.13 where wheels exist.
+requires-python = ">=3.10,<3.14"
 
 dependencies = [
+    "agent-starter-pack>=0.32.0,<0.33.0",
     "google-adk>=1.0.0",
+    "google-auth>=2.30.0",
     "google-cloud-aiplatform[adk,agent-engines]>=1.93.0",
     "google-genai>=1.9.0",
     "pydantic>=2.10.6",
@@ -21,10 +25,13 @@ dependencies = [
 ]
 
 [dependency-groups]
+# Keep dev lean: google-adk[eval] pulls scipy/sklearn (often source-build on Windows).
 dev = [
-    "google-adk[eval]>=1.0.0",
     "pytest>=8.3.5",
     "pytest-asyncio>=0.26.0",
+]
+eval = [
+    "google-adk[eval]>=1.0.0",
 ]
 deployment = [
     "absl-py>=2.2.1",
@@ -38,9 +45,23 @@ extend = "../../../pyproject.toml"
 # Categorizes the local package for correct import sorting
 known-first-party = ["llm_auditor"]
 
+[tool.ruff.lint.per-file-ignores]
+"llm_auditor/__init__.py" = ["E402", "I001"]
+
 [tool.hatch.build.targets.wheel]
 # Ensures Hatchling finds the package folder correctly
 packages = ["llm_auditor"]
+
+[tool.pytest.ini_options]
+pythonpath = "."
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+
+[tool.agent-starter-pack]
+example_question = "Double check this: Earth is further away from the Sun than Mars."
+
+[tool.agent-starter-pack.settings]
+agent_directory = "llm_auditor"
 
 [build-system]
 requires = ["hatchling"]
