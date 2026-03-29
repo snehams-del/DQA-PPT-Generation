@@ -17,6 +17,17 @@ dependencies = [
     "python-dotenv>=1.1.0",
 ]
 
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest>=8.3.2",
+    "pytest-asyncio>=0.23.7",
+    "google-adk[eval]>=1.0.0",
+    "nest-asyncio>=1.6.0",
+    "agent-starter-pack>=0.14.1",
+]
+
 [tool.ruff]
 extend = "../../../pyproject.toml"
 
@@ -30,3 +41,10 @@ deployment_targets = ["agent_engine", "cloud_run"]
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+pythonpath = "."
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.agent-starter-pack]
+example_question = "How much is 500 USD in Japanese Yen based on today's exchange rate?"
