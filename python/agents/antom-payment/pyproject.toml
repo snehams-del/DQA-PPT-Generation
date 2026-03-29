@@ -10,9 +10,19 @@ license = {text = "Apache License 2.0"}
 readme = "README.md"
 requires-python = ">=3.11"
 
+[dependency-groups]
+
 dependencies = [
     "google-adk>=1.11.0",
     "mcp>=1.13.0",
+]
+
+dev = [
+    "pytest>=8.3.2",
+    "pytest-asyncio>=0.23.7",
+    "google-adk[eval]>=1.0.0",
+    "nest-asyncio>=1.6.0",
+    "agent-starter-pack>=0.14.1",
 ]
 
 [tool.ruff]
@@ -28,3 +38,13 @@ packages = ["antom_payment"]
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+pythonpath = "."
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.agent-starter-pack]
+example_question = "Create a payment link for a $25 coffee order and send me the details."
+
+[tool.agent-starter-pack.settings]
+agent_directory = "antom_payemnt_agent"

@@ -11,17 +11,17 @@ The Antom Payment Agent aims to provide customers with a convenient and seamless
 ## Features
 
 ### 💳 Payment Operations
+
 - **Create Payment Session** (`create_payment_session`): Generate payment sessions for client-side SDK integration
 - **Query Payment Details** (`query_payment_detail`): Retrieve transaction status and information for submitted payment requests
 - **Cancel Payment** (`cancel_payment`): Cancel payments when results are not returned within expected timeframes
 
 ### 💰 Refund Operations
+
 - **Create Refund** (`create_refund`): Initiate full or partial refunds against successful payments
 - **Query Refund Details** (`query_refund_detail`): Check refund status for previously submitted refund requests
 
-
 ## Setup and Installation
-
 
 1.  **Prerequisites**
 
@@ -36,61 +36,48 @@ Before using the Antom Payment Agent, ensure you have:
   - Payment Redirect Return URL (PAYMENT_REDIRECT_URL)
   - Payment Notification Callback URL (PAYMENT_NOTIFY_URL)
 
-
 2.  **Installation**
 
+```bash
+# Clone this repository.
+git clone https://github.com/google/adk-samples.git
+cd adk-samples/python/agents/antom-payment
+# Install the package and dependencies.
+uv venv
+uv sync --dev
 
-   ```bash
-   # Clone this repository.
-   git clone https://github.com/google/adk-samples.git
-   cd adk-samples/python/agents/antom-payment
-   # Install the package and dependencies.
-   pip install poetry
-   poetry install
-   
-   or
-   uv venv 
-   uv sync
-   
-   ```
+```
 
 3. **Configuration**
 
-  You may set the following environment variables in your shell, or in a `python/agents/antom-payment/antom-payemnt-agent/.env` file instead.
-   *   Set up Google Cloud credentials.
+You may set the following environment variables in your shell, or in a `python/agents/antom-payment/antom-payemnt-agent/.env` file instead.
 
-          GOOGLE_GENAI_USE_VERTEXAI
-          GOOGLE_API_KEY
+- Set up Google Cloud credentials.
 
+  GOOGLE_GENAI_USE_VERTEXAI
+  GOOGLE_API_KEY
 
-   *    your Antom config.
+- your Antom config.
 
-
-          GATEWAY_URL
-          CLIENT_ID
-          MERCHANT_PRIVATE_KEY
-          ALIPAY_PUBLIC_KEY
-          PAYMENT_REDIRECT_URL
-          PAYMENT_NOTIFY_URL
+  GATEWAY_URL
+  CLIENT_ID
+  MERCHANT_PRIVATE_KEY
+  ALIPAY_PUBLIC_KEY
+  PAYMENT_REDIRECT_URL
+  PAYMENT_NOTIFY_URL
 
 ## Running the Agent
 
-
 **Using `adk`**
-
 
 ADK provides convenient ways to bring up agents locally and interact with them.
 You may talk to the agent using:
 
 ```bash
-poetry run adk web
-or
 uv run adk web
 ```
 
-
 **Try the following prompts:**
-
 
 After running the agent, try the following example prompt
 
@@ -110,3 +97,27 @@ And here's a sentence describing the Cream Puff:
 
 Let me know if you want help generating a real payment link using a specific service!
 ```
+
+### Agent Starter Pack (Recommended)
+
+Use the [Agent Starter Pack](https://goo.gle/agent-starter-pack) to create a production-ready version of this agent with additional deployment options. The easiest way is with `uvx` (no install needed):
+
+```bash
+uvx agent-starter-pack create my-antom-payment-agent -a adk@antom-payment-agent
+```
+
+<details>
+<summary>Alternative: Using pip and a virtual environment</summary>
+
+```bash
+# Create and activate a virtual environment
+python -m venv .venv && source .venv/bin/activate # On Windows: .venv\Scripts\activate
+
+# Install the starter pack and create your project
+pip install --upgrade agent-starter-pack
+agent-starter-pack create my-antom-payment-agent -a adk@antom-payment-agent
+```
+
+</details>
+
+The starter pack will prompt you to select deployment options and provides additional production-ready features including automated CI/CD deployment scripts.

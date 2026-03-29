@@ -26,7 +26,7 @@ root_agent = Agent(
                     command="uvx",
                     args=["ant-intl-antom-mcp"],
                     # Pass the API key as an environment variable to the npx process
-                    # This is how the MCP server for Antom payment expects the key.
+                    # This is how the MCP server for Antom payment expects the key
                     env={
                         "GATEWAY_URL": os.getenv("GATEWAY_URL"),
                         "CLIENT_ID": os.getenv("CLIENT_ID"),
