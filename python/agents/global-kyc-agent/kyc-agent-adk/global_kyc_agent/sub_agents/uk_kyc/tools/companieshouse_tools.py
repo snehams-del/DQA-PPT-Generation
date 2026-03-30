@@ -1,5 +1,5 @@
 from companieshouse import CompaniesHouseClient
-from global_kyc_agent.shared_libraries import helpercode
+from ....shared_libraries import helpercode
 import requests
 
 PROJECT_ID = helpercode.get_project_id()

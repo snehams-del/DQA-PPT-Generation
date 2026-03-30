@@ -3,7 +3,7 @@ from google.adk.agents import Agent, ParallelAgent, SequentialAgent
 from google.adk.tools.function_tool import FunctionTool
 from google.adk.tools import google_search
 
-from global_kyc_agent.shared_libraries.config import config
+from ...shared_libraries.config import config
 
 # Import Prompts
 from .prompt import (
@@ -22,7 +22,7 @@ from .tools.insider_trading import get_insider_transactions
 # Get the API client from shared or initialized
 from google import genai
 from google.adk.models import google_llm
-from global_kyc_agent.shared_libraries import helpercode
+from ...shared_libraries import helpercode
 
 model = google_llm.Gemini(model=config.gemini_model)
 try:

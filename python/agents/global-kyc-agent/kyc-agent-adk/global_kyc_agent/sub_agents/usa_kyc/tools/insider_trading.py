@@ -2,7 +2,7 @@ import math
 import os
 import sec_api
 from google.adk.tools.function_tool import FunctionTool
-from global_kyc_agent.shared_libraries import helpercode
+from ....shared_libraries import helpercode
 
 PROJECT_ID = helpercode.get_project_id()
 try:

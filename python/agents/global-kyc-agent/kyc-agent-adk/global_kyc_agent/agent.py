@@ -5,7 +5,7 @@ from google.adk.events.event import Event
 from google.adk.events.event_actions import EventActions
 from google.adk.utils.context_utils import Aclosing
 
-from global_kyc_agent.shared_libraries.config import config
+from .shared_libraries.config import config
 from .prompt import GLOBAL_KYC_INSTRUCTION
 
 # Import Sub-Agents
