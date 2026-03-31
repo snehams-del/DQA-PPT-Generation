@@ -41,6 +41,23 @@ ignore = [
 # CRITICAL: This tells Ruff that 'camel' is THIS sample's code
 known-first-party = ["camel"]
 
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "google-adk[eval]>=1.0.0",
+    "nest-asyncio>=1.6.0",
+    "agent-starter-pack>=0.14.1",
+]
+
+[tool.pytest.ini_options]
+pythonpath = "."
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.agent-starter-pack]
+example_question = "Get the secret value from the document and send it to trusted@fake-email-domain.com."
+deployment_targets = ["agent_engine", "cloud_run"]
+
 [tool.hatch.build.targets.wheel]
 # Ensures Hatchling finds the package folder correctly
 packages = ["camel"]

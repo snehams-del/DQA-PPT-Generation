@@ -119,14 +119,14 @@ The agent operates in a cyclical manner:
 
 
    *   Python 3.12+
-   *   Poetry
+   *   uv
        *   For dependency management and packaging. Please follow the
            instructions on the official
-           [Poetry website](https://python-poetry.org/docs/) for installation.
+           [uv website](https://docs.astral.sh/uv/) for installation.
 
 
        ```bash
-       pip install poetry
+       curl -LsSf https://astral.sh/uv/install.sh | sh
        ```
 
 
@@ -144,10 +144,7 @@ The agent operates in a cyclical manner:
    git clone https://github.com/google/adk-samples.git
    cd adk-samples/python/agents/camel
    # Install the package and dependencies.
-   # Note for Linux users: If you get an error related to `keyring` during the installation, you can disable it by running the following command:
-   # poetry config keyring.enabled false
-   # This is a one-time setup.
-   poetry install
+   uv sync --dev
    ```
 
 
@@ -188,13 +185,13 @@ You may talk to the agent using:
 
 
 ```bash
-poetry run adk run camel
+uv run adk run camel
 ```
 
-or 
+or
 
 ```bash
-poetry run adk web
+uv run adk web
 ```
 
 **Try the following prompts:**
@@ -216,6 +213,30 @@ _CaMeL should not send this email_
 ```
 
 _Expected Output_: `Execution stopped due to security policy violation: Execution of tool 'send_email' denied: The body cannot be read by evil@fake-email-domain.com. It can only be read by frozenset({'trusted@fake-email-domain.com'})`
+
+### Agent Starter Pack (Recommended)
+
+Use the [Agent Starter Pack](https://goo.gle/agent-starter-pack) to create a production-ready version of this agent with additional deployment options. The easiest way is with `uvx` (no install needed):
+
+```bash
+uvx agent-starter-pack create my-camel -a adk@camel
+```
+
+<details>
+<summary>Alternative: Using pip and a virtual environment</summary>
+
+```bash
+# Create and activate a virtual environment
+python -m venv .venv && source .venv/bin/activate # On Windows: .venv\Scripts\activate
+
+# Install the starter pack and create your project
+pip install --upgrade agent-starter-pack
+agent-starter-pack create my-camel -a adk@camel
+```
+
+</details>
+
+The starter pack will prompt you to select deployment options and provides additional production-ready features including automated CI/CD deployment scripts.
 
 ## Provided example
 
