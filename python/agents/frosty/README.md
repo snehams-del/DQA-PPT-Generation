@@ -5,6 +5,7 @@
 [![Snowflake](https://img.shields.io/badge/built%20for-Snowflake-29B5E8?logo=snowflake)](https://www.snowflake.com/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](../../../LICENSE)
 [![Website](https://img.shields.io/badge/Website-thegyrus.com-0A0A0A.svg)](https://www.thegyrus.com)
+[![Source](https://img.shields.io/badge/Source-Gyrus--Dev%2Ffrosty-181717.svg?logo=github)](https://github.com/Gyrus-Dev/frosty)
 
 Frosty is the original multi-agent Snowflake assistant implementation adapted
 into the ADK samples repository with a thin wrapper package. The underlying
