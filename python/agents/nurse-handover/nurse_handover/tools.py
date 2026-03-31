@@ -10,7 +10,7 @@ from google.genai import types
 
 from nurse_handover import summary
 
-PATIENT_FILE_DIR = pathlib.Path(__file__).parent.parent / "data"
+PATIENT_FILE_DIR = pathlib.Path(__file__).parent / "data"
 
 
 def list_available_shifts(tool_context: ToolContext) -> dict[str, Any]:

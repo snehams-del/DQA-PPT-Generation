@@ -18,7 +18,7 @@ PATTERN = r"(\d{2}/\d{2}/\d{4})\^(\d{2}:\d{2}:\d{2})\^(.*)\^(.*)\^(.*)"
 MEDICAL_ORDERS_TEXT = "MEDICATION ORDERS"
 MED_ORDER_PATTERN = r"(.+)-(.+)-(.*)-(\d+) Day\(s\)-([^-]*)-(\d{2}/\d{2}/\d{4})"
 
-CONFIG_DIR = pathlib.Path(__file__).parent.parent / "configs"
+CONFIG_DIR = pathlib.Path(__file__).parent / "configs"
 ISBAR_YAML = CONFIG_DIR / "isbar_config.yaml"
 SITUATION_TEMPLATE = CONFIG_DIR / "situation_template.txt"
 ASSESSMENT_TEMPLATE = CONFIG_DIR / "assessment_template.txt"
