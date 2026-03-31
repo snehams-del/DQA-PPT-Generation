@@ -16,7 +16,7 @@ def test_agent_stream() -> None:
 
     session = session_service.create_session_sync(user_id="test_user", app_name="test")
     runner = Runner(
-        agent=agent.load_agent(), session_service=session_service, app_name="test"
+        agent=agent.root_agent, session_service=session_service, app_name="test"
     )
 
     message = types.Content(
