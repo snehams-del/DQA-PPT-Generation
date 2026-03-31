@@ -85,6 +85,3 @@ def root_agent() -> llm_agent.Agent:
   )
 
 root_agent = root_agent()
-History
-References
-Warnings
