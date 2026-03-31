@@ -85,7 +85,7 @@ If you've already cloned the repository (as in Option A) and want to use Vertex 
 ```bash
 echo "GOOGLE_GENAI_USE_VERTEXAI=TRUE" >> app/.env
 echo "GOOGLE_CLOUD_PROJECT=YOUR_PROJECT_ID" >> app/.env
-echo "GOOGLE_CLOUD_LOCATION=us-central1" >> app/.env
+echo "GOOGLE_CLOUD_LOCATION=global" >> app/.env
 ```
 
 Make sure you're authenticated with Google Cloud:
@@ -212,6 +212,40 @@ Once you approve the plan, the agent's `research_pipeline` takes over and works 
 3.  **Compose Final Report:** After the research loop is complete, a final agent takes all the verified findings and writes a polished report, automatically adding inline citations that link back to the original sources.
 
 You can edit key parameters (Gemini models, research loop iterations) in the `ResearchConfiguration` dataclass within `app/config.py`.
+
+### Runtime profile and performance controls
+
+The financial variant supports runtime profile and App-level context controls via environment variables:
+
+```bash
+export DEEP_SEARCH_RUNTIME_PROFILE=balanced
+export DEEP_SEARCH_ENABLE_CONTEXT_CACHING=true
+export DEEP_SEARCH_CONTEXT_CACHE_MIN_TOKENS=2048
+export DEEP_SEARCH_CONTEXT_CACHE_TTL_SECONDS=900
+export DEEP_SEARCH_CONTEXT_CACHE_INTERVALS=5
+export DEEP_SEARCH_ENABLE_CONTEXT_COMPACTION=true
+export DEEP_SEARCH_COMPACTION_INTERVAL=4
+export DEEP_SEARCH_COMPACTION_OVERLAP_SIZE=1
+export DEEP_SEARCH_COMPACTION_SUMMARISER_MODEL=gemini-2.5-flash
+```
+
+Execution is explicitly approval-gated by default. You can override approval keywords:
+
+```bash
+export DEEP_SEARCH_REQUIRES_EXPLICIT_APPROVAL=true
+export DEEP_SEARCH_APPROVAL_KEYWORDS="kör,kor,go,execute,run"
+```
+
+### Core evaluation suite
+
+The repository includes a baseline evaluation package under `evals/core`.
+
+```bash
+adk eval app \
+  --config_file_path evals/core/eval_config.core.json \
+  evals/core/eval_set.core.json \
+  --print_detailed_results
+```
 
 ## Customization
 

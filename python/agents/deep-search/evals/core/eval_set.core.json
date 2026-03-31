@@ -1,0 +1,207 @@
+{
+  "eval_set_id": "deep_search_financial_core_suite",
+  "name": "Deep Search Financial Core Suite",
+  "description": "Core regression and quality suite for the Stockholm financial research workflow.",
+  "eval_cases": [
+    {
+      "eval_id": "clear_ticker_plan_first",
+      "session_input": {
+        "app_name": "app",
+        "user_id": "eval_user"
+      },
+      "conversation": [
+        {
+          "invocation_id": "inv-clear-ticker-1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Analysera Investor B pa Stockholmsborsen med fokus pa 6-12 manader. Borja med plan."
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "Agenten ska presentera en forskningsplan med tydliga [RESEARCH]- och [DELIVERABLE]-steg innan exekvering."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "plan_generator"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "ambiguous_company_disambiguation",
+      "session_input": {
+        "app_name": "app",
+        "user_id": "eval_user"
+      },
+      "conversation": [
+        {
+          "invocation_id": "inv-ambiguous-1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Kan du analysera Tele2? Jag ar osaker pa vilken aktieklass jag menar."
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "Agenten ska forst forst tydliggora instrument och ticker innan full exekvering."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "google_search",
+                "args": {
+                  "query": "Tele2 Stockholm ticker share classes"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "insufficient_scope_requires_refinement",
+      "session_input": {
+        "app_name": "app",
+        "user_id": "eval_user"
+      },
+      "conversation": [
+        {
+          "invocation_id": "inv-scope-1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Ge mig koprad pa nagot bra bolag pa Stockholmsborsen."
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "Agenten ska be om scope-forfining i planen och tydliggora riskniva och tidshorisont."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "plan_generator"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "execution_requires_explicit_approval",
+      "session_input": {
+        "app_name": "app",
+        "user_id": "eval_user"
+      },
+      "conversation": [
+        {
+          "invocation_id": "inv-approval-1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Planen ser bra ut."
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "Agenten ska inte exekvera autonom forskning utan explicit godkannande."
+              }
+            ]
+          }
+        },
+        {
+          "invocation_id": "inv-approval-2",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Kor."
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "Agenten far nu exekvera forskningspipen och producera citerad slutrapport."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "google_search"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "conflicting_signals_hold_bias",
+      "session_input": {
+        "app_name": "app",
+        "user_id": "eval_user"
+      },
+      "conversation": [
+        {
+          "invocation_id": "inv-conflict-1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Analysera ett verkstadsbolag pa Stockholmsborsen dar nyhetsflodet ar positivt men teknisk bild ar svag."
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "Agenten ska visa avvagning mellan bull och bear, redovisa riskprofil och kunna landa i hold vid otillracklig evidens."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "google_search"
+              },
+              {
+                "name": "google_search"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
