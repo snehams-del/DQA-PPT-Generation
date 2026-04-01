@@ -7,7 +7,6 @@ import os
 import ee
 import google
 from google.adk.agents import llm_agent
-import vertexai
 
 from . import prompts
 from . import tools
@@ -40,35 +39,14 @@ def _initialize_earth_engine():
         logging.exception('Failed to initialize Earth Engine: %s', e)
         raise
 
-@functools.cache
-def _initialize_vertex_ai():
-    """Initializes the Vertex AI client exactly once."""
-    try:
-        logging.info(
-            'Initializing Vertex AI for project: %s in location: %s',
-            _PROJECT_ID,
-            _REGION,
-        )
-        vertexai.init(project=_PROJECT_ID, location=_REGION)
-        logging.info('Vertex AI initialized successfully.')
-    except Exception as e:
-        logging.exception('Failed to initialize Vertex AI: %s', e)
-        raise
+_initialize_earth_engine()
 
-
-def root_agent() -> llm_agent.Agent:
-  # Initialize Earth Engine and Vertex when the agent is being created.
-  _initialize_earth_engine()
-  _initialize_vertex_ai()
-
-  return llm_agent.Agent(
-      name='ee_agent',
-      model='gemini-2.5-pro',
-      description='Agent to answer geo questions using Google Earth Engine.',
-      tools=[
-          tools.get_2017_2025_annual_changes,
-      ],
-      instruction=prompts.root_agent_prompt,
-  )
-
-root_agent = root_agent()
+root_agent =  llm_agent.Agent(
+    name='ee_agent',
+    model='gemini-2.5-pro',
+    description='Agent to answer geo questions using Google Earth Engine.',
+    tools=[
+        tools.get_2017_2025_annual_changes,
+    ],
+    instruction=prompts.root_agent_prompt,
+)
