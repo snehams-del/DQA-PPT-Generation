@@ -56,7 +56,7 @@ def flatten_filings(filings):
     unflattened_list = list(map(flatten_filing, filings))
     return [item for sublist in unflattened_list for item in sublist]
 
-def get_insider_transactions(ticker: str, start_date: str = None, end_date: str = None) -> str:
+def get_insider_transactions(ticker: str, start_date: str | None = None, end_date: str | None = None) -> str:
     """
     Retrieve insider trading transactions (Forms 3, 4, 5) for a specific company.
     
@@ -101,7 +101,7 @@ def get_insider_transactions(ticker: str, start_date: str = None, end_date: str 
             return f"Found {len(filings)} filings for {ticker}, but no non-derivative transactions found in them."
 
         result = f"Found {len(processed_data)} insider transactions (showing up to top 10):\n"
-        for i, trade in enumerate(processed_data[:10]):
+        for _, trade in enumerate(processed_data[:10]):
             reporting_person = trade.get('reportingOwner', 'Unknown')
             security = trade.get('securityTitle', 'Unknown Security')
             action = "Acquired" if trade.get('acquiredDisposed') == 'A' else "Disposed"

@@ -2,6 +2,8 @@ from companieshouse import CompaniesHouseClient
 from ....shared_libraries import helpercode
 import requests
 
+HTTP_NOT_FOUND = 404
+
 PROJECT_ID = helpercode.get_project_id()
 
 try:
@@ -23,7 +25,7 @@ def search_companies(search_query:str):
     try:
         return chclient.search_companies(search_query)
     except requests.exceptions.HTTPError as e:
-        if e.response.status_code == 404:
+        if e.response.status_code == HTTP_NOT_FOUND:
             return {"items": [], "total_results": 0}
         raise
     except Exception as e:
@@ -42,7 +44,7 @@ def get_company_profile(company_number:str):
     try:
         return chclient.get_company_profile(company_number)
     except requests.exceptions.HTTPError as e:
-        if e.response.status_code == 404:
+        if e.response.status_code == HTTP_NOT_FOUND:
             return {"error": "Company not found"}
         raise
     except Exception as e:

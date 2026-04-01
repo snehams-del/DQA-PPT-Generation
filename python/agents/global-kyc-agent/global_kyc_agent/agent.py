@@ -83,6 +83,17 @@ SequentialAgent._run_async_impl = workaround_seq_run_async_impl
 
 original_parallel_run_async_impl = ParallelAgent._run_async_impl
 
+def _create_final_event(last_event, accumulated_state_delta, author_name):
+    dump = last_event.model_dump()
+    dump['id'] = '' # Force new ID
+    final_event = Event(**dump)
+    if final_event.actions:
+        final_event.actions.state_delta = accumulated_state_delta
+    else:
+        final_event.actions = EventActions(state_delta=accumulated_state_delta)
+    final_event.author = author_name
+    return final_event
+
 async def workaround_parallel_run_async_impl(self, ctx):
     if not self.sub_agents:
         return
@@ -136,19 +147,12 @@ async def workaround_parallel_run_async_impl(self, ctx):
 
         # Yield a final response event if last_event was final
         if last_event and last_event.is_final_response():
-            dump = last_event.model_dump()
-            dump['id'] = '' # Force new ID
-            final_event = Event(**dump)
-            if final_event.actions:
-                final_event.actions.state_delta = accumulated_state_delta
-            else:
-                final_event.actions = EventActions(state_delta=accumulated_state_delta)
-            final_event.author = self.name
-            yield final_event
+            yield _create_final_event(last_event, accumulated_state_delta, self.name)
 
         if ctx.is_resumable and all(
             ctx.end_of_agents.get(sub_agent.name) for sub_agent in self.sub_agents
         ):
+
             ctx.set_agent_state(self.name, end_of_agent=True)
             yield self._create_agent_state_event(ctx)
 

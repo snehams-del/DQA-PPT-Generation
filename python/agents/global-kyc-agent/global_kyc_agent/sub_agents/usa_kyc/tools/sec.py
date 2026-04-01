@@ -3,6 +3,8 @@ import sec_api
 from google.adk.tools.function_tool import FunctionTool
 from ....shared_libraries import helpercode
 
+MAX_SECTION_LENGTH = 8000
+
 PROJECT_ID = helpercode.get_project_id()
 try:
     SEC_API_KEY = helpercode.access_secret_version(PROJECT_ID, "SECAPIKey")
@@ -42,7 +44,7 @@ def full_text_search(query: str, start_date: str, end_date: str) -> str:
             return f"No filings found for query '{query}' between {start_date} and {end_date}."
             
         result = f"Found {len(filings)} filings (showing up to top 5):\n"
-        for i, filing in enumerate(filings[:5]):
+        for _, filing in enumerate(filings[:5]):
             company_name = filing.get('companyNameShort', 'Unknown Company')
             ticker = filing.get('ticker', 'N/A')
             form_type = filing.get('formType', 'Unknown Form')
@@ -136,8 +138,8 @@ We are doing well but face risks.
         section_text = extractor_api.get_section(filing_url, section, "text")
         
         # Truncate if it's exceedingly long
-        if len(section_text) > 8000:
-            section_text = section_text[:8000] + "\n...[Text Truncated]..."
+        if len(section_text) > MAX_SECTION_LENGTH:
+            section_text = section_text[:MAX_SECTION_LENGTH] + "\n...[Text Truncated]..."
             
         return f"--- START OF SECTION {section} ---\n{section_text}\n--- END OF SECTION {section} ---"
     except Exception as e:
