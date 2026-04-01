@@ -8,7 +8,7 @@ import ee
 import google
 from google.adk.agents import llm_agent
 
-from . import prompts, tools
+from . import prompt, tools
 
 _PROJECT_ID = os.environ.get("GOOGLE_CLOUD_PROJECT")
 _REGION = os.environ.get("GOOGLE_CLOUD_LOCATION")
@@ -52,5 +52,5 @@ root_agent = llm_agent.Agent(
     tools=[
         tools.get_2017_2025_annual_changes,
     ],
-    instruction=prompts.root_agent_prompt,
+    instruction=prompt.root_agent_prompt,
 )
