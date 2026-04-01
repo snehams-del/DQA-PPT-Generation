@@ -17,4 +17,4 @@ project_dir = os.path.dirname(package_dir)
 if project_dir not in sys.path:
     sys.path.insert(0, project_dir)
 
-from . import agent
+from . import agent as agent  # noqa: E402

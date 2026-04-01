@@ -17,7 +17,7 @@ for case in data['eval_case_results']:
                     "name": fc['name'],
                     "args": fc['args']
                 })
-        except:
+        except Exception:
             pass
             
     print(json.dumps(tools, indent=4))

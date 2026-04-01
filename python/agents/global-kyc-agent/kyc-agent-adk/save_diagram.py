@@ -1,9 +1,9 @@
 import asyncio
 from dotenv import load_dotenv
-load_dotenv()
-
 from global_kyc_agent.agent import root_agent
 from google.adk.cli.agent_graph import get_agent_graph
+
+load_dotenv()
 
 async def main():
     png_bytes = await get_agent_graph(root_agent, None, image=True)

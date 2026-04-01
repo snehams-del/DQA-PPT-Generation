@@ -1,6 +1,7 @@
 import asyncio
 import uuid
 from google.genai import types
+from google.adk.runners import InMemoryRunner
 
 from global_kyc_agent.agent import root_agent
 
@@ -11,8 +12,6 @@ async def main():
     print("--------------------")
     print("Enter your query below. Type 'exit' to quit.")
 
-    from google.adk.runners import InMemoryRunner
-
     APP_NAME = "companies_house_agent"
     USER_ID = "user_1"
     SESSION_ID = str(uuid.uuid4())
@@ -22,7 +21,7 @@ async def main():
         app_name=APP_NAME
     )
 
-    session = await runner.session_service.create_session(
+    await runner.session_service.create_session(
         app_name=APP_NAME,
         user_id=USER_ID,
         session_id=SESSION_ID
@@ -51,13 +50,7 @@ async def main():
 
                     # Key Concept: is_final_response() marks the concluding message for the turn.
                     if event.is_final_response():
-                        if event.content and event.content.parts:
-                            # Assuming text response in the first part
-                            final_response_text = event.content.parts[0].text
-                        elif event.actions and event.actions.escalate: # Handle potential errors/escalations
-                            final_response_text = f"Agent escalated: {event.error_message or 'No specific message.'}"
-                        # Add more checks here if needed (e.g., specific error codes)
-                        break # Stop processing events once the final response is found
+                        break
             # print(f"<<< Agent Response: {final_response_text}")
         except (KeyboardInterrupt, EOFError):
             break
@@ -69,8 +62,6 @@ async def main_noinput():
     print("--------------------")
     print("Enter your query below. Type 'exit' to quit.")
 
-    from google.adk.runners import InMemoryRunner
-
     APP_NAME = "companies_house_agent"
     USER_ID = "user_1"
     SESSION_ID = str(uuid.uuid4())
@@ -80,7 +71,7 @@ async def main_noinput():
         app_name=APP_NAME
     )
 
-    session = await runner.session_service.create_session(
+    await runner.session_service.create_session(
         app_name=APP_NAME,
         user_id=USER_ID,
         session_id=SESSION_ID

@@ -23,7 +23,7 @@ def full_text_search(query: str, start_date: str, end_date: str) -> str:
         A formatted string summarizing the matching filings.
     """
     if os.environ.get("MOCK_SEC_API") == "true":
-        return f"Found 2 filings (Mock Mode):\n- Tesla, Inc. (TSLA) filed a 10-K on 2026-01-01\n- Tesla, Inc. (TSLA) filed a 10-Q on 2026-04-01\n"
+        return "Found 2 filings (Mock Mode):\n- Tesla, Inc. (TSLA) filed a 10-K on 2026-01-01\n- Tesla, Inc. (TSLA) filed a 10-Q on 2026-04-01\n"
 
     search_api = sec_api.FullTextSearchApi(api_key=SEC_API_KEY)
     

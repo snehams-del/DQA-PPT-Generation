@@ -4,7 +4,6 @@ import tempfile
 import logging
 from google.cloud import secretmanager
 import google.auth
-import datetime
 import hashlib
 
 

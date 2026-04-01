@@ -1,4 +1,3 @@
-import os
 
 def merge_agents():
     ch_path = "companies_house_agent/agent.py"
@@ -22,7 +21,7 @@ def merge_agents():
     # Let's combine them carefully. Actually, since edgar is mostly at the bottom, we can just append.
     # But edgar has imports at the top. Let's move edgar's imports to the top.
     
-    merged_content = f"""
+    merged_content = """
 # ==========================================
 # GLOBAL KYC AGENT MERGED FILE
 # ==========================================

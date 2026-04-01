@@ -1,7 +1,6 @@
 import datetime
 from google.adk.agents import Agent, ParallelAgent, SequentialAgent
 from google.adk.tools.function_tool import FunctionTool
-from google.adk.tools import google_search
 
 from ...shared_libraries.config import config
 

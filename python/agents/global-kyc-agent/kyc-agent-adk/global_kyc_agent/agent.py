@@ -4,6 +4,9 @@ from google.adk.agents import Agent, ParallelAgent, SequentialAgent
 from google.adk.events.event import Event
 from google.adk.events.event_actions import EventActions
 from google.adk.utils.context_utils import Aclosing
+from google.adk.agents.sequential_agent import SequentialAgentState
+from google.adk.agents.base_agent import BaseAgentState
+from google.adk.agents.parallel_agent import _create_branch_ctx_for_sub_agent, _merge_agent_run, _merge_agent_run_pre_3_11
 
 from .shared_libraries.config import config
 from .prompt import GLOBAL_KYC_INSTRUCTION
@@ -24,11 +27,10 @@ class SubAgentEvent(Event):
 # Workaround Patches
 original_seq_run_async_impl = SequentialAgent._run_async_impl
 
-async def workaround_seq_run_async_impl(self, ctx):
+async def workaround_seq_run_async_impl(self, ctx):  # noqa: C901
     if not self.sub_agents:
         return
 
-    from google.adk.agents.sequential_agent import SequentialAgentState
     agent_state = self._load_agent_state(ctx, SequentialAgentState)
     start_index = self._get_start_index(agent_state)
 
@@ -85,14 +87,12 @@ async def workaround_parallel_run_async_impl(self, ctx):
     if not self.sub_agents:
         return
 
-    from google.adk.agents.base_agent import BaseAgentState
     agent_state = self._load_agent_state(ctx, BaseAgentState)
     if ctx.is_resumable and agent_state is None:
         ctx.set_agent_state(self.name, agent_state=BaseAgentState())
         yield self._create_agent_state_event(ctx)
 
     agent_runs = []
-    from google.adk.agents.parallel_agent import _create_branch_ctx_for_sub_agent
     for sub_agent in self.sub_agents:
         sub_agent_ctx = _create_branch_ctx_for_sub_agent(self, sub_agent, ctx)
         sub_agent_ctx.agent = sub_agent
@@ -101,7 +101,6 @@ async def workaround_parallel_run_async_impl(self, ctx):
 
     pause_invocation = False
     try:
-        from google.adk.agents.parallel_agent import _merge_agent_run, _merge_agent_run_pre_3_11
         merge_func = _merge_agent_run if sys.version_info >= (3, 11) else _merge_agent_run_pre_3_11
         
         last_event = None

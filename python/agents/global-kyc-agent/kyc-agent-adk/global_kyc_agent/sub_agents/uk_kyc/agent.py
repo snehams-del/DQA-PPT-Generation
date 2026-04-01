@@ -1,4 +1,3 @@
-import sys
 from google.adk.agents import Agent, ParallelAgent, SequentialAgent
 from google.adk.agents.callback_context import CallbackContext
 from google.adk.tools import google_search
@@ -21,8 +20,7 @@ from .prompt import (
 
 # Import UK tools
 from .tools.companieshouse_tools import (
-    search_companies, get_company_profile, get_company_officers, get_company_address,
-    get_company_establishments, get_company_registers, get_company_exemptions,
+    search_companies, get_company_profile, get_company_officers, get_company_establishments, get_company_registers, get_company_exemptions,
     get_company_charges, get_company_insolvency, get_corporate_officer_disqualifications,
     get_natural_officer_disqualifications, get_office_appointments, get_company_filing_history,
     get_company_filing_detail
