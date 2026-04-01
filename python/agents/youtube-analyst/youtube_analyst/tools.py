@@ -81,7 +81,7 @@ def search_youtube(
         return []
 
 
-def get_video_details(video_ids: list):
+def get_video_details(video_ids: list[str]) -> list[dict]:
     """
     Retrieves statistics and snippet details for a list of video IDs.
 
@@ -192,7 +192,7 @@ def get_trending_videos(region_code: str = "US", video_category_id: str = "") ->
         return []
 
 
-def get_channel_details(channel_ids: list):
+def get_channel_details(channel_ids: list[str]):
     """
     Retrieves statistics and snippet details for a list of channel IDs.
 
@@ -540,7 +540,7 @@ def parse_timestamp_to_seconds(timestamp_str: str) -> int:
 # --- NEW METADATA/TEXT TOOLS FOR PR3 ---
 
 
-def get_comment_replies(comment_id: str, max_results: int = 50) -> list:
+def get_comment_replies(comment_id: str, max_results: int = 50) -> list[str]:
     """
     Retrieves the replies to a specific top-level comment.
     Use this to dig deep into a specific community debate or controversy.
@@ -574,13 +574,13 @@ def get_comment_replies(comment_id: str, max_results: int = 50) -> list:
         return []
 
 
-def aggregate_comment_sentiment(video_ids: list, comments_per_video: int = 10) -> dict:
+def aggregate_comment_sentiment(video_ids: list[str], comments_per_video: int = 10) -> dict:
     """
     Fetches comments across multiple videos simultaneously to generate a macro-sentiment view.
     Use this for Product Launch Audits to see what the entire audience is saying across different reviews.
 
     Args:
-        video_ids: A list of YouTube video IDs.
+        video_ids: A list of video IDs to fetch comments for.
         comments_per_video: How many top comments to pull per video.
 
     Returns:
@@ -600,7 +600,7 @@ def aggregate_comment_sentiment(video_ids: list, comments_per_video: int = 10) -
 
 def search_channel_videos(
     channel_id: str, max_results: int = 5, published_after: str = ""
-) -> list:
+) -> list[dict]:
     """
     Searches for the most recent videos uploaded by a specific channel.
     Use this for Industry Landscape Briefings to track specific 'analyst' or 'competitor' channels.
