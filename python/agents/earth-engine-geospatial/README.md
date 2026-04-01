@@ -1,51 +1,76 @@
-# Earth Engine enabled ADK agent
+# Earth Engine Geospatial Agent
+
+## Overview
 
 This directory contains a [Google Earth Engine](https://earthengine.google.com/)
-enabled ADK agent implemented as a simple chatbot. 
-The agent has a single tool that uses the [AlphaEarth Satellite Embeddings dataset](https://developers.google.com/earth-engine/datasets/catalog/GOOGLE_SATELLITE_EMBEDDING_V1_ANNUAL)
+enabled ADK agent implemented as a simple chatbot.
+
+The agent has a single tool that uses the [AlphaEarth Satellite Embeddings
+dataset](https://developers.google.com/earth-engine/datasets/catalog/GOOGLE_SATELLITE_EMBEDDING_V1_ANNUAL)
 to compute the area of annual change between 2017-2025 in a geometry provided by
 the user. The geometry is provided as GeoJSON text through the chat interface.
+
 The tool converts the GeoJSON to an `ee.Geometry` and sends it to the Earth
 Engine server for processing. The results of the computation are returned from
 the server as a JSON dictionary with years for keys and square meters of change
 as values. The agent uses these data and the coordinates in the geometry to
 reason about land cover change and report back to the user.
 
-## Manual setup
+## Agent Details
 
-You will need a Google Cloud Project with the Earth Engine API and the Vertex
-API enabled. Enter that project ID into the `.env` file. You will also need a
-local development environment with ADK, Earth Engine, Numpy and the Google Cloud
-SDK installed.
+| Feature | Description |
+| --- | --- |
+| **Interaction Type** | Conversational |
+| **Complexity** | Easy |
+| **Agent Type** | Single Agent |
+| **Components** | Tools: Earth Engine |
+| **Vertical** | Geospatial |
 
-To install Python ADK and the Earth Engine client, you can use a package manager
-such as `pip` or `pipx`. You may want to do the installs in a virtual
-environment as follows.
+## Setup and Installation
 
+1. **Prerequisites**
+   * Python 3.10+
+   * [uv](https://docs.astral.sh/uv/) for dependency management
+   * A Google Cloud project with the Earth Engine API and Vertex AI API enabled
+   * [Google Cloud CLI](https://cloud.google.com/sdk/docs/install)
+
+2. **Installation**
+   ```bash
+   git clone https://github.com/google/adk-samples.git
+   cd adk-samples/python/agents/earth-engine-geospatial
+   uv sync
+   ```
+
+3. **Configuration**
+   Copy `.env.example` to `.env` and fill in your project ID:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Authenticate:
+
+   ```bash
+   gcloud auth application-default login
+   ```
+   You may also need to run `earthengine authenticate`.
+
+## Running the Agent
+
+ADK provides convenient ways to bring up agents locally and interact with them.
+You may talk to the agent using the CLI:
+
+```bash
+adk run earth_engine_geospatial
 ```
-pipx install -U virtualenv
-python3 -m virtualenv ee-adk-env
-source ee-adk-env/bin/activate
-pip install -U earthengine-api
-pip install -U google-adk
-pip install -U numpy
-```
 
-Installation of the Google Cloud SDK depends on your environment. Follow
-[these instructions](https://docs.cloud.google.com/sdk/docs/install-sdk) to
-install the correct version.
+Or on a web interface:
 
-To run the agent from a local host, first authenticate using the Google Cloud
-CLI (you may also need to run `earthengine authenticate`):
-
-```
-cd <parent/directory/of/the/agent>
-gcloud auth application-default login
+```bash
 adk web
 ```
 
-The log should tell you the URL for the chat UI, but it will be something like:
-`http://localhost:8000/`.
+Select `earth_engine_geospatial` from the dropdown.
 
 ## Example Interaction
 
@@ -55,13 +80,14 @@ as GeoJSON strings. For example, here's a small polygon in the Santa Cruz
 mountains of California, USA:
 
 ```
-{"type":"Polygon","coordinates":[[[-122.25468153773132,37.21100075492321],[-122.25468153773132,37.186046417670404],[-122.2224950295526,37.186046417670404],[-122.2224950295526,37.21100075492321]]],"geodesic":false,"evenOdd":true}
+{"type":"Polygon","coordinates":[[[-122.25468153773132,37.21100075492321],
+[-122.25468153773132,37.186046417670404],[-122.2224950295526,37.186046417670404],
+[-122.2224950295526,37.21100075492321]]],"geodesic":false,"evenOdd":true}
 ```
 
-You can use a script like this to generate GeoJSON for your area(s) of interest:
-https://code.earthengine.google.com/f81c949df0550ef68ea6aca3937ec9bd. Then you
-can copy the GeoJSON printed in the Console of the Earth Engine Code Editor to a
-chat:
+Here is an [example script](https://code.earthengine.google.com/f81c949df0550ef68ea6aca3937ec9bd)
+for generating GeoJSON for your area(s) of interest. Copy the GeoJSON printed
+in the Console of the Earth Engine Code Editor to a chat:
 
 User:
 
@@ -72,10 +98,10 @@ User:
 
 Agent:
 
-> Based on an analysis of the provided geometry, here are the detected annual 
+> Based on an analysis of the provided geometry, here are the detected annual
 > changes for the years 2020 and 2021:
 >
-> - 2020: 3.45 square kilometers of change were detected. 
+> - 2020: 3.45 square kilometers of change were detected.
 >
 > - 2021: 2.74 square kilometers of change were detected.
 >
@@ -97,25 +123,25 @@ in the prompt. The tools can take this general form:
 async def your_fancy_earth_engine_function(
     geojson: str,
 ) -> dict[str, Any]:
-  """Gets some statistics about your area of interest (geojson).
+    """Gets some statistics about your area of interest (geojson).
 
-  Args:
-    geojson (str): A JSON string representing a GeoJSON geometry.
+    Args:
+        geojson (str): A JSON string representing a GeoJSON geometry.
 
-  Returns:
-    A JSON dictionary.
-  """
-  region = ee.Geometry(json.loads(geojson))
-  return await asyncio.to_thread(earth_engine_server_function(region).getInfo)
+    Returns:
+        A JSON dictionary.
+    """
+    region = ee.Geometry(json.loads(geojson))
+    return await asyncio.to_thread(earth_engine_server_function(region).getInfo)
 ```
 
-The `earth_engine_server_function` takes an `ee.Geometry` and returns an 
-`ee.Dictionary` (the output of a `reduceRegion()` call), both of which are 
+The `earth_engine_server_function` takes an `ee.Geometry` and returns an
+`ee.Dictionary` (the output of a `reduceRegion()` call), both of which are
 server variables. The `getInfo` call requests the result of the computation,
 specifically the JSON representation of the `ee.Dictionary`. The function is
-structured to make the request asynchronously and retry it it fails.
+structured to make the request asynchronously and retry if it fails.
 
-You can request textual representations of other server objects 
+You can request textual representations of other server objects
 (`ee.SomeObject`) using `getInfo()`. You can also request patches of pixels
 as images. See [this guide](https://developers.google.com/earth-engine/guides/data_extraction)
 for examples of programmatically extracting image data.

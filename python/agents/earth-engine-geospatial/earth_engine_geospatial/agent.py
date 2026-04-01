@@ -11,7 +11,6 @@ from google.adk.agents import llm_agent
 from . import prompt, tools
 
 _PROJECT_ID = os.environ.get("GOOGLE_CLOUD_PROJECT")
-_REGION = os.environ.get("GOOGLE_CLOUD_LOCATION")
 
 
 @functools.cache

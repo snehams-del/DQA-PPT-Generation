@@ -19,11 +19,11 @@ def get_angle(image1: ee.Image, image2: ee.Image) -> ee.Image:
     elsewhere, this implementation simplifies to acos(dot_product).
 
     Args:
-      image1: The first ee.Image.
-      image2: The second ee.Image.
+        image1: The first ee.Image.
+        image2: The second ee.Image.
 
     Returns:
-      An ee.Image containing the angle in radians.
+        An ee.Image containing the angle in radians.
     """
     return (
         image1.multiply(image2).reduce(ee.Reducer.sum()).acos().rename("angle")
@@ -42,11 +42,11 @@ def get_change_year_image(threshold: float):
     in that year compared to the previous one.
 
     Args:
-      threshold: Angular threshold in radians above which change is assumed.
+        threshold: Angular threshold in radians above which change is assumed.
 
     Returns:
-      An ee.Image with bands for each year from 2018 to 2025, indicating
-      the year of change.
+        An ee.Image with bands for each year from 2018 to 2025, indicating
+        the year of change.
     """
     embeddings = ee.ImageCollection("GOOGLE/SATELLITE_EMBEDDING/V1/ANNUAL")
     years = ee.List.sequence(2018, 2025)
@@ -83,11 +83,11 @@ def get_annual_change_dictionary(geometry: ee.Geometry) -> ee.Dictionary:
     the specified Earth Engine geometry.
 
     Args:
-      geometry: The ee.Geometry in which to compute the change areas.
+        geometry: The ee.Geometry in which to compute the change areas.
 
     Returns:
-      An ee.Dictionary where keys are years (as strings) and values are the
-      total area in square meters for which change was detected in that year.
+        An ee.Dictionary where keys are years (as strings) and values are the
+        total area in square meters for which change was detected in that year.
     """
     threshold = np.pi / 4  # Arbitrary.
     scale = 10
@@ -109,11 +109,11 @@ async def get_2017_2025_annual_changes(
     the specified GeoJSON geometry.
 
     Args:
-      geojson (str): A JSON string representing a GeoJSON geometry.
+        geojson (str): A JSON string representing a GeoJSON geometry.
 
     Returns:
-      A dictionary where keys are years (as strings) and values are the
-      total area in square meters for which change was detected in that year.
+        A dictionary where keys are years (as strings) and values are the
+        total area in square meters for which change was detected in that year.
     """
     region = ee.Geometry(json.loads(geojson))
     return await asyncio.to_thread(get_annual_change_dictionary(region).getInfo)
