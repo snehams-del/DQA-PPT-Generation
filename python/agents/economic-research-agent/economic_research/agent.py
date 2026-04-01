@@ -11,8 +11,6 @@ from google.adk.agents import Agent
 from google.adk.apps import App
 from google.adk.models import Gemini
 
-load_dotenv()
-
 # Specialized Skill Imports
 from economic_research.tools.bea_skill import fetch_bea_regional_data
 from economic_research.tools.bls_skill import (
@@ -36,6 +34,8 @@ from economic_research.tools.tax_foundation_skill import fetch_state_tax_rates
 from economic_research.tools.trade_skill import fetch_regional_trade_data
 
 from .prompt import Prompts
+
+load_dotenv()
 
 prompts = Prompts()
 ERA_INSTRUCTIONS = prompts.main_era_instructions()
@@ -107,7 +107,8 @@ class ERAAgent:
             "OPENFDA_API_KEY": get_cloud_secret("OPENFDA_API_KEY"),
         }
         for k, v in env_vars.items():
-            if v: os.environ[k] = v
+            if v:
+                os.environ[k] = v
 
         # Instantiate App & Runner at runtime rather than deploy-time
         app = self.get_app()

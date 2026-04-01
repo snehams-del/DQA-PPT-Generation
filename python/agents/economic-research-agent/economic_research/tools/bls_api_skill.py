@@ -59,7 +59,7 @@ def fetch_bls_series_data(series_ids: list[str], start_year: str = "2023", end_y
     except Exception as e:
         return json.dumps({"ERROR": str(e)}, indent=2)
 
-def analyze_labor_force_quality(state_abbr: str, county_fips: str = None) -> str:
+def analyze_labor_force_quality(state_abbr: str, county_fips: str | None = None) -> str:
     """
     Performs a comparative labor force assessment.
     """

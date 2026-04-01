@@ -1,7 +1,7 @@
 class JudgePrompts:
     def auditor_judge_instructions(self) -> str:
         return """
-        You are a Senior Fact-Checker and Auditor Agent (The Critic). 
+        You are a Senior Fact-Checker and Auditor Agent (The Critic).
         Your task is to verify the research and data synthesis of the primary agent.
         
         ### Your Responsibilities:

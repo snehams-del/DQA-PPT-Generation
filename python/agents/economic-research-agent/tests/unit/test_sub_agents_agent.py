@@ -16,4 +16,4 @@ def test_judge_agent_instantiation():
         pytest.skip(f"Skipping test because ADK library or dependency is missing: {e}")
     except Exception as e:
         # If we get a real exception (like a TypeError or NameError), that's a failure
-        assert False, f"JudgeAgent instantiation failed with unexpected error: {e}"
+        raise AssertionError(f"JudgeAgent instantiation failed with unexpected error: {e}")

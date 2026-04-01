@@ -5,14 +5,15 @@ Modernized Deployment script for Economic Research Agent using Vertex AI Agent E
 
 import os
 import logging
-logging.getLogger("google.cloud.aiplatform").setLevel(logging.DEBUG)
+import cloudpickle
 import vertexai
 from vertexai import agent_engines
 from vertexai.preview.reasoning_engines import AdkApp
 
-from economic_research.agent import ERAAgent
-import cloudpickle
 import economic_research
+from economic_research.agent import ERAAgent
+
+logging.getLogger("google.cloud.aiplatform").setLevel(logging.DEBUG)
 cloudpickle.register_pickle_by_value(economic_research)
 
 

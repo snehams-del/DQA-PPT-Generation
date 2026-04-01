@@ -29,10 +29,8 @@ def get_state_macro_health(state_names: list[str]) -> str:
         # 1. Fetch BEA State GDP (Sample Mapping logic)
         # In a full implementation, we would use the BEA 'GetDataSet' and 'GetData' endpoints.
         # This implementation uses the standardized BEA structure.
-        bea_url = f"https://apps.bea.gov/api/data/?&UserID={BEA_API_KEY}&method=GetData&datasetname=Regional&TableName=SAGDP2&GeoFIPS=STATE&LineCode=1&Year=2023&ResultFormat=JSON"
 
         # 2. Fetch Census Demographic benchmarks
-        census_url = f"https://api.census.gov/data/2021/pep/population?get=NAME,POP_2021&for=state:*&key={CENSUS_API_KEY}"
 
         # (Simulating API successful return for demonstration of structural adherence)
         # Note: In production, we handle these requests with robust error handling.

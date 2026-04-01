@@ -3,9 +3,6 @@
 
 from mcp.server.fastmcp import FastMCP
 
-# Initialize FastMCP Server
-mcp = FastMCP("EconomicResearchAgent")
-
 # Import specialized skills
 from economic_research.tools.bls_api_skill import (
     fetch_bls_series_data,
@@ -19,6 +16,9 @@ from economic_research.tools.regulatory_skill import fetch_regulatory_notices
 from economic_research.tools.tax_foundation_skill import fetch_state_tax_rates
 from economic_research.tools.trade_skill import fetch_regional_trade_data
 
+# Initialize FastMCP Server
+mcp = FastMCP("EconomicResearchAgent")
+
 
 # Register Tools via MCP Decorators
 @mcp.tool()
@@ -27,7 +27,7 @@ def get_macro_stats(cities: list[str], series_type: str = "unemployment"):
     return fetch_regional_macro_stats(cities, series_type)
 
 @mcp.tool()
-def get_education_stats(state_abbr: str, county_code: str = None):
+def get_education_stats(state_abbr: str, county_code: str | None = None):
     """Fetches ACS educational attainment data from Census."""
     return fetch_census_education_stats(state_abbr, county_code)
 

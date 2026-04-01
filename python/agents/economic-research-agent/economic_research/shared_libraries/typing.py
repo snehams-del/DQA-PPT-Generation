@@ -86,8 +86,8 @@ def default_serialization(obj: Any) -> Any:
     Default serialization for LangChain objects.
     Converts BaseModel instances to JSON strings.
     """
-    if isinstance(obj, Serializable):
-        return obj.to_json()
+    if isinstance(obj, BaseModel):
+        return obj.model_dump_json()
     return None
 
 
