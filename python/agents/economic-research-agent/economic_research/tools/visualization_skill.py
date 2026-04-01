@@ -60,7 +60,7 @@ def generate_economic_chart(
     fig.update_layout(
         font_family="Roboto, sans-serif",
         xaxis_tickangle=-45,
-        margin=dict(l=20, r=20, t=50, b=100),
+        margin={"l": 20, "r": 20, "t": 50, "b": 100},
     )
 
     # Return as JSON string for frontend rendering

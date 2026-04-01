@@ -35,7 +35,7 @@ def generate_metro_matrix_report(city_names: list[str]) -> str:
     """
     # 1. Gather Macro Health (BEA/Census)
     # Correct state derivation is critical for Live-API grounding accuracy.
-    states = list(set([get_state_from_city(city) for city in city_names]))
+    states = list({get_state_from_city(city) for city in city_names})
     macro_json = get_state_macro_health(states)
     macro_data = json.loads(macro_json) if not macro_json.startswith("ERROR") else []
 
@@ -59,7 +59,7 @@ def generate_metro_matrix_report(city_names: list[str]) -> str:
 
         # High-fidelity target matching
         m_item = next((m for m in macro_data if m["State"].lower() == state_target.lower()), macro_data[0] if macro_data else {"Message": "No Macro Data"})
-        l_item = next((l for l in labor_data if l.get("City", "").lower() == city_clean.lower() or l.get("City", "").lower() in city.lower()), {"City": city_clean, "Message": "No Labor Data"})
+        l_item = next((labor for labor in labor_data if labor.get("City", "").lower() == city_clean.lower() or labor.get("City", "").lower() in city.lower()), {"City": city_clean, "Message": "No Labor Data"})
         s_item = sentiment_data[i]
 
         matrix.append({

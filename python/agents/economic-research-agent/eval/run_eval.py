@@ -65,7 +65,8 @@ def run_benchmarks():
         except Exception as e:
             print(f"❌ Question {i+1} Failed: {e}")
 
-    if not sim_data: return
+    if not sim_data:
+        return
 
     print("⚖️ Judging Responses with Gemini 2.5 Flash...")
     eval_df = pd.DataFrame(sim_data)
