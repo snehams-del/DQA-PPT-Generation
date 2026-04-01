@@ -1,14 +1,14 @@
 census~=0.8.23
 db-dtypes~=1.4.2
 fastapi>=0.124.1
-google-cloud-aiplatform[evaluation]>=1.120.0
+google-cloud-aiplatform>=1.120.0
 google-cloud-secret-manager~=2.23.2
 google-cloud-logging~=3.11.4
 google-genai>=1.37.0
 opentelemetry-exporter-gcp-trace~=1.9.0
 pandas~=2.2.3
-pylint
-traceloop-sdk>=0.39.0
+
+
 us~=3.2.0
 uvicorn~=0.34.0
 plotly~=6.0.0

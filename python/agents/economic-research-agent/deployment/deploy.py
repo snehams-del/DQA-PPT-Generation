@@ -10,7 +10,10 @@ import vertexai
 from vertexai import agent_engines
 from vertexai.preview.reasoning_engines import AdkApp
 
-from economic_research.agent import root_agent
+from economic_research.agent import ERAAgent
+import cloudpickle
+import economic_research
+cloudpickle.register_pickle_by_value(economic_research)
 
 
 def deploy_era_to_vertex(project_id: str, location: str = "us-central1"):
@@ -35,16 +38,19 @@ def deploy_era_to_vertex(project_id: str, location: str = "us-central1"):
     with open(requirements_path) as f:
         requirements = [line.strip() for line in f if line.strip() and not line.startswith("#")]
 
+    era_instance = ERAAgent()
+    root_agent = era_instance.get_app().root_agent
+
     adk_app = AdkApp(
         agent=root_agent,
-        enable_tracing=True,
+        enable_tracing=False,
     )
 
     # Use the new agent_engines API
     remote_agent = agent_engines.create(
         adk_app,
         requirements=requirements,
-        extra_packages=[agent_package_path],
+        extra_packages=[os.path.join(project_root, "economic_research")],
         display_name="adk-economic-agent",
     )
 

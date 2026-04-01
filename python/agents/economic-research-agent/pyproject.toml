@@ -19,7 +19,6 @@ dependencies = [
     "streamlit",
     "streamlit-feedback",
     "locust",
-    "traceloop-sdk>=0.39.0",
     "us~=3.2.0",
     "uvicorn~=0.34.0",
     "plotly~=6.0.0",

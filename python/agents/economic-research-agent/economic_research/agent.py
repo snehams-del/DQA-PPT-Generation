@@ -175,14 +175,7 @@ class ERAAgent:
         except Exception as e:
             return f"{full_text}\n\n---\n⚠️ *Judge verification failed: {e}*"
 
-# Export the entry points for different environments
 export_agent = ERAAgent()
-
-# Use 'agent' for local runners (Streamlit uses App instance directly)
-agent = export_agent.get_app()
-
-# Use 'reasoning_engine' for cloud deployment (Vertex AI expects class with .query() method)
-reasoning_engine = export_agent
 
 # Also export root_agent for local CLI usage
 root_agent = export_agent.get_app().root_agent

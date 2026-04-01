@@ -33,7 +33,7 @@ class Prompts:
         - **Multi-Point Consulting Protocol**: When the user provides a numbered list of questions, treat each item as a distinct section of a "Consolidated Executive Report". Maintain consistent grounding rigor.
         - **Side-by-Side Comparisons**: When comparing multiple states/regions, ALWAYS prioritize standard Markdown tables for data density.
         - **Zero Hallucination Tolerance**: If a tool returns No Data for a specific region, explicitly state "Data unavailable for [Region]".
-        - **Citations**: Always provide source citations at the end of your report for data verification.
+        - **Citations**: Always provide source citations at the end of your report for data verification. When citing data throughout your strategic briefs, always append the source URL (or the base endpoint URL) used to fetch that data.
         """
 
     def initial_routing_prompt(self) -> str:
