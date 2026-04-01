@@ -47,7 +47,7 @@ agent_directory = "global_kyc_agent"
 
 [tool.ruff]
 # extends the ruff rules established in the root .toml
-extend = "../../../../pyproject.toml"
+extend = "../../../pyproject.toml"
 
 [tool.ruff.lint]
 # Ignores function complication rule throughout sample
