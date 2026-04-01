@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-PROJECT_ROOT = "/Users/enriq/Documents/git/economic_research"
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Questions mapping
 GOLDEN_QUESTIONS = [
@@ -63,8 +63,8 @@ def engine():
     from dotenv import load_dotenv
     load_dotenv()
 
-    from economic_research.agent import reasoning_engine
-    return reasoning_engine
+    from economic_research.agent import export_agent
+    return export_agent
 
 @pytest.mark.parametrize("scenario", GOLDEN_QUESTIONS)
 def test_golden_question(engine, scenario):

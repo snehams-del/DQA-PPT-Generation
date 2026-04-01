@@ -33,8 +33,8 @@ GOLDEN_SCENARIOS = [
 
 @pytest.fixture(scope="module")
 def runner():
-    from economic_research.agent import agent
-    runner_instance = InMemoryRunner(app=agent)
+    from economic_research.agent import export_agent
+    runner_instance = InMemoryRunner(app=export_agent.get_app())
     runner_instance.auto_create_session = True
     return runner_instance
 
