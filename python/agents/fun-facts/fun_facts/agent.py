@@ -23,7 +23,7 @@ load_dotenv(override=True)
 # --- Root Agent ---
 root_agent = Agent(
     name="Facts",
-    model="gemini-3.1-flash-lite-preview",
+    model="gemini-flash-latest",
     instruction="Provide the most mind-blowing, obscure, and wacky fun facts about the topic. Aim for maximum 'wow' factor with rare and surprising information.",
     description="An Agent to provide fun facts about a given topic.",
     tools=[google_search],
