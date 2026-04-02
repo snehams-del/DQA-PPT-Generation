@@ -63,7 +63,7 @@ def get_company_officers(company_number:str):
     try:
         return chclient.get_company_officers(company_number)
     except requests.exceptions.HTTPError as e:
-        if e.response.status_code == 404:
+        if e.response.status_code == HTTP_NOT_FOUND:
             return {"items": [], "total_results": 0}
         raise
     except Exception as e:
@@ -82,7 +82,7 @@ def get_company_address(company_number:str):
     try:
         return chclient.get_company_registered_office_address(company_number)
     except requests.exceptions.HTTPError as e:
-        if e.response.status_code == 404:
+        if e.response.status_code == HTTP_NOT_FOUND:
             return {"error": "Address not found"}
         raise
     except Exception as e:
@@ -101,7 +101,7 @@ def get_company_establishments(company_number:str):
     try:
         return chclient.get_company_uk_establishments(company_number)
     except requests.exceptions.HTTPError as e:
-        if e.response.status_code == 404:
+        if e.response.status_code == HTTP_NOT_FOUND:
             return {"items": []}
         raise
     except Exception as e:
@@ -120,7 +120,7 @@ def get_company_registers(company_number:str):
     try:
         return chclient.get_company_registers(company_number)
     except requests.exceptions.HTTPError as e:
-        if e.response.status_code == 404:
+        if e.response.status_code == HTTP_NOT_FOUND:
             return {"registers": {}}
         raise
     except Exception as e:
@@ -139,7 +139,7 @@ def get_company_exemptions(company_number:str):
     try:
         return chclient.get_company_exemptions(company_number)
     except requests.exceptions.HTTPError as e:
-        if e.response.status_code == 404:
+        if e.response.status_code == HTTP_NOT_FOUND:
             return {"exemptions": {}}
         raise
     except Exception as e:
@@ -158,7 +158,7 @@ def get_company_charges(company_number:str):
     try:
         return chclient.get_company_charges(company_number)
     except requests.exceptions.HTTPError as e:
-        if e.response.status_code == 404:
+        if e.response.status_code == HTTP_NOT_FOUND:
             return {"items": [], "total_count": 0}
         raise
     except Exception as e:
@@ -177,7 +177,7 @@ def get_company_insolvency(company_number:str):
     try:
         return chclient.get_company_insolvency(company_number)
     except requests.exceptions.HTTPError as e:
-        if e.response.status_code == 404:
+        if e.response.status_code == HTTP_NOT_FOUND:
             return {"cases": []}
         raise
     except Exception as e:
@@ -196,7 +196,7 @@ def get_company_filing_history(company_number: str):
     try:
         return chclient.get_company_filing_history(company_number)
     except requests.exceptions.HTTPError as e:
-        if e.response.status_code == 404:
+        if e.response.status_code == HTTP_NOT_FOUND:
             return {"items": [], "total_count": 0}
         raise
     except Exception as e:
@@ -216,7 +216,7 @@ def get_company_filing_detail(company_number: str, transaction_id: str):
     try:
         return chclient.get_company_filing_detail(company_number, transaction_id)
     except requests.exceptions.HTTPError as e:
-        if e.response.status_code == 404:
+        if e.response.status_code == HTTP_NOT_FOUND:
             return {"error": "Filing not found"}
         raise
     except Exception as e:
@@ -235,7 +235,7 @@ def get_corporate_officer_disqualifications(officer_id: str):
     try:
         return chclient.get_corporate_officer_disqualifications(officer_id)
     except requests.exceptions.HTTPError as e:
-        if e.response.status_code == 404:
+        if e.response.status_code == HTTP_NOT_FOUND:
             return {"disqualifications": []}
         raise
     except Exception as e:
@@ -254,7 +254,7 @@ def get_natural_officer_disqualifications(officer_id: str):
     try:
         return chclient.get_natural_officer_disqualifications(officer_id)
     except requests.exceptions.HTTPError as e:
-        if e.response.status_code == 404:
+        if e.response.status_code == HTTP_NOT_FOUND:
             return {"disqualifications": []}
         raise
     except Exception as e:
@@ -273,7 +273,7 @@ def get_office_appointments(officer_id: str):
     try:
         return chclient.get_office_appointments(officer_id)
     except requests.exceptions.HTTPError as e:
-        if e.response.status_code == 404:
+        if e.response.status_code == HTTP_NOT_FOUND:
             return {"appointments": []}
         raise
     except Exception as e:

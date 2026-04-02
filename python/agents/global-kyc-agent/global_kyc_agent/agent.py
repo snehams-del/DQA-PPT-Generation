@@ -94,6 +94,15 @@ def _create_final_event(last_event, accumulated_state_delta, author_name):
     final_event.author = author_name
     return final_event
 
+def _prepare_parallel_runs(agent, ctx):
+    agent_runs = []
+    for sub_agent in agent.sub_agents:
+        sub_agent_ctx = _create_branch_ctx_for_sub_agent(agent, sub_agent, ctx)
+        sub_agent_ctx.agent = sub_agent
+        if not sub_agent_ctx.end_of_agents.get(sub_agent.name):
+            agent_runs.append(sub_agent.run_async(sub_agent_ctx))
+    return agent_runs
+
 async def workaround_parallel_run_async_impl(self, ctx):
     if not self.sub_agents:
         return
@@ -103,12 +112,7 @@ async def workaround_parallel_run_async_impl(self, ctx):
         ctx.set_agent_state(self.name, agent_state=BaseAgentState())
         yield self._create_agent_state_event(ctx)
 
-    agent_runs = []
-    for sub_agent in self.sub_agents:
-        sub_agent_ctx = _create_branch_ctx_for_sub_agent(self, sub_agent, ctx)
-        sub_agent_ctx.agent = sub_agent
-        if not sub_agent_ctx.end_of_agents.get(sub_agent.name):
-            agent_runs.append(sub_agent.run_async(sub_agent_ctx))
+    agent_runs = _prepare_parallel_runs(self, ctx)
 
     pause_invocation = False
     try:
