@@ -4,6 +4,12 @@ This is a simple agent built using the Google Agent Development Kit (ADK). It is
 
 The agent uses the **Gemini** model and **Google Search** grounding to provide wacky and interesting fun facts about any topic you provide.
 
+## Project Structure
+
+- `fun_facts/agent.py`: Contains the `root_agent` definition and the `App` configuration.
+- `requirements.txt`: Lists the Python dependencies.
+- `.env.example`: Template for required environment variables.
+
 ## Prerequisites
 
 - **Python 3.10+**
@@ -71,8 +77,4 @@ Once deployed to Agent Engine, your agent can be made available to users in your
 
 - Follow the steps in the documentation to [Register and manage ADK agents hosted on Vertex AI Agent Engine](https://docs.cloud.google.com/gemini/enterprise/docs/register-and-manage-an-adk-agent#register-an-adk-agent)
 
-## Project Structure
-
-- `fun_facts/agent.py`: Contains the `root_agent` definition and the `App` configuration.
-- `requirements.txt`: Lists the Python dependencies.
-- `.env.example`: Template for required environment variables.
+![Gemini Enterprise](img/gemini-enterprise.png)
