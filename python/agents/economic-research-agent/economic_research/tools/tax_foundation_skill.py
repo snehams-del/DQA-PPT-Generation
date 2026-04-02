@@ -9,7 +9,11 @@ from pydantic import BaseModel, Field
 
 
 class TaxRequest(BaseModel):
-    state_names: list[str] = Field(..., description="List of full state names (e.g., ['Texas', 'California']).")
+    state_names: list[str] = Field(
+        ...,
+        description="List of full state names (e.g., ['Texas', 'California']).",
+    )
+
 
 def fetch_state_tax_rates(state_names: list[str]) -> str:
     """
@@ -21,33 +25,35 @@ def fetch_state_tax_rates(state_names: list[str]) -> str:
     try:
         response = requests.get(url, timeout=15)
         response.raise_for_status()
-        soup = BeautifulSoup(response.text, 'html.parser')
+        soup = BeautifulSoup(response.text, "html.parser")
 
         # The Tax Foundation often uses a table with class 'table' or inside a specific div
         # Let's find all tables and look for one containing state names
-        tables = soup.find_all('table')
+        tables = soup.find_all("table")
         tax_data = {}
 
         for table in tables:
-            rows = table.find_all('tr')
+            rows = table.find_all("tr")
             for row in rows:
-                cols = row.find_all(['td', 'th'])
+                cols = row.find_all(["td", "th"])
                 if len(cols) >= 2:
                     state_raw = cols[0].get_text(strip=True)
                     rate_raw = cols[1].get_text(strip=True)
 
                     # Clean up footnote references like 'Alaska (a)'
-                    state_clean = state_raw.split('(')[0].strip()
+                    state_clean = state_raw.split("(")[0].strip()
                     tax_data[state_clean] = rate_raw
 
         results = []
         for state in state_names:
             rate = tax_data.get(state, "N/A (Check Source)")
-            results.append({
-                "State": state,
-                "Corporate Tax Rate": rate,
-                "Source": "Tax Foundation (Live Scrape 2024)"
-            })
+            results.append(
+                {
+                    "State": state,
+                    "Corporate Tax Rate": rate,
+                    "Source": "Tax Foundation (Live Scrape 2024)",
+                }
+            )
 
         return json.dumps(results, indent=2)
 
@@ -62,18 +68,23 @@ def fetch_state_tax_rates(state_names: list[str]) -> str:
             "Pennsylvania": "8.49%",
             "Ohio": "None (Gross Receipts Tax)",
             "Washington": "None (Gross Receipts Tax)",
-            "North Carolina": "2.5%"
+            "North Carolina": "2.5%",
         }
 
         results = []
         for state in state_names:
-            results.append({
-                "State": state,
-                "Corporate Tax Rate": fallback_rates.get(state, "N/A"),
-                "Source": "Tax Foundation (Fallback/Hardcoded)",
-                "Error": str(e) if "404" not in str(e) else "Page structure changed"
-            })
+            results.append(
+                {
+                    "State": state,
+                    "Corporate Tax Rate": fallback_rates.get(state, "N/A"),
+                    "Source": "Tax Foundation (Fallback/Hardcoded)",
+                    "Error": str(e)
+                    if "404" not in str(e)
+                    else "Page structure changed",
+                }
+            )
         return json.dumps(results, indent=2)
+
 
 if __name__ == "__main__":
     # Test

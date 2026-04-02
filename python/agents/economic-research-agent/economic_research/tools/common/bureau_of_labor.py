@@ -14,9 +14,7 @@ PROJECT_ID = os.getenv("PROJECT_ID", "economic-research-agent")
 LABOR_STATS_DATASET = os.getenv("LABOR_STATS_DATASET", "bls")
 
 
-def get_labor_force_stats(
-    city_names: list[str]
-):
+def get_labor_force_stats(city_names: list[str]):
     """Get labor force stats from a city."""
     labor_force_table = "labor_force"
 
@@ -39,8 +37,7 @@ def get_labor_force_stats(
     """
 
     labor_force_stats = execute_bq_query_to_df(
-        project=PROJECT_ID,
-        query=labor_query
+        project=PROJECT_ID, query=labor_query
     )
 
     def find_city(area_name):
@@ -51,24 +48,18 @@ def get_labor_force_stats(
         return None
 
     labor_force_stats["city_name"] = labor_force_stats["area_name"].apply(
-        find_city)
+        find_city
+    )
 
     # Citations.
     citations = set(labor_force_stats["source"].unique())
 
     # Drop citation column.
-    labor_force_stats.drop(
-        ["source", "area_name"],
-        inplace=True,
-        axis=1
-    )
+    labor_force_stats.drop(["source", "area_name"], inplace=True, axis=1)
     return labor_force_stats, citations
 
 
-def get_state_tax_rates(
-    metros: list[dict[str,Any]],
-    drop_state: bool = True
-):
+def get_state_tax_rates(metros: list[dict[str, Any]], drop_state: bool = True):
     """Get State Tax Rates"""
     state_tax_table = "state_tax_rates"
 
@@ -86,8 +77,7 @@ def get_state_tax_rates(
     """
 
     state_tax_bq_results = execute_bq_query_to_df(
-        project=PROJECT_ID,
-        query=state_tax_query
+        project=PROJECT_ID, query=state_tax_query
     )
 
     if state_tax_bq_results.empty:
@@ -96,10 +86,7 @@ def get_state_tax_rates(
     metro_df = pd.DataFrame(metros)
 
     state_tax_df = pd.merge(
-        left=state_tax_bq_results,
-        right=metro_df,
-        on="state",
-        how="left"
+        left=state_tax_bq_results, right=metro_df, on="state", how="left"
     )
 
     # Citations.
@@ -109,19 +96,12 @@ def get_state_tax_rates(
     if drop_state:
         labels_to_drop.extend(["state", "state_abbreviation"])
 
-    state_tax_df.drop(
-        labels=labels_to_drop,
-        axis=1,
-        inplace=True
-    )
+    state_tax_df.drop(labels=labels_to_drop, axis=1, inplace=True)
 
     return state_tax_df, citations
 
 
-def get_union_employment(
-    metros: list[dict[str,Any]],
-    drop_state: bool = True
-):
+def get_union_employment(metros: list[dict[str, Any]], drop_state: bool = True):
     """Get Union Employment Percentage"""
     union_table = "union_employed"
 
@@ -139,17 +119,13 @@ def get_union_employment(
     """
 
     state_union_employement = execute_bq_query_to_df(
-        project=PROJECT_ID,
-        query=union_employement_query
+        project=PROJECT_ID, query=union_employement_query
     )
 
     metro_df = pd.DataFrame(metros)
 
     union_employment_df = pd.merge(
-        left=state_union_employement,
-        right=metro_df,
-        on="state",
-        how="left"
+        left=state_union_employement, right=metro_df, on="state", how="left"
     )
 
     # Citations.
@@ -158,18 +134,12 @@ def get_union_employment(
     labels_to_drop = ["source"]
     if drop_state:
         labels_to_drop.extend(["state", "state_abbreviation"])
-    union_employment_df.drop(
-        labels=labels_to_drop,
-        axis=1,
-        inplace=True
-    )
+    union_employment_df.drop(labels=labels_to_drop, axis=1, inplace=True)
 
     return union_employment_df, citations
 
 
-def get_median_hourly_wage(
-    city_names: list[str]
-):
+def get_median_hourly_wage(city_names: list[str]):
     """Get median hourly wages from a city."""
     median_hourly_wage_table = "metro_median_hourly_wages"
 
@@ -192,8 +162,7 @@ def get_median_hourly_wage(
     """
 
     median_hourly_wages = execute_bq_query_to_df(
-        project=PROJECT_ID,
-        query=median_wage_query
+        project=PROJECT_ID, query=median_wage_query
     )
 
     def find_city(metro):
@@ -203,17 +172,13 @@ def get_median_hourly_wage(
                 return city.capitalize()
         return None
 
-
     median_hourly_wages["city_name"] = median_hourly_wages["metro"].apply(
-        find_city)
+        find_city
+    )
 
     # Citations.
     citations = set(median_hourly_wages["source"].unique())
 
     # Drop citation column.
-    median_hourly_wages.drop(
-        ["source", "metro"],
-        inplace=True,
-        axis=1
-    )
+    median_hourly_wages.drop(["source", "metro"], inplace=True, axis=1)
     return median_hourly_wages, citations

@@ -68,7 +68,7 @@ extend = "../../../pyproject.toml"
 
 [tool.ruff.lint]
 # Ignores function complication rule throughout sample
-ignore = ["C901", "PLR0915"]
+ignore = ["C901", "PLR0915", "PLR2004", "PLC0415", "PLW2901", "PLR0912"]
 
 [tool.ruff.lint.per-file-ignores]
 # ignores unused import rule exclusively for this sample’s __init__.py files

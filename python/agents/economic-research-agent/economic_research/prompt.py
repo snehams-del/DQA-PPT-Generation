@@ -4,7 +4,6 @@
 """Atomic Agent Prompt definitions for Economic Research Agent (ERA)."""
 
 
-
 class Prompts:
     """
     Prompts for LLM Calls
@@ -80,9 +79,7 @@ class Prompts:
         """
 
     def occupation_selection_prompt(
-        self,
-        naics_titles: list[str],
-        industry_occupations: list[str]
+        self, naics_titles: list[str], industry_occupations: list[str]
     ) -> str:
         """
         Unskilled Labor Wages Occupation selection prompt.
@@ -93,7 +90,8 @@ class Prompts:
 
         Returns: (str) prompt.
         """
-        return f""""For the industry sectors {naics_titles}, identify the most \\
+        return (
+            f""""For the industry sectors {naics_titles}, identify the most \\
         relevant occupations and their corresponding Standard Occupational \\
         Classification (SOC) codes from the following list.
 
@@ -112,4 +110,6 @@ class Prompts:
 
         Example Output:
         {{"11-1011": "occupation 1", "11-1021": "occupation 2", ... }}
-        """""
+        """
+            ""
+        )

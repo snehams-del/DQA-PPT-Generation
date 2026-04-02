@@ -12,25 +12,27 @@ logger = logging.getLogger(__name__)
 
 # EIA API v2 handles key via query parameter
 h_eia_key = os.getenv("EIA_API_KEY", "").strip()
-EIA_API_KEY = h_eia_key.replace('"', '').replace("'", "")
+EIA_API_KEY = h_eia_key.replace('"', "").replace("'", "")
+
 
 def fetch_state_electricity_rates(
-    state_codes: list[str],
-    sector: str = "industrial"
+    state_codes: list[str], sector: str = "industrial"
 ) -> str:
     """
     Fetches real-time average electricity prices per kWh from the EIA Open Data API.
     Crucial for calculating the operational ROI of data centers or manufacturing plants.
     """
     if not EIA_API_KEY:
-        return json.dumps({"ERROR": "EIA_API_KEY not found in environment."}, indent=2)
+        return json.dumps(
+            {"ERROR": "EIA_API_KEY not found in environment."}, indent=2
+        )
 
     results = []
     # Map sector name to EIA v2 sectorid
     sector_map = {
         "industrial": "industrial",
         "commercial": "commercial",
-        "residential": "residential"
+        "residential": "residential",
     }
     s_id = sector_map.get(sector.lower(), "industrial")
 
@@ -50,29 +52,42 @@ def fetch_state_electricity_rates(
             if response.status_code == 200:
                 full_data = response.json()
                 # EIA v2 often wraps data in 'response' -> 'data'
-                data_list = full_data.get('response', {}).get('data', [])
+                data_list = full_data.get("response", {}).get("data", [])
                 if not data_list:
                     # Fallback for alternative v2 structures or 'ALL' sectors
-                    data_list = full_data.get('data', [])
+                    data_list = full_data.get("data", [])
 
                 if data_list:
                     latest = data_list[0]
-                    results.append({
-                        "State": state,
-                        "Sector": sector.capitalize(),
-                        "Avg Price (cents/kWh)": f"{float(latest.get('price', 0)):.2f}",
-                        "Period": latest.get("period", "Unknown"),
-                        "Source": "U.S. Energy Information Administration (EIA v2)"
-                    })
+                    results.append(
+                        {
+                            "State": state,
+                            "Sector": sector.capitalize(),
+                            "Avg Price (cents/kWh)": f"{float(latest.get('price', 0)):.2f}",
+                            "Period": latest.get("period", "Unknown"),
+                            "Source": "U.S. Energy Information Administration (EIA v2)",
+                        }
+                    )
                 else:
-                    results.append({"State": state, "Status": "No specific sector data found."})
+                    results.append(
+                        {
+                            "State": state,
+                            "Status": "No specific sector data found.",
+                        }
+                    )
             else:
-                results.append({"State": state, "Status": f"EIA API failure ({response.status_code})"})
+                results.append(
+                    {
+                        "State": state,
+                        "Status": f"EIA API failure ({response.status_code})",
+                    }
+                )
         except Exception as e:
             results.append({"State": state, "Status": f"Error: {e!s}"})
 
     if not results:
-        return json.dumps({"ERROR": f"No EIA data retrieved for {state_codes}"}, indent=2)
+        return json.dumps(
+            {"ERROR": f"No EIA data retrieved for {state_codes}"}, indent=2
+        )
 
     return json.dumps(results, indent=2)
-

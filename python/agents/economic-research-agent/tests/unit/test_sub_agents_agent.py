@@ -13,7 +13,11 @@ def test_judge_agent_instantiation():
         assert agent_instance.name == "Auditor_Judge"
         assert len(agent_instance.tools) > 0
     except ImportError as e:
-        pytest.skip(f"Skipping test because ADK library or dependency is missing: {e}")
+        pytest.skip(
+            f"Skipping test because ADK library or dependency is missing: {e}"
+        )
     except Exception as e:
         # If we get a real exception (like a TypeError or NameError), that's a failure
-        raise AssertionError(f"JudgeAgent instantiation failed with unexpected error: {e}") from e
+        raise AssertionError(
+            f"JudgeAgent instantiation failed with unexpected error: {e}"
+        ) from e

@@ -60,9 +60,7 @@ class CloudTraceLoggingSpanExporter(CloudTraceSpanExporter):
             span_id = format(span_context.span_id, "x")
             span_dict = json.loads(span.to_json())
 
-            span_dict["trace"] = (
-                f"projects/{self.project_id}/traces/{trace_id}"
-            )
+            span_dict["trace"] = f"projects/{self.project_id}/traces/{trace_id}"
             span_dict["span_id"] = span_id
 
             span_dict = self._process_large_attributes(
@@ -78,9 +76,7 @@ class CloudTraceLoggingSpanExporter(CloudTraceSpanExporter):
 
     def store_in_gcs(self, content: str, span_id: str) -> str:
         if not self.storage_client.bucket(self.bucket_name).exists():
-            logging.warning(
-                f"Bucket {self.bucket_name} not found."
-            )
+            logging.warning(f"Bucket {self.bucket_name} not found.")
             return "GCS bucket not found"
 
         blob_name = f"spans/{span_id}.json"
@@ -94,9 +90,7 @@ class CloudTraceLoggingSpanExporter(CloudTraceSpanExporter):
             attributes_payload = dict(attributes.items())
             attributes_retain = dict(attributes.items())
 
-            gcs_uri = self.store_in_gcs(
-                json.dumps(attributes_payload), span_id
-            )
+            gcs_uri = self.store_in_gcs(json.dumps(attributes_payload), span_id)
             attributes_retain["uri_payload"] = gcs_uri
             attributes_retain["url_payload"] = (
                 f"https://storage.googleapis.com/"

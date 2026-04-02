@@ -29,7 +29,9 @@ from economic_research.tools.hud_skill import (
 )
 from economic_research.tools.real_estate_skill import get_real_estate_roi
 from economic_research.tools.regulatory_skill import fetch_regulatory_notices
-from economic_research.tools.talent_pipeline_skill import get_talent_pipeline_roi
+from economic_research.tools.talent_pipeline_skill import (
+    get_talent_pipeline_roi,
+)
 from economic_research.tools.tax_foundation_skill import fetch_state_tax_rates
 from economic_research.tools.trade_skill import fetch_regional_trade_data
 
@@ -39,6 +41,7 @@ load_dotenv()
 
 prompts = Prompts()
 ERA_INSTRUCTIONS = prompts.main_era_instructions()
+
 
 class ERAAgent:
     agent_framework = "google-adk"
@@ -78,6 +81,7 @@ class ERAAgent:
 
     def query(self, input: str) -> str:
         """Standard Reasoning Engine entry point."""
+
         # Cloud Secrets fallback using Secret Manager
         def get_cloud_secret(key_name):
             val = os.getenv(key_name)
@@ -87,8 +91,11 @@ class ERAAgent:
                 from economic_research.shared_libraries.helper import (
                     access_secret_version,
                 )
+
                 # We can hardcode the workshop project-maui for consistency
-                return access_secret_version(project_id="project-maui", secret_id=key_name)
+                return access_secret_version(
+                    project_id="project-maui", secret_id=key_name
+                )
             except Exception:
                 return None
 
@@ -114,13 +121,14 @@ class ERAAgent:
         app = self.get_app()
 
         from google.adk.runners import InMemoryRunner
+
         runner = InMemoryRunner(app=app)
         runner.auto_create_session = True
 
         responses = runner.run(new_message=input)
         full_text = ""
         for res in responses:
-            if hasattr(res, 'content') and res.content.parts:
+            if hasattr(res, "content") and res.content.parts:
                 for part in res.content.parts:
                     if part.text:
                         full_text += part.text
@@ -146,14 +154,16 @@ class ERAAgent:
 
             judge_text = ""
             for res in judge_responses:
-                if hasattr(res, 'content') and res.content.parts:
+                if hasattr(res, "content") and res.content.parts:
                     for part in res.content.parts:
                         if part.text:
                             judge_text += part.text
 
             # If rejected, run Researcher again with the correction context!
             if "[REJECT]" in judge_text:
-                print("⚠️ [Actor-Critic] Judge rejected the draft! Self-correcting...")
+                print(
+                    "⚠️ [Actor-Critic] Judge rejected the draft! Self-correcting..."
+                )
                 correction_prompt = (
                     f"Your previous draft was REJECTED by the Auditor Judge. Please use your tools to FIX the following discrepancies and generate a final report:\n\n"
                     f"### Auditor Feedback:\n{judge_text}\n\n"
@@ -164,7 +174,7 @@ class ERAAgent:
                 retry_responses = runner.run(new_message=correction_prompt)
                 corrected_text = ""
                 for res in retry_responses:
-                    if hasattr(res, 'content') and res.content.parts:
+                    if hasattr(res, "content") and res.content.parts:
                         for part in res.content.parts:
                             if part.text:
                                 corrected_text += part.text
@@ -175,6 +185,7 @@ class ERAAgent:
 
         except Exception as e:
             return f"{full_text}\n\n---\n⚠️ *Judge verification failed: {e}*"
+
 
 export_agent = ERAAgent()
 

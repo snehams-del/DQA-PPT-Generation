@@ -31,7 +31,9 @@ def find_labor_force_stats(
     # Get Labor Force & Unemployment stats.
     from economic_research.tools.fred_skill import fetch_regional_macro_stats
 
-    macro_json = fetch_regional_macro_stats(city_names, series_type="unemployment")
+    macro_json = fetch_regional_macro_stats(
+        city_names, series_type="unemployment"
+    )
 
     if "ERROR" in macro_json or "No FRED data" in macro_json:
         # Fallback to empty DataFrame
@@ -43,7 +45,9 @@ def find_labor_force_stats(
     # Extract citations
     citations = [d["Source"] for d in data if "Source" in d]
 
-    return labor_force_df.to_dict(orient="records"), {"citations": list(set(citations))}
+    return labor_force_df.to_dict(orient="records"), {
+        "citations": list(set(citations))
+    }
 
 
 def find_median_hourly_wages(
@@ -73,14 +77,18 @@ def find_median_hourly_wages(
             series_data = fred.get_series(series_id)
             if series_data is not None and not series_data.empty:
                 val = series_data.iloc[-1]
-                results.append({
-                    "City": city,
-                    "Median Wage": f"${val:.2f}",
-                    "Source": f"FRED ({series_id})"
-                })
+                results.append(
+                    {
+                        "City": city,
+                        "Median Wage": f"${val:.2f}",
+                        "Source": f"FRED ({series_id})",
+                    }
+                )
 
     if not results:
-        return [{"Message": "No wage data found via FRED live search."}], {"citations": []}
+        return [{"Message": "No wage data found via FRED live search."}], {
+            "citations": []
+        }
 
     return results, {"citations": [r["Source"] for r in results]}
 
@@ -111,14 +119,18 @@ def find_state_union_employment(
             series_data = fred.get_series(series_id)
             if series_data is not None and not series_data.empty:
                 val = series_data.iloc[-1]
-                results.append({
-                    "State": state,
-                    "Union Membership %": f"{val:.1f}%",
-                    "Source": f"FRED ({series_id})"
-                })
+                results.append(
+                    {
+                        "State": state,
+                        "Union Membership %": f"{val:.1f}%",
+                        "Source": f"FRED ({series_id})",
+                    }
+                )
 
     if not results:
-        return [{"Message": "No union data found via FRED live search."}], {"citations": []}
+        return [{"Message": "No union data found via FRED live search."}], {
+            "citations": []
+        }
 
     return results, {"citations": [r["Source"] for r in results]}
 

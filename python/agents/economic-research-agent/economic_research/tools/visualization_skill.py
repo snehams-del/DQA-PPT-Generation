@@ -12,12 +12,18 @@ from pydantic import BaseModel, Field
 
 
 class VisualizationRequest(BaseModel):
-    data: list[dict[str, Any]] = Field(..., description="List of dictionaries containing the economic data.")
+    data: list[dict[str, Any]] = Field(
+        ..., description="List of dictionaries containing the economic data."
+    )
     x_axis: str = Field(..., description="Column name for the X-axis.")
     y_axis: str = Field(..., description="Column name for the Y-axis.")
-    chart_type: str = Field("bar", description="Type of chart to generate (bar, line, scatter).")
+    chart_type: str = Field(
+        "bar", description="Type of chart to generate (bar, line, scatter)."
+    )
     title: str | None = Field(None, description="Title of the chart.")
-    color_by: str | None = Field(None, description="Optional column name to color the data points by.")
+    color_by: str | None = Field(
+        None, description="Optional column name to color the data points by."
+    )
 
 
 def generate_economic_chart(
@@ -26,7 +32,7 @@ def generate_economic_chart(
     y_axis: str,
     chart_type: str = "bar",
     title: str | None = None,
-    color_by: str | None = None
+    color_by: str | None = None,
 ) -> str:
     """
     Generates a Plotly JSON string for an economic chart based on the provided data.
@@ -42,19 +48,49 @@ def generate_economic_chart(
 
     # Ensure numeric columns are actually numeric
     try:
-        df[y_axis] = pd.to_numeric(df[y_axis].replace(r'[\$,%]', '', regex=True))
+        df[y_axis] = pd.to_numeric(
+            df[y_axis].replace(r"[\$,%]", "", regex=True)
+        )
     except (ValueError, TypeError):
         pass
 
     fig = None
     if chart_type.lower() == "bar":
-        fig = px.bar(df, x=x_axis, y=y_axis, title=title, color=color_by, template="plotly_white")
+        fig = px.bar(
+            df,
+            x=x_axis,
+            y=y_axis,
+            title=title,
+            color=color_by,
+            template="plotly_white",
+        )
     elif chart_type.lower() == "line":
-        fig = px.line(df, x=x_axis, y=y_axis, title=title, color=color_by, template="plotly_white")
+        fig = px.line(
+            df,
+            x=x_axis,
+            y=y_axis,
+            title=title,
+            color=color_by,
+            template="plotly_white",
+        )
     elif chart_type.lower() == "scatter":
-        fig = px.scatter(df, x=x_axis, y=y_axis, title=title, color=color_by, template="plotly_white")
+        fig = px.scatter(
+            df,
+            x=x_axis,
+            y=y_axis,
+            title=title,
+            color=color_by,
+            template="plotly_white",
+        )
     else:
-        fig = px.bar(df, x=x_axis, y=y_axis, title=title, color=color_by, template="plotly_white")
+        fig = px.bar(
+            df,
+            x=x_axis,
+            y=y_axis,
+            title=title,
+            color=color_by,
+            template="plotly_white",
+        )
 
     # High-fidelity styling
     fig.update_layout(

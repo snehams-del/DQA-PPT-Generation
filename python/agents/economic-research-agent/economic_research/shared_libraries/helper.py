@@ -30,18 +30,49 @@ def execute_bq_query_to_df(project: str, query: str) -> pd.DataFrame:
 
     # Return mock data for standard BLS queries to keep local pipeline alive
     if "labor_force" in query.lower():
-        return pd.DataFrame([
-            {"area_name": "Austin, TX", "labor_force": 1200000, "unemployment_rate": "3.2% (2025)", "source": "BLS (Mock)"},
-            {"area_name": "Seattle, WA", "labor_force": 2000000, "unemployment_rate": "3.8% (2025)", "source": "BLS (Mock)"},
-            {"area_name": "San Francisco, CA", "labor_force": 2500000, "unemployment_rate": "4.1% (2025)", "source": "BLS (Mock)"}
-        ])
+        return pd.DataFrame(
+            [
+                {
+                    "area_name": "Austin, TX",
+                    "labor_force": 1200000,
+                    "unemployment_rate": "3.2% (2025)",
+                    "source": "BLS (Mock)",
+                },
+                {
+                    "area_name": "Seattle, WA",
+                    "labor_force": 2000000,
+                    "unemployment_rate": "3.8% (2025)",
+                    "source": "BLS (Mock)",
+                },
+                {
+                    "area_name": "San Francisco, CA",
+                    "labor_force": 2500000,
+                    "unemployment_rate": "4.1% (2025)",
+                    "source": "BLS (Mock)",
+                },
+            ]
+        )
 
     elif "median_hourly_wage" in query.lower():
-        return pd.DataFrame([
-            {"metro": "Austin-Round Rock, TX", "median_hourly_wage": "$32.50", "source": "BLS Wags (Mock)"},
-            {"metro": "Seattle-Tacoma-Bellevue, WA", "median_hourly_wage": "$41.20", "source": "BLS Wages (Mock)"},
-            {"metro": "San Francisco-Oakland-Hayward, CA", "median_hourly_wage": "$45.80", "source": "BLS Wages (Mock)"}
-        ])
+        return pd.DataFrame(
+            [
+                {
+                    "metro": "Austin-Round Rock, TX",
+                    "median_hourly_wage": "$32.50",
+                    "source": "BLS Wags (Mock)",
+                },
+                {
+                    "metro": "Seattle-Tacoma-Bellevue, WA",
+                    "median_hourly_wage": "$41.20",
+                    "source": "BLS Wages (Mock)",
+                },
+                {
+                    "metro": "San Francisco-Oakland-Hayward, CA",
+                    "median_hourly_wage": "$45.80",
+                    "source": "BLS Wages (Mock)",
+                },
+            ]
+        )
 
     return pd.DataFrame()
 
@@ -58,11 +89,7 @@ def join_sets(*sets) -> set:
     return resulting_set
 
 
-def merge_dataframes(
-    df_list,
-    how="outer",
-    on=None
-):
+def merge_dataframes(df_list, how="outer", on=None):
     """
     Merges a list of DataFrames into a single DataFrame.
 
@@ -80,12 +107,7 @@ def merge_dataframes(
         merged_df = df_list[0]
 
         for df in df_list[1:]:
-            merged_df = pd.merge(
-                merged_df,
-                df,
-                how=how,
-                on=on
-            )
+            merged_df = pd.merge(merged_df, df, how=how, on=on)
 
         return merged_df
     except Exception as e:

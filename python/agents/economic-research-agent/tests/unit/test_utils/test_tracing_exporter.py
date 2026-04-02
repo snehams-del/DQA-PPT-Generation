@@ -23,7 +23,9 @@ from google.cloud import logging as google_cloud_logging
 from google.cloud import storage
 from opentelemetry.sdk.trace import ReadableSpan
 
-from economic_research.shared_libraries.tracing import CloudTraceLoggingSpanExporter
+from economic_research.shared_libraries.tracing import (
+    CloudTraceLoggingSpanExporter,
+)
 
 
 @pytest.fixture
@@ -58,9 +60,7 @@ def patch_clients(
     mock_logging_client: Mock, mock_storage_client: Mock
 ) -> Generator[None, None, None]:
     """Patch the logging and storage clients."""
-    with patch(
-        "google.cloud.logging.Client", return_value=mock_logging_client
-    ):
+    with patch("google.cloud.logging.Client", return_value=mock_logging_client):
         with patch(
             "google.cloud.storage.Client", return_value=mock_storage_client
         ):

@@ -5,11 +5,17 @@ import json
 
 from pydantic import BaseModel, Field
 
-from economic_research.tools.metro_matrix_skill import generate_metro_matrix_report
+from economic_research.tools.metro_matrix_skill import (
+    generate_metro_matrix_report,
+)
 
 
 class HQRelocationRequest(BaseModel):
-    city_names: list[str] = Field(..., description="List of city names (e.g. ['Austin', 'Raleigh']) to build an HQ Relocation for.")
+    city_names: list[str] = Field(
+        ...,
+        description="List of city names (e.g. ['Austin', 'Raleigh']) to build an HQ Relocation for.",
+    )
+
 
 def generate_hq_relocation_summary(city_names: list[str]) -> str:
     """
@@ -25,11 +31,13 @@ def generate_hq_relocation_summary(city_names: list[str]) -> str:
     for i, city in enumerate(city_names):
         m_item = m_matrix[i]
 
-        hq_report.append({
-            "City": city,
-            "Metro Matrix Recap": m_item,
-            "HQ Suitability Rating": "High Growth (McKinsey Synthesis)",
-            "Analysis Type": "Executive Headquarters Summary (2.2.1.2) Grounded Report"
-        })
+        hq_report.append(
+            {
+                "City": city,
+                "Metro Matrix Recap": m_item,
+                "HQ Suitability Rating": "High Growth (McKinsey Synthesis)",
+                "Analysis Type": "Executive Headquarters Summary (2.2.1.2) Grounded Report",
+            }
+        )
 
     return json.dumps(hq_report, indent=2)

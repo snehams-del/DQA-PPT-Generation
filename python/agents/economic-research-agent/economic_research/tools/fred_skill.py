@@ -12,14 +12,20 @@ from pydantic import BaseModel, Field
 # FRED API handles key as an environment variable or via constructor.
 FRED_API_KEY = os.getenv("FRED_API_KEY")
 
+
 class FredRegionalRequest(BaseModel):
-    city_names: list[str] = Field(..., description="List of city names to fetch unemployment/macro data for.")
-    series_type: str = Field("unemployment", description="Type of data to fetch: unemployment, gdp, or residential_construction.")
+    city_names: list[str] = Field(
+        ...,
+        description="List of city names to fetch unemployment/macro data for.",
+    )
+    series_type: str = Field(
+        "unemployment",
+        description="Type of data to fetch: unemployment, gdp, or residential_construction.",
+    )
 
 
 def fetch_regional_macro_stats(
-    city_names: list[str],
-    series_type: str = "unemployment"
+    city_names: list[str], series_type: str = "unemployment"
 ) -> str:
     """
     Fetches regional economic metrics directly from St. Louis Fed (FRED) API.
@@ -34,26 +40,26 @@ def fetch_regional_macro_stats(
     # Simple mapping logic for top MSAs (Can be expanded with dynamic search)
     # Series IDs follow a pattern: [MSA CODE]UR for unemployment.
     msa_codes = {
-        "Austin": "AUST448", # Austin-Round Rock MSA
-        "Raleigh": "RALE937", # Raleigh-Cary MSA
+        "Austin": "AUST448",  # Austin-Round Rock MSA
+        "Raleigh": "RALE937",  # Raleigh-Cary MSA
         "San Francisco": "SANF806",
         "Dallas": "DALL148",
         "Denver": "DENN508",
         "Seattle": "SEAT653",
         "Atlanta": "ATLA013",
-        "Charlotte": "CHAL837"
+        "Charlotte": "CHAL837",
     }
 
     series_suffixes = {
         "unemployment": "UR",
-        "gdp": "RGDP", # Real GDP
-        "residential_construction": "BP1FH", # Building Permits 1-Unit
+        "gdp": "RGDP",  # Real GDP
+        "residential_construction": "BP1FH",  # Building Permits 1-Unit
     }
 
     results = []
 
     for city in city_names:
-        city_clean = city.split(',')[0].strip() # Handle "Austin, TX"
+        city_clean = city.split(",")[0].strip()  # Handle "Austin, TX"
         code = msa_codes.get(city_clean)
 
         if not code:
@@ -61,7 +67,7 @@ def fetch_regional_macro_stats(
             search_query = f"{city_clean} unemployment rate"
             search_results = fred.search(search_query)
             if not search_results.empty:
-                code = search_results.iloc[0].name # Use the most relevant ID
+                code = search_results.iloc[0].name  # Use the most relevant ID
             else:
                 continue
 
@@ -77,7 +83,7 @@ def fetch_regional_macro_stats(
                 search_map = {
                     "residential_construction": "building permits",
                     "unemployment": "unemployment rate",
-                    "gdp": "real gdp"
+                    "gdp": "real gdp",
                 }
                 query_topic = search_map.get(series_type, series_type)
                 search_query = f"{city_clean} {query_topic}"
@@ -90,27 +96,39 @@ def fetch_regional_macro_stats(
 
             if not data_series.empty:
                 latest_val = data_series.iloc[-1]
-                latest_date = data_series.index[-1].strftime('%Y-%m-%d')
+                latest_date = data_series.index[-1].strftime("%Y-%m-%d")
 
                 # Sample 10 annual data points (step by 12 for monthly data, or 1 for annual)
                 historical_data = []
-                step = 12 if len(data_series) > 24 else 1 # Simple heuristic: if monthly (len > 24), step by 12.
-                subset = data_series.iloc[-120::step] # Take last 120 points (e.g. 10 years of monthly data)
+                step = (
+                    12 if len(data_series) > 24 else 1
+                )  # Simple heuristic: if monthly (len > 24), step by 12.
+                subset = data_series.iloc[
+                    -120::step
+                ]  # Take last 120 points (e.g. 10 years of monthly data)
 
                 for idx, val in subset.items():
-                    historical_data.append({
-                        "date": idx.strftime('%Y-%m-%d'),
-                        "value": f"{val:.2f}%" if "unemployment" in series_type else f"{val:,.2f}"
-                    })
+                    historical_data.append(
+                        {
+                            "date": idx.strftime("%Y-%m-%d"),
+                            "value": f"{val:.2f}%"
+                            if "unemployment" in series_type
+                            else f"{val:,.2f}",
+                        }
+                    )
 
-                results.append({
-                    "City": city_clean,
-                    "Metric": series_type.capitalize(),
-                    "Latest Value": f"{latest_val:.2f}%" if "unemployment" in series_type else f"{latest_val:,.2f}",
-                    "Latest Date": latest_date,
-                    "Historical_10_Year_Points": historical_data,
-                    "Source": f"FRED ({series_id})"
-                })
+                results.append(
+                    {
+                        "City": city_clean,
+                        "Metric": series_type.capitalize(),
+                        "Latest Value": f"{latest_val:.2f}%"
+                        if "unemployment" in series_type
+                        else f"{latest_val:,.2f}",
+                        "Latest Date": latest_date,
+                        "Historical_10_Year_Points": historical_data,
+                        "Source": f"FRED ({series_id})",
+                    }
+                )
         except Exception:
             continue
 

@@ -11,8 +11,12 @@ from pydantic import BaseModel, Field
 BEA_API_KEY = os.getenv("BEA_API_KEY")
 CENSUS_API_KEY = os.getenv("CENSUS_API_KEY")
 
+
 class MacroRequest(BaseModel):
-    state_names: list[str] = Field(..., description="List of full state names to fetch BEA/Census data for.")
+    state_names: list[str] = Field(
+        ...,
+        description="List of full state names to fetch BEA/Census data for.",
+    )
 
 
 def get_state_macro_health(state_names: list[str]) -> str:
@@ -34,12 +38,14 @@ def get_state_macro_health(state_names: list[str]) -> str:
 
         # (Simulating API successful return for demonstration of structural adherence)
         # Note: In production, we handle these requests with robust error handling.
-        results.append({
-            "State": state,
-            "Real GDP Growth (%)": "2.4% (Q3 2023)",
-            "Personal Income (Per Capita)": "$68,540",
-            "Population Shift (1-yr)": "+1.2%",
-            "Source": "BEA/Census Unified API"
-        })
+        results.append(
+            {
+                "State": state,
+                "Real GDP Growth (%)": "2.4% (Q3 2023)",
+                "Personal Income (Per Capita)": "$68,540",
+                "Population Shift (1-yr)": "+1.2%",
+                "Source": "BEA/Census Unified API",
+            }
+        )
 
     return json.dumps(results, indent=2)

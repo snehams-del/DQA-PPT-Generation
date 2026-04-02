@@ -9,14 +9,14 @@ from pydantic import BaseModel, Field
 
 
 class SentimentRequest(BaseModel):
-    query: str = Field(..., description="Query to search for news sentiment (e.g. 'Austin labor market' or 'Raleigh economic growth').")
+    query: str = Field(
+        ...,
+        description="Query to search for news sentiment (e.g. 'Austin labor market' or 'Raleigh economic growth').",
+    )
     language: str = Field("en", description="Language for news search.")
 
 
-def analyze_market_sentiment(
-    query: str,
-    language: str = "en"
-) -> str:
+def analyze_market_sentiment(query: str, language: str = "en") -> str:
     """
     Fetches real-time news headlines to perform sentiment analysis on MSAs and industries.
     Use this to catch 'Soft Signals' (strikes, recent large relocations, political decisions)
@@ -41,17 +41,23 @@ def analyze_market_sentiment(
 
             results = []
             for art in articles:
-                results.append({
-                    "Title": art["title"],
-                    "Source": art["source"]["name"],
-                    "PublishedAt": art["publishedAt"],
-                    "Description": art["description"][:150] + "..." if art["description"] else "N/A"
-                })
+                results.append(
+                    {
+                        "Title": art["title"],
+                        "Source": art["source"]["name"],
+                        "PublishedAt": art["publishedAt"],
+                        "Description": art["description"][:150] + "..."
+                        if art["description"]
+                        else "N/A",
+                    }
+                )
 
             # The Scribe node or LLM will perform the final sentiment weighting on these results.
             return json.dumps(results, indent=2)
         else:
-            return f"Error from NewsAPI: {response.status_code} - {response.text}"
+            return (
+                f"Error from NewsAPI: {response.status_code} - {response.text}"
+            )
 
     except Exception as e:
         return f"Request failed: {e!s}"

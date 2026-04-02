@@ -23,13 +23,16 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
+
 class HumanMessage(BaseModel):
     content: str
     type: str = "human"
 
+
 class AIMessage(BaseModel):
     content: str
     type: str = "ai"
+
 
 class ToolMessage(BaseModel):
     content: str
@@ -40,9 +43,7 @@ class ToolMessage(BaseModel):
 class InputChat(BaseModel):
     """Represents the input for a chat session."""
 
-    messages: list[
-        HumanMessage | AIMessage | ToolMessage
-    ] = Field(
+    messages: list[HumanMessage | AIMessage | ToolMessage] = Field(
         ...,
         description="The chat messages representing the current conversation.",
     )

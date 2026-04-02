@@ -7,8 +7,12 @@ from pydantic import BaseModel, Field
 
 
 class PoliticalRequest(BaseModel):
-    industry: str = Field(..., description="Industry to track lobbying activity for (e.g. 'Energy', 'Tech').")
+    industry: str = Field(
+        ...,
+        description="Industry to track lobbying activity for (e.g. 'Energy', 'Tech').",
+    )
     state: str = Field(..., description="Selected state to focus on.")
+
 
 def search_lobbying_influence(industry: str, state: str) -> str:
     """
@@ -32,11 +36,10 @@ def search_lobbying_influence(industry: str, state: str) -> str:
             "FilingsFound": "Search Query Triggered",
             "SearchURL": url,
             "Context": f"Analysis of current {industry} industry lobbying spend in {state}.",
-            "Source": "U.S. Senate Lobbying Disclosure Act (LDA) Database"
+            "Source": "U.S. Senate Lobbying Disclosure Act (LDA) Database",
         }
 
         return json.dumps(results, indent=2)
 
     except Exception as e:
         return json.dumps({"ERROR": str(e)}, indent=2)
-

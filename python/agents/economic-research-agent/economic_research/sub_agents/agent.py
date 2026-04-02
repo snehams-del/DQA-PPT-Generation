@@ -7,6 +7,7 @@ from .tools.search_skill import web_search_skill
 prompts = JudgePrompts()
 JUDGE_INSTRUCTIONS = prompts.auditor_judge_instructions()
 
+
 class JudgeAgent:
     def __init__(self):
         pass

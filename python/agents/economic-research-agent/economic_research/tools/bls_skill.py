@@ -16,10 +16,16 @@ from .bls_functions import (
 
 
 class CityNamesRequest(BaseModel):
-    city_names: list[str] = Field(..., min_length=1, description="List of city names.")
+    city_names: list[str] = Field(
+        ..., min_length=1, description="List of city names."
+    )
+
 
 class StateNamesRequest(BaseModel):
-    state_names: list[str] = Field(..., min_length=1, description="List of full state names.")
+    state_names: list[str] = Field(
+        ..., min_length=1, description="List of full state names."
+    )
+
 
 def labor_force_stats_skill(city_names: list[str]) -> Any:
     """
@@ -27,17 +33,20 @@ def labor_force_stats_skill(city_names: list[str]) -> Any:
     """
     return find_labor_force_stats(city_names)
 
+
 def median_hourly_wages_skill(city_names: list[str]) -> Any:
     """
     Fetches BLS data for median hourly wages across all occupations.
     """
     return find_median_hourly_wages(city_names)
 
+
 def state_union_employment_skill(state_names: list[str]) -> Any:
     """
     Fetches state-level union employment rates.
     """
     return find_state_union_employment(state_names)
+
 
 def state_tax_rate_skill(state_names: list[str]) -> Any:
     """

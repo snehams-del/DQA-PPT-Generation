@@ -8,7 +8,8 @@ import requests
 
 # Census API key from environment
 c_key = os.getenv("CENSUS_API_KEY", "").strip()
-CENSUS_API_KEY = c_key.replace('"', '').replace("'", "")
+CENSUS_API_KEY = c_key.replace('"', "").replace("'", "")
+
 
 def fetch_census_education_stats(city_names: list[str]) -> str:
     """
@@ -16,7 +17,9 @@ def fetch_census_education_stats(city_names: list[str]) -> str:
     Essential for talent-pipeline assessments in site selection.
     """
     if not CENSUS_API_KEY:
-        return json.dumps({"ERROR": "CENSUS_API_KEY not found in environment."}, indent=2)
+        return json.dumps(
+            {"ERROR": "CENSUS_API_KEY not found in environment."}, indent=2
+        )
 
     # Simplified Census County Mapping for Grounded Reliability
     # Format: [State FIPS][County FIPS]
@@ -25,17 +28,22 @@ def fetch_census_education_stats(city_names: list[str]) -> str:
         "raleigh": "37183",
         "seattle": "53033",
         "nashville": "47037",
-        "denver": "08031"
+        "denver": "08031",
     }
 
     try:
         results = []
         for city in city_names:
-            city_clean = city.lower().split(',')[0].strip()
+            city_clean = city.lower().split(",")[0].strip()
             full_fips = city_to_fips.get(city_clean)
 
             if not full_fips:
-                results.append({"City": city_clean, "Status": "County FIPS mapping not found for Census API."})
+                results.append(
+                    {
+                        "City": city_clean,
+                        "Status": "County FIPS mapping not found for Census API.",
+                    }
+                )
                 continue
 
             state_fips = full_fips[:2]
@@ -55,20 +63,31 @@ def fetch_census_education_stats(city_names: list[str]) -> str:
                     row = data[1]
                     pct = row[1]
                     name = row[0]
-                    results.append({
-                        "City": city_clean,
-                        "Geography": name,
-                        "Metric": "Bachelor's Degree or Higher (%)",
-                        "Value": f"{pct}%",
-                        "Source": "U.S. Census Bureau ACS (DP02 2023)"
-                    })
+                    results.append(
+                        {
+                            "City": city_clean,
+                            "Geography": name,
+                            "Metric": "Bachelor's Degree or Higher (%)",
+                            "Value": f"{pct}%",
+                            "Source": "U.S. Census Bureau ACS (DP02 2023)",
+                        }
+                    )
                 else:
-                    results.append({"City": city_clean, "Status": "Census returned empty dataset."})
+                    results.append(
+                        {
+                            "City": city_clean,
+                            "Status": "Census returned empty dataset.",
+                        }
+                    )
             else:
-                results.append({"City": city_clean, "Status": f"Census API Failure ({response.status_code})"})
+                results.append(
+                    {
+                        "City": city_clean,
+                        "Status": f"Census API Failure ({response.status_code})",
+                    }
+                )
 
         return json.dumps(results, indent=2)
 
     except Exception as e:
         return json.dumps({"ERROR": str(e)}, indent=2)
-

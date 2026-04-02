@@ -10,9 +10,13 @@ from pydantic import BaseModel, Field
 # FEC API Key from api.open.fec.gov
 FEC_API_KEY = os.getenv("FEC_API_KEY", "DEMO_KEY")
 
+
 class FECRequest(BaseModel):
-    state_abbr: str = Field(..., description="Two-letter state abbreviation (e.g., 'TX').")
+    state_abbr: str = Field(
+        ..., description="Two-letter state abbreviation (e.g., 'TX')."
+    )
     cycle: str = Field("2024", description="Election cycle year to analyze.")
+
 
 def analyze_political_stability(state_abbr: str, cycle: str = "2024") -> str:
     """
@@ -26,17 +30,20 @@ def analyze_political_stability(state_abbr: str, cycle: str = "2024") -> str:
         "api_key": FEC_API_KEY,
         "state": state_abbr,
         "cycle": cycle,
-        "per_page": 1
+        "per_page": 1,
     }
 
     try:
         response = requests.get(url, params=params, timeout=12)
         if response.status_code == 200:
             data = response.json()
-            results = data.get('results', [])
+            results = data.get("results", [])
 
             if not results:
-                return json.dumps({"ERROR": f"No FEC data found for state: {state_abbr}"}, indent=2)
+                return json.dumps(
+                    {"ERROR": f"No FEC data found for state: {state_abbr}"},
+                    indent=2,
+                )
 
             entry = results[0]
 
@@ -44,13 +51,16 @@ def analyze_political_stability(state_abbr: str, cycle: str = "2024") -> str:
                 "State": state_abbr,
                 "Election Cycle": cycle,
                 "Total Contributions": f"${entry.get('receipts', 0):,.2f}",
-                "Political Activity Level": "High" if entry.get('receipts', 0) > 50000000 else "Moderate",
-                "Source": "U.S. Federal Election Commission (FEC) API"
+                "Political Activity Level": "High"
+                if entry.get("receipts", 0) > 50000000
+                else "Moderate",
+                "Source": "U.S. Federal Election Commission (FEC) API",
             }
             return json.dumps(summary, indent=2)
         else:
-            return json.dumps({"ERROR": f"FEC API status {response.status_code}"}, indent=2)
+            return json.dumps(
+                {"ERROR": f"FEC API status {response.status_code}"}, indent=2
+            )
 
     except Exception as e:
         return json.dumps({"ERROR": str(e)}, indent=2)
-
