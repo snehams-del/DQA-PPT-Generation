@@ -21,11 +21,8 @@ dependencies = [
 ]
 
 [build-system]
-requires = ["uv_build>=0.8.14,<0.9.0"]
-build-backend = "uv_build"
-
-[tool.uv.build-backend]
-module-root = "."
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
@@ -69,7 +66,10 @@ markers = [
 ]
 
 [tool.ruff]
-fix = true
+extend = "../../../pyproject.toml"
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
 
 [tool.coverage.report]
 skip_empty = true

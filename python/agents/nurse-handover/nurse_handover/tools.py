@@ -60,7 +60,9 @@ async def generate_shift_endorsement(
         The generated shift endorsement report.
     """
 
-    if not any(pid == patient for pid in tool_context.state.get("patients", [])):
+    if not any(
+        pid == patient for pid in tool_context.state.get("patients", [])
+    ):
         return {"error": f"Patient not found: {patient}"}
 
     start_dt, end_dt = (
@@ -100,7 +102,9 @@ async def generate_shift_endorsement(
     if not (summary_report := summary_content.text):
         return {
             "error": "No summary generated.",
-            "response": summary_content.model_dump(mode="json", exclude_none=True),
+            "response": summary_content.model_dump(
+                mode="json", exclude_none=True
+            ),
         }
 
     endorsement_filename = f"{patient}-{int(start_dt.timestamp())}-{int(end_dt.timestamp())}-endorsement.md"

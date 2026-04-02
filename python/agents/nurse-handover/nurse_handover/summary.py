@@ -11,7 +11,9 @@ from google.genai import types
 
 yaml.add_representer(
     data_type=type(None),
-    representer=lambda self, _: self.represent_scalar("tag:yaml.org,2002:null", ""),
+    representer=lambda self, _: self.represent_scalar(
+        "tag:yaml.org,2002:null", ""
+    ),
 )
 
 PATTERN = r"(\d{2}/\d{2}/\d{4})\^(\d{2}:\d{2}:\d{2})\^(.*)\^(.*)\^(.*)"
@@ -73,17 +75,25 @@ class Summarizer:
         self.reco_and_transfer_prompt = RECO_AND_TRANSFER_TEMPLATE.read_text()
         self.isbar_prompt = ISBAR_TEMPLATE.read_text()
 
-        with open(ISBAR_YAML, "r") as file:
+        with open(ISBAR_YAML) as file:
             yaml_file = yaml.safe_load(file)
-            identification_list = yaml.dump(yaml_file["identification"], indent=2)
+            identification_list = yaml.dump(
+                yaml_file["identification"], indent=2
+            )
             situation_list = yaml.dump(yaml_file["situation"], indent=2)
             background_list = yaml.dump(yaml_file["background"], indent=2)
             assessment_list = yaml.dump(yaml_file["assessment"], indent=2)
-            recommendation_list = yaml.dump(yaml_file["recommendation"], indent=2)
+            recommendation_list = yaml.dump(
+                yaml_file["recommendation"], indent=2
+            )
             transfer_list = yaml.dump(yaml_file["patient_transfer"], indent=2)
 
-        self.situation_prompt = self.situation_prompt.format("{}", "{}", situation_list)
-        self.assessment_prompt = self.assessment_prompt.format("{}", assessment_list)
+        self.situation_prompt = self.situation_prompt.format(
+            "{}", "{}", situation_list
+        )
+        self.assessment_prompt = self.assessment_prompt.format(
+            "{}", assessment_list
+        )
         self.id_and_background_prompt = self.id_and_background_prompt.format(
             "{}", identification_list, background_list
         )
@@ -130,7 +140,9 @@ class Summarizer:
             start_pos = match.start()
             end_pos = match.end()
             datetime_str = f"{date} {time}"
-            datetime_object = datetime.strptime(datetime_str, "%d/%m/%Y %H:%M:%S")
+            datetime_object = datetime.strptime(
+                datetime_str, "%d/%m/%Y %H:%M:%S"
+            )
             dt_dict[datetime_object] = self.document[start_pos:end_pos]
         return dt_dict
 
@@ -200,7 +212,9 @@ class Summarizer:
         start_time_string = dt_dict[nn_start]
         end_time_string = dt_dict[nn_end]
         context_data = (
-            self.document.split(start_time_string)[1].split(end_time_string)[0].strip()
+            self.document.split(start_time_string)[1]
+            .split(end_time_string)[0]
+            .strip()
         )
         return context_data
 
@@ -221,7 +235,7 @@ class Summarizer:
             genai.types.GenerateContentResponse: A response object containing the shift summary.
         """
 
-        with open(file_path, "r") as txt_file:
+        with open(file_path) as txt_file:
             self.document = txt_file.read()
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -252,7 +266,9 @@ class Summarizer:
                     self.reco_and_transfer_prompt.format(time_bound_document),
                 ],
             )
-            id_and_background, situation, assessment, reco_and_transfer = tuple(futures)
+            id_and_background, situation, assessment, reco_and_transfer = tuple(
+                futures
+            )
 
         final_summary = self.client.models.generate_content(
             model=self.summary_model,
