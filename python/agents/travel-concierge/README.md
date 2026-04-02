@@ -151,12 +151,11 @@ Expand on the "Key Components" from above.
     gcloud auth application-default login
     ```
 
-5. Activate the virtual environment set up by Poetry, run:
+5. (Optional) Activate the virtual environment:
     ```bash
-    eval $(poetry env activate)
-    (travel-concierge-py3.12) $ # Virtualenv entered
+    source .venv/bin/activate
     ```
-    Repeat this command whenever you have a new shell, before running the commands in this README.
+    Note: If you prefer not to activate the environment, you can run any command in this README by prefixing it with `uv run` (e.g., `uv run adk run travel_concierge`).
 
 ## Running the Agent
 
@@ -167,13 +166,13 @@ You may talk to the agent using the CLI:
 
 ```bash
 # Under the travel-concierge directory:
-adk run travel_concierge
+uv run adk run travel_concierge
 ```
 
 or via its web interface:
 ```bash
 # Under the travel-concierge directory:
-adk web
+uv run adk web
 ```
 
 This will start a local web server on your machine. You may open the URL, select "travel_concierge" in the top-left drop-down menu, and
