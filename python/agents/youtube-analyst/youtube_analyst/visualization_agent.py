@@ -18,7 +18,9 @@ visualization_agent = Agent(
     ),
     name="visualization_agent",
     description="Agent specialized in creating interactive and static visualizations.",
-    instruction=load_prompt(os.path.dirname(__file__), "visualization_agent.txt"),
+    instruction=load_prompt(
+        os.path.dirname(__file__), "visualization_agent.txt"
+    ),
     tools=[execute_visualization_code, execute_matplotlib_code, load_artifacts],
     generate_content_config=genai.types.GenerateContentConfig(
         max_output_tokens=config.VISUALIZATION_AGENT_MAX_OUTPUT_TOKENS,
