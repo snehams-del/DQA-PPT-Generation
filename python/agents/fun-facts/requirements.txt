@@ -1,3 +1,0 @@
-google-auth
-python-dotenv
-google-adk

@@ -1,13 +1,13 @@
 # Fun Facts Agent
 
-This is a simple agent built using the Google Agent Development Kit (ADK). It is designed to be as simple as possible to help you get familiar with ADK tools, deployment to Vertex AI Agent Engine, and accessing agents through Gemini Enterprise.
+This is a simple agent built using Google Agent Development Kit (ADK). It is designed to be as simple as possible to help you get familiar with ADK tools, deployment to Vertex AI Agent Engine, and accessing agents through Gemini Enterprise.
 
 The agent uses the **Gemini** model and **Google Search** grounding to provide wacky and interesting fun facts about any topic you provide.
 
 ## Project Structure
 
 - `fun_facts/agent.py`: Contains the `root_agent` definition and the `App` configuration.
-- `requirements.txt`: Lists the Python dependencies.
+- `pyproject.toml`: Lists the Python dependencies and project metadata.
 - `.env.example`: Template for required environment variables.
 
 ## Prerequisites
@@ -16,6 +16,7 @@ The agent uses the **Gemini** model and **Google Search** grounding to provide w
 - **Google Cloud Project** with the [Vertex AI API](https://console.cloud.google.com/apis/library/aiplatform.googleapis.com) enabled.
 - **gcloud CLI** installed and authenticated (`gcloud auth application-default login`).
 - **ADK CLI** installed (`pip install google-adk`).
+- **uv** installed ([Install uv](https://docs.astral.sh/uv/getting-started/installation/)).
 
 ## Setup
 
@@ -23,7 +24,7 @@ The agent uses the **Gemini** model and **Google Search** grounding to provide w
    From this directory, run:
 
    ```bash
-   pip install -r requirements.txt
+   uv sync
    ```
 
 2. **Configure Environment:**
