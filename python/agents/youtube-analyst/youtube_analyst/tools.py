@@ -71,7 +71,9 @@ def search_youtube(
                     {
                         "title": search_result["snippet"]["title"],
                         "videoId": search_result["id"]["videoId"],
-                        "channelTitle": search_result["snippet"]["channelTitle"],
+                        "channelTitle": search_result["snippet"][
+                            "channelTitle"
+                        ],
                         "description": search_result["snippet"]["description"],
                     }
                 )
@@ -134,7 +136,9 @@ def get_video_details(video_ids: list[str]) -> list[dict]:
                     "commentCount": stats.get("commentCount", 0),
                     "publishedAt": snippet.get("publishedAt", ""),
                     "duration": content_details.get("duration", ""),
-                    "licensedContent": content_details.get("licensedContent", False),
+                    "licensedContent": content_details.get(
+                        "licensedContent", False
+                    ),
                     "madeForKids": status.get("madeForKids", False),
                     "topicCategories": topic_details.get("topicCategories", []),
                     "thumbnail_url": thumbnail_url,
@@ -147,7 +151,9 @@ def get_video_details(video_ids: list[str]) -> list[dict]:
         return []
 
 
-def get_trending_videos(region_code: str = "US", video_category_id: str = "") -> list:
+def get_trending_videos(
+    region_code: str = "US", video_category_id: str = ""
+) -> list:
     """
     Retrieves the currently trending/most popular videos natively from YouTube, bypassing keyword search.
     Use this to proactively discover "What matters today" without needing a specific search query.
@@ -222,7 +228,9 @@ def get_channel_details(channel_ids: list[str]):
         for channel_result in channel_response.get("items", []):
             stats = channel_result.get("statistics", {})
             snippet = channel_result.get("snippet", {})
-            branding = channel_result.get("brandingSettings", {}).get("channel", {})
+            branding = channel_result.get("brandingSettings", {}).get(
+                "channel", {}
+            )
             topics = channel_result.get("topicDetails", {})
 
             results.append(
@@ -243,7 +251,9 @@ def get_channel_details(channel_ids: list[str]):
         return []
 
 
-def get_video_comments(video_id: str, max_results: int = 20, order: str = "time"):
+def get_video_comments(
+    video_id: str, max_results: int = 20, order: str = "time"
+):
     """
     Retrieves top-level comments for a specific video.
 
@@ -271,7 +281,9 @@ def get_video_comments(video_id: str, max_results: int = 20, order: str = "time"
 
         comments = []
         for item in comment_response.get("items", []):
-            comment = item["snippet"]["topLevelComment"]["snippet"]["textDisplay"]
+            comment = item["snippet"]["topLevelComment"]["snippet"][
+                "textDisplay"
+            ]
             comments.append(comment)
         return comments
     except HttpError as e:
@@ -315,9 +327,13 @@ def calculate_engagement_metrics(
     subscriber_count = int(subscriber_count) if subscriber_count else 0
 
     engagement_rate = (
-        ((like_count + comment_count) / view_count * 100) if view_count > 0 else 0
+        ((like_count + comment_count) / view_count * 100)
+        if view_count > 0
+        else 0
     )
-    active_rate = (view_count / subscriber_count * 100) if subscriber_count > 0 else 0
+    active_rate = (
+        (view_count / subscriber_count * 100) if subscriber_count > 0 else 0
+    )
 
     return {
         "engagement_rate": round(engagement_rate, 2),
@@ -450,7 +466,9 @@ def get_date_range(time_span: str):
     return past_date.isoformat()
 
 
-async def render_html(html_content: str, filename: str, tool_context: ToolContext):
+async def render_html(
+    html_content: str, filename: str, tool_context: ToolContext
+):
     """
     Saves HTML content to a file and optionally registers it as an artifact.
 
@@ -513,7 +531,9 @@ def parse_timestamp_to_seconds(timestamp_str: str) -> int:
     try:
         # Match optional HH:, required MM:, required SS
         # Groups: 1=HH (optional), 2=MM (or raw seconds if no colon), 3=SS (optional)
-        match = re.fullmatch(r"(?:(?:(\d+):)?(\d+):)?(\d+)", str(timestamp_str).strip())
+        match = re.fullmatch(
+            r"(?:(?:(\d+):)?(\d+):)?(\d+)", str(timestamp_str).strip()
+        )
         if not match:
             return 0
 
@@ -574,7 +594,9 @@ def get_comment_replies(comment_id: str, max_results: int = 50) -> list[str]:
         return []
 
 
-def aggregate_comment_sentiment(video_ids: list[str], comments_per_video: int = 10) -> dict:
+def aggregate_comment_sentiment(
+    video_ids: list[str], comments_per_video: int = 10
+) -> dict:
     """
     Fetches comments across multiple videos simultaneously to generate a macro-sentiment view.
     Use this for Product Launch Audits to see what the entire audience is saying across different reviews.
