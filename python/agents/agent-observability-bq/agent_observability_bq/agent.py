@@ -41,6 +41,7 @@ if not PROJECT_ID:
 
 DATASET_ID = os.environ.get("BQ_ANALYTICS_DATASET_ID", "adk_agent_analytics")
 TABLE_ID = os.environ.get("BQ_ANALYTICS_TABLE_ID", "agent_events")
+LOCATION = os.environ.get("GOOGLE_CLOUD_LOCATION", "us-central1")
 
 # --- Initialize the Plugin ---
 plugins = []
@@ -48,6 +49,7 @@ bq_logging_plugin = BigQueryAgentAnalyticsPlugin(
     project_id=PROJECT_ID,
     dataset_id=DATASET_ID,
     table_id=TABLE_ID,
+    location=LOCATION,
 )
 plugins.append(bq_logging_plugin)
 
@@ -59,8 +61,8 @@ tools.append(bigquery_toolset)
 
 root_agent = Agent(
     model="gemini-2.5-flash",
-    name='bigquery_data_agent',
-    description="An agent that helps users query and explore data in Google BigQuery.",
+    name='agent_observability_bq',
+    description="An agent that demonstrates observability via logging to Google BigQuery.",
     instruction="""
     You are a data analyst agent specializing in Google BigQuery.
     
@@ -80,7 +82,7 @@ root_agent = Agent(
 
 # --- Create the App ---
 app = App(
-    name="bigquery_data_agent",
+    name="agent_observability_bq",
     root_agent=root_agent,
     plugins=plugins,
 )
