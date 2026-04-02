@@ -1,11 +1,13 @@
 # Gemma Food Tour Agent
 
-This directory contains a sample ADK agent that builds personalized food tours using the Gemma API and Google Maps MCP. Given a dish photo or text description, a location, and an optional budget, the agent identifies the cuisine, finds relevant places, creates a walking route, and recommends what to order at each stop.
+**by [Smitha Kolan](https://github.com/smithakolan)**
+
+This directory contains a sample ADK agent that builds personalized food tours using the Gemma 4 31b model and Google Maps MCP. Given a dish photo or text description, a location, and an optional budget, the agent identifies the cuisine, finds relevant places, creates a walking route, and recommends what to order at each stop.
 
 ## Prerequisites
 - Enable [Google Maps API](https://console.cloud.google.com/maps-api/) on Google Cloud Console.
 - Create a [Google Maps Platform API key](https://console.cloud.google.com/maps-api/credentials).   
-- Create a Gemini API key in [Google AI Studio](https://aistudio.google.com/app/apikey).
+- Create a Google AI Studio API key in [Google AI Studio](https://aistudio.google.com/app/apikey).
 - [ADK](https://adk.dev) installed and configured in your Python environment
 
 ## Setup Instructions
@@ -56,7 +58,7 @@ To test out the capabilities of the Food Tour Agent, try pasting one of these pr
 
 ## What this sample demonstrates
 This sample shows how to:
-- Use Gemma 4 31b with ADK through the Gemini API
+- Use Gemma 4 31b with ADK through the Google AI Studio API
 - Connect an ADK agent to Google Maps MCP tools
 - Use tool calling to search for places and build routes
 - Generate grounded, structured food tour recommendations from Text or Image based input
