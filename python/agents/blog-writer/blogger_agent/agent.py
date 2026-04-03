@@ -15,8 +15,7 @@
 import datetime
 
 from google.adk.agents import Agent
-from google.adk.tools import FunctionTool
-from google.adk.tools.agent_tool import AgentTool
+from google.adk.tools import AgentTool, FunctionTool
 
 from .config import config
 from .sub_agents import (
