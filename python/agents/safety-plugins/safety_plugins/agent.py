@@ -12,26 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Safety Plugins for ADK — agent-agnostic guardrails via hooks."""
+"""Agent definitions for the Safety Plugins sample."""
 
-import os
+from google.adk.agents import LlmAgent
 
-import google.auth
-from dotenv import load_dotenv
+from . import prompts, tools
 
-load_dotenv()
+AGENT_MODEL = "gemini-2.5-flash"
 
-try:
-    _, project_id = google.auth.default()
-    if project_id:
-        os.environ.setdefault("GOOGLE_CLOUD_PROJECT", project_id)
-except google.auth.exceptions.DefaultCredentialsError:
-    pass
+sub_agent = LlmAgent(
+    model=AGENT_MODEL,
+    instruction=prompts.SUB_AGENT_SI,
+    name="sub_agent",
+    tools=[tools.fib_tool, tools.io_bound_tool],
+)
 
-os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "true")
-os.environ.setdefault("GOOGLE_CLOUD_LOCATION", "global")
-
-from . import agent
-from .agent import root_agent
-
-__all__ = ["agent", "root_agent"]
+root_agent = LlmAgent(
+    model=AGENT_MODEL,
+    instruction=prompts.ROOT_AGENT_SI,
+    name="main_agent",
+    tools=[tools.short_sum_tool, tools.long_sum_tool],
+    sub_agents=[sub_agent],
+)
