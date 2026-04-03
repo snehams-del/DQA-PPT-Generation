@@ -1,18 +1,24 @@
-from companieshouse import CompaniesHouseClient
-from ....shared_libraries import helpercode
 import requests
+from companieshouse import CompaniesHouseClient
+
+from ....shared_libraries import helpercode
 
 HTTP_NOT_FOUND = 404
 
 PROJECT_ID = helpercode.get_project_id()
 
 try:
-    chclient = CompaniesHouseClient(api_key=helpercode.access_secret_version(PROJECT_ID, "CompaniesHouseAPIKey"))
+    chclient = CompaniesHouseClient(
+        api_key=helpercode.access_secret_version(
+            PROJECT_ID, "CompaniesHouseAPIKey"
+        )
+    )
 except Exception as e:
     chclient = None
     print(f"Warning: Failed to initialize CompaniesHouseClient: {e}")
 
-def search_companies(search_query:str):
+
+def search_companies(search_query: str):
     """
     Searches for companies in the Companies House database based on the given search query.
 
@@ -31,7 +37,8 @@ def search_companies(search_query:str):
     except Exception as e:
         return {"error": str(e)}
 
-def get_company_profile(company_number:str):
+
+def get_company_profile(company_number: str):
     """
     Gets the profile of a company in the Companies House database based on the given company number.
 
@@ -50,7 +57,8 @@ def get_company_profile(company_number:str):
     except Exception as e:
         return {"error": str(e)}
 
-def get_company_officers(company_number:str):
+
+def get_company_officers(company_number: str):
     """
     Gets the company officers from the Companies House database based on the given company number.
 
@@ -69,7 +77,8 @@ def get_company_officers(company_number:str):
     except Exception as e:
         return {"error": str(e)}
 
-def get_company_address(company_number:str):
+
+def get_company_address(company_number: str):
     """
     Gets the registered office address of a company.
 
@@ -88,7 +97,8 @@ def get_company_address(company_number:str):
     except Exception as e:
         return {"error": str(e)}
 
-def get_company_establishments(company_number:str):
+
+def get_company_establishments(company_number: str):
     """
     Gets the UK establishments of a company.
 
@@ -107,7 +117,8 @@ def get_company_establishments(company_number:str):
     except Exception as e:
         return {"error": str(e)}
 
-def get_company_registers(company_number:str):
+
+def get_company_registers(company_number: str):
     """
     Gets the company registers.
 
@@ -126,7 +137,8 @@ def get_company_registers(company_number:str):
     except Exception as e:
         return {"error": str(e)}
 
-def get_company_exemptions(company_number:str):
+
+def get_company_exemptions(company_number: str):
     """
     Gets the company exemptions.
 
@@ -145,7 +157,8 @@ def get_company_exemptions(company_number:str):
     except Exception as e:
         return {"error": str(e)}
 
-def get_company_charges(company_number:str):
+
+def get_company_charges(company_number: str):
     """
     Gets the company charges (mortgages).
 
@@ -164,7 +177,8 @@ def get_company_charges(company_number:str):
     except Exception as e:
         return {"error": str(e)}
 
-def get_company_insolvency(company_number:str):
+
+def get_company_insolvency(company_number: str):
     """
     Gets the company insolvency records.
 
@@ -182,6 +196,7 @@ def get_company_insolvency(company_number:str):
         raise
     except Exception as e:
         return {"error": str(e)}
+
 
 def get_company_filing_history(company_number: str):
     """
@@ -202,6 +217,7 @@ def get_company_filing_history(company_number: str):
     except Exception as e:
         return {"error": str(e)}
 
+
 def get_company_filing_detail(company_number: str, transaction_id: str):
     """
     Gets the details of a specific company filing.
@@ -214,13 +230,16 @@ def get_company_filing_detail(company_number: str, transaction_id: str):
         A dictionary containing the filing details.
     """
     try:
-        return chclient.get_company_filing_detail(company_number, transaction_id)
+        return chclient.get_company_filing_detail(
+            company_number, transaction_id
+        )
     except requests.exceptions.HTTPError as e:
         if e.response.status_code == HTTP_NOT_FOUND:
             return {"error": "Filing not found"}
         raise
     except Exception as e:
         return {"error": str(e)}
+
 
 def get_corporate_officer_disqualifications(officer_id: str):
     """
@@ -241,6 +260,7 @@ def get_corporate_officer_disqualifications(officer_id: str):
     except Exception as e:
         return {"error": str(e)}
 
+
 def get_natural_officer_disqualifications(officer_id: str):
     """
     Gets natural officer disqualifications.
@@ -259,6 +279,7 @@ def get_natural_officer_disqualifications(officer_id: str):
         raise
     except Exception as e:
         return {"error": str(e)}
+
 
 def get_office_appointments(officer_id: str):
     """

@@ -1,4 +1,3 @@
-
 SEC_SEARCH_INSTRUCTION = (
     "You are an SEC research assistant. Use the `full_text_search` tool to find SEC filings "
     "mentioning specific keywords, phrases, or topics. "
@@ -75,9 +74,9 @@ USA_KYC_INSTRUCTION = (
     "                2.  Call the usa_data_retrieval_agent to perform SEC searches and filing extractions.\n"
     "                3.  Assemble a detailed and insightful report that addresses the SEC analysis section mentioned above using usa_report_creation_agent.\n"
     "                \n"
-    "                \"Make sure you run all the sub agents\"\n"
-    "                \"Use the usa_report_creation_agent to create a report on the investment and return it\"\n"
-    "                \"in order to analyse a company use the usa_data_retrieval_agent\"\n"
-    "                \"usa_report_creation_agent should be called right at the end of the analysis to create the final report.\"\n"
+    '                "Make sure you run all the sub agents"\n'
+    '                "Use the usa_report_creation_agent to create a report on the investment and return it"\n'
+    '                "in order to analyse a company use the usa_data_retrieval_agent"\n'
+    '                "usa_report_creation_agent should be called right at the end of the analysis to create the final report."\n'
     "                Always call usa_report_creation_agent at the end of the analysis.\n"
 )

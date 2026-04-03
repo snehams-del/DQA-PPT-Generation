@@ -1,26 +1,33 @@
-
 def merge_agents():
     ch_path = "companies_house_agent/agent.py"
     edgar_path = "edgar_agent/agent.py"
     target_path = "global_kyc_agent/agent.py"
 
-    with open(ch_path, "r") as f:
+    with open(ch_path) as f:
         ch_content = f.read()
 
-    with open(edgar_path, "r") as f:
+    with open(edgar_path) as f:
         edgar_content = f.read()
 
     # Rename root agents to avoid conflict
-    ch_content = ch_content.replace('name="root_agent",', 'name="uk_kyc_agent",')
-    ch_content = ch_content.replace('root_agent = Agent(', 'uk_kyc_agent = Agent(')
+    ch_content = ch_content.replace(
+        'name="root_agent",', 'name="uk_kyc_agent",'
+    )
+    ch_content = ch_content.replace(
+        "root_agent = Agent(", "uk_kyc_agent = Agent("
+    )
 
-    edgar_content = edgar_content.replace('name="investment_agent",', 'name="usa_kyc_agent",')
-    edgar_content = edgar_content.replace('root_agent = Agent(', 'usa_kyc_agent = Agent(')
+    edgar_content = edgar_content.replace(
+        'name="investment_agent",', 'name="usa_kyc_agent",'
+    )
+    edgar_content = edgar_content.replace(
+        "root_agent = Agent(", "usa_kyc_agent = Agent("
+    )
 
-    # We need to preserve imports at the top. 
+    # We need to preserve imports at the top.
     # Let's combine them carefully. Actually, since edgar is mostly at the bottom, we can just append.
     # But edgar has imports at the top. Let's move edgar's imports to the top.
-    
+
     merged_content = """
 # ==========================================
 # GLOBAL KYC AGENT MERGED FILE
@@ -61,10 +68,12 @@ from .tools.insider_trading import get_insider_transactions
 
     # We skip imports in the files by finding where the real code starts
     # For CH, look for "class SubAgentEvent(Event):"
-    ch_code = ch_content[ch_content.find("class SubAgentEvent(Event):"):]
+    ch_code = ch_content[ch_content.find("class SubAgentEvent(Event):") :]
 
     # For Edgar, look for "def get_current_date() -> str:"
-    edgar_code = edgar_content[edgar_content.find("def get_current_date() -> str:"):]
+    edgar_code = edgar_content[
+        edgar_content.find("def get_current_date() -> str:") :
+    ]
 
     merged_content += f"""
 # ==========================================
@@ -98,6 +107,7 @@ global_kyc_agent = Agent(
     with open(target_path, "w") as f:
         f.write(merged_content)
         print("Successfully merged agent files into", target_path)
+
 
 if __name__ == "__main__":
     merge_agents()

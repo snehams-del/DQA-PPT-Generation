@@ -1,7 +1,8 @@
 import asyncio
 import uuid
-from google.genai import types
+
 from google.adk.runners import InMemoryRunner
+from google.genai import types
 
 from global_kyc_agent.agent import root_agent
 
@@ -16,17 +17,11 @@ async def main():
     USER_ID = "user_1"
     SESSION_ID = str(uuid.uuid4())
 
-    runner = InMemoryRunner(
-        agent=root_agent, 
-        app_name=APP_NAME
-    )
+    runner = InMemoryRunner(agent=root_agent, app_name=APP_NAME)
 
     await runner.session_service.create_session(
-        app_name=APP_NAME,
-        user_id=USER_ID,
-        session_id=SESSION_ID
+        app_name=APP_NAME, user_id=USER_ID, session_id=SESSION_ID
     )
-
 
     while True:
         try:
@@ -42,8 +37,14 @@ async def main():
             #     if event.is_final_response() and event.content:
             #         response = "".join(part.text for part in event.content.parts)
             #         print(f"Agent: {response}")
-            async for event in runner.run_async(user_id=USER_ID, session_id=SESSION_ID, new_message=user_message):
-                if event.actions and event.actions.state_delta and event.actions.state_delta.get('final_message'):
+            async for event in runner.run_async(
+                user_id=USER_ID, session_id=SESSION_ID, new_message=user_message
+            ):
+                if (
+                    event.actions
+                    and event.actions.state_delta
+                    and event.actions.state_delta.get("final_message")
+                ):
                     print(f"<<< Agent Response: {event.content}")
                     # You can uncomment the line below to see *all* events during execution
                     # print(f"  [Event] Author: {event.author}, Type: {type(event).__name__}, Final: {event.is_final_response()}, Content: {event.content}")
@@ -66,21 +67,20 @@ async def main_noinput():
     USER_ID = "user_1"
     SESSION_ID = str(uuid.uuid4())
 
-    runner = InMemoryRunner(
-        agent=root_agent, 
-        app_name=APP_NAME
-    )
+    runner = InMemoryRunner(agent=root_agent, app_name=APP_NAME)
 
     await runner.session_service.create_session(
-        app_name=APP_NAME,
-        user_id=USER_ID,
-        session_id=SESSION_ID
+        app_name=APP_NAME, user_id=USER_ID, session_id=SESSION_ID
     )
-    
-    try:
 
+    try:
         user_message = types.Content(
-            role="user", parts=[types.Part.from_text(text="Create a report on London Stock Exchange Group")]
+            role="user",
+            parts=[
+                types.Part.from_text(
+                    text="Create a report on London Stock Exchange Group"
+                )
+            ],
         )
 
         # async for event in runner.run_async(user_id=USER_ID, session_id=SESSION_ID, new_message=user_message):
@@ -88,21 +88,28 @@ async def main_noinput():
         #         response = "".join(part.text for part in event.content.parts)
         #         print(f"Agent: {response}")
         final_response_text = None
-        async for event in runner.run_async(user_id=USER_ID, session_id=SESSION_ID, new_message=user_message):
-            print(f"  [Event] Author: {event.author}, Type: {type(event).__name__}, Final: {event.is_final_response()}, Content: {event.content}")
-            
+        async for event in runner.run_async(
+            user_id=USER_ID, session_id=SESSION_ID, new_message=user_message
+        ):
+            print(
+                f"  [Event] Author: {event.author}, Type: {type(event).__name__}, Final: {event.is_final_response()}, Content: {event.content}"
+            )
+
             if event.is_final_response() and event.content:
                 if event.content.parts:
                     final_response_text = event.content.parts[0].text
                 break
-            elif event.is_final_response() and event.actions and event.actions.escalate:
+            elif (
+                event.is_final_response()
+                and event.actions
+                and event.actions.escalate
+            ):
                 final_response_text = f"Agent escalated: {event.error_message or 'No specific message.'}"
                 break
 
         print(f"<<< Agent Response: {final_response_text}")
     except (KeyboardInterrupt, EOFError):
         pass
-
 
 
 if __name__ == "__main__":
