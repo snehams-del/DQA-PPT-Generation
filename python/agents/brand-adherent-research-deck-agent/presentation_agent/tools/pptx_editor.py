@@ -13,17 +13,13 @@
 # limitations under the License.
 
 import os
-from typing import Any, List, Literal, Optional, Tuple, Union
-
-# --- Presentation & Image Imports ---
+from typing import Any, Literal
+from google.adk.tools.tool_context import ToolContext
 from pptx import Presentation
 from pptx.enum.shapes import MSO_SHAPE_TYPE, PP_PLACEHOLDER_TYPE
 from pptx.util import Inches
 
-# --- ADK Imports ---
-from google.adk.tools.tool_context import ToolContext
-
-# --- Local Application Imports ---
+# Local Application Imports
 from ..shared_libraries.config import get_logger
 from ..shared_libraries.models import StyleProfile
 from ..shared_libraries.utils import _insert_image
@@ -31,9 +27,9 @@ from ..shared_libraries.utils import _insert_image
 def edit_slide_text(
     pptx_path: str,
     slide_number: int,
-    new_title: Optional[str] = None,
-    new_bullets: Optional[List[str]] = None,
-    new_speaker_notes: Optional[str] = None,
+    new_title: str | None = None,
+    new_bullets: list[str] | None = None,
+    new_speaker_notes: str | None = None,
 ) -> str:
     """Edits the text and speaker notes of a specific slide. Modifies the file IN-PLACE."""
     if not os.path.exists(pptx_path):
@@ -41,9 +37,7 @@ def edit_slide_text(
     try:
         prs = Presentation(pptx_path)
         if not (1 <= slide_number <= len(prs.slides)):
-            return (
-                f"Error: Invalid slide number. Must be between 1 and {len(prs.slides)}."
-            )
+            return f"Error: Invalid slide number. Must be between 1 and {len(prs.slides)}."
         slide = prs.slides[slide_number - 1]
 
         try:
@@ -59,7 +53,10 @@ def edit_slide_text(
                         s
                         for s in slide.placeholders
                         if s.placeholder_format.type
-                        in (PP_PLACEHOLDER_TYPE.BODY, PP_PLACEHOLDER_TYPE.OBJECT)
+                        in (
+                            PP_PLACEHOLDER_TYPE.BODY,
+                            PP_PLACEHOLDER_TYPE.OBJECT,
+                        )
                     ),
                     None,
                 )
@@ -88,9 +85,9 @@ def edit_slide_text(
 def add_slide_to_end(
     pptx_path: str,
     title: str,
-    layout_name: Optional[str] = None,
-    bullets: Optional[List[str]] = None,
-    speaker_notes: Optional[str] = None,
+    layout_name: str | None = None,
+    bullets: list[str] | None = None,
+    speaker_notes: str | None = None,
 ) -> str:
     """Adds a new slide to the END of the presentation. Modifies file IN-PLACE."""
     if not os.path.exists(pptx_path):
@@ -117,7 +114,10 @@ def add_slide_to_end(
                         s
                         for s in slide.placeholders
                         if s.placeholder_format.type
-                        in (PP_PLACEHOLDER_TYPE.BODY, PP_PLACEHOLDER_TYPE.OBJECT)
+                        in (
+                            PP_PLACEHOLDER_TYPE.BODY,
+                            PP_PLACEHOLDER_TYPE.OBJECT,
+                        )
                     ),
                     None,
                 )
@@ -148,9 +148,7 @@ def delete_slide(pptx_path: str, slide_number_to_delete: int) -> str:
     try:
         prs = Presentation(pptx_path)
         if not (1 <= slide_number_to_delete <= len(prs.slides)):
-            return (
-                f"Error: Invalid slide number. Must be between 1 and {len(prs.slides)}."
-            )
+            return f"Error: Invalid slide number. Must be between 1 and {len(prs.slides)}."
         rId = prs.slides._sldIdLst[slide_number_to_delete - 1].rId
         prs.part.drop_rel(rId)
         del prs.slides._sldIdLst[slide_number_to_delete - 1]
@@ -161,10 +159,10 @@ def delete_slide(pptx_path: str, slide_number_to_delete: int) -> str:
 
 
 def replace_slide_visual(
-    pptx_path: str, 
-    slide_number: int, 
+    pptx_path: str,
+    slide_number: int,
     image_data_base64: str,
-    target_type: Optional[Literal["picture", "chart", "any"]] = "any"
+    target_type: Literal["picture", "chart", "any"] | None = "any",
 ) -> str:
     """
     Replaces an existing visual element (Picture or Chart) on a slide with a new image.
@@ -180,22 +178,32 @@ def replace_slide_visual(
         if not (1 <= slide_number <= len(prs.slides)):
             return f"Error: Invalid slide number {slide_number}."
         slide = prs.slides[slide_number - 1]
-        
+
         target_shape = None
         box_hint = None
-        
+
         # 1. Search for a Chart if allowed
         if target_type in ("chart", "any"):
             target_shape = next(
-                (s for s in slide.shapes if s.shape_type == MSO_SHAPE_TYPE.CHART), None
+                (
+                    s
+                    for s in slide.shapes
+                    if s.shape_type == MSO_SHAPE_TYPE.CHART
+                ),
+                None,
             )
-            
+
         # 2. Search for a Picture if no chart was found or if explicitly requested
         if not target_shape and target_type in ("picture", "any"):
             target_shape = next(
-                (s for s in slide.shapes if s.shape_type == MSO_SHAPE_TYPE.PICTURE), None
+                (
+                    s
+                    for s in slide.shapes
+                    if s.shape_type == MSO_SHAPE_TYPE.PICTURE
+                ),
+                None,
             )
-            
+
         # 3. If a shape was found, capture its dimensions and remove it
         if target_shape:
             box_hint = (
@@ -208,28 +216,31 @@ def replace_slide_visual(
             sp.getparent().remove(sp)
             # Remove other pictures if 'picture' was explicitly requested to avoid overlap
             if target_type == "picture":
-                for other_pic in [s for s in slide.shapes if s.shape_type == MSO_SHAPE_TYPE.PICTURE]:
+                for other_pic in [
+                    s
+                    for s in slide.shapes
+                    if s.shape_type == MSO_SHAPE_TYPE.PICTURE
+                ]:
                     sp_other = other_pic._element
                     sp_other.getparent().remove(sp_other)
-        
+
         # 4. Insert the new image
         _insert_image(prs, slide, image_data_base64, box_hint=box_hint)
         prs.save(pptx_path)
-        
+
         type_msg = "visual" if target_type == "any" else target_type
         return f"Successfully replaced {type_msg} on slide {slide_number}."
     except Exception as e:
         return f"Error: Could not replace visual. {e}"
 
-
 async def update_element_layout(
     pptx_path: str,
     slide_number: int,
     element_index: int = 0,
-    left_inches: Optional[float] = None,
-    top_inches: Optional[float] = None,
-    width_inches: Optional[float] = None,
-    height_inches: Optional[float] = None,
+    left_inches: float | None = None,
+    top_inches: float | None = None,
+    width_inches: float | None = None,
+    height_inches: float | None = None,
 ) -> str:
     """Updates position and size of an element on a slide."""
     log = get_logger("update_element_layout")
@@ -268,7 +279,7 @@ async def inspect_template_style(
     """
     log = get_logger("style_tool")
 
-    # --- Sensible defaults ---
+    # Sensible defaults
     defaults = {
         "title_font_name": "Calibri Light",
         "title_font_size_pt": 28.0,
@@ -283,13 +294,18 @@ async def inspect_template_style(
     try:
         # 1. Resolve if it's not a local file
         if not os.path.exists(template_pptx):
-            log.info(f"Path '{template_pptx}' not found locally. Attempting artifact resolution...")
+            log.info(
+                f"Path '{template_pptx}' not found locally. Attempting artifact resolution..."
+            )
             from .artifact_utils import get_artifact_as_local_path
+
             res = await get_artifact_as_local_path(tool_context, template_pptx)
             if not res.startswith("Error"):
                 resolved_path = res
             else:
-                log.warning(f"Could not resolve '{template_pptx}' as artifact. Using defaults.")
+                log.warning(
+                    f"Could not resolve '{template_pptx}' as artifact. Using defaults."
+                )
                 defaults["supports_subtitles"] = False
                 return defaults
 
@@ -303,7 +319,9 @@ async def inspect_template_style(
                     if ph.placeholder_format.type == placeholder_type:
                         try:
                             font = ph.text_frame.paragraphs[0].font
-                            name = font.name or defaults[f"{type_key}_font_name"]
+                            name = (
+                                font.name or defaults[f"{type_key}_font_name"]
+                            )
                             size = (
                                 font.size.pt
                                 if font.size
@@ -319,7 +337,9 @@ async def inspect_template_style(
                             )
                             return name, size, color
                         except Exception:
-                            log.warning(f"Could not extract {type_key} style from placeholder.")
+                            log.warning(
+                                f"Could not extract {type_key} style from placeholder."
+                            )
                             break
             except (KeyError, AttributeError):
                 pass
@@ -329,15 +349,22 @@ async def inspect_template_style(
                 defaults[f"{type_key}_font_color_rgb"],
             )
 
-        t_name, t_size, t_color = get_font_style(PP_PLACEHOLDER_TYPE.TITLE, "title")
-        b_name, b_size, b_color = get_font_style(PP_PLACEHOLDER_TYPE.BODY, "body")
+        t_name, t_size, t_color = get_font_style(
+            PP_PLACEHOLDER_TYPE.TITLE, "title"
+        )
+        b_name, b_size, b_color = get_font_style(
+            PP_PLACEHOLDER_TYPE.BODY, "body"
+        )
 
         # Check if the template supports subtitles
         supports_subtitles = False
         for layout in prs.slide_layouts:
             try:
                 for shape in layout.placeholders:
-                    if shape.placeholder_format.type == PP_PLACEHOLDER_TYPE.SUBTITLE:
+                    if (
+                        shape.placeholder_format.type
+                        == PP_PLACEHOLDER_TYPE.SUBTITLE
+                    ):
                         supports_subtitles = True
                         break
             except (KeyError, AttributeError):
@@ -367,8 +394,8 @@ async def inspect_template_style(
 def _insert_visual_into_slide(
     prs: Presentation,
     slide: Any,
-    image_source: Union[str, bytes],
-    target_placeholder: Optional[Any] = None,
+    image_source: str | bytes,
+    target_placeholder: Any | None = None,
 ):
     """Inserts a visual into a slide using a placeholder or centering it."""
     get_logger("insert_visual_into_slide")
@@ -448,7 +475,10 @@ def get_safe_layout(prs, requested_layout_name):
     try:
         if "title" in requested_name or "cover" in requested_name:
             for layout in layouts:
-                if "title" in layout.name.lower() and "content" not in layout.name.lower():
+                if (
+                    "title" in layout.name.lower()
+                    and "content" not in layout.name.lower()
+                ):
                     return layout
             return layouts[0]
         return layouts[1] if len(layouts) > 1 else layouts[0]
@@ -468,21 +498,22 @@ def read_presentation_outline(pptx_path: str) -> str:
         prs = Presentation(pptx_path)
         titles = []
         for i, slide in enumerate(prs.slides):
-            title_text = f"Slide {i+1}: [Untitled]"
+            title_text = f"Slide {i + 1}: [Untitled]"
             try:
                 if (
                     slide.shapes.title
                     and slide.shapes.title.has_text_frame
                     and slide.shapes.title.text_frame.text
                 ):
-                    title_text = f"Slide {i+1}: {slide.shapes.title.text_frame.text}"
+                    title_text = (
+                        f"Slide {i + 1}: {slide.shapes.title.text_frame.text}"
+                    )
             except (KeyError, AttributeError):
                 pass
             titles.append(title_text)
         return "\n".join(titles) if titles else "The presentation is empty."
     except Exception as e:
         return f"Error: Could not read presentation outline. {e}"
-
 
 def read_presentation_details(pptx_path: str) -> str:
     """Extracts slide titles and all text content from a .pptx file."""
@@ -504,7 +535,7 @@ def read_presentation_details(pptx_path: str) -> str:
                     title = slide.shapes.title.text_frame.text
             except (KeyError, AttributeError):
                 pass
-                
+
             content_lines = []
             for s in slide.shapes:
                 try:
@@ -516,22 +547,23 @@ def read_presentation_details(pptx_path: str) -> str:
                                 is_title = True
                         except (KeyError, AttributeError):
                             pass
-                            
+
                         if not is_title:
                             for p in s.text_frame.paragraphs:
                                 if p.runs:
-                                    content_lines.append(f"- {''.join(r.text for r in p.runs).strip()}")
+                                    content_lines.append(
+                                        f"- {''.join(r.text for r in p.runs).strip()}"
+                                    )
                 except (KeyError, AttributeError):
                     continue
-            
+
             content = "\n".join(content_lines)
             details.append(
-                f"Slide {i+1} Title: {title}\nContent:\n{content or '[No text content found]'}"
+                f"Slide {i + 1} Title: {title}\nContent:\n{content or '[No text content found]'}"
             )
         return "\n\n---\n\n".join(details)
     except Exception as e:
         return f"Error: Could not read presentation details. {e}"
-
 
 def extract_slide_content(file_path: str, slide_number: int) -> str:
     """
@@ -579,7 +611,7 @@ def extract_slide_content(file_path: str, slide_number: int) -> str:
         content = "\n".join(slide_text)
         if speaker_notes:
             content += f"\n\nSPEAKER NOTES:\n{speaker_notes}"
-        
+
         return content
 
     except Exception as e:
@@ -614,7 +646,9 @@ def extract_images_from_slide(file_path: str, slide_number: int) -> list:
                     image_blob = shape.image.blob
                     content_type = shape.image.content_type
 
-                    images.append({"blob": image_blob, "content_type": content_type})
+                    images.append(
+                        {"blob": image_blob, "content_type": content_type}
+                    )
             except (KeyError, AttributeError):
                 continue
 

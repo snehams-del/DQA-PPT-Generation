@@ -16,7 +16,6 @@ import asyncio
 import json
 import os
 import re
-import tempfile
 from io import BytesIO
 
 from dotenv import load_dotenv
@@ -33,14 +32,17 @@ os.environ["LOCAL_DEV"] = "true"
 
 from presentation_agent.agent import PresentationExpertApp
 
+
 def create_valid_mock_pptx():
     """Generates bytes for a valid 5-slide PowerPoint file."""
     prs = Presentation()
     for i in range(1, 6):
-        slide = prs.slides.add_slide(prs.slide_layouts[1]) # Title and Content
+        slide = prs.slides.add_slide(prs.slide_layouts[1])  # Title and Content
         slide.shapes.title.text = f"Slide {i} Title"
-        slide.placeholders[1].text = f"This is the body content for slide {i}. It contains useful data for testing."
-    
+        slide.placeholders[
+            1
+        ].text = f"This is the body content for slide {i}. It contains useful data for testing."
+
     pptx_io = BytesIO()
     prs.save(pptx_io)
     return pptx_io.getvalue()
@@ -48,29 +50,28 @@ def create_valid_mock_pptx():
 async def mock_upload_artifact(app, session_id, filename):
     """Mocks an 'upload' by saving a valid PPTX into the agent's session store."""
     content = create_valid_mock_pptx()
-        
+
     artifact = types.Part(
         inline_data=types.Blob(
             data=content,
-            mime_type="application/vnd.openxmlformats-officedocument.presentationml.presentation"
+            mime_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
         )
     )
-    
+
     # Save the artifact using the EXACT keyword arguments from ADK signature
     await app._runner.artifact_service.save_artifact(
         app_name="presentation_expert",
         user_id="evaluator",
-        filename=filename, 
+        filename=filename,
         artifact=artifact,
-        session_id=session_id
+        session_id=session_id,
     )
     return filename
-
 
 async def evaluate_scenario(client, app, test_case, session_id):
     """Runs a single test scenario and calculates metrics."""
     print(f"\n--- Running Scenario: {test_case['name']} ---")
-    
+
     # Pre-load artifacts if the test case requires them
     if "artifacts" in test_case:
         for filename in test_case["artifacts"]:
@@ -86,7 +87,7 @@ async def evaluate_scenario(client, app, test_case, session_id):
     message = types.Content(
         role="user", parts=[types.Part.from_text(text=test_case["prompt"])]
     )
-    
+
     # Use the real application's runner
     events = app._runner.run(
         user_id="evaluator", session_id=session_id, new_message=message
@@ -97,7 +98,9 @@ async def evaluate_scenario(client, app, test_case, session_id):
                 if part.function_call:
                     tool_name = part.function_call.name
                     actual_tool_calls.append(tool_name)
-                    print(f"  [Tool Call]: {tool_name}({part.function_call.args})")
+                    print(
+                        f"  [Tool Call]: {tool_name}({part.function_call.args})"
+                    )
                 if part.text:
                     final_response += part.text
 
@@ -119,13 +122,16 @@ async def evaluate_scenario(client, app, test_case, session_id):
                     if part.function_call:
                         tool_name = part.function_call.name
                         actual_tool_calls.append(tool_name)
-                        print(f"  [Tool Call]: {tool_name}({part.function_call.args})")
+                        print(
+                            f"  [Tool Call]: {tool_name}({part.function_call.args})"
+                        )
 
     # --- FINAL TURN: Follow-up / Approval (if needed) ---
     if test_case.get("requires_approval", False):
         print("Final Turn: Sending 'Approve' to trigger rendering...")
         approve_msg = types.Content(
-            role="user", parts=[types.Part.from_text(text="Approve and render now.")]
+            role="user",
+            parts=[types.Part.from_text(text="Approve and render now.")],
         )
         events_f = app._runner.run(
             user_id="evaluator", session_id=session_id, new_message=approve_msg
@@ -138,11 +144,15 @@ async def evaluate_scenario(client, app, test_case, session_id):
                     if part.function_call:
                         tool_name = part.function_call.name
                         actual_tool_calls.append(tool_name)
-                        print(f"  [Tool Call]: {tool_name}({part.function_call.args})")
-                        
+                        print(
+                            f"  [Tool Call]: {tool_name}({part.function_call.args})"
+                        )
+
         # AFTER ALL TURNS: Capture final deck spec from state for constraint check
         session = await app._runner.session_service.get_session(
-            app_name="presentation_expert", user_id="evaluator", session_id=session_id
+            app_name="presentation_expert",
+            user_id="evaluator",
+            session_id=session_id,
         )
         generated_deck_spec = session.state.get("current_deck_spec")
         print(f"  [Full Response Total]: {final_response}")
@@ -151,7 +161,7 @@ async def evaluate_scenario(client, app, test_case, session_id):
 
     # A. Tool Trajectory Score
     expected = test_case["expected_tools"]
-    
+
     # We use a set for actual_tool_calls to avoid duplication penalties
     unique_actual = set(actual_tool_calls)
     intersection = set(expected).intersection(unique_actual)
@@ -160,8 +170,8 @@ async def evaluate_scenario(client, app, test_case, session_id):
     # B. Response Match Score
     judge_match_prompt = f"""
     Evaluate how well the agent's final response matches the user's intent and includes requested information.
-    User Intent: "{test_case['prompt']}"
-    Target Keywords: {test_case['target_keywords']}
+    User Intent: "{test_case["prompt"]}"
+    Target Keywords: {test_case["target_keywords"]}
     Agent Response: "{final_response}"
     
     Provide a score from 0.0 (no match) to 1.0 (perfect match).
@@ -174,7 +184,7 @@ async def evaluate_scenario(client, app, test_case, session_id):
         match = re.search(r"(\d\.\d+)", match_resp.text)
         if not match:
             match = re.search(r"\b([01])\b", match_resp.text)
-            
+
         response_match_score = float(match.group(1)) if match else 0.0
     except Exception as e:
         print(f"  [Error] Judge match failed: {e}")
@@ -187,21 +197,29 @@ async def evaluate_scenario(client, app, test_case, session_id):
 
     if "constraints" in test_case:
         constraints = test_case["constraints"]
-        
+
         if "slide_count" in constraints and generated_deck_spec:
             total_constraints += 1
-            if len(generated_deck_spec.get("slides", [])) == constraints["slide_count"]:
+            if (
+                len(generated_deck_spec.get("slides", []))
+                == constraints["slide_count"]
+            ):
                 score += 1
             else:
-                print(f"  [Debug] Slide count mismatch. Expected {constraints['slide_count']}, got {len(generated_deck_spec.get('slides', []))}")
-                
+                print(
+                    f"  [Debug] Slide count mismatch. Expected {constraints['slide_count']},got {len(generated_deck_spec.get('slides', []))}"
+                )
+
         if "required_terms" in constraints and generated_deck_spec:
             total_constraints += 1
             deck_text = json.dumps(generated_deck_spec).lower()
-            if all(term.lower() in deck_text for term in constraints["required_terms"]):
+            if all(
+                term.lower() in deck_text
+                for term in constraints["required_terms"]
+            ):
                 score += 1
             else:
-                print(f"  [Debug] Required terms missing from deck_spec.")
+                print("  [Debug] Required terms missing from deck_spec.")
 
         if "has_citations" in constraints:
             total_constraints += 1
@@ -216,12 +234,16 @@ async def evaluate_scenario(client, app, test_case, session_id):
                         break
                 # Check research summary specifically in state
                 session = await app._runner.session_service.get_session(
-                    app_name="presentation_expert", user_id="evaluator", session_id=session_id
+                    app_name="presentation_expert",
+                    user_id="evaluator",
+                    session_id=session_id,
                 )
-                state_summary = session.state.get("research_summary", "").lower()
+                state_summary = session.state.get(
+                    "research_summary", ""
+                ).lower()
                 if "http" in state_summary:
                     has_citation = True
-            
+
             # Fallback check final response text
             if not has_citation:
                 has_citation = bool(re.search(r"https?://", final_response))
@@ -229,9 +251,13 @@ async def evaluate_scenario(client, app, test_case, session_id):
             if has_citation:
                 score += 1
             else:
-                print(f"  [Debug] Citation check failed. No URLs found in state or response.")
+                print(
+                    "  [Debug] Citation check failed. No URLs found in state or response."
+                )
 
-    constraint_compliance_score = (score / total_constraints) if total_constraints > 0 else 1.0
+    constraint_compliance_score = (
+        (score / total_constraints) if total_constraints > 0 else 1.0
+    )
 
     results = {
         "scenario": test_case["name"],
@@ -277,7 +303,10 @@ async def run_evaluation_with_metrics():
                 "generate_and_render_deck",
             ],
             "target_keywords": ["presentation", "ready"],
-            "constraints": {"slide_count": 2, "required_terms": ["AWS", "Azure"]},
+            "constraints": {
+                "slide_count": 2,
+                "required_terms": ["AWS", "Azure"],
+            },
         },
         {
             "name": "Editing: Index Shifting",
@@ -307,11 +336,8 @@ async def run_evaluation_with_metrics():
                 "batch_generate_slides",
             ],
             "target_keywords": ["mRNA", "Medicine"],
-            "constraints": {
-                "slide_count": 1,
-                "has_citations": True
-            },
-        }
+            "constraints": {"slide_count": 1, "has_citations": True},
+        },
     ]
 
     # 2. Run Evaluations
@@ -320,30 +346,37 @@ async def run_evaluation_with_metrics():
     for i, test_case in enumerate(test_scenarios):
         session_id = f"eval_pipeline_session_{i}"
         await app._runner.session_service.create_session(
-            app_name="presentation_expert", user_id="evaluator", session_id=session_id
+            app_name="presentation_expert",
+            user_id="evaluator",
+            session_id=session_id,
         )
-        
         try:
-             res = await evaluate_scenario(client, app, test_case, session_id)
-             all_results.append(res)
+            res = await evaluate_scenario(client, app, test_case, session_id)
+            all_results.append(res)
         except Exception as e:
-             print(f"Error evaluating scenario '{test_case['name']}': {e}")
+            print(f"Error evaluating scenario '{test_case['name']}': {e}")
 
     #  aggregations ...
     if all_results:
         print("\n" + "=" * 50)
         print("📊 FINAL EVALUATION METRICS BY SCENARIO:")
         print(json.dumps(all_results, indent=4))
-        
-        avg_traj = sum(r["tool_trajectory_avg_score"] for r in all_results) / len(all_results)
-        avg_match = sum(r["response_match_score"] for r in all_results) / len(all_results)
-        avg_const = sum(r["constraint_compliance_score"] for r in all_results) / len(all_results)
-        
+
+        avg_traj = sum(
+            r["tool_trajectory_avg_score"] for r in all_results
+        ) / len(all_results)
+        avg_match = sum(r["response_match_score"] for r in all_results) / len(
+            all_results
+        )
+        avg_const = sum(
+            r["constraint_compliance_score"] for r in all_results
+        ) / len(all_results)
+
         print("\n--- OVERALL AVERAGES ---")
         print(f"Tool Trajectory: {avg_traj:.2f}")
         print(f"Response Match:  {avg_match:.2f}")
         print(f"Constraint Comp: {avg_const:.2f}")
-    
+
     print("=" * 50)
 
 if __name__ == "__main__":

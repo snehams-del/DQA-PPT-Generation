@@ -27,7 +27,11 @@ from presentation_agent.shared_libraries.config import (
 )
 
 logger = get_logger("model_armor")
-async def _call_model_armor_api(endpoint_suffix: str, payload: dict) -> dict | None:
+
+
+async def _call_model_armor_api(
+    endpoint_suffix: str, payload: dict
+) -> dict | None:
     """Helper to call Model Armor REST API."""
     try:
         # 1. Obtain Application Default Credentials
@@ -42,9 +46,11 @@ async def _call_model_armor_api(endpoint_suffix: str, payload: dict) -> dict | N
             logger.warning("Project ID not found. Skipping Model Armor.")
             return None
 
-        # MODEL_ARMOR_TEMPLATE_ID is already a full resource path 
+        # MODEL_ARMOR_TEMPLATE_ID is already a full resource path
         # e.g., projects/{project}/locations/{location}/templates/{template_id}
-        base_url = f"https://modelarmor.googleapis.com/v1/{MODEL_ARMOR_TEMPLATE_ID}"
+        base_url = (
+            f"https://modelarmor.googleapis.com/v1/{MODEL_ARMOR_TEMPLATE_ID}"
+        )
         url = f"{base_url}:{endpoint_suffix}"
 
         headers = {
@@ -63,7 +69,9 @@ async def _call_model_armor_api(endpoint_suffix: str, payload: dict) -> dict | N
         return response.json()
 
     except Exception as e:
-        logger.error(f"Error calling Model Armor REST API ({endpoint_suffix}): {e}")
+        logger.error(
+            f"Error calling Model Armor REST API ({endpoint_suffix}): {e}"
+        )
         return None
 
 
@@ -142,7 +150,9 @@ async def model_armor_response_interceptor(
     if not llm_response.content or not llm_response.content.parts:
         return None
 
-    response_text = " ".join(p.text for p in llm_response.content.parts if p.text)
+    response_text = " ".join(
+        p.text for p in llm_response.content.parts if p.text
+    )
     if not response_text:
         return None
 
@@ -182,8 +192,7 @@ async def model_armor_response_interceptor(
                 parts=[
                     types.Part.from_text(
                         text=(
-                            "The generated response was blocked by "
-                            "enterprise security policy."
+                            "The generated response was blocked by enterprise security policy."
                         )
                     )
                 ],
@@ -211,4 +220,3 @@ async def model_armor_response_interceptor(
         )
 
     return None
-

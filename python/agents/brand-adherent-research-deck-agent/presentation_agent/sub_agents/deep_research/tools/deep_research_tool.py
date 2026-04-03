@@ -27,7 +27,6 @@ logger = logging.getLogger(__name__)
 DEEP_RESEARCH_AGENT = "deep-research-pro-preview-12-2025"
 LOCATION = "global"
 
-
 def latex_to_text(text: str) -> str:
     """
     Converts LaTeX-style math blocks frequently returned by Deep Research
@@ -38,7 +37,7 @@ def latex_to_text(text: str) -> str:
         content = match.group(1)
         content = re.sub(r"\\text\{([^}]+)\}", r"\1", content)
         replacements = {
-            r"\times": "×",
+            r"\times": "×",  # noqa: RUF001
             r"\approx": "≈",
             r"\le": "≤",
             r"\ge": "≥",
@@ -109,13 +108,14 @@ def _parse_deep_research_stream(response_stream) -> tuple[str, list[str], str]:
 
     return full_report, citations, interaction_id
 
-
 def _deep_research_sync_impl(query: str) -> str:
     """
     Internal synchronous implementation of Deep Research with retry logic.
     Follows Vertex AI Deep Research API SDK best practices.
     """
-    client = genai.Client(vertexai=True, project=PROJECT_NUMBER, location=LOCATION)
+    client = genai.Client(
+        vertexai=True, project=PROJECT_NUMBER, location=LOCATION
+    )
 
     logger.info(f"Starting Deep Research for: {query}")
 
@@ -125,7 +125,9 @@ def _deep_research_sync_impl(query: str) -> str:
             agent=DEEP_RESEARCH_AGENT, input=query, background=True, stream=True
         )
 
-        report, citations, interaction_id = _parse_deep_research_stream(response)
+        report, citations, interaction_id = _parse_deep_research_stream(
+            response
+        )
 
         if interaction_id:
             logger.info(f"Deep Research Interaction ID: {interaction_id}")
@@ -160,7 +162,7 @@ async def deep_research_search(query: str) -> str:
         f"{query}\n\n"
         "CRITICAL RESEARCH CONSTRAINTS:\n"
         "1. FAST MODE: Execute research quickly. Limit search depth. MAXIMUM of 4 high-quality sources.\n"
-        "2. INLINE CITATIONS: You MUST include the raw URL citation [https://...] inline immediately following EVERY fact, number, or finding you report. This is non-negotiable.\n"
+        "2. INLINE CITATIONS: You MUST include the raw URL citation [https://...] inline immediately following EVERY fact, number, or finding in you report. This is non-negotiable.\n"
         "3. OUTPUT: Return a highly concise, bulleted summary of ONLY the most important facts. Limit output to 800 words maximum.\n"
     )
 
@@ -168,13 +170,14 @@ async def deep_research_search(query: str) -> str:
     try:
         # Strict 4-minute timeout for fast mode
         return await asyncio.wait_for(
-            loop.run_in_executor(None, _deep_research_sync_impl, optimized_query),
+            loop.run_in_executor(
+                None, _deep_research_sync_impl, optimized_query
+            ),
             timeout=240.0,
         )
-    except asyncio.TimeoutError:
+    except TimeoutError:
         logger.warning(f"Deep Research timed out after 240s for query: {query}")
         return "Deep Research timed out. Please rely on the Google Research and RAG tools for this specific query."
-
 
 # Create the FunctionTool wrapper
 deep_research_tool = FunctionTool(func=deep_research_search)

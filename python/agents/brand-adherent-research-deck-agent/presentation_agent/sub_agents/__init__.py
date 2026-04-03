@@ -17,17 +17,17 @@ from .google_research.agent import google_research_tool
 from .rag.agent import internal_knowledge_search_tool
 from .synthesizer.agent import (
     batch_slide_writer_tool,
+    generate_outline_and_save_tool,
     outline_specialist_tool,
     slide_writer_specialist_tool,
-    generate_outline_and_save_tool,
 )
 
 __all__ = [
-    "internal_knowledge_search_tool",
-    "google_research_tool",
+    "batch_slide_writer_tool",
     "deep_research_agent_tool",
+    "generate_outline_and_save_tool",
+    "google_research_tool",
+    "internal_knowledge_search_tool",
     "outline_specialist_tool",
     "slide_writer_specialist_tool",
-    "batch_slide_writer_tool",
-    "generate_outline_and_save_tool",
 ]

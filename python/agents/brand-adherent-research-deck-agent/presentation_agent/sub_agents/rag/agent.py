@@ -14,12 +14,10 @@
 
 """Specialist agent for retrieving internal Consulting Agency knowledge using Vertex AI Search."""
 
-import os
-from typing import Optional
 from google.adk.agents import LlmAgent
 from google.adk.tools import AgentTool, FunctionTool, VertexAiSearchTool
 
-from ...shared_libraries.config import ROOT_MODEL,DATASTORE_ID
+from ...shared_libraries.config import DATASTORE_ID, ROOT_MODEL
 from .prompt import RAG_AGENT_INSTRUCTION
 
 
@@ -31,15 +29,14 @@ def dummy_search(query: str) -> str:
 if DATASTORE_ID:
     vertex_search_tool = VertexAiSearchTool(data_store_id=DATASTORE_ID)
 else:
-    vertex_search_tool = FunctionTool(
-        func=dummy_search
-    )
+    vertex_search_tool = FunctionTool(func=dummy_search)
 
 # 2. Define the Internal Researcher Agent
 rag_agent = LlmAgent(
     model=ROOT_MODEL,
     name="cymbal_internal_knowledge_expert_agent",
-    description="A specialist agent that retrieves proprietary Consulting Agency assets, frameworks, and precedents relevant to a client's project using the Vertex AI Search tool.",
+    description="A specialist agent that retrieves proprietary Consulting Agency assets, frameworks, "
+    "and precedents relevant to a client's project using the Vertex AI Search tool.",
     instruction=RAG_AGENT_INSTRUCTION,
     tools=[vertex_search_tool],
 )

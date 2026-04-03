@@ -13,9 +13,8 @@
 # limitations under the License.
 
 import asyncio
-import uuid
 import tempfile
-import os
+import uuid
 
 from google import genai
 from google.genai import types
@@ -51,10 +50,12 @@ async def generate_visual(prompt: str) -> str:
     log.info(f"Dispatching to multi-modal model for prompt: '{prompt}'")
 
     try:
-        # --- Step 1: Generate the image bytes (same as before) ---
+        # Step 1: Generate the image bytes (same as before)
         global _genai_client
         if _genai_client is None:
-            log.warning("Global genai client was None. Re-initializing for Vertex AI.")
+            log.warning(
+                "Global genai client was None. Re-initializing for Vertex AI."
+            )
             _genai_client = genai.Client(
                 vertexai=True, project=PROJECT_ID, location=LOCATION
             )
@@ -79,18 +80,24 @@ async def generate_visual(prompt: str) -> str:
             and response.candidates[0].content.parts[0].inline_data
             and response.candidates[0].content.parts[0].inline_data.data
         ):
-            image_bytes = response.candidates[0].content.parts[0].inline_data.data
+            image_bytes = (
+                response.candidates[0].content.parts[0].inline_data.data
+            )
             log.info(f"Successfully generated visual using {model_name}.")
         else:
-            raise RuntimeError("Multi-modal model did not return valid image data.")
+            raise RuntimeError(
+                "Multi-modal model did not return valid image data."
+            )
 
         # If GCS_BUCKET_NAME is set, upload to GCS. Otherwise, save to temp storage
         if GCS_BUCKET_NAME:
-            # --- Step 2: Upload the image bytes to GCS ---
-            log.info(f"Uploading generated image to GCS bucket: {GCS_BUCKET_NAME}")
+            # Step 2: Upload the image bytes to GCS
+            log.info(
+                f"Uploading generated image to GCS bucket: {GCS_BUCKET_NAME}"
+            )
             storage_client = get_gcs_client()
             if storage_client is None:
-                 raise RuntimeError("GCS client could not be initialized.")
+                raise RuntimeError("GCS client could not be initialized.")
             bucket = storage_client.bucket(GCS_BUCKET_NAME)
             # Create a unique name for the image file
             image_filename = f"generated_images/{uuid.uuid4().hex}.png"
@@ -99,10 +106,10 @@ async def generate_visual(prompt: str) -> str:
             # Upload from the in-memory bytes
             # #blob.upload_from_string(image_bytes, content_type='image/png')
             await asyncio.to_thread(
-                blob.upload_from_string, 
-                image_bytes, 
-                content_type="image/png", 
-                timeout=60
+                blob.upload_from_string,
+                image_bytes,
+                content_type="image/png",
+                timeout=60,
             )
 
             # --- Step 3: Return the GCS URI instead of Base64 data ---
@@ -113,11 +120,15 @@ async def generate_visual(prompt: str) -> str:
             return gcs_uri
         else:
             # Fallback for local / InMemory testing using OS temp directory
-            with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+            with tempfile.NamedTemporaryFile(
+                suffix=".png", delete=False
+            ) as tmp:
                 tmp.write(image_bytes)
                 local_filepath = tmp.name
-                
-            log.info(f"No GCS Bucket configured. Saved visual to temp file: {local_filepath}")
+
+            log.info(
+                f"No GCS Bucket configured. Saved visual to temp file: {local_filepath}"
+            )
             return local_filepath
 
     except Exception as e:

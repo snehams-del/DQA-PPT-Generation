@@ -16,23 +16,16 @@ import argparse
 import logging
 import os
 import sys
-
 import vertexai
+import tomllib
 from dotenv import load_dotenv, set_key
 from vertexai import agent_engines
 from vertexai.preview.reasoning_engines import AdkApp
-
-try:
-    import tomllib
-except ImportError:
-    # For Python < 3.11
-    import tomllib as tomllib
 
 # Add the project root to sys.path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
-
 from presentation_agent.agent import root_agent
 
 # Force override from .env
@@ -62,7 +55,9 @@ def update_env_file(agent_engine_id, env_file_path):
     """Updates the .env file with the agent engine ID."""
     try:
         set_key(env_file_path, "AGENT_ENGINE_ID", agent_engine_id)
-        print(f"Updated AGENT_ENGINE_ID in {env_file_path} to {agent_engine_id}")
+        print(
+            f"Updated AGENT_ENGINE_ID in {env_file_path} to {agent_engine_id}"
+        )
     except Exception as e:
         print(f"Error updating .env file: {e}")
 
@@ -75,26 +70,37 @@ def load_requirements():
         pyproject_data = tomllib.load(f)
     return pyproject_data["project"]["dependencies"]
 
-
 def main(mode):
     # Build env_vars dynamically, ensuring all values are strings
     env_vars = {
         "GCP_PROJECT": str(os.getenv("GOOGLE_CLOUD_PROJECT")),
-        "GCP_LOCATION": str(os.getenv("GOOGLE_CLOUD_LOCATION") or "us-central1"),
-        "GEMINI_MODEL_NAME": str(os.getenv("GEMINI_MODEL_NAME") or "gemini-2.5-flash"),
-        "IMAGE_GENERATION_MODEL": str(os.getenv("IMAGE_GENERATION_MODEL") or "imagen-3.0-generate-002"),
+        "GCP_LOCATION": str(
+            os.getenv("GOOGLE_CLOUD_LOCATION") or "us-central1"
+        ),
+        "GEMINI_MODEL_NAME": str(
+            os.getenv("GEMINI_MODEL_NAME") or "gemini-2.5-flash"
+        ),
+        "IMAGE_GENERATION_MODEL": str(
+            os.getenv("IMAGE_GENERATION_MODEL") or "imagen-3.0-generate-002"
+        ),
         "GCP_STAGING_BUCKET": str(os.getenv("GCP_STAGING_BUCKET") or ""),
         "DEFAULT_TEMPLATE_URI": str(os.getenv("DEFAULT_TEMPLATE_URI") or ""),
         "ENABLE_RAG": str(os.getenv("ENABLE_RAG") or "false"),
-        "ENABLE_DEEP_RESEARCH": str(os.getenv("ENABLE_DEEP_RESEARCH") or "true"),
-        "GOOGLE_GENAI_USE_VERTEXAI": str(os.getenv("GOOGLE_GENAI_USE_VERTEXAI") or "True"),
+        "ENABLE_DEEP_RESEARCH": str(
+            os.getenv("ENABLE_DEEP_RESEARCH") or "false"
+        ),
+        "GOOGLE_GENAI_USE_VERTEXAI": str(
+            os.getenv("GOOGLE_GENAI_USE_VERTEXAI") or "True"
+        ),
     }
-    
+
     # Only add optional variables if they actually contain a value
     if os.getenv("DATASTORE_ID"):
         env_vars["DATASTORE_ID"] = str(os.getenv("DATASTORE_ID"))
     if os.getenv("MODEL_ARMOR_TEMPLATE_ID"):
-        env_vars["MODEL_ARMOR_TEMPLATE_ID"] = str(os.getenv("MODEL_ARMOR_TEMPLATE_ID"))
+        env_vars["MODEL_ARMOR_TEMPLATE_ID"] = str(
+            os.getenv("MODEL_ARMOR_TEMPLATE_ID")
+        )
 
     if mode == "update":
         logger.info("updating app in agent engine...")
@@ -140,7 +146,6 @@ def main(mode):
         update_env_file(remote_app.resource_name, ENV_FILE_PATH)
     else:
         logger.info("invalid mode")
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Deploy or Update")

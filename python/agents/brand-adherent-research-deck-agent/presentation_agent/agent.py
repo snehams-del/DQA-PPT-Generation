@@ -20,42 +20,42 @@ os.environ.setdefault("GOOGLE_CLOUD_PROJECT", project_id)
 os.environ.setdefault("GOOGLE_CLOUD_LOCATION", "global")
 os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "True")
 
-# --- ADK Imports ---
 from google.adk.agents import LlmAgent
-from google.adk.artifacts import GcsArtifactService, InMemoryArtifactService
+from google.adk.apps import App
+from google.adk.artifacts import (
+    GcsArtifactService,
+    InMemoryArtifactService,
+)
 from google.adk.memory import InMemoryMemoryService
 from google.adk.runners import Runner
-from google.adk.plugins.save_files_as_artifacts_plugin import SaveFilesAsArtifactsPlugin
-from google.adk.sessions import InMemorySessionService,VertexAiSessionService
+from google.adk.sessions import (
+    InMemorySessionService,
+    VertexAiSessionService,
+)
 
 from presentation_agent.prompt import final_instruction
 
-# --- Local Application Imports from the 'presentation_agent' package ---
+# Local Application Imports from the 'presentation_agent' package
+# If need to include MODEL_ARMOR_TEMPLATE_ID and related imports, they would go here as well.
 from presentation_agent.shared_libraries.config import (
     ENABLE_DEEP_RESEARCH,
     ENABLE_RAG,
     GCS_BUCKET_NAME,
-    MODEL_ARMOR_TEMPLATE_ID,
     ROOT_MODEL,
     get_gcs_client,
     get_logger,
     initialize_genai_client,
 )
-from presentation_agent.shared_libraries.model_armor import (
-    model_armor_interceptor,
-    model_armor_response_interceptor,
-)
 from presentation_agent.sub_agents import (
     batch_slide_writer_tool,
     deep_research_agent_tool,
+    generate_outline_and_save_tool,
     google_research_tool,
     internal_knowledge_search_tool,
     outline_specialist_tool,
     slide_writer_specialist_tool,
-    generate_outline_and_save_tool,
 )
 from presentation_agent.tools import ALL_STANDARD_TOOLS
-
 
 class PresentationExpertApp:
     """
@@ -68,12 +68,12 @@ class PresentationExpertApp:
 
         # 1. Start with the core tools that are always needed
         agent_tools = ALL_STANDARD_TOOLS + [
-            # --- Specialist / Research Tools ---
+            # Specialist / Research Tools
             outline_specialist_tool,
             generate_outline_and_save_tool,
             slide_writer_specialist_tool,
             batch_slide_writer_tool,
-            google_research_tool, # Always include standard Google Search (Fast)
+            google_research_tool,
         ]
 
         # 2. Conditionally add RAG (Internal Search)
@@ -96,7 +96,7 @@ class PresentationExpertApp:
             "tools": agent_tools,
         }
 
-        #if MODEL_ARMOR_TEMPLATE_ID:
+        # if MODEL_ARMOR_TEMPLATE_ID:
         #    get_logger("agent").info(
         #         f"Applying Model Armor Template: {MODEL_ARMOR_TEMPLATE_ID}"
         #     )
@@ -113,10 +113,11 @@ class PresentationExpertApp:
                 gcs_client = get_gcs_client()
                 if gcs_client:
                     gcs_client.get_bucket(GCS_BUCKET_NAME)
-                    artifact_service = GcsArtifactService(bucket_name=GCS_BUCKET_NAME)
+                    artifact_service = GcsArtifactService(
+                        bucket_name=GCS_BUCKET_NAME
+                    )
                     get_logger("agent").info(
-                        "Successfully connected to GCS ArtifactService. "
-                        f"Bucket: {GCS_BUCKET_NAME}"
+                        f"Successfully connected to GCS ArtifactService. Bucket: {GCS_BUCKET_NAME}"
                     )
                 else:
                     raise RuntimeError("GCS client could not be initialized.")
@@ -124,7 +125,9 @@ class PresentationExpertApp:
                 get_logger("agent").warning(
                     f"Failed to initialize GcsArtifactService: {e}"
                 )
-                get_logger("agent").warning("Falling back to InMemoryArtifactService.")
+                get_logger("agent").warning(
+                    "Falling back to InMemoryArtifactService."
+                )
                 artifact_service = InMemoryArtifactService()
         else:
             get_logger("agent").info(
@@ -144,7 +147,9 @@ class PresentationExpertApp:
             )
         else:
             session_service = InMemorySessionService()
-            get_logger("agent").info("Using InMemorySessionService for local development.")
+            get_logger("agent").info(
+                "Using InMemorySessionService for local development."
+            )
 
         # Configure and Run the Runner
         self._runner = Runner(
@@ -161,6 +166,4 @@ class PresentationExpertApp:
 coordinator_wrapper = PresentationExpertApp()
 root_agent = coordinator_wrapper._agent
 
-from google.adk.apps import App
-
-app = App(root_agent=root_agent, name="presentation_agent")
+app = App(root_agent=root_agent, name="brand_aligned_presentations")

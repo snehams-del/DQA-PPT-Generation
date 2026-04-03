@@ -15,15 +15,13 @@
 """Specialist agent for performing deep research with programmatic grounding extraction."""
 
 import re
-from typing import List
-
 from google.adk.agents import LlmAgent
-from google.adk.tools import FunctionTool
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
+from google.adk.tools import FunctionTool
 from google.genai import types
 
-from ...shared_libraries.config import ROOT_MODEL, get_logger
+from ...shared_libraries.config import ROOT_MODEL
 from .prompt import DEEP_RESEARCH_INSTRUCTION
 from .tools.deep_research_tool import deep_research_tool
 
@@ -36,7 +34,7 @@ research_agent = LlmAgent(
     tools=[deep_research_tool],
 )
 
-def _extract_urls_from_text(text: str) -> List[str]:
+def _extract_urls_from_text(text: str) -> list[str]:
     """Helper to extract raw URLs from the agent's text response."""
     url_pattern = r"https?://[^\s\]\)\>]+"
     found_urls = re.findall(url_pattern, text)
@@ -52,16 +50,14 @@ async def deep_research_grounded_tool(query: str) -> str:
     """
     Executes deep research and ensures raw URLs are preserved and appended.
     """
-    log = get_logger("deep_research_grounded")
-    
     # Setup local execution context for the sub-agent
     session_service = InMemorySessionService()
     await session_service.create_session(
-        app_name="deep_research", 
-        user_id="deep_research_task", 
-        session_id="deep_research_session"
+        app_name="deep_research",
+        user_id="deep_research_task",
+        session_id="deep_research_session",
     )
-    
+
     runner = Runner(
         app_name="deep_research",
         agent=research_agent,
@@ -72,9 +68,9 @@ async def deep_research_grounded_tool(query: str) -> str:
     user_message = types.Content(role="user", parts=[types.Part(text=query)])
     final_event = None
     async for event in runner.run_async(
-        user_id="deep_research_task", 
-        session_id="deep_research_session", 
-        new_message=user_message
+        user_id="deep_research_task",
+        session_id="deep_research_session",
+        new_message=user_message,
     ):
         final_event = event
 
@@ -92,15 +88,15 @@ async def deep_research_grounded_tool(query: str) -> str:
     # Programmatically extract URLs from the text to ensure they are listed explicitly
     # This acts as a safety net to ensure data provenance for the Slide Writer
     sources = _extract_urls_from_text(answer_text)
-    
+
     if sources:
-        # If the text already contains a "References" or "Sources" section from the tool, 
+        # If the text already contains a "References" or "Sources" section from the tool,
         # we check to avoid excessive duplication, but prioritize explicit listing.
         if "### Extracted Sources:" not in answer_text:
             answer_text += "\n\n### Verified Source URLs (Deep Research):\n"
             for i, url in enumerate(sources, 1):
                 answer_text += f"{i}. {url}\n"
-    
+
     return answer_text
 
 # 2. Export as the final FunctionTool for the main Orchestrator

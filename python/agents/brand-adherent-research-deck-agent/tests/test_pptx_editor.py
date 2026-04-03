@@ -14,13 +14,15 @@
 
 import os
 import tempfile
+
 from pptx import Presentation
+
 from presentation_agent.tools.pptx_editor import (
     add_slide_to_end,
     delete_slide,
     edit_slide_text,
+    read_presentation_details,
     read_presentation_outline,
-    read_presentation_details
 )
 
 
@@ -42,7 +44,7 @@ def create_sample_presentation():
     content = slide.placeholders[1]
     title.text = "Slide 2 Title"
     content.text = "Old Text"
-    
+
     # Save to temp file
     fd, path = tempfile.mkstemp(suffix=".pptx")
     os.close(fd)
@@ -55,14 +57,14 @@ def test_edit_slide_text():
     try:
         # The function signature is (pptx_path, slide_number, new_title, new_bullets)
         result = edit_slide_text(
-            pptx_path=pptx_path, 
-            slide_number=2, 
-            new_title="New Title", 
-            new_bullets=["New Bullet 1", "New Bullet 2"]
+            pptx_path=pptx_path,
+            slide_number=2,
+            new_title="New Title",
+            new_bullets=["New Bullet 1", "New Bullet 2"],
         )
-        
+
         assert "Successfully edited slide" in result
-        
+
         # Verify changes
         prs = Presentation(pptx_path)
         slide = prs.slides[1]  # 0-indexed internally
@@ -74,7 +76,7 @@ def test_edit_slide_text():
                     found_title = True
                 if "New Bullet 1" in shape.text:
                     found_bullet = True
-                    
+
         assert found_title, "The new title was not found on the slide."
         assert found_bullet, "The new bullets were not found on the slide."
     finally:
@@ -87,10 +89,10 @@ def test_add_slide_to_end():
         # Before adding, we have 2 slides
         prs = Presentation(pptx_path)
         assert len(prs.slides) == 2
-        
+
         result = add_slide_to_end(pptx_path, "Title and Content")
         assert "Successfully added new slide" in result
-        
+
         # After adding, we should have 3 slides
         prs = Presentation(pptx_path)
         assert len(prs.slides) == 3
@@ -104,10 +106,10 @@ def test_delete_slide():
         # Before deleting, we have 2 slides
         prs = Presentation(pptx_path)
         assert len(prs.slides) == 2
-        
+
         result = delete_slide(pptx_path, 2)
         assert "Successfully deleted slide 2" in result
-        
+
         # After deleting, we should have 1 slide
         prs = Presentation(pptx_path)
         assert len(prs.slides) == 1

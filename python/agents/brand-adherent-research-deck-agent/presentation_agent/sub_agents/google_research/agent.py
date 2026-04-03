@@ -14,15 +14,14 @@
 
 """Specialist agent for performing web research with programmatic grounding extraction."""
 
-from typing import Any, Dict, List
-
+from typing import Any
 from google.adk.agents import LlmAgent
-from google.adk.tools import FunctionTool, google_search
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
+from google.adk.tools import FunctionTool, google_search
 from google.genai import types
 
-from ...shared_libraries.config import ROOT_MODEL, get_logger
+from ...shared_libraries.config import ROOT_MODEL
 from .prompt import GOOGLE_RESEARCH_INSTRUCTION
 
 # 1. Define the core specialist agent
@@ -34,14 +33,14 @@ research_agent = LlmAgent(
     tools=[google_search],
 )
 
-def _extract_grounding_metadata(event: Any) -> List[Dict[str, str]]:
+def _extract_grounding_metadata(event: Any) -> list[dict[str, str]]:
     """Helper to traverse the final event and extract web source URIs."""
     sources = []
     seen_urls = set()
-    
+
     # Robustly find grounding metadata in the event structure
     data = event.model_dump() if hasattr(event, "model_dump") else {}
-    
+
     def find_metadata(obj):
         if isinstance(obj, dict):
             if "groundingMetadata" in obj:
@@ -73,17 +72,15 @@ async def google_research_grounded_tool(query: str) -> str:
     """
     Executes research and appends verified URLs extracted from grounding metadata.
     """
-    log = get_logger("google_research_grounded")
-    
     # Setup local execution context for the sub-agent
     # Using InMemorySessionService for research sub-tasks is efficient
     session_service = InMemorySessionService()
     await session_service.create_session(
-        app_name="google_research", 
-        user_id="research_task", 
-        session_id="research_session"
+        app_name="google_research",
+        user_id="research_task",
+        session_id="research_session",
     )
-    
+
     runner = Runner(
         app_name="google_research",
         agent=research_agent,
@@ -94,9 +91,9 @@ async def google_research_grounded_tool(query: str) -> str:
     user_message = types.Content(role="user", parts=[types.Part(text=query)])
     final_event = None
     async for event in runner.run_async(
-        user_id="research_task", 
-        session_id="research_session", 
-        new_message=user_message
+        user_id="research_task",
+        session_id="research_session",
+        new_message=user_message,
     ):
         final_event = event
 
@@ -113,14 +110,17 @@ async def google_research_grounded_tool(query: str) -> str:
 
     # Programmatically extract the verified sources from the underlying grounding chunks
     sources = _extract_grounding_metadata(final_event)
-    
+
     # Append the verified links to the end of the report to ensure the main agent receives them
     if sources:
-        answer_text += "\n\n### Verified Source URLs (Programmatic Grounding):\n"
+        answer_text += (
+            "\n\n### Verified Source URLs (Programmatic Grounding):\n"
+        )
         for i, src in enumerate(sources, 1):
             answer_text += f"{i}. {src['url']}\n"
-    
+
     return answer_text
+
 
 # 2. Export as the final FunctionTool for the main Orchestrator to use
 google_research_tool = FunctionTool(func=google_research_grounded_tool)

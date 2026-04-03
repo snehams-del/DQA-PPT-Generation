@@ -13,8 +13,13 @@
 # limitations under the License.
 
 import pytest
-from presentation_agent.shared_libraries.models import CoverSpec, DeckSpec, SlideSpec
 from pydantic import ValidationError
+
+from presentation_agent.shared_libraries.models import (
+    CoverSpec,
+    DeckSpec,
+    SlideSpec,
+)
 
 
 def test_cover_spec():

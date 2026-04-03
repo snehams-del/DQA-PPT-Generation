@@ -27,7 +27,8 @@ SYNTHESIZER_OUTLINE_INSTRUCTION = """
             - IF `visual_prompt` is NOT `null` -> `layout_name` MUST be `"Title and Image"`.
             - IF `visual_prompt` is `null` -> `layout_name` MUST be `"Title and Content"` (UNLESS it is a `"Section Header"`).
             - **!!! FORBIDDEN !!!:** NEVER use `"Title and Chart"` or `"Two Content"` if a visual prompt is present. NEVER exceed the budget of 5 visuals.
-    5.  **No Double Quotes:** Avoid using double quotes (") inside any text field. Use single quotes (') if necessary. This prevents malformed tool calls.
+    5.  **Citations (MANDATORY):** For every slide topic you plan, you MUST identify the relevant source URLs from the `Research Summary` and include them in the `citations` field of that slide. This ensures that the slide writer can later verify and attribute the content.
+    6.  **No Double Quotes:** Avoid using double quotes (") inside any text field. Use single quotes (') if necessary. This prevents malformed tool calls.
 """
 
 SYNTHESIZER_SLIDE_INSTRUCTION = """

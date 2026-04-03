@@ -1,6 +1,6 @@
 # PowerPoint Template Blueprint Guide
 
-This guide explains how to create a PPTX template that allows the Presentation Expert Agent to generate flawless slides with zero manual adjustment.
+This guide explains how to create a PPTX template that allows the Presentation Expert Agent to generate flawless slides with less manual adjustment.
 
 ## The "Perfect Master" Blueprint
 

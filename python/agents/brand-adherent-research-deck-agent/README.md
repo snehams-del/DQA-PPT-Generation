@@ -1,4 +1,4 @@
-# Brand-Adherent Research & Deck Agent
+# Brand-Aligned Presentations.
 
 **Last Updated:** March 2026  
 **Architecture:** Multi-Agent System on Vertex AI  
@@ -135,7 +135,7 @@ python -m venv .venv && source .venv/bin/activate # On Windows: .venv\Scripts\ac
 
 # Install the starter pack and create your project
 pip install --upgrade agent-starter-pack
-agent-starter-pack create my-research-deck-agent -a adk@brand-adherent-research-deck-agent
+agent-starter-pack create my-research-deck-agent -a adk@brand-aligned-presentations
 ```
 
 <details>
@@ -143,7 +143,7 @@ agent-starter-pack create my-research-deck-agent -a adk@brand-adherent-research-
 
 If you have [`uv`](https://github.com/astral-sh/uv) installed, you can create and set up your project with a single command:
 ```bash
-uvx agent-starter-pack create my-research-deck-agent -a adk@brand-adherent-research-deck-agent
+uvx agent-starter-pack create my-research-deck-agent -a adk@brand-aligned-presentations
 ```
 This command handles creating the project without needing to pre-install the package into a virtual environment.
 

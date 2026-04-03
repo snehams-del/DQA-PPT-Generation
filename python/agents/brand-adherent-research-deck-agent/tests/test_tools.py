@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from pptx import Presentation
+
 from presentation_agent.tools import get_safe_layout
 
 

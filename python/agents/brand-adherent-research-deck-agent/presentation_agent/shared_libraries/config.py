@@ -14,15 +14,14 @@
 
 import logging
 import sys
-from typing import Optional
 
 from google import genai
 from google.cloud import storage
-from pydantic import Field, AliasChoices
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # ==============================================================================
-# --- Configuration Logic (Pydantic) ---
+# Configuration Logic (Pydantic)
 # ==============================================================================
 
 # Configure logging
@@ -40,31 +39,42 @@ log = get_logger("config")
 
 class AppConfig(BaseSettings):
     google_cloud_project: str = Field(
-        default=None, 
-        validation_alias=AliasChoices("GOOGLE_CLOUD_PROJECT", "GCP_PROJECT")
+        default=None,
+        validation_alias=AliasChoices("GOOGLE_CLOUD_PROJECT", "GCP_PROJECT"),
     )
     google_cloud_location: str = Field(
-        default="us-central1", 
-        validation_alias=AliasChoices("GOOGLE_CLOUD_LOCATION", "GCP_LOCATION")
+        default="us-central1",
+        validation_alias=AliasChoices("GOOGLE_CLOUD_LOCATION", "GCP_LOCATION"),
     )
-    gemini_model_name: str = Field(default="gemini-2.5-flash", alias="GEMINI_MODEL_NAME")
-    image_generation_model: str = Field(default="imagen-3.0-generate-002", alias="IMAGE_GENERATION_MODEL")
-    google_cloud_project_number: Optional[str] = None
-    gcp_staging_bucket: Optional[str] = Field(default=None, alias="GCP_STAGING_BUCKET")
-    default_template_uri: Optional[str] = Field(default=None, alias="DEFAULT_TEMPLATE_URI")
-    datastore_id: Optional[str] = Field(default=None, alias="DATASTORE_ID")
-    
+    gemini_model_name: str = Field(
+        default="gemini-2.5-flash", alias="GEMINI_MODEL_NAME"
+    )
+    image_generation_model: str = Field(
+        default="imagen-3.0-generate-002", alias="IMAGE_GENERATION_MODEL"
+    )
+    google_cloud_project_number: str | None = None
+    gcp_staging_bucket: str | None = Field(
+        default=None, alias="GCP_STAGING_BUCKET"
+    )
+    default_template_uri: str | None = Field(
+        default=None, alias="DEFAULT_TEMPLATE_URI"
+    )
+    datastore_id: str | None = Field(default=None, alias="DATASTORE_ID")
+
     enable_rag: bool = Field(default=False, alias="ENABLE_RAG")
-    enable_deep_research: bool = Field(default=False, alias="ENABLE_DEEP_RESEARCH")
-    model_armor_template_id: Optional[str] = Field(default=None, alias="MODEL_ARMOR_TEMPLATE_ID")
+    enable_deep_research: bool = Field(
+        default=False, alias="ENABLE_DEEP_RESEARCH"
+    )
+    model_armor_template_id: str | None = Field(
+        default=None, alias="MODEL_ARMOR_TEMPLATE_ID"
+    )
 
     model_config = SettingsConfigDict(
-        env_file=".env", 
-        env_file_encoding="utf-8", 
+        env_file=".env",
+        env_file_encoding="utf-8",
         extra="ignore",
-        case_sensitive=False
+        case_sensitive=False,
     )
-
 
 # Initialize configuration
 try:
@@ -100,7 +110,7 @@ RESEARCH_SUMMARY_ARTIFACT = "research_summary.txt"
 _genai_client = None
 
 # ==============================================================================
-# --- Client Initialization and Logging Utilities ---
+# Client Initialization and Logging Utilities
 # ==============================================================================
 
 def initialize_genai_client():
@@ -129,7 +139,9 @@ def get_gcs_client():
             client = storage.Client()
         return client
     except Exception as e:
-        get_logger("get_gcs_client").error(f"Failed to initialize GCS client: {e}")
+        get_logger("get_gcs_client").error(
+            f"Failed to initialize GCS client: {e}"
+        )
         get_logger("get_gcs_client").warning(
             "Please ensure you are authenticated (e.g., `gcloud auth application-default login`)"
         )

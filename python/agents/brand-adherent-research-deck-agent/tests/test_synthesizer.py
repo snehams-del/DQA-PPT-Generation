@@ -12,67 +12,129 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-import asyncio
-from unittest.mock import patch, MagicMock, AsyncMock
-from presentation_agent.sub_agents.synthesizer.agent import batch_generate_slides
+
+from presentation_agent.sub_agents.synthesizer.agent import (
+    batch_generate_slides,
+)
+
 
 class MockResponse:
     def __init__(self, text):
         self.text = text
 
+
 @pytest.mark.asyncio
 async def test_batch_generate_slides_success():
-    slides = [{"title": "Title A", "layout_name": "Title and Content", "bullets": ["A focus"]}]
+    slides = [
+        {
+            "title": "Title A",
+            "layout_name": "Title and Content",
+            "bullets": ["A focus"],
+        }
+    ]
     research_summary = "Sum A"
     tool_context = MagicMock()
     tool_context.state = {}
     tool_context.save_artifact = AsyncMock()
-    
+
     mock_client = MagicMock()
     # Mocking the async generate_content call
-    mock_client.aio.models.generate_content = AsyncMock(return_value=MockResponse('{"title": "Title A", "layout_name": "Title and Content", "bullets": ["B1"]}'))
-    
-    with patch("presentation_agent.sub_agents.synthesizer.agent.initialize_genai_client", return_value=mock_client):
-        result = await batch_generate_slides(tool_context=tool_context, research_summary=research_summary, slides=slides)
-        
+    mock_client.aio.models.generate_content = AsyncMock(
+        return_value=MockResponse(
+            '{"title": "Title A", "layout_name": "Title and Content", "bullets": ["B1"]}'
+        )
+    )
+
+    with patch(
+        "presentation_agent.sub_agents.synthesizer.agent.initialize_genai_client",
+        return_value=mock_client,
+    ):
+        result = await batch_generate_slides(
+            tool_context=tool_context,
+            research_summary=research_summary,
+            slides=slides,
+        )
+
     assert result["status"] == "Success"
     assert len(result["deck_spec"]["slides"]) == 1
     assert result["deck_spec"]["slides"][0]["title"] == "Title A"
     assert result["deck_spec"]["slides"][0]["bullets"] == ["B1"]
 
+
 @pytest.mark.asyncio
 async def test_batch_generate_slides_json_error():
-    slides = [{"title": "Title A", "layout_name": "Title and Content", "bullets": ["A focus"]}]
+    slides = [
+        {
+            "title": "Title A",
+            "layout_name": "Title and Content",
+            "bullets": ["A focus"],
+        }
+    ]
     research_summary = "Sum A"
     tool_context = MagicMock()
     tool_context.state = {}
     tool_context.save_artifact = AsyncMock()
-    
+
     mock_client = MagicMock()
-    mock_client.aio.models.generate_content = AsyncMock(return_value=MockResponse('Invalid JSON'))
-    
-    with patch("presentation_agent.sub_agents.synthesizer.agent.initialize_genai_client", return_value=mock_client):
-        result = await batch_generate_slides(tool_context=tool_context, research_summary=research_summary, slides=slides)
-        
-    assert result["status"] == "Success" # The tool returns Success even if some slides fail
+    mock_client.aio.models.generate_content = AsyncMock(
+        return_value=MockResponse("Invalid JSON")
+    )
+
+    with patch(
+        "presentation_agent.sub_agents.synthesizer.agent.initialize_genai_client",
+        return_value=mock_client,
+    ):
+        result = await batch_generate_slides(
+            tool_context=tool_context,
+            research_summary=research_summary,
+            slides=slides,
+        )
+
+    assert (
+        result["status"] == "Success"
+    )  # The tool returns Success even if some slides fail
     assert result["deck_spec"]["slides"][0]["title"] == "Title A"
-    assert "Error generating content" in result["deck_spec"]["slides"][0]["bullets"][0]
+    assert (
+        "Error generating content"
+        in result["deck_spec"]["slides"][0]["bullets"][0]
+    )
+
 
 @pytest.mark.asyncio
 async def test_batch_generate_slides_exception():
-    slides = [{"title": "Title A", "layout_name": "Title and Content", "bullets": ["A focus"]}]
+    slides = [
+        {
+            "title": "Title A",
+            "layout_name": "Title and Content",
+            "bullets": ["A focus"],
+        }
+    ]
     research_summary = "Sum A"
     tool_context = MagicMock()
     tool_context.state = {}
     tool_context.save_artifact = AsyncMock()
-    
+
     mock_client = MagicMock()
-    mock_client.aio.models.generate_content = AsyncMock(side_effect=Exception("API Call Failed"))
-    
-    with patch("presentation_agent.sub_agents.synthesizer.agent.initialize_genai_client", return_value=mock_client):
-        result = await batch_generate_slides(tool_context=tool_context, research_summary=research_summary, slides=slides)
-        
+    mock_client.aio.models.generate_content = AsyncMock(
+        side_effect=Exception("API Call Failed")
+    )
+
+    with patch(
+        "presentation_agent.sub_agents.synthesizer.agent.initialize_genai_client",
+        return_value=mock_client,
+    ):
+        result = await batch_generate_slides(
+            tool_context=tool_context,
+            research_summary=research_summary,
+            slides=slides,
+        )
+
     assert result["status"] == "Success"
     assert result["deck_spec"]["slides"][0]["title"] == "Title A"
-    assert "Error generating content: API Call Failed" in result["deck_spec"]["slides"][0]["bullets"][0]
+    assert (
+        "Error generating content: API Call Failed"
+        in result["deck_spec"]["slides"][0]["bullets"][0]
+    )

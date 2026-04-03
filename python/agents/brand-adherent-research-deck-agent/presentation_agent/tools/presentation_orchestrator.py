@@ -14,11 +14,9 @@
 
 import asyncio
 import json
-import math
 import os
 import tempfile
 import uuid
-from typing import List, Optional
 
 from google.adk.tools.tool_context import ToolContext
 from google.genai import types
@@ -28,13 +26,13 @@ from pptx.enum.text import MSO_ANCHOR, PP_PARAGRAPH_ALIGNMENT
 from pptx.util import Inches
 
 from ..shared_libraries.config import (
+    DEFAULT_TEMPLATE_URI,
     GCS_BUCKET_NAME,
     get_logger,
-    DEFAULT_TEMPLATE_URI
 )
 from ..shared_libraries.models import CoverSpec, DeckSpec, SlideSpec
 from ..shared_libraries.utils import _insert_image
-from .artifact_utils import save_presentation, get_gcs_file_as_local_path
+from .artifact_utils import get_gcs_file_as_local_path, save_presentation
 from .pptx_editor import _insert_visual_into_slide
 from .visual_generator import generate_visual
 
@@ -45,12 +43,14 @@ def get_smart_layout(prs: Presentation, requested_name: str):
     """
     log = get_logger("layout_mapper")
     requested_name = requested_name.lower()
-    
+
     #  Avoid "Title and Chart" as it requies data (demo ignore this) placeholders
     if "chart" in requested_name:
-        log.info(f"Overriding layout request '{requested_name}' to 'Title and Image' for better spacing.")
+        log.info(
+            f"Overriding layout request '{requested_name}' to 'Title and Image' for better spacing."
+        )
         requested_name = "title and image"
-        
+
     layouts = prs.slide_layouts
 
     # 1. Exact Match
@@ -107,21 +107,32 @@ def get_smart_layout(prs: Presentation, requested_name: str):
         if "title" in requested_name or "cover" in requested_name:
             # Look for index 0 (Standard Title) or anything with 'title'
             for layout in layouts:
-                if "title" in layout.name.lower() and "content" not in layout.name.lower():
+                if (
+                    "title" in layout.name.lower()
+                    and "content" not in layout.name.lower()
+                ):
                     return layout
             return layouts[0]
 
         # Default to standard content layout (usually index 1)
         # However, we MUST avoid "Title Only" or "Blank" if we expect content
         final_layout = layouts[1] if len(layouts) > 1 else layouts[0]
-        
-        if any(k in requested_name for k in ["content", "chart", "image", "bullet"]):
-            if "only" in final_layout.name.lower() or "blank" in final_layout.name.lower():
+
+        if any(
+            k in requested_name for k in ["content", "chart", "image", "bullet"]
+        ):
+            if (
+                "only" in final_layout.name.lower()
+                or "blank" in final_layout.name.lower()
+            ):
                 # Try to find a layout that actually has content placeholders
                 for layout in layouts:
-                    if "content" in layout.name.lower() or "body" in layout.name.lower():
+                    if (
+                        "content" in layout.name.lower()
+                        or "body" in layout.name.lower()
+                    ):
                         return layout
-        
+
         return final_layout
     except IndexError:
         return layouts[0]
@@ -131,7 +142,7 @@ async def render_deck_from_spec(
     spec_dict: dict,
     out_pptx: str,
     tool_context: ToolContext,
-    template_pptx: Optional[str] = None,
+    template_pptx: str | None = None,
 ) -> str:
     """
     Renders a presentation from a spec, using a template if provided or falling
@@ -141,7 +152,9 @@ async def render_deck_from_spec(
     try:
         # 1. WORKING TEMPLATE SELECTION
         if template_pptx and os.path.exists(template_pptx):
-            log.info(f"Using user template '{template_pptx}' as the foundation.")
+            log.info(
+                f"Using user template '{template_pptx}' as the foundation."
+            )
             working_template = template_pptx
         else:
             log.error("No valid user template provided. Aborting.")
@@ -182,7 +195,7 @@ async def render_deck_from_spec(
                         if j % 2 != 0:
                             r.font.bold = True
 
-            # --- TITLE & SUBTITLE ---
+            # TITLE & SUBTITLE
             # Robustly find placeholders directly from the slide's shapes
             title_ph = None
             subhead_ph = None
@@ -194,7 +207,10 @@ async def render_deck_from_spec(
                     PP_PLACEHOLDER_TYPE.CENTER_TITLE,
                 ):
                     title_ph = shape
-                elif shape.placeholder_format.type == PP_PLACEHOLDER_TYPE.SUBTITLE:
+                elif (
+                    shape.placeholder_format.type
+                    == PP_PLACEHOLDER_TYPE.SUBTITLE
+                ):
                     subhead_ph = shape
                 elif shape.placeholder_format.type in (
                     PP_PLACEHOLDER_TYPE.BODY,
@@ -220,8 +236,10 @@ async def render_deck_from_spec(
             if is_cover:
                 return
 
-            # --- CONTENT & VISUALS ---
-            has_bullets = hasattr(spec_obj, "bullets") and bool(spec_obj.bullets)
+            # CONTENT & VISUALS
+            has_bullets = hasattr(spec_obj, "bullets") and bool(
+                spec_obj.bullets
+            )
             image_source = getattr(spec_obj, "image_data", None) or getattr(
                 spec_obj, "image_file_path", None
             )
@@ -297,7 +315,9 @@ async def render_deck_from_spec(
         # If it's empty, we create a new Cover Slide.
 
         # Cover
-        cover_data = spec_dict.get("cover", {"title": "Strategic Research & Analysis"})
+        cover_data = spec_dict.get(
+            "cover", {"title": "Strategic Research & Analysis"}
+        )
         cover_spec = CoverSpec(**cover_data)
 
         # Remove all existing slides except the cover (or remove all if we are building a new deck from scratch)
@@ -310,17 +330,23 @@ async def render_deck_from_spec(
                 del prs.slides._sldIdLst[i]
 
         if len(prs.slides) > 0:
-            log.info("Template has an existing slide. Using it as the Cover Page.")
+            log.info(
+                "Template has an existing slide. Using it as the Cover Page."
+            )
             cover_slide = prs.slides[0]
             # No need to add a slide, just render content onto existing one
             try:
                 render_slide_content(cover_slide, cover_spec, is_cover=True)
             except (KeyError, Exception) as e:
-                log.warning(f"Could not render cover text on existing slide: {e}")
+                log.warning(
+                    f"Could not render cover text on existing slide: {e}"
+                )
         else:
             log.info("Template is empty. Generating a new Cover Page.")
             try:
-                cover_slide = prs.slides.add_slide(get_smart_layout(prs, "Title Slide"))
+                cover_slide = prs.slides.add_slide(
+                    get_smart_layout(prs, "Title Slide")
+                )
                 render_slide_content(cover_slide, cover_spec, is_cover=True)
             except (KeyError, Exception) as e:
                 log.warning(f"Could not generate/render cover slide: {e}")
@@ -332,10 +358,14 @@ async def render_deck_from_spec(
 
             try:
                 s_spec = SlideSpec(**s_data)
-                slide = prs.slides.add_slide(get_smart_layout(prs, s_spec.layout_name))
+                slide = prs.slides.add_slide(
+                    get_smart_layout(prs, s_spec.layout_name)
+                )
                 render_slide_content(slide, s_spec)
             except (KeyError, Exception) as e:
-                log.error(f"Failed to render slide '{s_data.get('title')}': {e}")
+                log.error(
+                    f"Failed to render slide '{s_data.get('title')}': {e}"
+                )
                 continue
 
             # Speaker Notes/Citations
@@ -380,13 +410,12 @@ async def render_deck_from_spec(
 
 async def generate_and_render_deck(
     tool_context: ToolContext,
-    deck_spec: Optional[dict] = None,
-    spec_artifact_name: Optional[str] = None,
-    template_path: Optional[str] = None,
+    deck_spec: dict | None = None,
+    spec_artifact_name: str | None = None,
+    template_path: str | None = None,
 ) -> dict:
     """
     Orchestrates the entire deck generation process.
-    Prioritizes: 1. Direct Input, 2. Session STATE.
     """
     log = get_logger("generate_and_render_deck_tool")
     try:
@@ -403,15 +432,23 @@ async def generate_and_render_deck(
             log.info(f"Loading DeckSpec from artifact: '{spec_artifact_name}'")
             try:
                 artifact = await tool_context.load_artifact(spec_artifact_name)
-                
+
                 # Propagation Retry for named artifacts too
                 if not artifact:
-                    log.warning(f"Artifact '{spec_artifact_name}' not found. Waiting 2s...")
+                    log.warning(
+                        f"Artifact '{spec_artifact_name}' not found. Waiting 2s..."
+                    )
                     await asyncio.sleep(2.0)
-                    artifact = await tool_context.load_artifact(spec_artifact_name)
+                    artifact = await tool_context.load_artifact(
+                        spec_artifact_name
+                    )
 
                 if artifact:
-                    spec_json = artifact.inline_data.data if isinstance(artifact, types.Part) else artifact
+                    spec_json = (
+                        artifact.inline_data.data
+                        if isinstance(artifact, types.Part)
+                        else artifact
+                    )
                     if isinstance(spec_json, (bytes, bytearray)):
                         spec_dict = json.loads(spec_json.decode("utf-8"))
                     elif isinstance(spec_json, str):
@@ -422,20 +459,28 @@ async def generate_and_render_deck(
                 log.error(f"Failed to load named spec artifact: {e}")
 
         if not spec_dict:
-            return {"status": "Failed", "message": "No active presentation plan found in session state. Please provide deck_spec or ensure an outline was generated."}
-        
+            return {
+                "status": "Failed",
+                "message": "No active presentation plan found in session state. "
+                "Please provide deck_spec or ensure an outline was generated.",
+            }
+
         # 3. GCS-FALLBACK TEMPLATE RECOVERY
         working_template = template_path
         if not working_template or not os.path.exists(working_template):
-            log.info("Template path invalid or lost. Re-downloading from GCS...")
-            working_template = await get_gcs_file_as_local_path(DEFAULT_TEMPLATE_URI)
-            
+            log.info(
+                "Template path invalid or lost. Re-downloading from GCS..."
+            )
+            working_template = await get_gcs_file_as_local_path(
+                DEFAULT_TEMPLATE_URI
+            )
+
         # Standardize structure
         if isinstance(spec_dict.get("slides"), dict):
             spec_dict["slides"] = list(spec_dict["slides"].values())
         if "closing_title" not in spec_dict:
             spec_dict["closing_title"] = "Thank You"
-            
+
         validated_spec = DeckSpec(**spec_dict)
 
         all_content = [validated_spec.cover] + validated_spec.slides
@@ -452,7 +497,7 @@ async def generate_and_render_deck(
                     if slide.layout_name not in [
                         "Title and Image",
                         "Two Content",
-                        "Comparison"
+                        "Comparison",
                     ]:
                         slide.layout_name = "Title and Image"
                 else:
@@ -480,10 +525,13 @@ async def generate_and_render_deck(
         out_name = f"{validated_spec.cover.title}_{uuid.uuid4().hex[:6]}.pptx"
 
         local_path = await render_deck_from_spec(
-            validated_spec.model_dump(), out_name, tool_context, working_template
+            validated_spec.model_dump(),
+            out_name,
+            tool_context,
+            working_template,
         )
         if local_path.startswith("Error:"):
-             return {"status": "Failed", "message": local_path}
+            return {"status": "Failed", "message": local_path}
 
         msg = await save_presentation(
             tool_context, out_name, local_path, GCS_BUCKET_NAME

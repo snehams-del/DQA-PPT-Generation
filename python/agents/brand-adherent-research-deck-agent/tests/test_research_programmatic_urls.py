@@ -1,9 +1,14 @@
 # Copyright 2026 Google LLC
-import asyncio
-from unittest.mock import MagicMock, AsyncMock, patch
-from presentation_agent.sub_agents.google_research.agent import google_research_grounded_tool
-from google.genai import types
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+
+from presentation_agent.sub_agents.google_research.agent import (
+    google_research_grounded_tool,
+)
+
+
+@pytest.mark.asyncio
 async def test_google_research_programmatic_extraction():
     """
     Mocks the research runner to verify URIs are extracted from grounding chunks.
@@ -17,14 +22,19 @@ async def test_google_research_programmatic_extraction():
                     "text": "Research finding text.",
                     "groundingMetadata": {
                         "groundingChunks": [
-                            {"web": {"uri": "https://verified-source.com", "title": "Verified Title"}}
+                            {
+                                "web": {
+                                    "uri": "https://verified-source.com",
+                                    "title": "Verified Title",
+                                }
+                            }
                         ]
-                    }
+                    },
                 }
             ]
         }
     }
-    
+
     # We also need the content attribute to be present for the text extraction part
     mock_part = MagicMock()
     mock_part.text = "Research finding text."
@@ -36,14 +46,18 @@ async def test_google_research_programmatic_extraction():
     mock_runner = MagicMock()
     mock_runner.run_async = mock_run_async
 
-    with patch("presentation_agent.sub_agents.google_research.agent.Runner", return_value=mock_runner):
-        with patch("presentation_agent.sub_agents.google_research.agent.InMemorySessionService", return_value=AsyncMock()):
+    with patch(
+        "presentation_agent.sub_agents.google_research.agent.Runner",
+        return_value=mock_runner,
+    ):
+        with patch(
+            "presentation_agent.sub_agents.google_research.agent.InMemorySessionService",
+            return_value=AsyncMock(),
+        ):
             result = await google_research_grounded_tool("test query")
-            
-            assert "Research finding text." in result
-            assert "### Verified Source URLs (Programmatic Grounding):" in result
-            assert "https://verified-source.com" in result
-            print("✅ Verified: Programmatic URL extraction works for Google Research.")
 
-if __name__ == "__main__":
-    asyncio.run(test_google_research_programmatic_extraction())
+            assert "Research finding text." in result
+            assert (
+                "### Verified Source URLs (Programmatic Grounding):" in result
+            )
+            assert "https://verified-source.com" in result

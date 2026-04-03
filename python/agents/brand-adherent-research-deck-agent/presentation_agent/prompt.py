@@ -13,9 +13,10 @@
 # limitations under the License.
 
 
-from presentation_agent.shared_libraries.config import ENABLE_DEEP_RESEARCH, ENABLE_RAG
-import textwrap
-
+from presentation_agent.shared_libraries.config import (
+    ENABLE_DEEP_RESEARCH,
+    ENABLE_RAG,
+)
 
 COMMON_PRINCIPLES = """
    * **User-Friendly Communication & Real-Time Status Updates (The "Live Agent" Effect):** To match the Brand-Adherent Agent persona, you must output "thought-trace" updates. Before calling a major tool, output a single line describing the main action in the present continuous tense. 
@@ -43,22 +44,22 @@ COMMON_PRINCIPLES = """
 
 
 INTERNAL_RESEARCH_PROMPT = (
-   """
+    """
        * **Internal Research:** Based on your narrative, formulate specific questions to query the internal corporate knowledge base using the **`cymbal_internal_knowledge_expert_agent`**. Use this to find proprietary data, case studies, and internal expertise relevant to the topic. If the internal database is not configured or returns empty results, simply ignore it and rely entirely on external research. You *MUST* extract and include the source link or internal identifier (e.g., table reference or database ID) for every key finding you retrieve."""
-   if ENABLE_RAG
-   else ""
+    if ENABLE_RAG
+    else ""
 )
 
 
 EXTERNAL_RESEARCH_PROMPT = (
-   """
+    """
        * **External Research Strategy:** You have access to TWO external research tools. You MUST use them correctly to avoid timeouts:
            1. **Standard Search (FAST):** Use the **`research_specialist`** for broad factual queries. This is extremely fast and should be your PRIMARY tool for gathering baseline information.
            2. **Deep Research (SLOW):** Use the **`deep_research_specialist`** ONLY for highly complex, specific analytical questions that require synthesizing multiple layered sources.
        * **Citation Rule (CRITICAL MANDATE):** You *MUST* extract and include at least 1 (and up to 10) specific source URLs for any information you retrieve. Every key finding MUST be accompanied by its source link using the strict format: `[https://...]` (e.g., "The market will grow by 12% [https://example.com/report]"). Do not generate a summary without these links. Do NOT summarize away the raw URLs. Preserve them exactly as they were returned by the specialists.
    """
-   if ENABLE_DEEP_RESEARCH
-   else """
+    if ENABLE_DEEP_RESEARCH
+    else """
        * **External Research:** For broader context, use the **`research_specialist`** to perform automated web searches on public sources. Your goal is to gather current market analysis, industry updates, and competitive intelligence that supports your narrative. Prioritize authoritative sites based on the user's intent. If the user mentions specific websites to include, explicitly prioritize them.
        * **Citation Rule (CRITICAL MANDATE):** You *MUST* extract and include at least 1 (and up to 10) specific source URLs for any information you retrieve. Every key finding MUST be accompanied by its source link using the strict format: `[https://...]` (e.g., "The market will grow by 12% [https://example.com/report]"). Do not generate a summary without these links. Do NOT summarize away the raw URLs. Preserve them exactly as they were returned by the specialists."""
 )
@@ -123,7 +124,7 @@ WORKFLOW_CREATE = f"""
        *   **Step 4.3: Deliver Final Presentation**
            * Confirm the file is ready and mention the final artifact name (e.g., "Your presentation, `[artifact_name]`, has been saved to your GCS bucket and is ready for review. You can also download it here.").
    """
-   
+
 WORKFLOW_EDIT = """
    Your goal is to act as a smart, flexible editor, modifying an existing presentation based on user commands.
 

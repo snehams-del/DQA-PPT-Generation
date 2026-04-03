@@ -12,31 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# --- Python Standard Library Imports ---
 import base64
 import io
 import os
 import re
-from typing import Any, Optional, Tuple, Union
+from typing import Any
 
-# --- Presentation & Image Imports ---
+# Presentation & Image Imports
 from pptx import Presentation
 from pptx.dml.color import RGBColor
 from pptx.util import Inches, Pt
 from PIL import Image
 
-# --- Local Application Imports ---
+# Local Application Imports
 from .config import get_gcs_client, get_logger
-
-# ==============================================================================
-# --- Core Helper Functions ---
-# ==============================================================================
 
 def _apply_font(
     run,
-    name: Optional[str],
-    size_pt: Optional[float],
-    color_rgb: Optional[Tuple[int, int, int]],
+    name: str | None,
+    size_pt: float | None,
+    color_rgb: tuple[int, int, int] | None,
 ):
     """Safely applies font style (name, size, color) to a given text run."""
     log = get_logger("apply_font")
@@ -58,23 +53,23 @@ def _apply_font(
     except Exception as e:
         log.error(f"Error applying font style: {e}", exc_info=True)
 
-
-def _decode_base64_to_bytes(base64_string: str) -> Optional[bytes]:
+def _decode_base64_to_bytes(base64_string: str) -> bytes | None:
     """Decodes a base64 string to bytes, returning None if invalid."""
     try:
         if base64_string.startswith("data:image/"):
             base64_string = base64_string.split(",", 1)[1]
         return base64.b64decode(base64_string, validate=True)
     except (base64.binascii.Error, ValueError) as e:
-        get_logger("decode_base64").error(f"Failed to decode base64 string: {e}")
+        get_logger("decode_base64").error(
+            f"Failed to decode base64 string: {e}"
+        )
         return None
-
 
 def _insert_image(
     prs: Presentation,
     slide: Any,
-    image_data: Union[str, bytes],
-    box_hint: Optional[Tuple[int, int, int, int]],
+    image_data: str | bytes,
+    box_hint: tuple[int, int, int, int] | None,
 ):
     """
     Loads an image from various sources and inserts it into a slide.
@@ -83,10 +78,10 @@ def _insert_image(
     If no box_hint is provided, it centers the image on the slide.
     """
     log = get_logger("insert_image")
-    image_bytes: Optional[bytes] = None
+    image_bytes: bytes | None = None
 
     try:
-        # --- Step 1: Load Image Data into Bytes ---
+        # Step 1: Load Image Data into Bytes
         if isinstance(image_data, bytes):
             log.info("Loading image from in-memory bytes.")
             image_bytes = image_data
@@ -128,10 +123,12 @@ def _insert_image(
 
         image_stream = io.BytesIO(image_bytes)
 
-        # --- Step 2: Calculate Dimensions and Position ---
+        # Step 2: Calculate Dimensions and Position
         # CASE A: A specific box (placeholder) is provided.
         if box_hint:
-            log.info("Fitting image into provided box while preserving aspect ratio.")
+            log.info(
+                "Fitting image into provided box while preserving aspect ratio."
+            )
 
             box_left, box_top, box_width, box_height = box_hint
 
@@ -144,7 +141,8 @@ def _insert_image(
 
             # Calculate the scaling factor to fit without stretching
             scale = min(
-                box_width / max(img_width_emu, 1), box_height / max(img_height_emu, 1)
+                box_width / max(img_width_emu, 1),
+                box_height / max(img_height_emu, 1),
             )
 
             final_width = int(img_width_emu * scale)
@@ -186,10 +184,16 @@ def _insert_image(
             if final_width > 0 and final_height > 0:
                 image_stream.seek(0)
                 slide.shapes.add_picture(
-                    image_stream, left, top, width=final_width, height=final_height
+                    image_stream,
+                    left,
+                    top,
+                    width=final_width,
+                    height=final_height,
                 )
             else:
-                log.warning("Calculated image dimensions are non-positive. Skipping.")
+                log.warning(
+                    "Calculated image dimensions are non-positive. Skipping."
+                )
 
         log.info("Successfully inserted image onto slide.")
     except Exception as e:
