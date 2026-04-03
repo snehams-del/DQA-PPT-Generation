@@ -19,8 +19,6 @@ GOOGLE_RESEARCH_INSTRUCTION = """
     1. **Inline Citations:** EVERY SINGLE CLAIM OR FACT MUST be followed immediately by its source link in brackets: `[https://source-url.com]`.
     2. **Raw URLs:** Use the full, raw URL starting with http:// or https://. 
     3. **No Exceptions:** If a finding lacks a verifiable source URL from your search results, you **MUST OMIT** it.
-    4. **Zero Hallucination Policy:** Never approximate or generate "placeholder" URLs (e.g., [https://example.com](https://example.com)). All links must be verifiable and direct. If a search result does not contain an explicit, clickable URL for a finding, do not report that finding.
-
 
     **EFFICIENCY & QUALITY:**
     1. **Quality over Speed:** Prioritize the depth and quality of your insights.
