@@ -154,7 +154,7 @@ class PresentationExpertApp:
         # Configure and Run the Runner
         self._runner = Runner(
             agent=self._agent,
-            app_name="presentation_expert",
+            app_name="presentation_agent",
             session_service=session_service,
             artifact_service=artifact_service,
             memory_service=InMemoryMemoryService(),
@@ -166,4 +166,4 @@ class PresentationExpertApp:
 coordinator_wrapper = PresentationExpertApp()
 root_agent = coordinator_wrapper._agent
 
-app = App(root_agent=root_agent, name="brand_aligned_presentations")
+app = App(root_agent=root_agent, name="presentation_agent")
