@@ -40,10 +40,10 @@ if not PROJECT_ID:
     raise ValueError(
         "GOOGLE_CLOUD_PROJECT environment variable not set. Please set it in your .env file."
     )
-LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION")
+LOCATION = os.getenv("RAG_ENGINE_LOCATION")
 if not LOCATION:
     raise ValueError(
-        "GOOGLE_CLOUD_LOCATION environment variable not set. Please set it in your .env file."
+        "RAG_ENGINE_LOCATION environment variable not set. Please set it in your .env file."
     )
 CORPUS_DISPLAY_NAME = "Alphabet_10K_2025_corpus"
 CORPUS_DESCRIPTION = "Corpus containing Alphabet's 10-K 2025 document"

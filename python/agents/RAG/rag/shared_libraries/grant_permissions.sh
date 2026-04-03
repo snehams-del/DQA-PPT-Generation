@@ -65,32 +65,16 @@ RAG_CORPUS="projects/${PROJECT_NUMBER}/locations/us-central1/ragCorpora/${RAG_CO
 echo "Granting permissions to $SERVICE_ACCOUNT..."
 
 # Ensure the AI Platform service identity exists
-gcloud alpha services identity create --service=aiplatform.googleapis.com --project="$PROJECT_ID"
+gcloud beta services identity create --service=aiplatform.googleapis.com --project="$PROJECT_ID" --quiet
 
-# Create a custom role with only the RAG Corpus query permission
-ROLE_ID="ragCorpusQueryRole"
-ROLE_TITLE="RAG Corpus Query Role"
-ROLE_DESCRIPTION="Custom role with permission to query RAG Corpus"
+# Grant the standard Vertex AI Viewer role to the service account
+# This role includes aiplatform.ragCorpora.query among other viewing permissions
+echo "Granting roles/aiplatform.viewer for RAG Corpus access..."
 
-# Check if the custom role already exists
-echo "Checking if custom role $ROLE_ID exists..."
-if gcloud iam roles describe "$ROLE_ID" --project="$PROJECT_ID" &>/dev/null; then
-  echo "Custom role $ROLE_ID already exists."
-else
-  echo "Custom role $ROLE_ID does not exist. Creating it..."
-  gcloud iam roles create "$ROLE_ID" \
-    --project="$PROJECT_ID" \
-    --title="$ROLE_TITLE" \
-    --description="$ROLE_DESCRIPTION" \
-    --permissions="aiplatform.ragCorpora.query"
-  echo "Custom role $ROLE_ID created successfully."
-fi
-
-# Grant the custom role to the service account
-echo "Granting custom role for RAG Corpus query permissions for $RAG_CORPUS..."
 gcloud projects add-iam-policy-binding "$PROJECT_ID" \
   --member="serviceAccount:$SERVICE_ACCOUNT" \
-  --role="projects/$PROJECT_ID/roles/$ROLE_ID" \
+  --role="roles/aiplatform.viewer" \
+  --condition=None
 
 echo "Permissions granted successfully."
 echo "Service account $SERVICE_ACCOUNT can now query the specific RAG Corpus: $RAG_CORPUS"
