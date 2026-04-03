@@ -62,7 +62,7 @@ def initialize_vertex_ai():
 def create_or_get_corpus():
     """Creates a new corpus or retrieves an existing one."""
     embedding_model_config = rag.EmbeddingModelConfig(
-        publisher_model="publishers/google/models/text-embedding-004"
+        publisher_model="publishers/google/models/text-embedding-005"
     )
     existing_corpora = rag.list_corpora()
     corpus = None
