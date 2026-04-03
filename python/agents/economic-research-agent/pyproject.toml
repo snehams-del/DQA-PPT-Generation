@@ -3,8 +3,8 @@ name = "economic-research"
 version = "0.1.0"
 description = ""
 authors = [
-    {name = "Your Name", email = "your@email.com"},
-    {name = "Second Author", email = "second@example.com"},
+    {name = "Enrique Chan", email = "enriq@google.com"},
+    {name = "Casey Justus", email = "caseynjustus@google.com"},
 ]
 dependencies = [
     "census~=0.8.23",
