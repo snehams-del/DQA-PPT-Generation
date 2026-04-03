@@ -1,4 +1,4 @@
-# Copyright 2025 Google LLC
+# Copyright 2026 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,21 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""SWE Agent - Software Engineering Agent for benchmark evaluation.
+from .agent import app
 
-This package provides a sophisticated agent for solving software engineering
-tasks from SWE-bench and Terminal-Bench benchmarks using Google ADK.
-"""
-
-import os
-
-import google.auth
-
-_, project_id = google.auth.default()
-os.environ.setdefault("GOOGLE_CLOUD_PROJECT", project_id)
-os.environ.setdefault("GOOGLE_CLOUD_LOCATION", "global")
-os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "True")
-
-__version__ = "0.1.0"
-
-from . import agent  # noqa: E402
+__all__ = ["app"]
