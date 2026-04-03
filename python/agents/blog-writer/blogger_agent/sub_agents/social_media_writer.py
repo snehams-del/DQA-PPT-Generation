@@ -19,7 +19,7 @@ from ..config import config
 social_media_writer = Agent(
     model=config.critic_model,
     name="social_media_writer",
-    description="Writes social media posts to promote the blog post.",
+    description="Only writes social media posts (Twitter/LinkedIn) to promote the blog post. Does not handle saving or exporting files.",
     instruction="""
     You are a social media marketing expert. You will be given a blog post, and your task is to write social media posts for the following platforms:
     - Twitter: A short, engaging tweet that summarizes the blog post and includes relevant hashtags.
