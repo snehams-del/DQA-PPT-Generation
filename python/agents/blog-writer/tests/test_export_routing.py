@@ -32,3 +32,15 @@ def test_main_agent_instruction_handles_export():
     source = _source(AGENT_PY)
     assert "never delegate" in source.lower() or "always handle" in source.lower()
     assert "save_blog_post_to_file" in source
+
+
+def test_social_media_writer_is_tool_not_sub_agent():
+    source = _source(AGENT_PY)
+    tree = ast.parse(source)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.keyword) and node.arg == "sub_agents":
+            names = [elt.id for elt in ast.walk(node.value) if isinstance(elt, ast.Name)]
+            assert "social_media_writer" not in names, (
+                "social_media_writer must be an AgentTool, not a sub_agent"
+            )
+    assert "AgentTool(social_media_writer)" in source

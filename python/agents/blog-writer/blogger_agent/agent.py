@@ -16,6 +16,7 @@ import datetime
 
 from google.adk.agents import Agent
 from google.adk.tools import FunctionTool
+from google.adk.tools.agent_tool import AgentTool
 
 from .config import config
 from .sub_agents import (
@@ -56,11 +57,11 @@ interactive_blogger_agent = Agent(
         robust_blog_writer,
         robust_blog_planner,
         blog_editor,
-        social_media_writer,
     ],
     tools=[
         FunctionTool(save_blog_post_to_file),
         FunctionTool(analyze_codebase),
+        AgentTool(social_media_writer),
     ],
     output_key="blog_outline",
 )
