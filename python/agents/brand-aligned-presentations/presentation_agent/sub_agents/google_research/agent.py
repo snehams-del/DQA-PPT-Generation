@@ -15,6 +15,7 @@
 """Specialist agent for performing web research with programmatic grounding extraction."""
 
 from typing import Any
+
 from google.adk.agents import LlmAgent
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
@@ -32,6 +33,7 @@ research_agent = LlmAgent(
     instruction=GOOGLE_RESEARCH_INSTRUCTION,
     tools=[google_search],
 )
+
 
 def _extract_grounding_metadata(event: Any) -> list[dict[str, str]]:
     """Helper to traverse the final event and extract web source URIs."""

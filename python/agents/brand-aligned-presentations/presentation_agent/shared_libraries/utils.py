@@ -18,14 +18,16 @@ import os
 import re
 from typing import Any
 
+from PIL import Image
+
 # Presentation & Image Imports
 from pptx import Presentation
 from pptx.dml.color import RGBColor
 from pptx.util import Inches, Pt
-from PIL import Image
 
 # Local Application Imports
 from .config import get_gcs_client, get_logger
+
 
 def _apply_font(
     run,
@@ -53,6 +55,7 @@ def _apply_font(
     except Exception as e:
         log.error(f"Error applying font style: {e}", exc_info=True)
 
+
 def _decode_base64_to_bytes(base64_string: str) -> bytes | None:
     """Decodes a base64 string to bytes, returning None if invalid."""
     try:
@@ -64,6 +67,7 @@ def _decode_base64_to_bytes(base64_string: str) -> bytes | None:
             f"Failed to decode base64 string: {e}"
         )
         return None
+
 
 def _insert_image(
     prs: Presentation,

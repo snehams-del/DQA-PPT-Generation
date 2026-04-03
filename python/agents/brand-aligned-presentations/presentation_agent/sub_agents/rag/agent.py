@@ -25,6 +25,7 @@ def dummy_search(query: str) -> str:
     """Returns a default message when the internal database is not configured."""
     return "Internal database is not configured or is unavailable."
 
+
 # 1. Instantiate the RAG tool
 if DATASTORE_ID:
     vertex_search_tool = VertexAiSearchTool(data_store_id=DATASTORE_ID)

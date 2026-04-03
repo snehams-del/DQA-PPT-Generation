@@ -31,11 +31,14 @@ logging.basicConfig(
     stream=sys.stdout,
 )
 
+
 def get_logger(name: str):
     """Returns a standard Python logger."""
     return logging.getLogger(name)
 
+
 log = get_logger("config")
+
 
 class AppConfig(BaseSettings):
     google_cloud_project: str = Field(
@@ -76,6 +79,7 @@ class AppConfig(BaseSettings):
         case_sensitive=False,
     )
 
+
 # Initialize configuration
 try:
     config = AppConfig()
@@ -113,6 +117,7 @@ _genai_client = None
 # Client Initialization and Logging Utilities
 # ==============================================================================
 
+
 def initialize_genai_client():
     """Initializes and returns the global Vertex AI GenAI client."""
     global _genai_client
@@ -128,6 +133,7 @@ def initialize_genai_client():
             log.error(f"CRITICAL: Failed to initialize Vertex AI client: {e}")
             _genai_client = None
     return _genai_client
+
 
 def get_gcs_client():
     """Initializes and returns a GCS client with robust project detection."""

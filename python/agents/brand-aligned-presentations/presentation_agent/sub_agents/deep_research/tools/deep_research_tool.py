@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 DEEP_RESEARCH_AGENT = "deep-research-pro-preview-12-2025"
 LOCATION = "global"
 
+
 def latex_to_text(text: str) -> str:
     """
     Converts LaTeX-style math blocks frequently returned by Deep Research
@@ -108,6 +109,7 @@ def _parse_deep_research_stream(response_stream) -> tuple[str, list[str], str]:
 
     return full_report, citations, interaction_id
 
+
 def _deep_research_sync_impl(query: str) -> str:
     """
     Internal synchronous implementation of Deep Research with retry logic.
@@ -178,6 +180,7 @@ async def deep_research_search(query: str) -> str:
     except TimeoutError:
         logger.warning(f"Deep Research timed out after 240s for query: {query}")
         return "Deep Research timed out. Please rely on the Google Research and RAG tools for this specific query."
+
 
 # Create the FunctionTool wrapper
 deep_research_tool = FunctionTool(func=deep_research_search)

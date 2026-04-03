@@ -14,6 +14,7 @@
 
 import os
 from typing import Any, Literal
+
 from google.adk.tools.tool_context import ToolContext
 from pptx import Presentation
 from pptx.enum.shapes import MSO_SHAPE_TYPE, PP_PLACEHOLDER_TYPE
@@ -23,6 +24,7 @@ from pptx.util import Inches
 from ..shared_libraries.config import get_logger
 from ..shared_libraries.models import StyleProfile
 from ..shared_libraries.utils import _insert_image
+
 
 def edit_slide_text(
     pptx_path: str,
@@ -141,6 +143,7 @@ def add_slide_to_end(
     except Exception as e:
         return f"Error: Could not add new slide. {e}"
 
+
 def delete_slide(pptx_path: str, slide_number_to_delete: int) -> str:
     """Deletes a specific slide. Modifies the file IN-PLACE."""
     if not os.path.exists(pptx_path):
@@ -232,6 +235,7 @@ def replace_slide_visual(
         return f"Successfully replaced {type_msg} on slide {slide_number}."
     except Exception as e:
         return f"Error: Could not replace visual. {e}"
+
 
 async def update_element_layout(
     pptx_path: str,
@@ -515,6 +519,7 @@ def read_presentation_outline(pptx_path: str) -> str:
     except Exception as e:
         return f"Error: Could not read presentation outline. {e}"
 
+
 def read_presentation_details(pptx_path: str) -> str:
     """Extracts slide titles and all text content from a .pptx file."""
     import os
@@ -564,6 +569,7 @@ def read_presentation_details(pptx_path: str) -> str:
         return "\n\n---\n\n".join(details)
     except Exception as e:
         return f"Error: Could not read presentation details. {e}"
+
 
 def extract_slide_content(file_path: str, slide_number: int) -> str:
     """

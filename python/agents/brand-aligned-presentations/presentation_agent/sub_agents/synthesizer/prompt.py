@@ -72,5 +72,6 @@ SYNTHESIZER_SLIDE_INSTRUCTION = """
         - **Rule 3:** NEVER invent citation names or URLs. 
         - **Rule 4:** If the summary contains NO explicit `http` or `https` links for this topic, set the `citations` field strictly to `null`. Do not return an empty array `[]`.
         - **Rule 5:** EVEN IF THE TOPIC FOCUS DOES NOT EXPLICITLY MENTION A URL, YOU MUST SCAN THE ENTIRE `RESEARCH SUMMARY` FOR URLS THAT SUPPORT THE CONTENT YOU ARE WRITING.
+        - **Rule 6 (NO DESCRIPTIVE TEXT):** You MUST NOT include any descriptive summaries, titles, or names of the sources in the `citations` field. It is STRICTLY for the raw URL link only (e.g., ["https://..."]). Any slide with descriptive text instead of a URL is a failure. 
     6.  **STRICT RULE: NO DOUBLE QUOTES:** You **MUST NOT** use double quotes (") inside your bullet points, visual prompts, titles, subheads, or scripts. If you need to emphasize a term, use single quotes ('). Double quotes will break the system.
 """

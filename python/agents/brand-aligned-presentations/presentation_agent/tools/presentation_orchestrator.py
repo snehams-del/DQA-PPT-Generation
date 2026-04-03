@@ -165,6 +165,7 @@ async def render_deck_from_spec(
 
         def render_slide_content(slide, spec_obj, is_cover=False):
             """Intelligently populates a slide based on its layout and the spec's content."""
+
             def _rm_md(t: str) -> str:
                 return t.replace("**", "")
 
@@ -226,9 +227,9 @@ async def render_deck_from_spec(
                 # Use standard text assignment to preserve inheritance
                 title_ph.text = _rm_md(spec_obj.title)
                 if is_cover and title_ph.text_frame.paragraphs:
-                    title_ph.text_frame.paragraphs[0].alignment = (
-                        PP_PARAGRAPH_ALIGNMENT.CENTER
-                    )
+                    title_ph.text_frame.paragraphs[
+                        0
+                    ].alignment = PP_PARAGRAPH_ALIGNMENT.CENTER
 
             if subhead_ph and hasattr(spec_obj, "subhead") and spec_obj.subhead:
                 subhead_ph.text = _rm_md(spec_obj.subhead)
@@ -407,6 +408,7 @@ async def render_deck_from_spec(
     except Exception as e:
         log.error(f"Render failed: {e}", exc_info=True)
         return f"Error: Render failed. {e}"
+
 
 async def generate_and_render_deck(
     tool_context: ToolContext,

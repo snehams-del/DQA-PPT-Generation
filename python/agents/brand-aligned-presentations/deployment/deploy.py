@@ -16,8 +16,9 @@ import argparse
 import logging
 import os
 import sys
-import vertexai
 import tomllib
+
+import vertexai
 from dotenv import load_dotenv, set_key
 from vertexai import agent_engines
 from vertexai.preview.reasoning_engines import AdkApp
@@ -50,6 +51,7 @@ vertexai.init(
     staging_bucket=STAGING_BUCKET,
 )
 
+
 # Function to update the .env file
 def update_env_file(agent_engine_id, env_file_path):
     """Updates the .env file with the agent engine ID."""
@@ -61,6 +63,7 @@ def update_env_file(agent_engine_id, env_file_path):
     except Exception as e:
         print(f"Error updating .env file: {e}")
 
+
 def load_requirements():
     """Loads requirements from pyproject.toml."""
     pyproject_path = os.path.abspath(
@@ -69,6 +72,7 @@ def load_requirements():
     with open(pyproject_path, "rb") as f:
         pyproject_data = tomllib.load(f)
     return pyproject_data["project"]["dependencies"]
+
 
 def main(mode):
     # Build env_vars dynamically, ensuring all values are strings
@@ -112,7 +116,7 @@ def main(mode):
             engine = agent_engines.get(AGENT_ENGINE_ID)
             engine.update(
                 agent_engine=app,
-                display_name="presentation_expert",
+                display_name="presentation_agent",
                 requirements=load_requirements(),
                 extra_packages=[
                     "./presentation_agent",
@@ -132,7 +136,7 @@ def main(mode):
 
         remote_app = agent_engines.create(
             app,
-            display_name="presentation_expert",
+            display_name="presentation_agent",
             requirements=load_requirements(),
             extra_packages=[
                 "./presentation_agent",
@@ -146,6 +150,7 @@ def main(mode):
         update_env_file(remote_app.resource_name, ENV_FILE_PATH)
     else:
         logger.info("invalid mode")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Deploy or Update")

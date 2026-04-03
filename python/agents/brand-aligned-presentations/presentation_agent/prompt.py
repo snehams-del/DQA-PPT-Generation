@@ -82,6 +82,7 @@ WORKFLOW_CREATE = f"""
        * **Internal Thought & Action (Consolidate Plan)**: Organize your thoughts before calling the specialist.
            1. **Audience & Narrative:** Consolidate your core narrative and the Target Audience you defined in Phase 1. 
            2. **Research & Citations (CRITICAL FOUNDATION):** Formulate your findings into a comprehensive `research_summary`. You MUST PRESERVE AND INCLUDE EVERY RAW URL (e.g., [https://...]) identified in Phase 1. **DO NOT summarize away the citations.** This `research_summary` is the *only* source of truth for the Slide Writer; if you remove URLs here, the final slides will have NO citations. 
+           3. **NO URL REWRITING (STRICT):** You MUST NOT paraphrase or describe the URLs. You MUST include the literal raw `[https://...]` string next to the fact it supports. 
        * **Step 2.1 (Atomic Generation & Save):** Call **`generate_and_save_outline`**. This tool generates the outline AND securely saves it to the persistent **session state** (using keys `current_deck_spec` and `research_summary`).
        * **Output:** This tool will return a dictionary containing the `strategic_briefing` and the list of `slides`. Note these for Phase 3.
        * **CRITICAL:** You must proceed immediately to Phase 3 to show the outline to the user first.

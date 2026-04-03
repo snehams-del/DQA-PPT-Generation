@@ -15,6 +15,7 @@
 """Specialist agent for performing deep research with programmatic grounding extraction."""
 
 import re
+
 from google.adk.agents import LlmAgent
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
@@ -34,6 +35,7 @@ research_agent = LlmAgent(
     tools=[deep_research_tool],
 )
 
+
 def _extract_urls_from_text(text: str) -> list[str]:
     """Helper to extract raw URLs from the agent's text response."""
     url_pattern = r"https?://[^\s\]\)\>]+"
@@ -45,6 +47,7 @@ def _extract_urls_from_text(text: str) -> list[str]:
         if clean_url not in unique_urls:
             unique_urls.append(clean_url)
     return unique_urls
+
 
 async def deep_research_grounded_tool(query: str) -> str:
     """
@@ -98,6 +101,7 @@ async def deep_research_grounded_tool(query: str) -> str:
                 answer_text += f"{i}. {url}\n"
 
     return answer_text
+
 
 # 2. Export as the final FunctionTool for the main Orchestrator
 deep_research_agent_tool = FunctionTool(func=deep_research_grounded_tool)

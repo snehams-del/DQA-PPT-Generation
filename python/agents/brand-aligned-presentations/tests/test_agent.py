@@ -36,7 +36,7 @@ def test_app_initialization(mock_init):
 
     # Assert runner is composed
     assert app._runner is not None
-    assert app._runner.app_name == "presentation_expert"
+    assert app._runner.app_name == "presentation_agent"
 
 
 @patch("presentation_agent.agent.initialize_genai_client")

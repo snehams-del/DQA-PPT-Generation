@@ -32,6 +32,7 @@ from ..shared_libraries.models import DeckSpec
 
 plt.style.use("seaborn-v0_8-whitegrid")
 
+
 async def list_available_artifacts(tool_context: ToolContext) -> list[str]:
     """Lists the filenames of all available artifacts in the session."""
     try:

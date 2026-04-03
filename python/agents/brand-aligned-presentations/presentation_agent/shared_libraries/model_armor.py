@@ -137,6 +137,7 @@ async def model_armor_interceptor(
 
     return None
 
+
 async def model_armor_response_interceptor(
     callback_context: CallbackContext,
     llm_response: LlmResponse,

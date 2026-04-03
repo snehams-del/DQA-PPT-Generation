@@ -11,8 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from pydantic import BaseModel, Field
 from typing import Literal
+
+from pydantic import BaseModel, Field
+
 
 class StyleProfile(BaseModel):
     """A model to hold the extracted theme/style of a presentation."""
@@ -27,9 +29,11 @@ class StyleProfile(BaseModel):
     image_box_hint: tuple[int, int, int, int] | None = None
     supports_subtitles: bool = False
 
+
 class CoverSpec(BaseModel):
     title: str
     subhead: str | None = None
+
 
 class SlideSpec(BaseModel):
     """
@@ -41,7 +45,7 @@ class SlideSpec(BaseModel):
     subhead: str | None = None
     bullets: list[str] = Field(
         default_factory=list,
-        description="A list of bullet points. During planning, " \
+        description="A list of bullet points. During planning, "
         "this contains a single summary of the slide's focus.",
     )
 
@@ -74,9 +78,11 @@ class SlideSpec(BaseModel):
 
 class DeckSpec(BaseModel):
     """The full specification for a presentation deck."""
+
     cover: CoverSpec
     slides: list[SlideSpec]
     closing_title: str
+
 
 class PresentationOutline(BaseModel):
     """The initial structural plan for the presentation."""

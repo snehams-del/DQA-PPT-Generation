@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+
 import google.auth
 
 _, project_id = google.auth.default()
@@ -56,6 +57,7 @@ from presentation_agent.sub_agents import (
     slide_writer_specialist_tool,
 )
 from presentation_agent.tools import ALL_STANDARD_TOOLS
+
 
 class PresentationExpertApp:
     """

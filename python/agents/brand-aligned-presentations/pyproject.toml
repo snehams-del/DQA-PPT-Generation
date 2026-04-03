@@ -77,44 +77,22 @@ build-backend = "hatchling.build"
 packages = ["eval", "deployment", "presentation_agent"]
 
 [tool.ruff]
-# Set the maximum line length
-line-length = 80
+extend = "../../../pyproject.toml"
 target-version = "py311"
 
 [tool.ruff.lint]
-# Select the rules you want to enforce
-select = [
-    "E", # pycodestyle
-    "F", # pyflakes
-    "I", # isort
-    "C", # flake8-comprehension
-    "PL", # Pylint rules
-    "B", # flake8-bugbear
-    "UP", # pyupgrade
-    "RUF" # ruff specific rules
-]
-ignore = [
-    "E501", # Ignore line length for long LLM prompts
-    "PLR0913", # Allow agents to have many arguments if needed
-    "PLC0415", # ADK tools often use nested imports for performance/isolation
-    "PLR0912", # Agents often have complex branching logic
-    "PLR0911", # Complex tools often have many returns
-    "PLW0603", # Global genai client is a standard singleton pattern here
-    "PLR2004", # Magic values are often used in PPTX/Model manipulation
-    "C901",    # Ignore function complexity
-    "PLR0915", # Ignore too many statements
-    "I001",    # Ignore import sorting
+extend-ignore = [
+    "C901",    # Complexity
+    "PLR0911", # Too many return statements
+    "PLR0912", # Too many branches
+    "PLR0915", # Too many statements
+    "PLR2004", # Magic values
+    "PLW0603", # Global statement
+    "PLC0415", # Import not at top-level
     "RUF005",  # Ignore iterable unpacking suggestions
     "B905",    # Ignore zip() without strict parameter
     "E402",    # Ignore module level imports not at top of file (config order)
 ]
-[tool.ruff.lint.per-file-ignores]
-# Global rule: ADK agents use __init__.py to expose their logic
-"__init__.py" = ["F401"]
-
-[tool.ruff.format]
-quote-style = "double"
-indent-style = "space"
 
 [tool.ruff.lint.isort]
 known-first-party = ["eval", "deployment", "presentation_agent"]
@@ -125,7 +103,6 @@ skip = "./locust_env/*,uv.lock,.venv,./frontend,**/*.ipynb"
 
 [tool.uv]
 environments = ["sys_platform == 'darwin'"]
-
 
 [[tool.uv.index]]
 name = "pypi"

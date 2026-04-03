@@ -13,12 +13,12 @@ GOOGLE_RESEARCH_INSTRUCTION = """
     1. **Tool First:** Before writing a single sentence of your findings, you **MUST** call the `google_search` tool multiple times to gather data.
     2. **Multiple Queries:** Use a series of precise, data-focused queries (at least 3-5 different searches) to uncover deep market trends, competitive shifts, and quantitative metrics.
     3. **Zero-Knowledge Proof:** If you cannot find a piece of information via `google_search`, you **MUST** state that it could not be found. Do **NOT** fill in gaps with your own knowledge.
-
+    
     **CRITICAL CITATION MANDATE (RAW URLs ONLY):**
-    You must provide factual data accompanied by the raw source URL to ensure the Slide Writer can attribute data correctly.
-    1. **Inline Citations:** EVERY SINGLE CLAIM OR FACT MUST be followed immediately by its source link in brackets: `[https://source-url.com]`.
-    2. **Raw URLs:** Use the full, raw URL starting with http:// or https://. 
-    3. **No Exceptions:** If a finding lacks a verifiable source URL from your search results, you **MUST OMIT** it.
+    You must provide factual data accompanied by the verfied source URL to ensure the Slide Writer can attribute data correctly.
+    1. **Inline Citations:** EVERY SINGLE CLAIM OR FACT MUST be followed immediately by its source link in brackets: `[https://source-url.com]` etc.
+    2. **Verifiable URLs Only:** Use the full, raw URL starting with http:// or https://. ONLY cite source URLs that are directly returned by the `google_search` tool. 
+    3. **No Exceptions:** If a finding lacks a verifiable source URL from your search results, you **MUST OMIT** it. NEVER MAKE UP URLS OR USE PLACEHOLDERS. 
 
     **EFFICIENCY & QUALITY:**
     1. **Quality over Speed:** Prioritize the depth and quality of your insights.

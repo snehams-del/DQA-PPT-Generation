@@ -24,10 +24,10 @@ from google.adk.tools.tool_context import ToolContext
 from google.genai import types
 
 from ...shared_libraries.config import (
+    PRESENTATION_SPEC_ARTIFACT,
     ROOT_MODEL,
-    initialize_genai_client,
     get_logger,
-    PRESENTATION_SPEC_ARTIFACT
+    initialize_genai_client,
 )
 from ...shared_libraries.models import (
     SlideSpec,
@@ -55,6 +55,7 @@ slide_writer_agent = LlmAgent(
     instruction=SYNTHESIZER_SLIDE_INSTRUCTION,
     output_schema=SlideSpec,
 )
+
 
 async def generate_and_save_outline(
     tool_context: ToolContext,
@@ -245,15 +246,24 @@ async def batch_generate_slides(
                     # but append existing notes if they contain unique information.
                     existing_notes = topic.get("speaker_notes")
                     generated_notes = res_dict.get("speaker_notes", "")
-                    
+
                     if existing_notes:
                         if not generated_notes:
                             res_dict["speaker_notes"] = existing_notes
-                            log.info(f"Recovered existing speaker notes for slide '{t_title}'.")
-                        elif existing_notes.strip() not in generated_notes.strip():
-                            res_dict["speaker_notes"] = generated_notes + "\n\n" + existing_notes
-                            log.info(f"Appended existing speaker notes to generated notes for slide '{t_title}'.")
-                    
+                            log.info(
+                                f"Recovered existing speaker notes for slide '{t_title}'."
+                            )
+                        elif (
+                            existing_notes.strip()
+                            not in generated_notes.strip()
+                        ):
+                            res_dict["speaker_notes"] = (
+                                generated_notes + "\n\n" + existing_notes
+                            )
+                            log.info(
+                                f"Appended existing speaker notes to generated notes for slide '{t_title}'."
+                            )
+
                     # Determine if we should keep the planned layout or override it
                     planned_layout = t_layout
 
