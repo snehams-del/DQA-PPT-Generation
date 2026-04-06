@@ -257,7 +257,6 @@ uv run python -c "from nexshift_agent.agent import root_agent; print(f'Agent: {r
 
 ```bash
 make help          # Show all available commands
-make run        # Start ADK web UI
 ```
 
 ---
