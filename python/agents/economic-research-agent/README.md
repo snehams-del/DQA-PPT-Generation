@@ -12,7 +12,7 @@ An enterprise-grade, **Multi-Agent intelligence** for high-fidelity regional eco
 ## 🏛️ Executive Summary
 The **Economic Research Agent (ERA)** is a production-grade site-selection and market intelligence consultant. Designed for corporate research, ERA automates comparative metropolitan cost-modeling by orchestrating live public APIs (FRED, BLS, CENSUS, HUD, EIA) into McKinsey-style strategic briefs—now upgraded with an automated **Auditor Judge Agent** (via Serper Live Search) for zero-hallucination verification.
 
-![ERA Architecture](agent_pattern.png)
+![ERA Architecture](economic_research_agent_architecture.png)
 
 ```mermaid
 graph TD
@@ -20,16 +20,18 @@ graph TD
     
     subgraph "Structured Live Grounding (ReAct)"
         Planner --> ToolRouter{"Tool Router"}
-        ToolRouter --> Macro["Macro Hub (FRED, BEA, Census)"]
-        ToolRouter --> Labor["Labor Matrix (BLS Stats, Wage Data)"]
-        ToolRouter --> Policy["Policy & Risk (FEC, OpenFEC)"]
-        ToolRouter --> Infra["Infrastructure (EIA, HUD)"]
+        ToolRouter --> Macro["Macro Hub (FRED, BEA, Census, Tax Foundation)"]
+        ToolRouter --> Labor["Labor Matrix (BLS, Talent Pipeline)"]
+        ToolRouter --> Policy["Policy & Volatility (FEC, Regulatory, Political)"]
+        ToolRouter --> Infra["Infrastructure & Climate (EIA, HUD, Resilience)"]
+        ToolRouter --> Specialized["Specialized Synthesis (Metro Matrix, Relocation, Trade)"]
     end
     
     Macro --> LiveAPIs([Structured Public APIs])
     Labor --> LiveAPIs
     Policy --> LiveAPIs
     Infra --> LiveAPIs
+    Specialized --> LiveAPIs
     
     LiveAPIs -->|"Grounded Data"| Planner
     
