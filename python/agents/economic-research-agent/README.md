@@ -9,8 +9,70 @@ An enterprise-grade, **Multi-Agent intelligence** for high-fidelity regional eco
 
 ---
 
-## 🏛️ Executive Summary
+## A. Overview & Functionalities
+
 The **Economic Research Agent (ERA)** is a production-grade site-selection and market intelligence consultant. Designed for corporate research, ERA automates comparative metropolitan cost-modeling by orchestrating live public APIs (FRED, BLS, CENSUS, HUD, EIA) into McKinsey-style strategic briefs—now upgraded with an automated **Auditor Judge Agent** (via Serper Live Search) for zero-hallucination verification.
+
+### 📊 Agent Details
+
+| Feature | Specifics |
+| :--- | :--- |
+| **Interaction Type** | Conversational / Strategic Consultant |
+| **Complexity** | Advanced (Multi-Source Synthesis) |
+| **Agent Type** | Single Agent (ADK Class-Based) |
+| **Vertical** | Economic Development / Real Estate / Finance |
+| **Grounding** | 100% Live-API (FRED, BLS, HUD, Census, BEA) |
+
+### 💬 Example Interaction (Strategic Consulting)
+
+**User**: "Compare Austin and Raleigh for a new data center HQ."
+
+**ERA**: "I am analyzing technical and fiscal ROI for NAICS 518210 (Data Processing). 
+1. **Utility Benchmarking**: Texas (ERCOT) industrial rates average 8.2c/kWh, while North Carolina (Duke Energy) is 7.5c/kWh.
+2. **Talent Pipeline**: UT Austin graduated 1,200 CS majors in 2023 vs. 850 from NC State.
+3. **Fiscal Climate**: NC has a scheduled corporate tax phasedown to 0% by 2030, offering a better longitudinal OPEX profile.
+*Recommendation: Raleigh for long-term tax stability; Austin for immediate talent density.*"
+
+### 💎 Consultant's Playbook: The "WOW" Matrix
+
+| Source | Strategic "WOW" Query | Consultative Insight |
+| :--- | :--- | :--- |
+| **FRED** | "What is the 10-year unemployment trend for Austin vs. Nashville?" | Longitudinal Labor Resilience |
+| **BEA** | "Compare the Real GDP growth rate for the San Francisco MSA vs. Dallas." | Macroeconomic Momentum |
+| **Census** | "Show the educational attainment (Bachelor's+) pipeline for Seattle vs. Raleigh." | Talent Depth & Engineering Density |
+| **HUD** | "Is Austin affordable for a 50% AMI workforce? Correlate rent vs income." | Workforce Retention & COLA Risk |
+| **BLS** | "What is the 10-year wage trend vs. unionization in the Rust Belt?" | Labor Cost & Structural Risk |
+| **FEC** | "Benchmark the political stability of site selection in Ohio using FEC data." | Political Volatility & Lobbying Exposure |
+| **USITC** | "Analyze Arizona as a semiconductor hub. Show trade flows vs state tax rates." | Supply Chain Dependency (Chips) |
+| **EIA** | "Compare industrial electricity rates in Texas vs. Ohio for a data center." | Operational Utility Benchmarking |
+| **Register** | "Are there any recent regulatory notices regarding semiconductors in Texas?" | Live Regulatory Drift & Compliance |
+| **Tax F.** | "What are the corporate income tax brackets for North Carolina in 2024?" | Fiscal Competitiveness |
+| **Combined** | "Create a Metro Matrix comparing Denver and Seattle for a new Tech Hub." | 360-Degree Site Selection (Level 3) |
+
+### 📡 Consultative Capabilities
+
+#### 💼 Labor & Macro (FRED/BLS)
+- **Live Wage Analysis**: Real-time median hourly wages fetched via live FRED search (No hardcoded mocks).
+- **Unemployment Trends**: 10-year historical time-series sampling for MSA-level analysis.
+- **Union Density**: Live state-level union membership percentages.
+
+#### 🏢 Real Estate & Utilities (CoStar/EIA)
+- **Energy Matrix**: Live Industrial electricity rates (per kWh) using compliant EIA `IND` sector codes.
+- **ROI Modeling**: Real estate acquisition ROI based on live macro health indicators.
+
+#### 🗳️ Policy & Political Risk (FEC/LDA/OpenSecrets)
+- **Campaign Finance**: Correlate political stability with corporate and PAC contribution data.
+- **Lobbying Hubs**: Identification of industry influence and regulatory engagement levels.
+- **Regulatory Monitoring**: Live notices from the **Federal Register** regarding industry-specific policy shifts.
+
+#### 🏠 Housing & Affordability (HUD/Census)
+- **Workforce Burden Analysis**: Correlation of Fair Market Rents (FMR) against Area Median Income (AMI).
+- **Relocation COLA**: Precise cost-of-living benchmarking for talent retention strategy.
+- **Demographic Depth**: Hyper-localized education and age-bucket analysis (Census ACS).
+
+---
+
+## B. Architecture Visuals
 
 ![ERA Architecture](economic_research_agent_architecture.png)
 
@@ -47,60 +109,12 @@ graph TD
     style Search fill:#bbf,stroke:#333,stroke-width:2px
 ```
 
-### 📊 Agent Details
-| Feature | Specifics |
-| :--- | :--- |
-| **Interaction Type** | Conversational / Strategic Consultant |
-| **Complexity** | Advanced (Multi-Source Synthesis) |
-| **Agent Type** | Single Agent (ADK Class-Based) |
-| **Vertical** | Economic Development / Real Estate / Finance |
-| **Grounding** | 100% Live-API (FRED, BLS, HUD, Census, BEA) |
-
 ---
 
-## 💬 Example Interaction (Strategic Consulting)
-**User**: "Compare Austin and Raleigh for a new data center HQ."
+## C. Setup & Execution
 
-**ERA**: "I am analyzing technical and fiscal ROI for NAICS 518210 (Data Processing). 
-1. **Utility Benchmarking**: Texas (ERCOT) industrial rates average 8.2c/kWh, while North Carolina (Duke Energy) is 7.5c/kWh.
-2. **Talent Pipeline**: UT Austin graduated 1,200 CS majors in 2023 vs. 850 from NC State.
-3. **Fiscal Climate**: NC has a scheduled corporate tax phasedown to 0% by 2030, offering a better longitudinal OPEX profile.
-*Recommendation: Raleigh for long-term tax stability; Austin for immediate talent density.*"
+### 🔑 API Configuration (.env)
 
----
-
----
-
-## 💎 Consultant's Playbook: The "WOW" Matrix
-The ERA is a multi-tool synthesizer. Use these "WOW" queries to experience high-fidelity site-selection logic:
-
-| Source | Strategic "WOW" Query | Consultative Insight |
-| :--- | :--- | :--- |
-| **FRED** | "What is the 10-year unemployment trend for Austin vs. Nashville?" | Longitudinal Labor Resilience |
-| **BEA** | "Compare the Real GDP growth rate for the San Francisco MSA vs. Dallas." | Macroeconomic Momentum |
-| **Census** | "Show the educational attainment (Bachelor's+) pipeline for Seattle vs. Raleigh." | Talent Depth & Engineering Density |
-| **HUD** | "Is Austin affordable for a 50% AMI workforce? Correlate rent vs income." | Workforce Retention & COLA Risk |
-| **BLS** | "What is the 10-year wage trend vs. unionization in the Rust Belt?" | Labor Cost & Structural Risk |
-| **FEC** | "Benchmark the political stability of site selection in Ohio using FEC data." | Political Volatility & Lobbying Exposure |
-| **USITC** | "Analyze Arizona as a semiconductor hub. Show trade flows vs state tax rates." | Supply Chain Dependency (Chips) |
-| **EIA** | "Compare industrial electricity rates in Texas vs. Ohio for a data center." | Operational Utility Benchmarking |
-| **Register** | "Are there any recent regulatory notices regarding semiconductors in Texas?" | Live Regulatory Drift & Compliance |
-| **Tax F.** | "What are the corporate income tax brackets for North Carolina in 2024?" | Fiscal Competitiveness |
-| **Combined** | "Create a Metro Matrix comparing Denver and Seattle for a new Tech Hub." | 360-Degree Site Selection (Level 3) |
-
-### 🛠️ Multi-Source Strategic Synthesis
-These advanced queries trigger massive cross-connector orchestration:
-
-| Scenario | Strategic Query | Connectors Orchestrated |
-| :--- | :--- | :--- |
-| **HQ Relocation** | "Generate a Site Selection Report for a new Fintech HQ in Charlotte vs. Atlanta." | FRED + BEA + BLS + FEC + Census |
-| **Industrial Expansion** | "Compare industrial power-costs vs workforce availability in Michigan and Ohio." | EIA + BLS + Tax Foundation |
-| **Risk Assessment** | "Assess the regulatory and political risk profile for a biotech hub in Boston." | FEC + Register + NewsAPI + Census |
-| **Talent Arbitrage** | "Identify high-talent, low-cost engineering hubs in the Sun Belt." | Census + HUD + BLS + CoStar |
-
----
-
-## 🔑 API Configuration
 The ERA uses a modular grounding strategy. Set these in your `.env` file (see `.env.example`).
 
 | Service | Category | Status | Signup Link |
@@ -116,11 +130,8 @@ The ERA uses a modular grounding strategy. Set these in your `.env` file (see `.
 | **Serper** | Live Judge Search | **Optional** | [Sign up for Serper.dev](https://serper.dev/) |
 | **CDC** | Healthcare Stats | **Optional** | [Sign up for CDC Data](https://data.cdc.gov/) |
 
----
+### 🛠️ Installation
 
-## 🚀 B. Setup & Execution
-
-### Installation
 ERA uses `uv` for lightning-fast dependency management.
 
 ```bash
@@ -154,7 +165,8 @@ This command handles creating the project without needing to pre-install the pac
 
 The starter pack will prompt you to select deployment options and provides additional production-ready features including automated CI/CD deployment scripts.
 
-### Running the Agent
+### 🚀 Running the Agent
+
 ERA offers multiple interaction protocols:
 
 ```bash
@@ -167,40 +179,33 @@ make mcp
 
 ---
 
-## 📡 Consultative Capabilities
+## D. Customization & Extension
 
-### 💼 Labor & Macro (FRED/BLS)
-- **Live Wage Analysis**: Real-time median hourly wages fetched via live FRED search (No hardcoded mocks).
-- **Unemployment Trends**: 10-year historical time-series sampling for MSA-level analysis.
-- **Union Density**: Live state-level union membership percentages.
-
-### 🏢 Real Estate & Utilities (CoStar/EIA)
-- **Energy Matrix**: Live Industrial electricity rates (per kWh) using compliant EIA `IND` sector codes.
-- **ROI Modeling**: Real estate acquisition ROI based on live macro health indicators.
-
-### 🗳️ Policy & Political Risk (FEC/LDA/OpenSecrets)
-- **Campaign Finance**: Correlate political stability with corporate and PAC contribution data.
-- **Lobbying Hubs**: Identification of industry influence and regulatory engagement levels.
-- **Regulatory Monitoring**: Live notices from the **Federal Register** regarding industry-specific policy shifts.
-
-### 🏠 Housing & Affordability (HUD/Census)
-- **Workforce Burden Analysis**: Correlation of Fair Market Rents (FMR) against Area Median Income (AMI).
-- **Relocation COLA**: Precise cost-of-living benchmarking for talent retention strategy.
-- **Demographic Depth**: Hyper-localized education and age-bucket analysis (Census ACS).
+The ERA is designed for modular growth:
+- **Modifying the Persona**: Edit `economic_research/prompt.py` to change the consultative tone.
+- **Adding New Skills**: Add your skill in `economic_research/tools/`, then register it in `economic_research/agent.py`.
+- **Altering Data Flows**: Use the `shared_libraries/helper.py` to add new HTTP/JSON normalization patterns for regional data.
 
 ---
 
-## 📊 C. Quality Assurance: The Golden Suite
-The agent is validated using a **21-Question Golden Integration Suite**. This suite ensures 100% reliability across all API connectors.
+## E. Evaluation
+
+How do we know ERA is accurate?
+- **Golden Suite**: We use a 21-question integration suite (`tests/integration/`) targeting specific NAICS scenarios.
+- **Grounding Fidelity Metric**: The `eval/run_eval.py` script uses **LLM-as-a-Judge** (Gemini 3.1 Pro) to verify if the output contains actual numerical data from the APIs.
+- **Regression Testing**: `pytest` handles unit-level verification of API response parsing.
 
 ```bash
-# Run the full 21-question validation
+# Run the full 21-question validation suite
 uv run pytest tests/integration/test_full_golden_suite.py
 ```
 
 ---
 
-# 🚀 D. Production Deployment
+## F. Deploy
+
+### 🚀 Production Rollout
+
 The ERA is built for the **Vertex AI Reasoning Engine** (ADK 2.0).
 
 ```bash
@@ -208,19 +213,8 @@ The ERA is built for the **Vertex AI Reasoning Engine** (ADK 2.0).
 make deploy
 ```
 
-## 🛠️ E. Customization & Extension
-The ERA is designed for modular growth:
-- **Modifying the Persona**: Edit `economic_research/prompt.py` to change the consultative tone.
-- **Adding New Skills**: Add your skill in `economic_research/tools/`, then register it in `economic_research/agent.py`.
-- **Altering Data Flows**: Use the `shared_libraries/helper.py` to add new HTTP/JSON normalization patterns for regional data.
+### 🔒 Cloud-Native Security & Privacy
 
-## 📊 F. Evaluation Methodology
-How do we know ERA is accurate?
-- **Golden Suite**: We use a 21-question integration suite (`tests/integration/`) targeting specific NAICS scenarios.
-- **Grounding Fidelity Metric**: The `eval/run_eval.py` script uses **LLM-as-a-Judge** (Gemini 3.1 Pro) to verify if the output contains actual numerical data from the APIs.
-- **Regression Testing**: `pytest` handles unit-level verification of API response parsing.
-
-## 🔒 G. Cloud-Native Security & Privacy
 The ERA is engineered for **Enterprise Privacy** within the Google Cloud perimeter:
 - **Zero Data Retention**: No local databases or static tables are used. Data is processed in-memory.
 - **Key-Safe Architecture**: Secrets are managed via `.env` or Google Secret Manager.

@@ -72,7 +72,7 @@ class ERAAgent:
         ]
 
         era_agent = Agent(
-            name="Economic Research",
+            name="economic_research",
             model=Gemini(model_name="gemini-2.5-flash"),
             instruction=ERA_INSTRUCTIONS,
             tools=tools,
