@@ -102,7 +102,7 @@ ignore-words-list = "rouge"
 skip = "./locust_env/*,uv.lock,.venv,./frontend,**/*.ipynb"
 
 [tool.uv]
-environments = ["sys_platform == 'darwin'"]
+# Universal platform support
 
 [[tool.uv.index]]
 name = "pypi"
