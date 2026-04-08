@@ -122,6 +122,8 @@ allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["economic_research", "deployment"]
+include = ["deployment/**/*", "economic_research/**/*"]
+force-include = {"deployment" = "deployment"}
 
 [tool.hatch.build.targets.sdist]
 include = ["economic_research", "deployment"]
