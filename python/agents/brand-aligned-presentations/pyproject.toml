@@ -96,7 +96,7 @@ extend-ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["eval", "deployment", "presentation_agent"]
+known-first-party = ["eval", "presentation_agent"]
 
 [tool.codespell]
 ignore-words-list = "rouge"
