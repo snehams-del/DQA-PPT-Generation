@@ -150,7 +150,7 @@ def main(mode):
         "IMAGE_GENERATION_MODEL": str(
             os.getenv("IMAGE_GENERATION_MODEL") or "imagen-3.0-generate-002"
         ),
-        "GCP_STAGING_BUCKET": str(os.getenv("GCP_STAGING_BUCKET") or ""),
+        "GCP_STAGING_BUCKET": str(GCP_STAGING_BUCKET or ""),
         "DEFAULT_TEMPLATE_URI": default_template_uri,
         "ENABLE_RAG": str(os.getenv("ENABLE_RAG") or "false"),
         "ENABLE_DEEP_RESEARCH": str(
