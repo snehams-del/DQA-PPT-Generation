@@ -16,6 +16,15 @@ import argparse
 import logging
 import os
 import sys
+
+# --- SHADOWING PROTECTION ---
+# When moved by agent-starter-pack, this script may sit next to a local 'typing.py'.
+# We remove the current script's directory from the path to ensure we use the standard library.
+script_dir = os.path.dirname(os.path.abspath(__file__))
+if script_dir in sys.path:
+    sys.path.remove(script_dir)
+# ----------------------------
+
 import tomllib
 
 import vertexai

@@ -9,7 +9,7 @@ backend:
 	elif [ -f presentation_agent/app_utils/deploy.py ]; then \
 		uv run python presentation_agent/app_utils/deploy.py --mode create; \
 	else \
-		echo "Error: deploy.py not found in deployment/ or presentation_agent/app_utils/"; \
+		echo "Error: deploy.py not found. Check project structure."; \
 		exit 1; \
 	fi
 
@@ -19,10 +19,11 @@ update:
 	elif [ -f presentation_agent/app_utils/deploy.py ]; then \
 		uv run python presentation_agent/app_utils/deploy.py --mode update; \
 	else \
-		echo "Error: deploy.py not found in deployment/ or presentation_agent/app_utils/"; \
+		echo "Error: deploy.py not found. Check project structure."; \
 		exit 1; \
 	fi
 
 test:
-	rm -rf .pytest_cache __pycache__ tests/__pycache__
+	find . -type d -name "__pycache__" -exec rm -rf {} +
+	rm -rf .pytest_cache
 	uv run pytest --cache-clear
