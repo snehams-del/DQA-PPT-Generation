@@ -64,7 +64,7 @@ def load_requirements():
 def main(mode):
     GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT")
     GOOGLE_CLOUD_LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
-    GCP_STAGING_BUCKET = os.getenv("GCP_STAGING_BUCKET", f"{GOOGLE_CLOUD_PROJECT}-agent-engine-v16")
+    GCP_STAGING_BUCKET = os.getenv("GCP_STAGING_BUCKET", f"gs://{GOOGLE_CLOUD_PROJECT}-agent-engine-v16")
     AGENT_ENGINE_ID = os.getenv("AGENT_ENGINE_ID")
     
     vertexai.init(
