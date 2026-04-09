@@ -7,8 +7,8 @@ import logging
 import os
 from datetime import datetime, timedelta
 from typing import Optional
-from agents.tools.data_loader import load_nurses, generate_shifts
-from agents.tools.history_tools import _load_json, NURSE_STATS_FILE
+from nexshift_agent.sub_agents.tools.data_loader import load_nurses, generate_shifts
+from nexshift_agent.sub_agents.tools.history_tools import _load_json, NURSE_STATS_FILE
 
 logger = logging.getLogger(__name__)
 
@@ -309,7 +309,7 @@ def get_upcoming_shifts(days: int = 7) -> str:
     Returns:
         Formatted list of upcoming shifts with requirements.
     """
-    from agents.tools.data_loader import get_shifts_to_fill
+    from nexshift_agent.sub_agents.tools.data_loader import get_shifts_to_fill
     return get_shifts_to_fill(num_days=days)
 
 

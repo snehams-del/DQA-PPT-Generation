@@ -2,7 +2,7 @@ import json
 import os
 from typing import List
 from datetime import datetime, timedelta
-from agents.models.domain import Nurse
+from nexshift_agent.models.domain import Nurse
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "../../data")
 
@@ -135,7 +135,7 @@ def get_shifts_to_fill(start_date: str = "", num_days: int = 7) -> str:
     Returns:
         Formatted string with shift details including ward, time, and requirements.
     """
-    from agents.tools.history_tools import get_next_unscheduled_date, check_period_overlap
+    from nexshift_agent.sub_agents.tools.history_tools import get_next_unscheduled_date, check_period_overlap
 
     # Parse start_date if provided, otherwise use next unscheduled date
     if start_date:

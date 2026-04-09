@@ -10,14 +10,14 @@ The workflow enforces a strict sequence:
 import logging
 from google.adk.agents import LlmAgent, SequentialAgent, ParallelAgent
 
-from agents.config import MODEL_COORDINATOR
-from agents.context_gatherer import create_context_gatherer_agent
-from agents.solver_agent import create_solver_agent
-from agents.compliance import create_compliance_agent
-from agents.empathy import create_empathy_agent
-from agents.presenter import create_presenter_agent
+from nexshift_agent.sub_agents.config import MODEL_COORDINATOR
+from nexshift_agent.sub_agents.context_gatherer import create_context_gatherer_agent
+from nexshift_agent.sub_agents.solver_agent import create_solver_agent
+from nexshift_agent.sub_agents.compliance import create_compliance_agent
+from nexshift_agent.sub_agents.empathy import create_empathy_agent
+from nexshift_agent.sub_agents.presenter import create_presenter_agent
 
-from agents.tools.query_tools import (
+from nexshift_agent.sub_agents.tools.query_tools import (
     get_nurse_info,
     list_nurses,
     list_nurse_preferences,
@@ -25,12 +25,12 @@ from agents.tools.query_tools import (
     get_upcoming_shifts,
     get_staffing_summary
 )
-from agents.tools.history_tools import (
+from nexshift_agent.sub_agents.tools.history_tools import (
     get_nurse_stats,
     get_shift_history,
     get_nurse_history
 )
-from agents.tools.data_loader import get_regulations
+from nexshift_agent.sub_agents.tools.data_loader import get_regulations
 
 logger = logging.getLogger(__name__)
 
@@ -205,7 +205,7 @@ For roster generation requests, delegate to the RosteringWorkflow sub-agent whic
 - Use the appropriate query tool based on user intent
 """
 
-from agents.tools.history_tools import (
+from nexshift_agent.sub_agents.tools.history_tools import (
     list_pending_rosters,
     list_all_rosters,
     finalize_roster,
@@ -216,7 +216,7 @@ from agents.tools.history_tools import (
     get_rosters_by_date_range,
     compare_rosters
 )
-from agents.tools.hris_tools import (
+from nexshift_agent.sub_agents.tools.hris_tools import (
     add_nurse,
     promote_nurse,
     update_nurse_certifications,
@@ -227,14 +227,14 @@ from agents.tools.hris_tools import (
     remove_time_off_request,
     list_time_off_requests
 )
-from agents.tools.compliance_tools import (
+from nexshift_agent.sub_agents.tools.compliance_tools import (
     validate_roster_compliance,
     validate_weekly_hours
 )
-from agents.tools.empathy_tools import (
+from nexshift_agent.sub_agents.tools.empathy_tools import (
     analyze_roster_fairness
 )
-from agents.callbacks.format_output import format_model_output
+from nexshift_agent.callbacks.format_output import format_model_output
 
 
 def create_coordinator_agent(model_name: str = MODEL_COORDINATOR) -> LlmAgent:

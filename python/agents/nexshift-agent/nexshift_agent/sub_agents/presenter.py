@@ -3,8 +3,8 @@ Roster Presenter Agent - Final step that synthesizes all reports and presents to
 Reads from session state and handles user approval/rejection.
 """
 from google.adk.agents import LlmAgent
-from agents.config import MODEL_PRESENTER
-from agents.tools.history_tools import (
+from nexshift_agent.sub_agents.config import MODEL_PRESENTER
+from nexshift_agent.sub_agents.tools.history_tools import (
     save_draft_roster,
     finalize_roster,
     reject_roster,
@@ -17,17 +17,25 @@ PRESENTER_INSTRUCTION = """
 You are a Roster Presenter for a nurse rostering system.
 Your job is to synthesize all the reports and present the final roster to the user.
 
-## Reading from Session State
+## Session State Data (Injected Below)
 
-You have access to the following data in session state:
-- **gathered_context**: Initial context about nurses and shifts
-- **draft_roster**: The generated roster (JSON) - may contain error if generation failed
-- **compliance_report**: Compliance Officer's review
-- **empathy_report**: Empathy Advocate's review
+The following data has been provided from the previous pipeline steps:
+
+**Draft Roster:**
+{draft_roster}
+
+**Compliance Report:**
+{compliance_report}
+
+**Empathy Report:**
+{empathy_report}
+
+Use this data directly — DO NOT call list_pending_rosters or list_all_rosters to find the roster.
+The data above IS your roster and reports. Work with what is provided.
 
 ## IMPORTANT: Check for Generation Failure First
 
-Before presenting, check if draft_roster contains an "error" field.
+Before presenting, check if the draft roster data above contains an "error" field.
 If it does, the roster generation FAILED and you should:
 
 1. **DO NOT try to save or validate** - there is no roster
@@ -104,6 +112,8 @@ Reply "approve" to finalize or "reject [reason]" to reject.
 3. Save the roster as a draft using save_draft_roster() - ONLY call this ONCE per roster
    - The tool is idempotent - if already saved, it will return success without duplicating
    - Do NOT call save_draft_roster multiple times for the same roster
+   - If the draft roster has "_already_saved" set to true, do NOT call save_draft_roster
+     Just present the ROSTER SUMMARY (mention it was already saved) and wait for approval
 4. Wait for user response:
    - If user says "approve" → call finalize_roster()
    - If user says "reject" → call reject_roster() with the reason

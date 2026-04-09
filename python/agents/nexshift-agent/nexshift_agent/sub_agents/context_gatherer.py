@@ -3,9 +3,9 @@ Context Gatherer Agent - First step in the roster generation workflow.
 Gathers all necessary context (nurse stats, shifts, regulations) before roster generation.
 """
 from google.adk.agents import LlmAgent
-from agents.config import MODEL_CONTEXT_GATHERER
-from agents.tools.data_loader import get_available_nurses, get_shifts_to_fill, get_regulations
-from agents.tools.history_tools import get_nurse_stats, get_shift_history
+from nexshift_agent.sub_agents.config import MODEL_CONTEXT_GATHERER
+from nexshift_agent.sub_agents.tools.data_loader import get_available_nurses, get_shifts_to_fill, get_regulations
+from nexshift_agent.sub_agents.tools.history_tools import get_nurse_stats, get_shift_history
 
 CONTEXT_GATHERER_INSTRUCTION = """
 You are a Context Gatherer for a nurse rostering system.

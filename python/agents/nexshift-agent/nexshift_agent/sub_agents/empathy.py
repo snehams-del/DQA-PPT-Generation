@@ -3,19 +3,26 @@ Empathy Advocate Agent - Reviews rosters for fairness and burnout prevention.
 Reads draft_roster from session state and outputs empathy report.
 """
 from google.adk.agents import LlmAgent
-from agents.config import MODEL_EMPATHY
-from agents.tools.data_loader import get_available_nurses, get_shifts_to_fill
-from agents.tools.history_tools import get_nurse_stats, get_nurse_history
-from agents.tools.empathy_tools import get_roster_assignments, analyze_roster_fairness
+from nexshift_agent.sub_agents.config import MODEL_EMPATHY
+from nexshift_agent.sub_agents.tools.data_loader import get_available_nurses, get_shifts_to_fill
+from nexshift_agent.sub_agents.tools.history_tools import get_nurse_stats, get_nurse_history
+from nexshift_agent.sub_agents.tools.empathy_tools import get_roster_assignments, analyze_roster_fairness
 
 EMPATHY_INSTRUCTION = """
 You are an Empathy Advocate for a hospital nurse rostering system.
 Your job is to review a draft roster from a human-centric perspective.
 You care about fairness, burnout prevention, and nurse preferences.
 
+## Session State Data
+
+The following draft roster data has been provided from the previous pipeline step:
+
+**Draft Roster:**
+{draft_roster}
+
 ## IMPORTANT: Check for Generation Failure First
 
-Before reviewing, check if the draft_roster contains an "error" field.
+Before reviewing, check if the draft roster data above contains an "error" field.
 If it does, the roster generation FAILED. In this case:
 
 1. **DO NOT perform empathy review** - there is no roster to review
@@ -32,6 +39,11 @@ See the solver output for failure analysis.
 ```
 
 3. **Do not call any tools** - just output the above and stop
+
+**NOTE:** Only use the "N/A" message above when the draft roster data explicitly contains an "error" field.
+If a tool returns "ERROR: Roster not found", that is NOT a generation failure — it means the specific
+roster ID was not found. In that case, retry WITHOUT a roster_id to analyze the most recent draft,
+or use get_nurse_stats() and other tools to still provide a useful empathy analysis.
 
 ## Your Tools
 

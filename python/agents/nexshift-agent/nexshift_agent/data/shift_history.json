@@ -1036,6 +1036,420 @@
       "status": "draft",
       "generated_at": "2026-03-17T21:43:33.048026",
       "roster_id": "roster_20260317214333_1538"
+    },
+    {
+      "id": "roster_20260406230025_5618",
+      "assignments": [
+        {
+          "nurse_id": "nurse_002",
+          "shift_id": "shift_006"
+        },
+        {
+          "nurse_id": "nurse_002",
+          "shift_id": "shift_021"
+        },
+        {
+          "nurse_id": "nurse_002",
+          "shift_id": "shift_028"
+        },
+        {
+          "nurse_id": "nurse_002",
+          "shift_id": "shift_032"
+        },
+        {
+          "nurse_id": "nurse_003",
+          "shift_id": "shift_016"
+        },
+        {
+          "nurse_id": "nurse_003",
+          "shift_id": "shift_029"
+        },
+        {
+          "nurse_id": "nurse_003",
+          "shift_id": "shift_031"
+        },
+        {
+          "nurse_id": "nurse_003",
+          "shift_id": "shift_043"
+        },
+        {
+          "nurse_id": "nurse_004",
+          "shift_id": "shift_010"
+        },
+        {
+          "nurse_id": "nurse_004",
+          "shift_id": "shift_011"
+        },
+        {
+          "nurse_id": "nurse_004",
+          "shift_id": "shift_019"
+        },
+        {
+          "nurse_id": "nurse_004",
+          "shift_id": "shift_047"
+        },
+        {
+          "nurse_id": "nurse_006",
+          "shift_id": "shift_002"
+        },
+        {
+          "nurse_id": "nurse_006",
+          "shift_id": "shift_013"
+        },
+        {
+          "nurse_id": "nurse_006",
+          "shift_id": "shift_023"
+        },
+        {
+          "nurse_id": "nurse_006",
+          "shift_id": "shift_045"
+        },
+        {
+          "nurse_id": "nurse_010",
+          "shift_id": "shift_033"
+        },
+        {
+          "nurse_id": "nurse_010",
+          "shift_id": "shift_036"
+        },
+        {
+          "nurse_id": "nurse_011",
+          "shift_id": "shift_005"
+        },
+        {
+          "nurse_id": "nurse_011",
+          "shift_id": "shift_025"
+        },
+        {
+          "nurse_id": "nurse_011",
+          "shift_id": "shift_027"
+        },
+        {
+          "nurse_id": "nurse_011",
+          "shift_id": "shift_034"
+        },
+        {
+          "nurse_id": "nurse_012",
+          "shift_id": "shift_003"
+        },
+        {
+          "nurse_id": "nurse_012",
+          "shift_id": "shift_009"
+        },
+        {
+          "nurse_id": "nurse_012",
+          "shift_id": "shift_026"
+        },
+        {
+          "nurse_id": "nurse_012",
+          "shift_id": "shift_035"
+        },
+        {
+          "nurse_id": "nurse_012",
+          "shift_id": "shift_046"
+        },
+        {
+          "nurse_id": "nurse_014",
+          "shift_id": "shift_001"
+        },
+        {
+          "nurse_id": "nurse_014",
+          "shift_id": "shift_008"
+        },
+        {
+          "nurse_id": "nurse_014",
+          "shift_id": "shift_038"
+        },
+        {
+          "nurse_id": "nurse_015",
+          "shift_id": "shift_004"
+        },
+        {
+          "nurse_id": "nurse_015",
+          "shift_id": "shift_012"
+        },
+        {
+          "nurse_id": "nurse_015",
+          "shift_id": "shift_017"
+        },
+        {
+          "nurse_id": "nurse_015",
+          "shift_id": "shift_044"
+        },
+        {
+          "nurse_id": "nurse_016",
+          "shift_id": "shift_007"
+        },
+        {
+          "nurse_id": "nurse_016",
+          "shift_id": "shift_042"
+        },
+        {
+          "nurse_id": "nurse_017",
+          "shift_id": "shift_014"
+        },
+        {
+          "nurse_id": "nurse_017",
+          "shift_id": "shift_018"
+        },
+        {
+          "nurse_id": "nurse_017",
+          "shift_id": "shift_020"
+        },
+        {
+          "nurse_id": "nurse_017",
+          "shift_id": "shift_041"
+        },
+        {
+          "nurse_id": "nurse_018",
+          "shift_id": "shift_022"
+        },
+        {
+          "nurse_id": "nurse_018",
+          "shift_id": "shift_024"
+        },
+        {
+          "nurse_id": "nurse_018",
+          "shift_id": "shift_040"
+        },
+        {
+          "nurse_id": "nurse_019",
+          "shift_id": "shift_015"
+        },
+        {
+          "nurse_id": "nurse_019",
+          "shift_id": "shift_037"
+        },
+        {
+          "nurse_id": "nurse_020",
+          "shift_id": "shift_030"
+        },
+        {
+          "nurse_id": "nurse_020",
+          "shift_id": "shift_039"
+        }
+      ],
+      "metadata": {
+        "generated_at": "2026-04-06 23:00:25.301538",
+        "compliance_status": "Pending",
+        "empathy_score": 0.65,
+        "compliance_notes": null,
+        "empathy_notes": "10 preference violation(s), 1 burnout risk(s)"
+      },
+      "period": {
+        "start": "2026-04-06",
+        "end": "2026-04-12"
+      },
+      "status": "draft",
+      "generated_at": "2026-04-06T23:00:25.301638",
+      "roster_id": "roster_20260406230025_5618"
+    },
+    {
+      "id": "roster_20260406230029_6777",
+      "assignments": [
+        {
+          "nurse_id": "nurse_002",
+          "shift_id": "shift_007"
+        },
+        {
+          "nurse_id": "nurse_002",
+          "shift_id": "shift_013"
+        },
+        {
+          "nurse_id": "nurse_002",
+          "shift_id": "shift_020"
+        },
+        {
+          "nurse_id": "nurse_002",
+          "shift_id": "shift_031"
+        },
+        {
+          "nurse_id": "nurse_002",
+          "shift_id": "shift_045"
+        },
+        {
+          "nurse_id": "nurse_003",
+          "shift_id": "shift_017"
+        },
+        {
+          "nurse_id": "nurse_003",
+          "shift_id": "shift_018"
+        },
+        {
+          "nurse_id": "nurse_003",
+          "shift_id": "shift_033"
+        },
+        {
+          "nurse_id": "nurse_003",
+          "shift_id": "shift_047"
+        },
+        {
+          "nurse_id": "nurse_004",
+          "shift_id": "shift_003"
+        },
+        {
+          "nurse_id": "nurse_004",
+          "shift_id": "shift_004"
+        },
+        {
+          "nurse_id": "nurse_004",
+          "shift_id": "shift_040"
+        },
+        {
+          "nurse_id": "nurse_004",
+          "shift_id": "shift_041"
+        },
+        {
+          "nurse_id": "nurse_004",
+          "shift_id": "shift_046"
+        },
+        {
+          "nurse_id": "nurse_006",
+          "shift_id": "shift_005"
+        },
+        {
+          "nurse_id": "nurse_006",
+          "shift_id": "shift_011"
+        },
+        {
+          "nurse_id": "nurse_006",
+          "shift_id": "shift_019"
+        },
+        {
+          "nurse_id": "nurse_006",
+          "shift_id": "shift_029"
+        },
+        {
+          "nurse_id": "nurse_006",
+          "shift_id": "shift_035"
+        },
+        {
+          "nurse_id": "nurse_010",
+          "shift_id": "shift_015"
+        },
+        {
+          "nurse_id": "nurse_010",
+          "shift_id": "shift_032"
+        },
+        {
+          "nurse_id": "nurse_011",
+          "shift_id": "shift_014"
+        },
+        {
+          "nurse_id": "nurse_011",
+          "shift_id": "shift_026"
+        },
+        {
+          "nurse_id": "nurse_011",
+          "shift_id": "shift_034"
+        },
+        {
+          "nurse_id": "nurse_011",
+          "shift_id": "shift_036"
+        },
+        {
+          "nurse_id": "nurse_012",
+          "shift_id": "shift_016"
+        },
+        {
+          "nurse_id": "nurse_012",
+          "shift_id": "shift_023"
+        },
+        {
+          "nurse_id": "nurse_012",
+          "shift_id": "shift_039"
+        },
+        {
+          "nurse_id": "nurse_012",
+          "shift_id": "shift_042"
+        },
+        {
+          "nurse_id": "nurse_014",
+          "shift_id": "shift_022"
+        },
+        {
+          "nurse_id": "nurse_014",
+          "shift_id": "shift_043"
+        },
+        {
+          "nurse_id": "nurse_015",
+          "shift_id": "shift_021"
+        },
+        {
+          "nurse_id": "nurse_015",
+          "shift_id": "shift_025"
+        },
+        {
+          "nurse_id": "nurse_016",
+          "shift_id": "shift_002"
+        },
+        {
+          "nurse_id": "nurse_016",
+          "shift_id": "shift_012"
+        },
+        {
+          "nurse_id": "nurse_016",
+          "shift_id": "shift_024"
+        },
+        {
+          "nurse_id": "nurse_016",
+          "shift_id": "shift_044"
+        },
+        {
+          "nurse_id": "nurse_017",
+          "shift_id": "shift_009"
+        },
+        {
+          "nurse_id": "nurse_017",
+          "shift_id": "shift_028"
+        },
+        {
+          "nurse_id": "nurse_018",
+          "shift_id": "shift_001"
+        },
+        {
+          "nurse_id": "nurse_018",
+          "shift_id": "shift_006"
+        },
+        {
+          "nurse_id": "nurse_018",
+          "shift_id": "shift_027"
+        },
+        {
+          "nurse_id": "nurse_018",
+          "shift_id": "shift_038"
+        },
+        {
+          "nurse_id": "nurse_019",
+          "shift_id": "shift_010"
+        },
+        {
+          "nurse_id": "nurse_019",
+          "shift_id": "shift_037"
+        },
+        {
+          "nurse_id": "nurse_020",
+          "shift_id": "shift_008"
+        },
+        {
+          "nurse_id": "nurse_020",
+          "shift_id": "shift_030"
+        }
+      ],
+      "metadata": {
+        "generated_at": "2026-04-06 23:00:29.936541",
+        "compliance_status": "PASS",
+        "empathy_score": 0.55,
+        "compliance_notes": "All checks passed",
+        "empathy_notes": "10 preference violation(s), 3 burnout risk(s)"
+      },
+      "period": {
+        "start": "2025-01-15",
+        "end": "2025-01-21"
+      },
+      "status": "draft",
+      "generated_at": "2026-04-06T23:00:29.936631",
+      "roster_id": "roster_20260406230029_6777"
     }
   ],
   "metadata": {

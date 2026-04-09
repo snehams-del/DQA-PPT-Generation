@@ -1,5 +1,5 @@
 from ortools.sat.python import cp_model
-from agents.models.domain import Nurse, Shift, Roster, Assignment, RosterMetadata, NursePreferences, NurseHistory
+from nexshift_agent.models.domain import Nurse, Shift, Roster, Assignment, RosterMetadata, NursePreferences, NurseHistory
 from datetime import datetime, timedelta
 from collections import defaultdict
 from copy import deepcopy
@@ -176,8 +176,8 @@ def generate_roster(start_date: str = "", num_days: int = 7, constraints_json: s
         If overlap detected, returns warning info instead.
     """
     # Import here to avoid circular imports
-    from agents.tools.data_loader import load_nurses, generate_shifts as gen_shifts
-    from agents.tools.history_tools import _load_json, NURSE_STATS_FILE, get_next_unscheduled_date, check_period_overlap
+    from nexshift_agent.sub_agents.tools.data_loader import load_nurses, generate_shifts as gen_shifts
+    from nexshift_agent.sub_agents.tools.history_tools import _load_json, NURSE_STATS_FILE, get_next_unscheduled_date, check_period_overlap
 
     # Load data automatically
     nurses_objs = load_nurses()
@@ -715,8 +715,8 @@ def simulate_staffing_change(
     Returns:
         Simulation report showing if the changes would resolve staffing issues.
     """
-    from agents.tools.data_loader import load_nurses, generate_shifts as gen_shifts
-    from agents.tools.history_tools import _load_json, NURSE_STATS_FILE, get_next_unscheduled_date
+    from nexshift_agent.sub_agents.tools.data_loader import load_nurses, generate_shifts as gen_shifts
+    from nexshift_agent.sub_agents.tools.history_tools import _load_json, NURSE_STATS_FILE, get_next_unscheduled_date
 
     # Load current data
     nurses_objs = load_nurses()

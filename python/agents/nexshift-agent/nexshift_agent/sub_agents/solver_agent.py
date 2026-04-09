@@ -3,9 +3,9 @@ Roster Solver Agent - Generates optimal nurse rosters using OR-Tools.
 Reads context from session state and outputs draft roster.
 """
 from google.adk.agents import LlmAgent
-from agents.config import MODEL_SOLVER
-from agents.tools.solver_tool import generate_roster, simulate_staffing_change
-from agents.tools.history_tools import delete_roster
+from nexshift_agent.sub_agents.config import MODEL_SOLVER
+from nexshift_agent.sub_agents.tools.solver_tool import generate_roster, simulate_staffing_change
+from nexshift_agent.sub_agents.tools.history_tools import delete_roster
 
 SOLVER_INSTRUCTION = """
 You are a Roster Solver.

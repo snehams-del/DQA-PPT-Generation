@@ -5,7 +5,7 @@ from typing import Optional
 from google.genai import types
 from google.adk.agents.callback_context import CallbackContext
 from google.adk.models import LlmResponse
-from agents.utils.output_formatter import OutputFormatter
+from nexshift_agent.sub_agents.utils.output_formatter import OutputFormatter
 
 
 def format_model_output(

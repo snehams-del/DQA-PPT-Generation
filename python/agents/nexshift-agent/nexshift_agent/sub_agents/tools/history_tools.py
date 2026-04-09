@@ -383,7 +383,7 @@ def get_roster_by_id(roster_id: str) -> str:
         return f"Roster '{roster_id}' not found."
 
     # Load nurse names for display
-    from agents.tools.data_loader import load_nurses, generate_shifts
+    from nexshift_agent.sub_agents.tools.data_loader import load_nurses, generate_shifts
     nurses = {n.id: n for n in load_nurses()}
 
     # Determine start date for shift generation
@@ -625,11 +625,11 @@ def get_roster(roster_id: str) -> str:
         return result
 
     # Load nurse names for display
-    from agents.tools.data_loader import load_nurses
+    from nexshift_agent.sub_agents.tools.data_loader import load_nurses
     nurses = {n.id: n.name for n in load_nurses()}
 
     # Load shift info - try to get period, or infer from generated_at date
-    from agents.tools.data_loader import generate_shifts
+    from nexshift_agent.sub_agents.tools.data_loader import generate_shifts
     shifts_map = {}
 
     # Try to determine the start date for shift generation
@@ -802,7 +802,7 @@ def get_rosters_by_date_range(start_date: str, end_date: str) -> str:
     result += f"Found {len(matching_rosters)} roster(s)\n\n"
 
     # Load nurse data for name lookup
-    from agents.tools.data_loader import load_nurses, generate_shifts
+    from nexshift_agent.sub_agents.tools.data_loader import load_nurses, generate_shifts
     nurses = {n.id: n for n in load_nurses()}
 
     # Display each roster with calendar table
@@ -959,7 +959,7 @@ def save_draft_roster(roster_json: str) -> str:
 
     # Calculate period from shift_ids by looking up shift dates
     if "period" not in roster or not roster.get("period", {}).get("start"):
-        from agents.tools.data_loader import generate_shifts
+        from nexshift_agent.sub_agents.tools.data_loader import generate_shifts
 
         # Infer start date from generated_at or roster metadata
         generated_at = roster.get("generated_at") or roster.get("metadata", {}).get("generated_at")
@@ -1017,7 +1017,7 @@ def _get_assignment_dates(roster: dict, rosters_dir: str) -> set:
     Get all dates covered by assignments in a roster.
     Uses shift_id to look up dates from generated shifts.
     """
-    from agents.tools.data_loader import generate_shifts
+    from nexshift_agent.sub_agents.tools.data_loader import generate_shifts
 
     period = roster.get("period", {})
     if not period.get("start"):
@@ -1047,7 +1047,7 @@ def _remove_assignments_for_dates(roster: dict, dates_to_remove: set) -> list:
     Remove assignments for specific dates from a roster.
     Returns the removed assignments.
     """
-    from agents.tools.data_loader import generate_shifts
+    from nexshift_agent.sub_agents.tools.data_loader import generate_shifts
 
     period = roster.get("period", {})
     if not period.get("start"):
