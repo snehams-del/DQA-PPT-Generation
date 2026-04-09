@@ -4,24 +4,10 @@ install:
 	uv sync
 
 backend:
-	@if [ -f deployment/deploy.py ]; then \
-		uv run python deployment/deploy.py --mode create; \
-	elif [ -f presentation_agent/app_utils/deploy.py ]; then \
-		uv run python presentation_agent/app_utils/deploy.py --mode create; \
-	else \
-		echo "Error: deploy.py not found. Check project structure."; \
-		exit 1; \
-	fi
+	uv run python presentation_agent/deployment/deploy.py --mode create
 
 update:
-	@if [ -f deployment/deploy.py ]; then \
-		uv run python deployment/deploy.py --mode update; \
-	elif [ -f presentation_agent/app_utils/deploy.py ]; then \
-		uv run python presentation_agent/app_utils/deploy.py --mode update; \
-	else \
-		echo "Error: deploy.py not found. Check project structure."; \
-		exit 1; \
-	fi
+	uv run python presentation_agent/deployment/deploy.py --mode update
 
 test:
 	find . -type d -name "__pycache__" -exec rm -rf {} +

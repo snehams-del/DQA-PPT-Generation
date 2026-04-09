@@ -16,15 +16,6 @@ import argparse
 import logging
 import os
 import sys
-
-# --- SHADOWING PROTECTION ---
-# When moved by agent-starter-pack, this script may sit next to a local 'typing.py'.
-# We remove the current script's directory from the path to ensure we use the standard library.
-script_dir = os.path.dirname(os.path.abspath(__file__))
-if script_dir in sys.path:
-    sys.path.remove(script_dir)
-# ----------------------------
-
 import tomllib
 
 import vertexai
@@ -33,7 +24,9 @@ from vertexai import agent_engines
 from vertexai.preview.reasoning_engines import AdkApp
 
 # Add the project root to sys.path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+# Since we are now in root/presentation_agent/deployment/deploy.py, 
+# the project root is two levels up.
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 from presentation_agent.agent import root_agent
@@ -51,7 +44,7 @@ AGENT_ENGINE_ID = os.getenv("AGENT_ENGINE_ID")
 
 
 ENV_FILE_PATH = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..", "", ".env")
+    os.path.join(os.path.dirname(__file__), "..", "..", ".env")
 )
 
 vertexai.init(
@@ -76,7 +69,7 @@ def update_env_file(agent_engine_id, env_file_path):
 def load_requirements():
     """Loads requirements from pyproject.toml."""
     pyproject_path = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "..", "pyproject.toml")
+        os.path.join(os.path.dirname(__file__), "..", "..", "pyproject.toml")
     )
     with open(pyproject_path, "rb") as f:
         pyproject_data = tomllib.load(f)
