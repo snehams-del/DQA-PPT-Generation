@@ -121,7 +121,7 @@ pythonpath = "."
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["economic_research", "deployment"]
+packages = ["economic_research"]
 
 [tool.hatch.build.targets.sdist]
-include = ["economic_research", "deployment"]
+include = ["economic_research"]
