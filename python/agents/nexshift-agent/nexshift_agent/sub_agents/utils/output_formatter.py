@@ -2,8 +2,8 @@
 Universal output formatter for chat-friendly rendering.
 Detects content type and converts to well-formatted markdown.
 """
+
 import re
-from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 
 
@@ -41,23 +41,31 @@ class OutputFormatter:
     # =========================================================================
 
     def _is_nurse_list(self, text: str) -> bool:
-        return bool(re.search(r'\[(OK|HIGH|MOD)\].*nurse_\d+', text)) or \
-               bool(re.search(r'(ALL NURSES|SENIOR NURSES|AVAILABLE NURSES).*={10,}', text, re.I | re.S))
+        return bool(re.search(r"\[(OK|HIGH|MOD)\].*nurse_\d+", text)) or bool(
+            re.search(
+                r"(ALL NURSES|SENIOR NURSES|AVAILABLE NURSES).*={10,}",
+                text,
+                re.I | re.S,
+            )
+        )
 
     def _is_roster(self, text: str) -> bool:
         # Detect roster output that needs calendar formatting
         # Match patterns like "ROSTER:" or roster IDs with assignments
         # BUT exclude list outputs (ALL ROSTERS, PENDING ROSTERS)
-        if re.search(r'ALL ROSTERS|PENDING ROSTERS', text, re.I):
+        if re.search(r"ALL ROSTERS|PENDING ROSTERS", text, re.I):
             return False
-        return bool(re.search(r'ROSTER[:\s].*roster_\d+', text, re.I)) or \
-               bool(re.search(r'ASSIGNMENTS:.*\d{4}-\d{2}-\d{2}', text, re.I | re.S))
+        return bool(re.search(r"ROSTER[:\s].*roster_\d+", text, re.I)) or bool(
+            re.search(r"ASSIGNMENTS:.*\d{4}-\d{2}-\d{2}", text, re.I | re.S)
+        )
 
     def _is_availability(self, text: str) -> bool:
-        return bool(re.search(r'NURSE AVAILABILITY.*\d{4}-\d{2}-\d{2}', text, re.I))
+        return bool(
+            re.search(r"NURSE AVAILABILITY.*\d{4}-\d{2}-\d{2}", text, re.I)
+        )
 
     def _is_nurse_profile(self, text: str) -> bool:
-        return bool(re.search(r'NURSE PROFILE:', text, re.I))
+        return bool(re.search(r"NURSE PROFILE:", text, re.I))
 
     def _is_staffing_summary(self, text: str) -> bool:
         # Disabled - the raw output is already well-formatted and regex parsing
@@ -65,7 +73,7 @@ class OutputFormatter:
         return False
 
     def _is_shifts_list(self, text: str) -> bool:
-        return bool(re.search(r'SHIFTS TO BE FILLED', text, re.I))
+        return bool(re.search(r"SHIFTS TO BE FILLED", text, re.I))
 
     def _is_pending_rosters(self, text: str) -> bool:
         # Disabled - the raw output is already well-formatted
@@ -77,11 +85,11 @@ class OutputFormatter:
 
     def _format_nurse_list(self, text: str) -> str:
         """Format nurse list as markdown table."""
-        lines = text.strip().split('\n')
+        lines = text.strip().split("\n")
 
         # Extract title from first line
         title = "Nurses"
-        if lines and '=' in lines[0]:
+        if lines and "=" in lines[0]:
             title = lines[0].strip()
         elif lines:
             title = lines[0].strip()
@@ -92,13 +100,21 @@ class OutputFormatter:
         while i < len(lines):
             line = lines[i].strip()
             # Match pattern: [OK] Name (nurse_xxx) or similar
-            match = re.match(r'\[(OK|HIGH|MOD)\]\s+(\w+)\s+\((nurse_\d+)\)', line)
+            match = re.match(
+                r"\[(OK|HIGH|MOD)\]\s+(\w+)\s+\((nurse_\d+)\)", line
+            )
             if match:
                 status_code = match.group(1)
                 name = match.group(2)
                 nurse_id = match.group(3)
 
-                status = "🟢" if status_code == "OK" else "🟡" if status_code == "MOD" else "🔴"
+                status = (
+                    "🟢"
+                    if status_code == "OK"
+                    else "🟡"
+                    if status_code == "MOD"
+                    else "🔴"
+                )
 
                 # Next line has details
                 details = ""
@@ -107,19 +123,21 @@ class OutputFormatter:
                     i += 1
 
                 # Parse details: "Senior | FullTime | ACLS, BLS, ICU"
-                parts = [p.strip() for p in details.split('|')]
+                parts = [p.strip() for p in details.split("|")]
                 level = parts[0] if len(parts) > 0 else ""
                 contract = parts[1] if len(parts) > 1 else ""
                 certs = parts[2] if len(parts) > 2 else ""
 
-                nurses.append({
-                    "status": status,
-                    "name": name,
-                    "id": nurse_id,
-                    "level": level,
-                    "contract": contract,
-                    "certs": certs
-                })
+                nurses.append(
+                    {
+                        "status": status,
+                        "name": name,
+                        "id": nurse_id,
+                        "level": level,
+                        "contract": contract,
+                        "certs": certs,
+                    }
+                )
             i += 1
 
         if not nurses:
@@ -134,7 +152,7 @@ class OutputFormatter:
             result += f"| {n['status']} | {n['name']} | {n['id']} | {n['level']} | {n['contract']} | {n['certs']} |\n"
 
         # Extract total if present
-        total_match = re.search(r'Total:\s*(\d+)\s*nurses', text, re.I)
+        total_match = re.search(r"Total:\s*(\d+)\s*nurses", text, re.I)
         if total_match:
             result += f"\n**Total: {total_match.group(1)} nurses**"
 
@@ -143,21 +161,25 @@ class OutputFormatter:
     def _format_roster(self, text: str) -> str:
         """Format roster as 7-day calendar view."""
         # Extract roster ID - handles formats like roster_202512052008 or roster_20251209165648_2930
-        roster_match = re.search(r'(roster_[\w]+)', text, re.I)
+        roster_match = re.search(r"(roster_[\w]+)", text, re.I)
         roster_id = roster_match.group(1) if roster_match else "Unknown"
 
         # Extract status
-        status_match = re.search(r'Status:\s*(\w+)', text, re.I)
+        status_match = re.search(r"Status:\s*(\w+)", text, re.I)
         status = status_match.group(1).upper() if status_match else "DRAFT"
 
         # Extract period
-        period_match = re.search(r'Period:\s*(\d{4}-\d{2}-\d{2}).*?to\s*(\d{4}-\d{2}-\d{2})', text, re.I)
+        period_match = re.search(
+            r"Period:\s*(\d{4}-\d{2}-\d{2}).*?to\s*(\d{4}-\d{2}-\d{2})",
+            text,
+            re.I,
+        )
         if period_match:
             start_date_str = period_match.group(1)
             end_date_str = period_match.group(2)
         else:
             # Try to infer from assignments
-            date_matches = re.findall(r'(\d{4}-\d{2}-\d{2})', text)
+            date_matches = re.findall(r"(\d{4}-\d{2}-\d{2})", text)
             if date_matches:
                 start_date_str = min(date_matches)
                 end_date_str = max(date_matches)
@@ -165,32 +187,39 @@ class OutputFormatter:
                 return text  # Can't determine period
 
         # Extract compliance and empathy
-        compliance_match = re.search(r'Compliance:\s*(\w+)', text, re.I)
+        compliance_match = re.search(r"Compliance:\s*(\w+)", text, re.I)
         compliance = compliance_match.group(1) if compliance_match else "N/A"
 
-        empathy_match = re.search(r'Empathy.*?:\s*([\d.]+)', text, re.I)
+        empathy_match = re.search(r"Empathy.*?:\s*([\d.]+)", text, re.I)
         empathy = empathy_match.group(1) if empathy_match else "N/A"
 
         # Parse assignments - look for nurse_id -> shift patterns
         assignments = []
         # Pattern: nurse_xxx → Ward or nurse_xxx -> shift_xxx
-        for match in re.finditer(r'(nurse_\d+)\s*(?:→|->)\s*(\w+)', text):
+        for match in re.finditer(r"(nurse_\d+)\s*(?:→|->)\s*(\w+)", text):
             nurse_id = match.group(1)
             info = match.group(2)
             assignments.append({"nurse_id": nurse_id, "info": info})
 
         # Also try parsing structured assignment lines
-        for match in re.finditer(r"'nurse_id':\s*'(nurse_\d+)'.*?'shift_id':\s*'(shift_\d+)'", text):
+        for match in re.finditer(
+            r"'nurse_id':\s*'(nurse_\d+)'.*?'shift_id':\s*'(shift_\d+)'", text
+        ):
             nurse_id = match.group(1)
             shift_id = match.group(2)
             assignments.append({"nurse_id": nurse_id, "shift_id": shift_id})
 
         # Pattern: time | ward | name (nurse_id) - format from get_roster()
-        for match in re.finditer(r'(\d{2}:\d{2}-\d{2}:\d{2})\s*\|\s*(\w+)[^|]*\|\s*[^(]+\((nurse_\d+)\)', text):
+        for match in re.finditer(
+            r"(\d{2}:\d{2}-\d{2}:\d{2})\s*\|\s*(\w+)[^|]*\|\s*[^(]+\((nurse_\d+)\)",
+            text,
+        ):
             time_info = match.group(1)
             ward = match.group(2)
             nurse_id = match.group(3)
-            assignments.append({"nurse_id": nurse_id, "info": f"{ward} ({time_info})"})
+            assignments.append(
+                {"nurse_id": nurse_id, "info": f"{ward} ({time_info})"}
+            )
 
         # Build header
         result = f"## Roster: {roster_id}\n\n"
@@ -214,18 +243,23 @@ class OutputFormatter:
             # Format: "📅 2025-12-04 (Wednesday)" followed by assignment lines
             # "   07:00-15:00 | Ward A     | Alice Smith (nurse_001)"
             nurse_schedule = {}  # {nurse_id: {date_str: ward_shift_type}}
-            nurse_names = {}     # {nurse_id: name}
+            nurse_names = {}  # {nurse_id: name}
 
             current_date = None
-            for line in text.split('\n'):
+            for line in text.split("\n"):
                 # Match date header: "📅 2025-12-04 (Wednesday)"
-                date_header = re.search(r'📅\s*(\d{4}-\d{2}-\d{2})\s*\((\w+)\)', line)
+                date_header = re.search(
+                    r"📅\s*(\d{4}-\d{2}-\d{2})\s*\((\w+)\)", line
+                )
                 if date_header:
                     current_date = date_header.group(1)
                     continue
 
                 # Match assignment: "   07:00-15:00 | Ward A     | Alice Smith (nurse_001)"
-                assign_match = re.search(r'(\d{2}:\d{2})-(\d{2}:\d{2})\s*\|\s*(\w+)[^|]*\|\s*([^(]+)\((nurse_\d+)\)', line)
+                assign_match = re.search(
+                    r"(\d{2}:\d{2})-(\d{2}:\d{2})\s*\|\s*(\w+)[^|]*\|\s*([^(]+)\((nurse_\d+)\)",
+                    line,
+                )
                 if assign_match and current_date:
                     start_time = assign_match.group(1)
                     ward = assign_match.group(3)[:3]  # Truncate ward name
@@ -233,7 +267,7 @@ class OutputFormatter:
                     nurse_id = assign_match.group(5)
 
                     # Determine shift type from start time
-                    hour = int(start_time.split(':')[0])
+                    hour = int(start_time.split(":")[0])
                     if hour >= 20 or hour < 6:
                         shift_type = "N"  # Night
                     elif hour >= 14:
@@ -243,13 +277,13 @@ class OutputFormatter:
 
                     if nurse_id not in nurse_schedule:
                         nurse_schedule[nurse_id] = {}
-                    
+
                     val = f"{ward}-{shift_type}"
                     if current_date in nurse_schedule[nurse_id]:
                         nurse_schedule[nurse_id][current_date] += " " + val
                     else:
                         nurse_schedule[nurse_id][current_date] = val
-                    
+
                     nurse_names[nurse_id] = name
 
             if not nurse_schedule:
@@ -259,7 +293,9 @@ class OutputFormatter:
                     nid = a.get("nurse_id", "")
                     if nid not in nurse_assignments:
                         nurse_assignments[nid] = []
-                    nurse_assignments[nid].append(a.get("info") or a.get("shift_id", ""))
+                    nurse_assignments[nid].append(
+                        a.get("info") or a.get("shift_id", "")
+                    )
 
                 result += "### Assignments Summary\n\n"
                 result += "| Nurse | Shifts |\n"
@@ -275,8 +311,12 @@ class OutputFormatter:
             roster_nurse_ids = sorted(nurse_schedule.keys())
 
             for chunk_idx in range(num_chunks):
-                chunk_start = start_date + timedelta(days=chunk_idx * chunk_size)
-                chunk_end = min(chunk_start + timedelta(days=chunk_size - 1), end_date)
+                chunk_start = start_date + timedelta(
+                    days=chunk_idx * chunk_size
+                )
+                chunk_end = min(
+                    chunk_start + timedelta(days=chunk_size - 1), end_date
+                )
                 chunk_days = (chunk_end - chunk_start).days + 1
 
                 if num_chunks > 1:
@@ -304,7 +344,9 @@ class OutputFormatter:
                     nurse_total = 0
 
                     for date_str in dates_in_chunk:
-                        cell = nurse_schedule.get(nurse_id, {}).get(date_str, "-")
+                        cell = nurse_schedule.get(nurse_id, {}).get(
+                            date_str, "-"
+                        )
                         row.append(cell)
                         if cell != "-":
                             nurse_total += len(cell.split(" "))
@@ -325,7 +367,7 @@ class OutputFormatter:
     def _format_availability(self, text: str) -> str:
         """Format availability as sectioned list."""
         # Extract date
-        date_match = re.search(r'(\d{4}-\d{2}-\d{2})\s*\((\w+)\)', text)
+        date_match = re.search(r"(\d{4}-\d{2}-\d{2})\s*\((\w+)\)", text)
         if date_match:
             date_str = date_match.group(1)
             day_name = date_match.group(2)
@@ -339,28 +381,30 @@ class OutputFormatter:
         result += "\n\n"
 
         # Parse sections
-        sections = {
-            "available": [],
-            "limited": [],
-            "unavailable": []
-        }
+        sections = {"available": [], "limited": [], "unavailable": []}
 
         current_section = None
-        for line in text.split('\n'):
+        for line in text.split("\n"):
             line = line.strip()
-            if re.search(r'AVAILABLE\s*\(\d+\)', line, re.I):
+            if re.search(r"AVAILABLE\s*\(\d+\)", line, re.I):
                 current_section = "available"
-                count_match = re.search(r'\((\d+)\)', line)
-                sections["available_count"] = count_match.group(1) if count_match else "0"
-            elif re.search(r'LIMITED.*AVAILABILITY\s*\(\d+\)', line, re.I):
+                count_match = re.search(r"\((\d+)\)", line)
+                sections["available_count"] = (
+                    count_match.group(1) if count_match else "0"
+                )
+            elif re.search(r"LIMITED.*AVAILABILITY\s*\(\d+\)", line, re.I):
                 current_section = "limited"
-                count_match = re.search(r'\((\d+)\)', line)
-                sections["limited_count"] = count_match.group(1) if count_match else "0"
-            elif re.search(r'UNAVAILABLE\s*\(\d+\)', line, re.I):
+                count_match = re.search(r"\((\d+)\)", line)
+                sections["limited_count"] = (
+                    count_match.group(1) if count_match else "0"
+                )
+            elif re.search(r"UNAVAILABLE\s*\(\d+\)", line, re.I):
                 current_section = "unavailable"
-                count_match = re.search(r'\((\d+)\)', line)
-                sections["unavailable_count"] = count_match.group(1) if count_match else "0"
-            elif current_section and line.startswith(('+', '?', '-')):
+                count_match = re.search(r"\((\d+)\)", line)
+                sections["unavailable_count"] = (
+                    count_match.group(1) if count_match else "0"
+                )
+            elif current_section and line.startswith(("+", "?", "-")):
                 # Parse entry: "+ Name - details" or "? Name - details"
                 entry = line[1:].strip()
                 sections[current_section].append(entry)
@@ -391,7 +435,7 @@ class OutputFormatter:
     def _format_nurse_profile(self, text: str) -> str:
         """Format nurse profile with sections."""
         # Extract nurse name
-        name_match = re.search(r'NURSE PROFILE:\s*(\w+)', text, re.I)
+        name_match = re.search(r"NURSE PROFILE:\s*(\w+)", text, re.I)
         name = name_match.group(1) if name_match else "Unknown"
 
         result = f"## Nurse: {name}\n\n"
@@ -404,7 +448,9 @@ class OutputFormatter:
         # Basic Info section
         result += "### Basic Info\n\n"
         result += f"- **ID**: {extract_value(r'ID:\s*([^\n]+)')}\n"
-        result += f"- **Seniority**: {extract_value(r'Seniority:\s*([^\n]+)')}\n"
+        result += (
+            f"- **Seniority**: {extract_value(r'Seniority:\s*([^\n]+)')}\n"
+        )
         result += f"- **Contract**: {extract_value(r'Contract:\s*([^\n]+)')}\n"
         result += f"- **Certifications**: {extract_value(r'Certifications:\s*([^\n]+)')}\n"
         result += "\n"
@@ -417,7 +463,9 @@ class OutputFormatter:
 
         # Current Status section
         result += "### Current Status\n\n"
-        result += f"- **Last Shift**: {extract_value(r'Last shift:\s*([^\n]+)')}\n"
+        result += (
+            f"- **Last Shift**: {extract_value(r'Last shift:\s*([^\n]+)')}\n"
+        )
         result += f"- **Consecutive Shifts**: {extract_value(r'Consecutive shifts:\s*([^\n]+)')}\n"
         result += f"- **Shifts (30d)**: {extract_value(r'Shifts \(30d\):\s*([^\n]+)')}\n"
         result += f"- **Weekend Shifts**: {extract_value(r'Weekend shifts.*?:\s*([^\n]+)')}\n"
@@ -434,16 +482,20 @@ class OutputFormatter:
             return match.group(1).strip() if match else "N/A"
 
         # Workforce stats
-        result += f"- **Total Nurses**: {extract_value(r'Total nurses:\s*(\d+)')}\n"
+        result += (
+            f"- **Total Nurses**: {extract_value(r'Total nurses:\s*(\d+)')}\n"
+        )
         result += f"- **By Seniority**: {extract_value(r'By seniority:\s*([^\n]+)')}\n"
-        result += f"- **By Contract**: {extract_value(r'By contract:\s*([^\n]+)')}\n"
+        result += (
+            f"- **By Contract**: {extract_value(r'By contract:\s*([^\n]+)')}\n"
+        )
         result += "\n"
 
         # Fatigue status
         result += "### Fatigue Status\n\n"
-        good_match = re.search(r'\[OK\].*?Good:\s*(\d+)', text, re.I)
-        mod_match = re.search(r'\[MOD\].*?Moderate:\s*(\d+)', text, re.I)
-        high_match = re.search(r'\[HIGH\].*?High Risk:\s*(\d+)', text, re.I)
+        good_match = re.search(r"\[OK\].*?Good:\s*(\d+)", text, re.I)
+        mod_match = re.search(r"\[MOD\].*?Moderate:\s*(\d+)", text, re.I)
+        high_match = re.search(r"\[HIGH\].*?High Risk:\s*(\d+)", text, re.I)
 
         good = good_match.group(1) if good_match else "0"
         moderate = mod_match.group(1) if mod_match else "0"
@@ -456,12 +508,12 @@ class OutputFormatter:
 
         # Upcoming shifts
         result += "### Upcoming Shifts\n\n"
-        total_shifts = extract_value(r'Total:\s*(\d+)\s*shifts')
+        total_shifts = extract_value(r"Total:\s*(\d+)\s*shifts")
         result += f"- **Total**: {total_shifts} shifts\n"
 
-        icu_match = re.search(r'ICU:\s*(\d+)', text)
-        emergency_match = re.search(r'Emergency:\s*(\d+)', text)
-        general_match = re.search(r'General:\s*(\d+)', text)
+        icu_match = re.search(r"ICU:\s*(\d+)", text)
+        emergency_match = re.search(r"Emergency:\s*(\d+)", text)
+        general_match = re.search(r"General:\s*(\d+)", text)
 
         if icu_match:
             result += f"- **ICU**: {icu_match.group(1)}\n"
@@ -472,16 +524,18 @@ class OutputFormatter:
         result += "\n"
 
         # Alerts
-        if re.search(r'ALERTS:', text, re.I):
+        if re.search(r"ALERTS:", text, re.I):
             result += "### ⚠️ Alerts\n\n"
             # Extract alert lines
-            alerts_section = re.search(r'ALERTS:\s*(.*?)(?:\n\n|\Z)', text, re.I | re.S)
+            alerts_section = re.search(
+                r"ALERTS:\s*(.*?)(?:\n\n|\Z)", text, re.I | re.S
+            )
             if alerts_section:
-                for line in alerts_section.group(1).split('\n'):
+                for line in alerts_section.group(1).split("\n"):
                     line = line.strip()
-                    if line and not line.startswith('='):
+                    if line and not line.startswith("="):
                         result += f"- {line}\n"
-        elif re.search(r'No staffing alerts', text, re.I):
+        elif re.search(r"No staffing alerts", text, re.I):
             result += "### ✅ No Alerts\n\n"
             result += "_All staffing levels are healthy_\n"
 
@@ -490,7 +544,7 @@ class OutputFormatter:
     def _format_shifts_list(self, text: str) -> str:
         """Format shifts list as table grouped by date."""
         # Extract header info
-        days_match = re.search(r'\((\d+)\s*days\)', text, re.I)
+        days_match = re.search(r"\((\d+)\s*days\)", text, re.I)
         days = days_match.group(1) if days_match else "7"
 
         result = f"## Shifts to Fill ({days} days)\n\n"
@@ -499,38 +553,46 @@ class OutputFormatter:
         current_date = None
         shifts = []
 
-        for line in text.split('\n'):
+        for line in text.split("\n"):
             line = line.strip()
 
             # Date header: "📆 2025-12-04 (Wednesday)"
-            date_match = re.search(r'(\d{4}-\d{2}-\d{2})\s*\((\w+)\)', line)
+            date_match = re.search(r"(\d{4}-\d{2}-\d{2})\s*\((\w+)\)", line)
             if date_match:
                 current_date = f"{date_match.group(1)} ({date_match.group(2)})"
                 continue
 
             # Shift entry: "📅 shift_001: ICU Ward"
-            shift_match = re.search(r'(shift_\d+):\s*(\w+)\s*Ward', line)
+            shift_match = re.search(r"(shift_\d+):\s*(\w+)\s*Ward", line)
             if shift_match and current_date:
                 shift_id = shift_match.group(1)
                 ward = shift_match.group(2)
-                shifts.append({
-                    "date": current_date,
-                    "id": shift_id,
-                    "ward": ward,
-                    "time": "",
-                    "certs": "",
-                    "level": ""
-                })
+                shifts.append(
+                    {
+                        "date": current_date,
+                        "id": shift_id,
+                        "ward": ward,
+                        "time": "",
+                        "certs": "",
+                        "level": "",
+                    }
+                )
                 continue
 
             # Time line: "Time: 08:00 - 16:00"
-            time_match = re.search(r'Time:\s*(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})', line)
+            time_match = re.search(
+                r"Time:\s*(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})", line
+            )
             if time_match and shifts:
-                shifts[-1]["time"] = f"{time_match.group(1)}-{time_match.group(2)}"
+                shifts[-1]["time"] = (
+                    f"{time_match.group(1)}-{time_match.group(2)}"
+                )
                 continue
 
             # Requirements line: "Required: ICU | Min Level: Senior"
-            req_match = re.search(r'Required:\s*([^|]+)\|\s*Min Level:\s*(\w+)', line)
+            req_match = re.search(
+                r"Required:\s*([^|]+)\|\s*Min Level:\s*(\w+)", line
+            )
             if req_match and shifts:
                 shifts[-1]["certs"] = req_match.group(1).strip()
                 shifts[-1]["level"] = req_match.group(2).strip()
@@ -549,7 +611,7 @@ class OutputFormatter:
             result += f"| {date_display} | {s['id']} | {s['ward']} | {s['time']} | {s['certs']} | {s['level']} |\n"
 
         # Total
-        total_match = re.search(r'Total shifts:\s*(\d+)', text, re.I)
+        total_match = re.search(r"Total shifts:\s*(\d+)", text, re.I)
         if total_match:
             result += f"\n**Total: {total_match.group(1)} shifts**"
 
@@ -563,31 +625,33 @@ class OutputFormatter:
         rosters = []
         current_roster = {}
 
-        for line in text.split('\n'):
+        for line in text.split("\n"):
             line = line.strip()
 
             # Roster ID line
-            roster_match = re.search(r'(roster_\w+)', line)
-            if roster_match and not line.startswith('Period'):
+            roster_match = re.search(r"(roster_\w+)", line)
+            if roster_match and not line.startswith("Period"):
                 if current_roster:
                     rosters.append(current_roster)
                 current_roster = {"id": roster_match.group(1)}
                 continue
 
             # Period line
-            period_match = re.search(r'Period:\s*(\S+)\s*to\s*(\S+)', line)
+            period_match = re.search(r"Period:\s*(\S+)\s*to\s*(\S+)", line)
             if period_match and current_roster:
-                current_roster["period"] = f"{period_match.group(1)} to {period_match.group(2)}"
+                current_roster["period"] = (
+                    f"{period_match.group(1)} to {period_match.group(2)}"
+                )
                 continue
 
             # Generated line
-            gen_match = re.search(r'Generated:\s*(.+)', line)
+            gen_match = re.search(r"Generated:\s*(.+)", line)
             if gen_match and current_roster:
                 current_roster["generated"] = gen_match.group(1)
                 continue
 
             # Assignments line
-            assign_match = re.search(r'Assignments:\s*(\d+)', line)
+            assign_match = re.search(r"Assignments:\s*(\d+)", line)
             if assign_match and current_roster:
                 current_roster["assignments"] = assign_match.group(1)
 

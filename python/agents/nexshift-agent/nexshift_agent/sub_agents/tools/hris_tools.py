@@ -8,7 +8,6 @@ promote existing nurses, and update certifications.
 import json
 import os
 from datetime import datetime, timedelta
-from typing import List, Optional
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "../../data")
 HRIS_FILE = os.path.join(DATA_DIR, "mock_hris.json")
@@ -18,7 +17,7 @@ NURSE_STATS_FILE = os.path.join(DATA_DIR, "nurse_stats.json")
 def _load_hris() -> list:
     """Load HRIS data."""
     try:
-        with open(HRIS_FILE, "r") as f:
+        with open(HRIS_FILE) as f:
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         return []
@@ -33,7 +32,7 @@ def _save_hris(data: list) -> None:
 def _load_nurse_stats() -> dict:
     """Load nurse stats."""
     try:
-        with open(NURSE_STATS_FILE, "r") as f:
+        with open(NURSE_STATS_FILE) as f:
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         return {}
@@ -65,7 +64,7 @@ def add_nurse(
     contract_type: str = "FullTime",
     certifications: str = "BLS",
     avoid_night_shifts: bool = False,
-    preferred_days: str = ""
+    preferred_days: str = "",
 ) -> str:
     """
     Adds a new nurse to the HRIS system.
@@ -93,7 +92,9 @@ def add_nurse(
         return f"Error: Invalid contract type '{contract_type}'. Must be one of: {', '.join(valid_contracts)}"
 
     # Parse certifications
-    cert_list = [c.strip().upper() for c in certifications.split(",") if c.strip()]
+    cert_list = [
+        c.strip().upper() for c in certifications.split(",") if c.strip()
+    ]
     valid_certs = ["BLS", "ACLS", "ICU"]
     for cert in cert_list:
         if cert not in valid_certs:
@@ -105,7 +106,15 @@ def add_nurse(
     # Parse preferred days
     day_list = []
     if preferred_days:
-        valid_days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        valid_days = [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday",
+        ]
         for day in preferred_days.split(","):
             day = day.strip().capitalize()
             if day in valid_days:
@@ -132,13 +141,13 @@ def add_nurse(
         "preferences": {
             "avoid_night_shifts": avoid_night_shifts,
             "preferred_days": day_list,
-            "adhoc_requests": []
+            "adhoc_requests": [],
         },
         "history_summary": {
             "last_shift": None,
             "consecutive_shifts": 0,
-            "weekend_shifts_last_month": 0
-        }
+            "weekend_shifts_last_month": 0,
+        },
     }
 
     # Add to HRIS
@@ -156,14 +165,14 @@ def add_nurse(
         "last_shift_date": "",
         "preferences_honored_rate": 1.0,
         "fatigue_score": 0.0,
-        "updated_at": datetime.now().isoformat()
+        "updated_at": datetime.now().isoformat(),
     }
     _save_nurse_stats(stats)
 
     # Build response
-    result = f"SUCCESS: New nurse added to the system.\n\n"
-    result += f"NURSE DETAILS\n"
-    result += f"{'='*40}\n"
+    result = "SUCCESS: New nurse added to the system.\n\n"
+    result += "NURSE DETAILS\n"
+    result += f"{'=' * 40}\n"
     result += f"ID: {new_id}\n"
     result += f"Name: {name}\n"
     result += f"Seniority: {seniority_level}\n"
@@ -172,8 +181,8 @@ def add_nurse(
     result += f"Avoid Night Shifts: {'Yes' if avoid_night_shifts else 'No'}\n"
     if day_list:
         result += f"Preferred Days: {', '.join(day_list)}\n"
-    result += f"\nFatigue Score: 0.0 (Fresh)\n"
-    result += f"\nThe nurse is now available for roster generation."
+    result += "\nFatigue Score: 0.0 (Fresh)\n"
+    result += "\nThe nurse is now available for roster generation."
 
     return result
 
@@ -200,7 +209,10 @@ def promote_nurse(nurse_id: str, new_level: str) -> str:
     # Find nurse by ID or name
     found_nurse = None
     for nurse in nurses:
-        if nurse.get("id") == nurse_id or nurse.get("name", "").lower() == nurse_id.lower():
+        if (
+            nurse.get("id") == nurse_id
+            or nurse.get("name", "").lower() == nurse_id.lower()
+        ):
             found_nurse = nurse
             break
 
@@ -219,9 +231,9 @@ def promote_nurse(nurse_id: str, new_level: str) -> str:
     found_nurse["seniority_level"] = new_level
     _save_hris(nurses)
 
-    result = f"SUCCESS: Nurse promoted.\n\n"
-    result += f"PROMOTION DETAILS\n"
-    result += f"{'='*40}\n"
+    result = "SUCCESS: Nurse promoted.\n\n"
+    result += "PROMOTION DETAILS\n"
+    result += f"{'=' * 40}\n"
     result += f"Nurse: {found_nurse['name']} ({found_nurse['id']})\n"
     result += f"Previous Level: {old_level}\n"
     result += f"New Level: {new_level}\n"
@@ -230,7 +242,9 @@ def promote_nurse(nurse_id: str, new_level: str) -> str:
     return result
 
 
-def update_nurse_certifications(nurse_id: str, add_certifications: str = "", remove_certifications: str = "") -> str:
+def update_nurse_certifications(
+    nurse_id: str, add_certifications: str = "", remove_certifications: str = ""
+) -> str:
     """
     Updates a nurse's certifications.
 
@@ -249,7 +263,10 @@ def update_nurse_certifications(nurse_id: str, add_certifications: str = "", rem
     # Find nurse by ID or name
     found_nurse = None
     for nurse in nurses:
-        if nurse.get("id") == nurse_id or nurse.get("name", "").lower() == nurse_id.lower():
+        if (
+            nurse.get("id") == nurse_id
+            or nurse.get("name", "").lower() == nurse_id.lower()
+        ):
             found_nurse = nurse
             break
 
@@ -286,9 +303,9 @@ def update_nurse_certifications(nurse_id: str, add_certifications: str = "", rem
     found_nurse["certifications"] = list(current_certs)
     _save_hris(nurses)
 
-    result = f"SUCCESS: Certifications updated.\n\n"
-    result += f"CERTIFICATION UPDATE\n"
-    result += f"{'='*40}\n"
+    result = "SUCCESS: Certifications updated.\n\n"
+    result += "CERTIFICATION UPDATE\n"
+    result += f"{'=' * 40}\n"
     result += f"Nurse: {found_nurse['name']} ({found_nurse['id']})\n"
     result += f"Previous: {', '.join(sorted(original_certs))}\n"
     result += f"Current: {', '.join(sorted(current_certs))}\n"
@@ -298,16 +315,16 @@ def update_nurse_certifications(nurse_id: str, add_certifications: str = "", rem
         result += f"Removed: {', '.join(removed)}\n"
 
     # Ward eligibility
-    result += f"\nWard Eligibility:\n"
+    result += "\nWard Eligibility:\n"
     if "ICU" in current_certs:
-        result += f"  - ICU: Yes\n"
+        result += "  - ICU: Yes\n"
     else:
-        result += f"  - ICU: No (requires ICU certification)\n"
+        result += "  - ICU: No (requires ICU certification)\n"
 
     if "ACLS" in current_certs and "BLS" in current_certs:
-        result += f"  - Emergency: Yes\n"
+        result += "  - Emergency: Yes\n"
     else:
-        result += f"  - Emergency: No (requires ACLS + BLS)\n"
+        result += "  - Emergency: No (requires ACLS + BLS)\n"
 
     result += f"  - General: {'Yes' if 'BLS' in current_certs else 'No (requires BLS)'}\n"
 
@@ -316,8 +333,8 @@ def update_nurse_certifications(nurse_id: str, add_certifications: str = "", rem
 
 def update_nurse_preferences(
     nurse_id: str,
-    avoid_night_shifts: Optional[bool] = None,
-    preferred_days: str = ""
+    avoid_night_shifts: bool | None = None,
+    preferred_days: str = "",
 ) -> str:
     """
     Updates a nurse's scheduling preferences.
@@ -336,7 +353,10 @@ def update_nurse_preferences(
     # Find nurse by ID or name
     found_nurse = None
     for nurse in nurses:
-        if nurse.get("id") == nurse_id or nurse.get("name", "").lower() == nurse_id.lower():
+        if (
+            nurse.get("id") == nurse_id
+            or nurse.get("name", "").lower() == nurse_id.lower()
+        ):
             found_nurse = nurse
             break
 
@@ -351,7 +371,9 @@ def update_nurse_preferences(
         old_value = prefs.get("avoid_night_shifts", False)
         if old_value != avoid_night_shifts:
             prefs["avoid_night_shifts"] = avoid_night_shifts
-            changes.append(f"Avoid Night Shifts: {old_value} → {avoid_night_shifts}")
+            changes.append(
+                f"Avoid Night Shifts: {old_value} → {avoid_night_shifts}"
+            )
 
     # Update preferred days
     if preferred_days:
@@ -359,7 +381,15 @@ def update_nurse_preferences(
         if preferred_days.lower() == "clear":
             new_days = []
         else:
-            valid_days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+            valid_days = [
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday",
+                "Sunday",
+            ]
             new_days = []
             for day in preferred_days.split(","):
                 day = day.strip().capitalize()
@@ -376,9 +406,9 @@ def update_nurse_preferences(
     found_nurse["preferences"] = prefs
     _save_hris(nurses)
 
-    result = f"SUCCESS: Preferences updated.\n\n"
-    result += f"PREFERENCE UPDATE\n"
-    result += f"{'='*40}\n"
+    result = "SUCCESS: Preferences updated.\n\n"
+    result += "PREFERENCE UPDATE\n"
+    result += f"{'=' * 40}\n"
     result += f"Nurse: {found_nurse['name']} ({found_nurse['id']})\n\n"
     result += "Changes:\n"
     for change in changes:
@@ -403,7 +433,10 @@ def remove_nurse(nurse_id: str) -> str:
     found_index = None
     found_nurse = None
     for i, nurse in enumerate(nurses):
-        if nurse.get("id") == nurse_id or nurse.get("name", "").lower() == nurse_id.lower():
+        if (
+            nurse.get("id") == nurse_id
+            or nurse.get("name", "").lower() == nurse_id.lower()
+        ):
             found_index = i
             found_nurse = nurse
             break
@@ -421,9 +454,11 @@ def remove_nurse(nurse_id: str) -> str:
         del stats[found_nurse["id"]]
         _save_nurse_stats(stats)
 
-    result = f"SUCCESS: Nurse removed from the system.\n\n"
+    result = "SUCCESS: Nurse removed from the system.\n\n"
     result += f"Removed: {found_nurse['name']} ({found_nurse['id']})\n"
-    result += f"\nNote: Any pending rosters with this nurse should be regenerated."
+    result += (
+        "\nNote: Any pending rosters with this nurse should be regenerated."
+    )
 
     return result
 
@@ -460,10 +495,7 @@ def list_available_certifications() -> str:
 
 
 def add_time_off_request(
-    nurse_id: str,
-    start_date: str,
-    end_date: str = "",
-    reason: str = "TimeOff"
+    nurse_id: str, start_date: str, end_date: str = "", reason: str = "TimeOff"
 ) -> str:
     """
     Adds a time-off request for a nurse (sick leave, vacation, unavailable period).
@@ -488,7 +520,10 @@ def add_time_off_request(
     # Find nurse by ID or name
     found_nurse = None
     for nurse in nurses:
-        if nurse.get("id") == nurse_id or nurse.get("name", "").lower() == nurse_id.lower():
+        if (
+            nurse.get("id") == nurse_id
+            or nurse.get("name", "").lower() == nurse_id.lower()
+        ):
             found_nurse = nurse
             break
 
@@ -499,13 +534,17 @@ def add_time_off_request(
     try:
         start = datetime.strptime(start_date, "%Y-%m-%d")
     except ValueError:
-        return f"Error: Invalid start_date format '{start_date}'. Use YYYY-MM-DD."
+        return (
+            f"Error: Invalid start_date format '{start_date}'. Use YYYY-MM-DD."
+        )
 
     if end_date:
         try:
             end = datetime.strptime(end_date, "%Y-%m-%d")
         except ValueError:
-            return f"Error: Invalid end_date format '{end_date}'. Use YYYY-MM-DD."
+            return (
+                f"Error: Invalid end_date format '{end_date}'. Use YYYY-MM-DD."
+            )
     else:
         end = start
 
@@ -529,7 +568,11 @@ def add_time_off_request(
         request_entry = f"Off_{date_str}_Reason_{reason}"
 
         # Check if this date already has a time-off request
-        existing = [r for r in prefs["adhoc_requests"] if r.startswith(f"Off_{date_str}_")]
+        existing = [
+            r
+            for r in prefs["adhoc_requests"]
+            if r.startswith(f"Off_{date_str}_")
+        ]
         if existing:
             skipped_dates.append(date_str)
         else:
@@ -545,9 +588,9 @@ def add_time_off_request(
     _save_hris(nurses)
 
     # Build response
-    result = f"SUCCESS: Time-off request added.\n\n"
-    result += f"TIME-OFF DETAILS\n"
-    result += f"{'='*40}\n"
+    result = "SUCCESS: Time-off request added.\n\n"
+    result += "TIME-OFF DETAILS\n"
+    result += f"{'=' * 40}\n"
     result += f"Nurse: {found_nurse['name']} ({found_nurse['id']})\n"
     result += f"Reason: {reason}\n"
     result += f"Period: {start_date} to {end.strftime('%Y-%m-%d')}\n"
@@ -561,7 +604,7 @@ def add_time_off_request(
     if skipped_dates:
         result += f"\nSkipped (already blocked): {', '.join(skipped_dates)}\n"
 
-    result += f"\nThe nurse will NOT be assigned shifts on these dates."
+    result += "\nThe nurse will NOT be assigned shifts on these dates."
 
     return result
 
@@ -570,7 +613,7 @@ def remove_time_off_request(
     nurse_id: str,
     start_date: str = "",
     end_date: str = "",
-    clear_all: bool = False
+    clear_all: bool = False,
 ) -> str:
     """
     Removes time-off requests for a nurse.
@@ -594,7 +637,10 @@ def remove_time_off_request(
     # Find nurse by ID or name
     found_nurse = None
     for nurse in nurses:
-        if nurse.get("id") == nurse_id or nurse.get("name", "").lower() == nurse_id.lower():
+        if (
+            nurse.get("id") == nurse_id
+            or nurse.get("name", "").lower() == nurse_id.lower()
+        ):
             found_nurse = nurse
             break
 
@@ -619,10 +665,10 @@ def remove_time_off_request(
         found_nurse["preferences"] = prefs
         _save_hris(nurses)
 
-        result = f"SUCCESS: All time-off requests cleared.\n\n"
+        result = "SUCCESS: All time-off requests cleared.\n\n"
         result += f"Nurse: {found_nurse['name']} ({found_nurse['id']})\n"
         result += f"Removed: {len(time_off_requests)} time-off request(s)\n"
-        result += f"\nThe nurse is now available for scheduling on all dates."
+        result += "\nThe nurse is now available for scheduling on all dates."
         return result
 
     # Remove specific dates
@@ -632,13 +678,17 @@ def remove_time_off_request(
     try:
         start = datetime.strptime(start_date, "%Y-%m-%d")
     except ValueError:
-        return f"Error: Invalid start_date format '{start_date}'. Use YYYY-MM-DD."
+        return (
+            f"Error: Invalid start_date format '{start_date}'. Use YYYY-MM-DD."
+        )
 
     if end_date:
         try:
             end = datetime.strptime(end_date, "%Y-%m-%d")
         except ValueError:
-            return f"Error: Invalid end_date format '{end_date}'. Use YYYY-MM-DD."
+            return (
+                f"Error: Invalid end_date format '{end_date}'. Use YYYY-MM-DD."
+            )
     else:
         end = start
 
@@ -666,11 +716,11 @@ def remove_time_off_request(
     found_nurse["preferences"] = prefs
     _save_hris(nurses)
 
-    result = f"SUCCESS: Time-off request(s) removed.\n\n"
+    result = "SUCCESS: Time-off request(s) removed.\n\n"
     result += f"Nurse: {found_nurse['name']} ({found_nurse['id']})\n"
     result += f"Period: {start_date} to {end.strftime('%Y-%m-%d')}\n"
     result += f"Removed: {len(removed)} day(s)\n"
-    result += f"\nThe nurse is now available for scheduling on these dates."
+    result += "\nThe nurse is now available for scheduling on these dates."
 
     return result
 
@@ -691,7 +741,10 @@ def list_time_off_requests(nurse_id: str = "") -> str:
         # Filter to specific nurse
         found_nurse = None
         for nurse in nurses:
-            if nurse.get("id") == nurse_id or nurse.get("name", "").lower() == nurse_id.lower():
+            if (
+                nurse.get("id") == nurse_id
+                or nurse.get("name", "").lower() == nurse_id.lower()
+            ):
                 found_nurse = nurse
                 break
 
@@ -730,18 +783,30 @@ def list_time_off_requests(nurse_id: str = "") -> str:
             # Group consecutive dates with same reason
             if parsed:
                 groups = []
-                current_group = {"start": parsed[0][0], "end": parsed[0][0], "reason": parsed[0][1]}
+                current_group = {
+                    "start": parsed[0][0],
+                    "end": parsed[0][0],
+                    "reason": parsed[0][1],
+                }
 
                 for i in range(1, len(parsed)):
                     date, reason = parsed[i]
-                    prev_date = datetime.strptime(current_group["end"], "%Y-%m-%d")
+                    prev_date = datetime.strptime(
+                        current_group["end"], "%Y-%m-%d"
+                    )
                     curr_date = datetime.strptime(date, "%Y-%m-%d")
 
-                    if (curr_date - prev_date).days == 1 and reason == current_group["reason"]:
+                    if (
+                        curr_date - prev_date
+                    ).days == 1 and reason == current_group["reason"]:
                         current_group["end"] = date
                     else:
                         groups.append(current_group)
-                        current_group = {"start": date, "end": date, "reason": reason}
+                        current_group = {
+                            "start": date,
+                            "end": date,
+                            "reason": reason,
+                        }
 
                 groups.append(current_group)
 

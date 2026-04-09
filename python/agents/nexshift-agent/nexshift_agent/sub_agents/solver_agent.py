@@ -2,10 +2,15 @@
 Roster Solver Agent - Generates optimal nurse rosters using OR-Tools.
 Reads context from session state and outputs draft roster.
 """
+
 from google.adk.agents import LlmAgent
+
 from nexshift_agent.sub_agents.config import MODEL_SOLVER
-from nexshift_agent.sub_agents.tools.solver_tool import generate_roster, simulate_staffing_change
 from nexshift_agent.sub_agents.tools.history_tools import delete_roster
+from nexshift_agent.sub_agents.tools.solver_tool import (
+    generate_roster,
+    simulate_staffing_change,
+)
 
 SOLVER_INSTRUCTION = """
 You are a Roster Solver.
@@ -90,5 +95,5 @@ def create_solver_agent(model_name: str = MODEL_SOLVER) -> LlmAgent:
         model=model_name,
         instruction=SOLVER_INSTRUCTION,
         output_key="draft_roster",  # Stores the generated roster in session state
-        tools=[generate_roster, simulate_staffing_change, delete_roster]
+        tools=[generate_roster, simulate_staffing_change, delete_roster],
     )

@@ -10,7 +10,6 @@ Provides tools for:
 import json
 import os
 from datetime import datetime, timedelta
-from typing import Optional
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "../../data")
 SHIFT_HISTORY_FILE = os.path.join(DATA_DIR, "shift_history.json")
@@ -22,10 +21,11 @@ ROSTERS_DIR = os.path.join(DATA_DIR, "rosters")
 # Internal Helper Functions
 # =============================================================================
 
+
 def _load_json(filepath: str) -> dict:
     """Load JSON file, return empty dict if not found."""
     try:
-        with open(filepath, "r") as f:
+        with open(filepath) as f:
             return json.load(f)
     except FileNotFoundError:
         return {}
@@ -42,7 +42,7 @@ def _save_json(filepath: str, data: dict) -> None:
 def _get_shift_type(start_time: str) -> str:
     """Determine shift type based on start time."""
     try:
-        hour = int(start_time.split(":")[0])
+        hour = int(start_time.split(":", maxsplit=1)[0])
         if hour >= 20 or hour < 6:
             return "night"
         elif hour >= 6 and hour < 14:
@@ -67,17 +67,23 @@ def _calculate_fatigue_score(stats: dict) -> float:
     Calculate fatigue score based on nurse stats.
     0.0 = Fresh, 1.0 = Burnout risk
     """
-    consecutive_factor = min(stats.get("consecutive_shifts_current", 0) / 3, 1.0) * 0.3
+    consecutive_factor = (
+        min(stats.get("consecutive_shifts_current", 0) / 3, 1.0) * 0.3
+    )
     weekend_factor = min(stats.get("weekend_shifts_30d", 0) / 4, 1.0) * 0.25
     night_factor = min(stats.get("night_shifts_30d", 0) / 8, 1.0) * 0.25
     preference_factor = (1 - stats.get("preferences_honored_rate", 1.0)) * 0.2
 
-    return round(consecutive_factor + weekend_factor + night_factor + preference_factor, 2)
+    return round(
+        consecutive_factor + weekend_factor + night_factor + preference_factor,
+        2,
+    )
 
 
 # =============================================================================
 # Scheduling Period Tools
 # =============================================================================
+
 
 def get_scheduled_periods() -> list:
     """
@@ -104,12 +110,14 @@ def get_scheduled_periods() -> list:
 
         period = log.get("period", {})
         if period.get("start") and period.get("end"):
-            periods.append({
-                "roster_id": roster_id,
-                "status": status,
-                "start": period["start"],
-                "end": period["end"]
-            })
+            periods.append(
+                {
+                    "roster_id": roster_id,
+                    "status": status,
+                    "start": period["start"],
+                    "end": period["end"],
+                }
+            )
 
     return sorted(periods, key=lambda x: x["start"])
 
@@ -136,9 +144,10 @@ def get_next_unscheduled_date() -> str:
     try:
         latest_end_dt = datetime.strptime(latest_end, "%Y-%m-%d")
         next_date = latest_end_dt + timedelta(days=1)
-        today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        if next_date < today:
-            next_date = today
+        today = datetime.now().replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+        next_date = max(next_date, today)
         return next_date.strftime("%Y-%m-%d")
     except ValueError:
         return datetime.now().strftime("%Y-%m-%d")
@@ -166,7 +175,7 @@ def check_period_overlap(start_date: str, num_days: int = 7) -> dict:
             "has_overlap": False,
             "overlapping_rosters": [],
             "suggested_start": start_date,
-            "error": "Invalid date format"
+            "error": "Invalid date format",
         }
 
     periods = get_scheduled_periods()
@@ -179,11 +188,13 @@ def check_period_overlap(start_date: str, num_days: int = 7) -> dict:
 
             # Check for overlap: NOT (req_end < p_start OR req_start > p_end)
             if not (req_end < p_start or req_start > p_end):
-                overlapping.append({
-                    "roster_id": p["roster_id"],
-                    "status": p["status"],
-                    "period": f"{p['start']} to {p['end']}"
-                })
+                overlapping.append(
+                    {
+                        "roster_id": p["roster_id"],
+                        "status": p["status"],
+                        "period": f"{p['start']} to {p['end']}",
+                    }
+                )
         except ValueError:
             continue
 
@@ -194,7 +205,7 @@ def check_period_overlap(start_date: str, num_days: int = 7) -> dict:
         "has_overlap": len(overlapping) > 0,
         "overlapping_rosters": overlapping,
         "suggested_start": suggested_start,
-        "requested_period": f"{start_date} to {req_end.strftime('%Y-%m-%d')}"
+        "requested_period": f"{start_date} to {req_end.strftime('%Y-%m-%d')}",
     }
 
 
@@ -229,7 +240,7 @@ def get_scheduling_status() -> str:
             for p in drafts:
                 result += f"   {p['start']} to {p['end']} ({p['roster_id']})\n"
 
-    result += f"\n" + "=" * 50 + "\n"
+    result += "\n" + "=" * 50 + "\n"
     result += f"📅 Next unscheduled date: {next_date}\n"
 
     return result
@@ -238,6 +249,7 @@ def get_scheduling_status() -> str:
 # =============================================================================
 # Read Tools (Phase 2)
 # =============================================================================
+
 
 def get_shift_history(weeks: int = 12) -> str:
     """
@@ -273,7 +285,9 @@ def get_shift_history(weeks: int = 12) -> str:
     # Format output
     result = f"ROSTER HISTORY (Last {weeks} weeks)\n" + "=" * 50 + "\n\n"
 
-    for log in sorted(recent_logs, key=lambda x: x.get("generated_at", ""), reverse=True):
+    for log in sorted(
+        recent_logs, key=lambda x: x.get("generated_at", ""), reverse=True
+    ):
         roster_id = log.get("roster_id") or log.get("id", "unknown")
         period = log.get("period", {})
         status = log.get("status", "unknown")
@@ -326,11 +340,17 @@ def get_nurse_stats() -> str:
             fatigue_indicator = "🟢 Good"
 
         result += f"📋 {name} ({nurse_id})\n"
-        result += f"   Total Shifts (30d): {nurse_stats.get('total_shifts_30d', 0)}\n"
-        result += f"   Weekend Shifts: {nurse_stats.get('weekend_shifts_30d', 0)}\n"
+        result += (
+            f"   Total Shifts (30d): {nurse_stats.get('total_shifts_30d', 0)}\n"
+        )
+        result += (
+            f"   Weekend Shifts: {nurse_stats.get('weekend_shifts_30d', 0)}\n"
+        )
         result += f"   Night Shifts: {nurse_stats.get('night_shifts_30d', 0)}\n"
         result += f"   Consecutive Shifts: {nurse_stats.get('consecutive_shifts_current', 0)}\n"
-        result += f"   Last Shift: {nurse_stats.get('last_shift_date', 'N/A')}\n"
+        result += (
+            f"   Last Shift: {nurse_stats.get('last_shift_date', 'N/A')}\n"
+        )
         result += f"   Preferences Honored: {nurse_stats.get('preferences_honored_rate', 0) * 100:.0f}%\n"
         result += f"   Fatigue Score: {fatigue:.2f} {fatigue_indicator}\n"
         result += "\n"
@@ -383,7 +403,11 @@ def get_roster_by_id(roster_id: str) -> str:
         return f"Roster '{roster_id}' not found."
 
     # Load nurse names for display
-    from nexshift_agent.sub_agents.tools.data_loader import load_nurses, generate_shifts
+    from nexshift_agent.sub_agents.tools.data_loader import (
+        generate_shifts,
+        load_nurses,
+    )
+
     nurses = {n.id: n for n in load_nurses()}
 
     # Determine start date for shift generation
@@ -392,33 +416,41 @@ def get_roster_by_id(roster_id: str) -> str:
     start_dt = None
     num_days = 7
 
-    if period.get('start'):
+    if period.get("start"):
         try:
-            start_dt = datetime.strptime(period['start'], "%Y-%m-%d")
-            if period.get('end'):
-                end_dt = datetime.strptime(period['end'], "%Y-%m-%d")
+            start_dt = datetime.strptime(period["start"], "%Y-%m-%d")
+            if period.get("end"):
+                end_dt = datetime.strptime(period["end"], "%Y-%m-%d")
                 num_days = (end_dt - start_dt).days + 1
         except ValueError:
             pass
 
     # If no period, infer from generated_at date
     if not start_dt:
-        generated_at = roster.get('generated_at') or metadata.get('generated_at')
+        generated_at = roster.get("generated_at") or metadata.get(
+            "generated_at"
+        )
         if generated_at:
             try:
-                if 'T' in str(generated_at):
-                    start_dt = datetime.fromisoformat(str(generated_at).split('T')[0])
+                if "T" in str(generated_at):
+                    start_dt = datetime.fromisoformat(
+                        str(generated_at).split("T")[0]
+                    )
                 else:
-                    start_dt = datetime.strptime(str(generated_at).split(' ')[0], "%Y-%m-%d")
+                    start_dt = datetime.strptime(
+                        str(generated_at).split(" ")[0], "%Y-%m-%d"
+                    )
             except ValueError:
                 pass
 
     if not start_dt:
-        start_dt = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        start_dt = datetime.now().replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
 
     # Generate shifts and build lookup map
     shifts = generate_shifts(start_date=start_dt, num_days=num_days)
-    shifts_map = {s['id']: s for s in shifts}
+    shifts_map = {s["id"]: s for s in shifts}
 
     # Calculate period
     end_dt = start_dt + timedelta(days=num_days - 1)
@@ -457,16 +489,18 @@ def get_roster_by_id(roster_id: str) -> str:
             assignments_by_date[date] = []
 
         nurse = nurses.get(nurse_id)
-        assignments_by_date[date].append({
-            "nurse_id": nurse_id,
-            "nurse_name": nurse.name if nurse else nurse_id,
-            "seniority": nurse.seniority_level if nurse else "?",
-            "shift_id": shift_id,
-            "ward": shift_info.get("ward", "?"),
-            "start": shift_info.get("start", "?"),
-            "end": shift_info.get("end", "?"),
-            "day": shift_info.get("day", "")
-        })
+        assignments_by_date[date].append(
+            {
+                "nurse_id": nurse_id,
+                "nurse_name": nurse.name if nurse else nurse_id,
+                "seniority": nurse.seniority_level if nurse else "?",
+                "shift_id": shift_id,
+                "ward": shift_info.get("ward", "?"),
+                "start": shift_info.get("start", "?"),
+                "end": shift_info.get("end", "?"),
+                "day": shift_info.get("day", ""),
+            }
+        )
 
     # Calendar view output
     result += "\n" + "=" * 60 + "\n"
@@ -485,7 +519,9 @@ def get_roster_by_id(roster_id: str) -> str:
         # Sort by start time
         for a in sorted(day_assignments, key=lambda x: x.get("start", "")):
             time_range = f"{a['start']}-{a['end']}"
-            seniority_badge = {"Senior": "🔵", "Mid": "🟢", "Junior": "🟡"}.get(a['seniority'], "⚪")
+            seniority_badge = {"Senior": "🔵", "Mid": "🟢", "Junior": "🟡"}.get(
+                a["seniority"], "⚪"
+            )
             result += f"  {time_range:14} | {a['ward']:10} | {seniority_badge} {a['nurse_name']:10} ({a['nurse_id']})\n"
 
     # Summary by nurse
@@ -496,21 +532,21 @@ def get_roster_by_id(roster_id: str) -> str:
     nurse_summary = {}
     for date, day_assignments in assignments_by_date.items():
         for a in day_assignments:
-            nid = a['nurse_id']
+            nid = a["nurse_id"]
             if nid not in nurse_summary:
                 nurse_summary[nid] = {
-                    "name": a['nurse_name'],
-                    "seniority": a['seniority'],
+                    "name": a["nurse_name"],
+                    "seniority": a["seniority"],
                     "shifts": 0,
                     "wards": set(),
                     "weekends": 0,
-                    "nights": 0
+                    "nights": 0,
                 }
             nurse_summary[nid]["shifts"] += 1
-            nurse_summary[nid]["wards"].add(a['ward'])
-            if a['day'] in ["Saturday", "Sunday"]:
+            nurse_summary[nid]["wards"].add(a["ward"])
+            if a["day"] in ["Saturday", "Sunday"]:
                 nurse_summary[nid]["weekends"] += 1
-            if a['start'] >= "20:00" or a['start'] < "06:00":
+            if a["start"] >= "20:00" or a["start"] < "06:00":
                 nurse_summary[nid]["nights"] += 1
 
     result += f"\n{'Nurse':<15} {'Level':<8} {'Shifts':>6} {'Wknd':>5} {'Night':>5} {'Wards'}\n"
@@ -518,7 +554,7 @@ def get_roster_by_id(roster_id: str) -> str:
 
     for nid in sorted(nurse_summary.keys()):
         s = nurse_summary[nid]
-        wards = ", ".join(sorted(s['wards']))
+        wards = ", ".join(sorted(s["wards"]))
         result += f"{s['name']:<15} {s['seniority']:<8} {s['shifts']:>6} {s['weekends']:>5} {s['nights']:>5} {wards}\n"
 
     # Check for unassigned nurses
@@ -552,7 +588,9 @@ def get_nurse_history(nurse_id: str, weeks: int = 12) -> str:
 
     # Current stats
     result += "CURRENT STATS:\n"
-    result += f"   Total Shifts (30d): {nurse_stats.get('total_shifts_30d', 0)}\n"
+    result += (
+        f"   Total Shifts (30d): {nurse_stats.get('total_shifts_30d', 0)}\n"
+    )
     result += f"   Weekend Shifts: {nurse_stats.get('weekend_shifts_30d', 0)}\n"
     result += f"   Night Shifts: {nurse_stats.get('night_shifts_30d', 0)}\n"
     result += f"   Fatigue Score: {nurse_stats.get('fatigue_score', 0):.2f}\n"
@@ -572,17 +610,21 @@ def get_nurse_history(nurse_id: str, weeks: int = 12) -> str:
 
         for assignment in log.get("assignments", []):
             if assignment.get("nurse_id") == nurse_id:
-                nurse_shifts.append({
-                    "roster_id": log.get("roster_id"),
-                    "date": assignment.get("date"),
-                    "ward": assignment.get("ward"),
-                    "shift_type": assignment.get("shift_type")
-                })
+                nurse_shifts.append(
+                    {
+                        "roster_id": log.get("roster_id"),
+                        "date": assignment.get("date"),
+                        "ward": assignment.get("ward"),
+                        "shift_type": assignment.get("shift_type"),
+                    }
+                )
 
     if nurse_shifts:
         result += f"RECENT SHIFTS (Last {weeks} weeks):\n" + "-" * 40 + "\n"
         # Sort by date, handling None values
-        for shift in sorted(nurse_shifts, key=lambda x: x.get("date") or "", reverse=True):
+        for shift in sorted(
+            nurse_shifts, key=lambda x: x.get("date") or "", reverse=True
+        ):
             date_str = shift.get("date") or "?"
             weekend = "🅆" if date_str != "?" and _is_weekend(date_str) else " "
             result += f"   {date_str} {weekend} {shift.get('ward') or '?'} ({shift.get('shift_type') or '?'})\n"
@@ -626,46 +668,56 @@ def get_roster(roster_id: str) -> str:
 
     # Load nurse names for display
     from nexshift_agent.sub_agents.tools.data_loader import load_nurses
+
     nurses = {n.id: n.name for n in load_nurses()}
 
     # Load shift info - try to get period, or infer from generated_at date
     from nexshift_agent.sub_agents.tools.data_loader import generate_shifts
+
     shifts_map = {}
 
     # Try to determine the start date for shift generation
     start_dt = None
     num_days = 7  # default
 
-    if period.get('start'):
+    if period.get("start"):
         try:
-            start_dt = datetime.strptime(period['start'], "%Y-%m-%d")
-            if period.get('end'):
-                end_dt = datetime.strptime(period['end'], "%Y-%m-%d")
+            start_dt = datetime.strptime(period["start"], "%Y-%m-%d")
+            if period.get("end"):
+                end_dt = datetime.strptime(period["end"], "%Y-%m-%d")
                 num_days = (end_dt - start_dt).days + 1
         except ValueError:
             pass
 
     # If no period, try to infer from generated_at date
     if not start_dt:
-        generated_at = roster.get('generated_at') or metadata.get('generated_at')
+        generated_at = roster.get("generated_at") or metadata.get(
+            "generated_at"
+        )
         if generated_at:
             try:
                 # Handle both ISO format and space-separated format
-                if 'T' in str(generated_at):
-                    start_dt = datetime.fromisoformat(str(generated_at).split('T')[0])
+                if "T" in str(generated_at):
+                    start_dt = datetime.fromisoformat(
+                        str(generated_at).split("T")[0]
+                    )
                 else:
-                    start_dt = datetime.strptime(str(generated_at).split(' ')[0], "%Y-%m-%d")
+                    start_dt = datetime.strptime(
+                        str(generated_at).split(" ")[0], "%Y-%m-%d"
+                    )
             except ValueError:
                 pass
 
     # Fallback to today
     if not start_dt:
-        start_dt = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        start_dt = datetime.now().replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
 
     # Generate shifts and build map
     shifts = generate_shifts(start_date=start_dt, num_days=num_days)
     for s in shifts:
-        shifts_map[s['id']] = s
+        shifts_map[s["id"]] = s
 
     # Calculate actual period from shifts
     end_dt = start_dt + timedelta(days=num_days - 1)
@@ -688,14 +740,16 @@ def get_roster(roster_id: str) -> str:
         if date not in assignments_by_date:
             assignments_by_date[date] = []
 
-        assignments_by_date[date].append({
-            "nurse_id": nurse_id,
-            "nurse_name": nurses.get(nurse_id, nurse_id),
-            "shift_id": shift_id,
-            "ward": shift_info.get("ward", "?"),
-            "time": f"{shift_info.get('start', '?')}-{shift_info.get('end', '?')}",
-            "day": shift_info.get("day", "")
-        })
+        assignments_by_date[date].append(
+            {
+                "nurse_id": nurse_id,
+                "nurse_name": nurses.get(nurse_id, nurse_id),
+                "shift_id": shift_id,
+                "ward": shift_info.get("ward", "?"),
+                "time": f"{shift_info.get('start', '?')}-{shift_info.get('end', '?')}",
+                "day": shift_info.get("day", ""),
+            }
+        )
 
     # Format output grouped by date
     result += "ASSIGNMENTS:\n" + "-" * 40 + "\n"
@@ -738,7 +792,7 @@ def get_rosters_by_date_range(start_date: str, end_date: str) -> str:
     all_matching = []
     if os.path.exists(ROSTERS_DIR):
         for filename in os.listdir(ROSTERS_DIR):
-            if filename.endswith('.json') and not filename.startswith('.'):
+            if filename.endswith(".json") and not filename.startswith("."):
                 roster_path = os.path.join(ROSTERS_DIR, filename)
                 roster = _load_json(roster_path)
 
@@ -757,21 +811,27 @@ def get_rosters_by_date_range(start_date: str, end_date: str) -> str:
 
                 # Check if roster overlaps with requested range
                 if r_start <= end_dt and r_end >= start_dt:
-                    roster_id = roster.get("id") or filename.replace('.json', '')
-                    all_matching.append({
-                        "roster_id": roster_id,
-                        "status": roster.get("status", "unknown"),
-                        "period_start": roster_start,
-                        "period_end": roster_end,
-                        "generated_at": roster.get("generated_at", "")
-                    })
+                    roster_id = roster.get("id") or filename.replace(
+                        ".json", ""
+                    )
+                    all_matching.append(
+                        {
+                            "roster_id": roster_id,
+                            "status": roster.get("status", "unknown"),
+                            "period_start": roster_start,
+                            "period_end": roster_end,
+                            "generated_at": roster.get("generated_at", ""),
+                        }
+                    )
 
     # Filter: prefer finalized rosters, fall back to most recent draft per period
     matching_rosters = []
     periods_covered = set()
 
     # Sort by generated_at descending to get most recent first
-    sorted_rosters = sorted(all_matching, key=lambda x: x["generated_at"], reverse=True)
+    sorted_rosters = sorted(
+        all_matching, key=lambda x: x["generated_at"], reverse=True
+    )
 
     # First, add most recent finalized roster per period
     for r in sorted_rosters:
@@ -790,7 +850,9 @@ def get_rosters_by_date_range(start_date: str, end_date: str) -> str:
                 periods_covered.add(period_key)
 
     if not matching_rosters:
-        return f"No rosters found covering the period {start_date} to {end_date}."
+        return (
+            f"No rosters found covering the period {start_date} to {end_date}."
+        )
 
     # Sort rosters by period start
     matching_rosters.sort(key=lambda x: x["period_start"])
@@ -802,7 +864,11 @@ def get_rosters_by_date_range(start_date: str, end_date: str) -> str:
     result += f"Found {len(matching_rosters)} roster(s)\n\n"
 
     # Load nurse data for name lookup
-    from nexshift_agent.sub_agents.tools.data_loader import load_nurses, generate_shifts
+    from nexshift_agent.sub_agents.tools.data_loader import (
+        generate_shifts,
+        load_nurses,
+    )
+
     nurses = {n.id: n for n in load_nurses()}
 
     # Display each roster with calendar table
@@ -815,7 +881,9 @@ def get_rosters_by_date_range(start_date: str, end_date: str) -> str:
         # Section header with roster ID
         result += f"{'─' * 60}\n"
         result += f"📋 {roster_id}\n"
-        result += f"   Status: {status} | Period: {period_start} to {period_end}\n"
+        result += (
+            f"   Status: {status} | Period: {period_start} to {period_end}\n"
+        )
         result += f"{'─' * 60}\n\n"
 
         # Load roster data
@@ -841,7 +909,7 @@ def get_rosters_by_date_range(start_date: str, end_date: str) -> str:
             continue
 
         shifts = generate_shifts(start_date=r_start, num_days=r_days)
-        shifts_map = {s['id']: s for s in shifts}
+        shifts_map = {s["id"]: s for s in shifts}
 
         # Build nurse schedule: {nurse_id: {date: ward-shift_type}}
         nurse_schedule = {}
@@ -923,6 +991,7 @@ def get_rosters_by_date_range(start_date: str, end_date: str) -> str:
 # Write Tools (Phase 3)
 # =============================================================================
 
+
 def save_draft_roster(roster_json: str) -> str:
     """
     Saves a roster as a draft awaiting approval.
@@ -962,23 +1031,31 @@ def save_draft_roster(roster_json: str) -> str:
         from nexshift_agent.sub_agents.tools.data_loader import generate_shifts
 
         # Infer start date from generated_at or roster metadata
-        generated_at = roster.get("generated_at") or roster.get("metadata", {}).get("generated_at")
+        generated_at = roster.get("generated_at") or roster.get(
+            "metadata", {}
+        ).get("generated_at")
         start_dt = None
         if generated_at:
             try:
-                if 'T' in str(generated_at):
-                    start_dt = datetime.fromisoformat(str(generated_at).split('T')[0])
+                if "T" in str(generated_at):
+                    start_dt = datetime.fromisoformat(
+                        str(generated_at).split("T")[0]
+                    )
                 else:
-                    start_dt = datetime.strptime(str(generated_at).split(' ')[0], "%Y-%m-%d")
+                    start_dt = datetime.strptime(
+                        str(generated_at).split(" ")[0], "%Y-%m-%d"
+                    )
             except ValueError:
                 pass
 
         if not start_dt:
-            start_dt = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            start_dt = datetime.now().replace(
+                hour=0, minute=0, second=0, microsecond=0
+            )
 
         # Generate shifts to get the date mapping
         shifts = generate_shifts(start_date=start_dt, num_days=7)
-        shift_dates = {s['id']: s['date'] for s in shifts}
+        shift_dates = {s["id"]: s["date"] for s in shifts}
 
         # Extract dates from assignments using shift lookup
         dates = []
@@ -1004,7 +1081,9 @@ def save_draft_roster(roster_json: str) -> str:
     history_entry["roster_id"] = roster_id
 
     # Remove existing draft with same ID
-    history["logs"] = [l for l in history["logs"] if l.get("roster_id") != roster_id]
+    history["logs"] = [
+        l for l in history["logs"] if l.get("roster_id") != roster_id
+    ]
     history["logs"].append(history_entry)
     _save_json(SHIFT_HISTORY_FILE, history)
 
@@ -1025,7 +1104,9 @@ def _get_assignment_dates(roster: dict, rosters_dir: str) -> set:
 
     try:
         start_dt = datetime.strptime(period["start"], "%Y-%m-%d")
-        end_dt = datetime.strptime(period.get("end", period["start"]), "%Y-%m-%d")
+        end_dt = datetime.strptime(
+            period.get("end", period["start"]), "%Y-%m-%d"
+        )
         num_days = (end_dt - start_dt).days + 1
     except ValueError:
         return set()
@@ -1055,7 +1136,9 @@ def _remove_assignments_for_dates(roster: dict, dates_to_remove: set) -> list:
 
     try:
         start_dt = datetime.strptime(period["start"], "%Y-%m-%d")
-        end_dt = datetime.strptime(period.get("end", period["start"]), "%Y-%m-%d")
+        end_dt = datetime.strptime(
+            period.get("end", period["start"]), "%Y-%m-%d"
+        )
         num_days = (end_dt - start_dt).days + 1
     except ValueError:
         return []
@@ -1074,7 +1157,13 @@ def _remove_assignments_for_dates(roster: dict, dates_to_remove: set) -> list:
         if shift_date in dates_to_remove:
             # Add shift info to removed assignment for stats reversal
             a["date"] = shift_date
-            a["shift_type"] = "night" if shift_info.get("start", "").startswith(("20", "21", "22", "23", "00", "01", "02", "03", "04", "05")) else "day"
+            a["shift_type"] = (
+                "night"
+                if shift_info.get("start", "").startswith(
+                    ("20", "21", "22", "23", "00", "01", "02", "03", "04", "05")
+                )
+                else "day"
+            )
             removed.append(a)
         else:
             kept.append(a)
@@ -1098,13 +1187,19 @@ def _reverse_nurse_stats(assignments: list, stats: dict) -> None:
         shift_type = a.get("shift_type", "")
 
         # Subtract counts (don't go below 0)
-        nurse_stats["total_shifts_30d"] = max(0, nurse_stats.get("total_shifts_30d", 0) - 1)
+        nurse_stats["total_shifts_30d"] = max(
+            0, nurse_stats.get("total_shifts_30d", 0) - 1
+        )
 
         if _is_weekend(date):
-            nurse_stats["weekend_shifts_30d"] = max(0, nurse_stats.get("weekend_shifts_30d", 0) - 1)
+            nurse_stats["weekend_shifts_30d"] = max(
+                0, nurse_stats.get("weekend_shifts_30d", 0) - 1
+            )
 
         if shift_type == "night":
-            nurse_stats["night_shifts_30d"] = max(0, nurse_stats.get("night_shifts_30d", 0) - 1)
+            nurse_stats["night_shifts_30d"] = max(
+                0, nurse_stats.get("night_shifts_30d", 0) - 1
+            )
 
         # Recalculate fatigue
         nurse_stats["fatigue_score"] = _calculate_fatigue_score(nurse_stats)
@@ -1147,7 +1242,9 @@ def finalize_roster(roster_id: str) -> str:
         try:
             new_start = datetime.strptime(new_period["start"], "%Y-%m-%d")
             new_end = datetime.strptime(new_period["end"], "%Y-%m-%d")
-            today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            today = datetime.now().replace(
+                hour=0, minute=0, second=0, microsecond=0
+            )
 
             # Check all finalized rosters for overlap
             finalized_periods = get_scheduled_periods()
@@ -1190,7 +1287,9 @@ def finalize_roster(roster_id: str) -> str:
                 if past_overlap_dates:
                     past_dates_str = ", ".join(past_overlap_dates[:5])
                     if len(past_overlap_dates) > 5:
-                        past_dates_str += f" ... ({len(past_overlap_dates)} dates total)"
+                        past_dates_str += (
+                            f" ... ({len(past_overlap_dates)} dates total)"
+                        )
                     return (
                         f"❌ Cannot finalize roster '{roster_id}'.\n\n"
                         f"Period {new_period['start']} to {new_period['end']} overlaps with "
@@ -1202,21 +1301,27 @@ def finalize_roster(roster_id: str) -> str:
                 # Overwrite future dates
                 if future_overlap_dates:
                     # Load the existing roster
-                    existing_file = os.path.join(ROSTERS_DIR, f"{p['roster_id']}.json")
+                    existing_file = os.path.join(
+                        ROSTERS_DIR, f"{p['roster_id']}.json"
+                    )
                     if not os.path.exists(existing_file):
                         continue
 
                     existing_roster = _load_json(existing_file)
 
                     # Remove assignments for future overlap dates
-                    removed = _remove_assignments_for_dates(existing_roster, set(future_overlap_dates))
+                    removed = _remove_assignments_for_dates(
+                        existing_roster, set(future_overlap_dates)
+                    )
 
                     if removed:
                         # Reverse nurse stats for removed assignments
                         _reverse_nurse_stats(removed, stats)
 
                         # Update the existing roster's period
-                        remaining_dates = _get_assignment_dates(existing_roster, ROSTERS_DIR)
+                        remaining_dates = _get_assignment_dates(
+                            existing_roster, ROSTERS_DIR
+                        )
 
                         if not remaining_dates:
                             # No assignments left - delete the roster
@@ -1224,8 +1329,10 @@ def finalize_roster(roster_id: str) -> str:
                             # Remove from history
                             history = _load_json(SHIFT_HISTORY_FILE)
                             history["logs"] = [
-                                l for l in history.get("logs", [])
-                                if l.get("roster_id") != p["roster_id"] and l.get("id") != p["roster_id"]
+                                l
+                                for l in history.get("logs", [])
+                                if l.get("roster_id") != p["roster_id"]
+                                and l.get("id") != p["roster_id"]
                             ]
                             _save_json(SHIFT_HISTORY_FILE, history)
                             overwrite_messages.append(
@@ -1235,16 +1342,23 @@ def finalize_roster(roster_id: str) -> str:
                             # Update period to remaining dates
                             existing_roster["period"] = {
                                 "start": min(remaining_dates),
-                                "end": max(remaining_dates)
+                                "end": max(remaining_dates),
                             }
-                            existing_roster["trimmed_at"] = datetime.now().isoformat()
-                            existing_roster["trimmed_reason"] = f"Future shifts overwritten by {roster_id}"
+                            existing_roster["trimmed_at"] = (
+                                datetime.now().isoformat()
+                            )
+                            existing_roster["trimmed_reason"] = (
+                                f"Future shifts overwritten by {roster_id}"
+                            )
                             _save_json(existing_file, existing_roster)
 
                             # Update history
                             history = _load_json(SHIFT_HISTORY_FILE)
                             for log in history.get("logs", []):
-                                if log.get("roster_id") == p["roster_id"] or log.get("id") == p["roster_id"]:
+                                if (
+                                    log.get("roster_id") == p["roster_id"]
+                                    or log.get("id") == p["roster_id"]
+                                ):
                                     log["period"] = existing_roster["period"]
                                     break
                             _save_json(SHIFT_HISTORY_FILE, history)
@@ -1280,13 +1394,19 @@ def finalize_roster(roster_id: str) -> str:
         shift_type = assignment.get("shift_type", "")
 
         # Update counts
-        nurse_stats["total_shifts_30d"] = nurse_stats.get("total_shifts_30d", 0) + 1
+        nurse_stats["total_shifts_30d"] = (
+            nurse_stats.get("total_shifts_30d", 0) + 1
+        )
 
         if _is_weekend(date):
-            nurse_stats["weekend_shifts_30d"] = nurse_stats.get("weekend_shifts_30d", 0) + 1
+            nurse_stats["weekend_shifts_30d"] = (
+                nurse_stats.get("weekend_shifts_30d", 0) + 1
+            )
 
         if shift_type == "night":
-            nurse_stats["night_shifts_30d"] = nurse_stats.get("night_shifts_30d", 0) + 1
+            nurse_stats["night_shifts_30d"] = (
+                nurse_stats.get("night_shifts_30d", 0) + 1
+            )
 
         # Update consecutive shifts
         last_date = nurse_stats.get("last_shift_date", "")
@@ -1295,7 +1415,9 @@ def finalize_roster(roster_id: str) -> str:
                 last = datetime.strptime(last_date, "%Y-%m-%d")
                 current = datetime.strptime(date, "%Y-%m-%d")
                 if (current - last).days == 1:
-                    nurse_stats["consecutive_shifts_current"] = nurse_stats.get("consecutive_shifts_current", 0) + 1
+                    nurse_stats["consecutive_shifts_current"] = (
+                        nurse_stats.get("consecutive_shifts_current", 0) + 1
+                    )
                 else:
                     nurse_stats["consecutive_shifts_current"] = 1
             except ValueError:
@@ -1394,23 +1516,26 @@ def list_pending_rosters() -> str:
     # Scan actual roster files for accuracy
     if os.path.exists(ROSTERS_DIR):
         for filename in os.listdir(ROSTERS_DIR):
-            if filename.endswith('.json') and not filename.startswith('.'):
+            if filename.endswith(".json") and not filename.startswith("."):
                 roster_path = os.path.join(ROSTERS_DIR, filename)
                 roster = _load_json(roster_path)
                 if roster.get("status") == "draft":
                     # Handle both 'id' and 'roster_id' keys
-                    roster_id = roster.get("roster_id") or roster.get("id") or filename.replace('.json', '')
-                    drafts.append({
-                        "roster_id": roster_id,
-                        "roster": roster
-                    })
+                    roster_id = (
+                        roster.get("roster_id")
+                        or roster.get("id")
+                        or filename.replace(".json", "")
+                    )
+                    drafts.append({"roster_id": roster_id, "roster": roster})
 
     if not drafts:
         return "No pending rosters. All rosters have been processed."
 
     result = "PENDING ROSTERS (Awaiting Approval)\n" + "=" * 50 + "\n\n"
 
-    for item in sorted(drafts, key=lambda x: x["roster"].get("generated_at", ""), reverse=True):
+    for item in sorted(
+        drafts, key=lambda x: x["roster"].get("generated_at", ""), reverse=True
+    ):
         roster_id = item["roster_id"]
         roster = item["roster"]
         period = roster.get("period", {})
@@ -1465,7 +1590,8 @@ def delete_roster(roster_id: str) -> str:
     history = _load_json(SHIFT_HISTORY_FILE)
     original_count = len(history.get("logs", []))
     history["logs"] = [
-        l for l in history.get("logs", [])
+        l
+        for l in history.get("logs", [])
         if l.get("roster_id") != roster_id and l.get("id") != roster_id
     ]
     removed_count = original_count - len(history["logs"])
@@ -1494,19 +1620,23 @@ def list_all_rosters() -> str:
         "draft": [],
         "finalized": [],
         "rejected": [],
-        "unknown": []
+        "unknown": [],
     }
 
     if not os.path.exists(ROSTERS_DIR):
         return "No rosters directory found."
 
     for filename in os.listdir(ROSTERS_DIR):
-        if filename.endswith('.json') and not filename.startswith('.'):
+        if filename.endswith(".json") and not filename.startswith("."):
             roster_path = os.path.join(ROSTERS_DIR, filename)
             roster = _load_json(roster_path)
 
             # Handle both 'id' and 'roster_id' keys
-            roster_id = roster.get("roster_id") or roster.get("id") or filename.replace('.json', '')
+            roster_id = (
+                roster.get("roster_id")
+                or roster.get("id")
+                or filename.replace(".json", "")
+            )
             status = roster.get("status", "unknown")
             period = roster.get("period", {})
             metadata = roster.get("metadata", {})
@@ -1517,7 +1647,7 @@ def list_all_rosters() -> str:
                 "period_end": period.get("end", "?"),
                 "generated_at": roster.get("generated_at", "N/A"),
                 "assignments": len(roster.get("assignments", [])),
-                "empathy_score": metadata.get("empathy_score", "N/A")
+                "empathy_score": metadata.get("empathy_score", "N/A"),
             }
 
             if status in rosters_by_status:
@@ -1534,9 +1664,15 @@ def list_all_rosters() -> str:
 
     # Draft rosters first
     if rosters_by_status["draft"]:
-        result += f"📝 DRAFT ({len(rosters_by_status['draft'])} pending approval)\n"
+        result += (
+            f"📝 DRAFT ({len(rosters_by_status['draft'])} pending approval)\n"
+        )
         result += "-" * 50 + "\n"
-        for r in sorted(rosters_by_status["draft"], key=lambda x: x["generated_at"], reverse=True):
+        for r in sorted(
+            rosters_by_status["draft"],
+            key=lambda x: x["generated_at"],
+            reverse=True,
+        ):
             result += f"\n• {r['roster_id']}\t"
             result += f"  Period: {r['period_start']} to {r['period_end']}\n"
             result += f"  Assignments: {r['assignments']} | Generated: {r['generated_at'][:10] if len(str(r['generated_at'])) >= 10 else r['generated_at']}\n"
@@ -1546,7 +1682,11 @@ def list_all_rosters() -> str:
     if rosters_by_status["finalized"]:
         result += f"✅ FINALIZED ({len(rosters_by_status['finalized'])})\n"
         result += "-" * 50 + "\n"
-        for r in sorted(rosters_by_status["finalized"], key=lambda x: x["generated_at"], reverse=True):
+        for r in sorted(
+            rosters_by_status["finalized"],
+            key=lambda x: x["generated_at"],
+            reverse=True,
+        ):
             result += f"\n• {r['roster_id']}\t"
             result += f"  Period: {r['period_start']} to {r['period_end']}\n"
         result += "\n"
@@ -1555,7 +1695,11 @@ def list_all_rosters() -> str:
     if rosters_by_status["rejected"]:
         result += f"❌ REJECTED ({len(rosters_by_status['rejected'])})\n"
         result += "-" * 50 + "\n"
-        for r in sorted(rosters_by_status["rejected"], key=lambda x: x["generated_at"], reverse=True):
+        for r in sorted(
+            rosters_by_status["rejected"],
+            key=lambda x: x["generated_at"],
+            reverse=True,
+        ):
             result += f"\n• {r['roster_id']}\t"
             result += f"  Period: {r['period_start']} to {r['period_end']}\n"
         result += "\n"
@@ -1582,6 +1726,7 @@ def list_all_rosters() -> str:
 # =============================================================================
 # Analysis Tools (Phase 4)
 # =============================================================================
+
 
 def compare_rosters(roster_id_1: str, roster_id_2: str) -> str:
     """
@@ -1621,7 +1766,7 @@ def compare_rosters(roster_id_1: str, roster_id_2: str) -> str:
     if not roster2:
         return f"Roster '{roster_id_2}' not found."
 
-    result = f"ROSTER COMPARISON\n" + "=" * 50 + "\n"
+    result = "ROSTER COMPARISON\n" + "=" * 50 + "\n"
     result += f"{roster_id_1} vs {roster_id_2}\n\n"
 
     # Compare metadata
@@ -1666,6 +1811,7 @@ def compare_rosters(roster_id_1: str, roster_id_2: str) -> str:
 # =============================================================================
 # Maintenance Tools (Phase 5)
 # =============================================================================
+
 
 def sync_history_with_files() -> str:
     """
@@ -1752,7 +1898,7 @@ def cleanup_old_history(weeks: int = 12) -> str:
     # Recalculate nurse stats
     recalc_result = recalculate_nurse_stats(days=30)
 
-    result = f"HISTORY CLEANUP COMPLETE\n" + "=" * 50 + "\n\n"
+    result = "HISTORY CLEANUP COMPLETE\n" + "=" * 50 + "\n\n"
     result += f"Retention period: {weeks} weeks\n"
     result += f"Cutoff date: {cutoff_date.strftime('%Y-%m-%d')}\n\n"
     result += f"Rosters archived: {archived_count}\n"
@@ -1787,7 +1933,7 @@ def recalculate_nurse_stats(days: int = 30) -> str:
             "weekend": 0,
             "night": 0,
             "dates": [],
-            "nurse_name": stats[nurse_id].get("nurse_name", nurse_id)
+            "nurse_name": stats[nurse_id].get("nurse_name", nurse_id),
         }
 
     # Aggregate from finalized rosters within window
@@ -1850,7 +1996,9 @@ def recalculate_nurse_stats(days: int = 30) -> str:
             stats[nurse_id]["consecutive_shifts_current"] = consecutive
 
         # Recalculate fatigue
-        stats[nurse_id]["fatigue_score"] = _calculate_fatigue_score(stats[nurse_id])
+        stats[nurse_id]["fatigue_score"] = _calculate_fatigue_score(
+            stats[nurse_id]
+        )
         stats[nurse_id]["updated_at"] = datetime.now().isoformat()
 
     # Update metadata
@@ -1861,7 +2009,7 @@ def recalculate_nurse_stats(days: int = 30) -> str:
 
     _save_json(NURSE_STATS_FILE, stats)
 
-    result = f"NURSE STATS RECALCULATED\n"
+    result = "NURSE STATS RECALCULATED\n"
     result += f"Window: Last {days} days\n\n"
 
     for nurse_id, counts in nurse_counts.items():

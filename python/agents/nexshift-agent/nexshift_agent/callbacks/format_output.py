@@ -1,17 +1,18 @@
 """
 After-model callback to format coordinator output for chat display.
 """
-from typing import Optional
-from google.genai import types
+
+
 from google.adk.agents.callback_context import CallbackContext
 from google.adk.models import LlmResponse
+from google.genai import types
+
 from nexshift_agent.sub_agents.utils.output_formatter import OutputFormatter
 
 
 def format_model_output(
-    callback_context: CallbackContext,
-    llm_response: LlmResponse
-) -> Optional[LlmResponse]:
+    callback_context: CallbackContext, llm_response: LlmResponse
+) -> LlmResponse | None:
     """
     Format the LLM's response for chat display.
 
@@ -36,7 +37,7 @@ def format_model_output(
     # Get the text content from all parts
     original_text = ""
     for part in content.parts:
-        if hasattr(part, 'text') and part.text:
+        if hasattr(part, "text") and part.text:
             original_text += part.text
 
     if not original_text:
@@ -52,8 +53,7 @@ def format_model_output(
 
     # Create new content with formatted text
     new_content = types.Content(
-        role=content.role,
-        parts=[types.Part(text=formatted_text)]
+        role=content.role, parts=[types.Part(text=formatted_text)]
     )
 
     # Return new LlmResponse with formatted content
@@ -62,5 +62,5 @@ def format_model_output(
         grounding_metadata=llm_response.grounding_metadata,
         usage_metadata=llm_response.usage_metadata,
         finish_reason=llm_response.finish_reason,
-        model_version=llm_response.model_version
+        model_version=llm_response.model_version,
     )

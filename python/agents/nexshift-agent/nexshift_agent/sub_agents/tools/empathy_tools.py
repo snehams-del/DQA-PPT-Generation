@@ -8,7 +8,6 @@ burnout prevention, and preference honoring.
 import json
 import os
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "../../data")
 ROSTERS_DIR = os.path.join(DATA_DIR, "rosters")
@@ -18,7 +17,7 @@ NURSE_STATS_FILE = os.path.join(DATA_DIR, "nurse_stats.json")
 def _load_json(filepath: str) -> dict:
     """Load JSON file, return empty dict if not found."""
     try:
-        with open(filepath, "r") as f:
+        with open(filepath) as f:
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         return {}
@@ -30,26 +29,46 @@ def _save_json(filepath: str, data: dict) -> None:
         json.dump(data, f, indent=2, default=str)
 
 
-def _load_hris() -> List[dict]:
+def _load_hris() -> list[dict]:
     """Load HRIS data."""
     hris_path = os.path.join(DATA_DIR, "mock_hris.json")
     try:
-        with open(hris_path, "r") as f:
+        with open(hris_path) as f:
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         return []
 
 
-def _generate_shifts(start_date: datetime, num_days: int = 7) -> List[dict]:
+def _generate_shifts(start_date: datetime, num_days: int = 7) -> list[dict]:
     """Generate shift data for analysis."""
     shift_templates = [
         {"ward": "ICU", "start": "00:00", "end": "08:00", "all_week": True},
         {"ward": "ICU", "start": "08:00", "end": "16:00", "all_week": True},
         {"ward": "ICU", "start": "16:00", "end": "00:00", "all_week": True},
-        {"ward": "Emergency", "start": "00:00", "end": "08:00", "all_week": True},
-        {"ward": "Emergency", "start": "08:00", "end": "16:00", "all_week": True},
-        {"ward": "Emergency", "start": "16:00", "end": "00:00", "all_week": True},
-        {"ward": "General", "start": "08:00", "end": "16:00", "all_week": False},
+        {
+            "ward": "Emergency",
+            "start": "00:00",
+            "end": "08:00",
+            "all_week": True,
+        },
+        {
+            "ward": "Emergency",
+            "start": "08:00",
+            "end": "16:00",
+            "all_week": True,
+        },
+        {
+            "ward": "Emergency",
+            "start": "16:00",
+            "end": "00:00",
+            "all_week": True,
+        },
+        {
+            "ward": "General",
+            "start": "08:00",
+            "end": "16:00",
+            "all_week": False,
+        },
     ]
 
     shifts = []
@@ -64,16 +83,19 @@ def _generate_shifts(start_date: datetime, num_days: int = 7) -> List[dict]:
             if is_weekend and not template.get("all_week", True):
                 continue
 
-            shifts.append({
-                "id": f"shift_{shift_counter:03d}",
-                "ward": template["ward"],
-                "date": current_date.strftime("%Y-%m-%d"),
-                "day": day_name,
-                "start": template["start"],
-                "end": template["end"],
-                "is_night": template["start"] == "00:00" or template["start"] >= "20:00",
-                "is_weekend": is_weekend
-            })
+            shifts.append(
+                {
+                    "id": f"shift_{shift_counter:03d}",
+                    "ward": template["ward"],
+                    "date": current_date.strftime("%Y-%m-%d"),
+                    "day": day_name,
+                    "start": template["start"],
+                    "end": template["end"],
+                    "is_night": template["start"] == "00:00"
+                    or template["start"] >= "20:00",
+                    "is_weekend": is_weekend,
+                }
+            )
             shift_counter += 1
 
     return shifts
@@ -105,7 +127,7 @@ def get_roster_assignments(roster_id: str = "") -> str:
         drafts = []
         if os.path.exists(ROSTERS_DIR):
             for filename in os.listdir(ROSTERS_DIR):
-                if filename.endswith('.json'):
+                if filename.endswith(".json"):
                     roster_path = os.path.join(ROSTERS_DIR, filename)
                     r = _load_json(roster_path)
                     if r.get("status") == "draft":
@@ -141,14 +163,20 @@ def get_roster_assignments(roster_id: str = "") -> str:
         if generated_at:
             try:
                 if "T" in str(generated_at):
-                    start_date = datetime.fromisoformat(str(generated_at).split("T")[0])
+                    start_date = datetime.fromisoformat(
+                        str(generated_at).split("T")[0]
+                    )
                 else:
-                    start_date = datetime.strptime(str(generated_at).split(" ")[0], "%Y-%m-%d")
+                    start_date = datetime.strptime(
+                        str(generated_at).split(" ")[0], "%Y-%m-%d"
+                    )
             except ValueError:
                 pass
 
     if not start_date:
-        start_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        start_date = datetime.now().replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
 
     # Generate shifts and create lookup
     shifts_list = _generate_shifts(start_date, num_days)
@@ -160,7 +188,9 @@ def get_roster_assignments(roster_id: str = "") -> str:
     result = "=" * 60 + "\n"
     result += f"ROSTER ASSIGNMENTS: {roster_id}\n"
     result += "=" * 60 + "\n\n"
-    result += f"Period: {period.get('start', 'N/A')} to {period.get('end', 'N/A')}\n"
+    result += (
+        f"Period: {period.get('start', 'N/A')} to {period.get('end', 'N/A')}\n"
+    )
     result += f"Total Assignments: {len(assignments)}\n\n"
 
     # Group by nurse for empathy analysis
@@ -178,18 +208,20 @@ def get_roster_assignments(roster_id: str = "") -> str:
                 "preferences": nurse.get("preferences", {}),
                 "seniority": nurse.get("seniority_level", "Unknown"),
                 "contract": nurse.get("contract_type", "Unknown"),
-                "shifts": []
+                "shifts": [],
             }
 
-        by_nurse[nurse_id]["shifts"].append({
-            "shift_id": shift_id,
-            "ward": shift.get("ward", "?"),
-            "date": shift.get("date", "?"),
-            "day": shift.get("day", "?"),
-            "time": f"{shift.get('start', '?')}-{shift.get('end', '?')}",
-            "is_night": shift.get("is_night", False),
-            "is_weekend": shift.get("is_weekend", False)
-        })
+        by_nurse[nurse_id]["shifts"].append(
+            {
+                "shift_id": shift_id,
+                "ward": shift.get("ward", "?"),
+                "date": shift.get("date", "?"),
+                "day": shift.get("day", "?"),
+                "time": f"{shift.get('start', '?')}-{shift.get('end', '?')}",
+                "is_night": shift.get("is_night", False),
+                "is_weekend": shift.get("is_weekend", False),
+            }
+        )
 
     # Format output by nurse
     result += "ASSIGNMENTS BY NURSE:\n"
@@ -201,7 +233,7 @@ def get_roster_assignments(roster_id: str = "") -> str:
 
         result += f"👤 {info['name']} ({nurse_id})\n"
         result += f"   Seniority: {info['seniority']} | Contract: {info['contract']}\n"
-        result += f"   Preferences:\n"
+        result += "   Preferences:\n"
         result += f"     - Avoid night shifts: {prefs.get('avoid_night_shifts', False)}\n"
         result += f"     - Preferred days: {', '.join(prefs.get('preferred_days', [])) or 'None'}\n"
 
@@ -215,13 +247,19 @@ def get_roster_assignments(roster_id: str = "") -> str:
         # Check for preference violations
         violations = []
         if prefs.get("avoid_night_shifts") and nights > 0:
-            violations.append(f"⚠️ Has {nights} night shift(s) despite preference to avoid")
+            violations.append(
+                f"⚠️ Has {nights} night shift(s) despite preference to avoid"
+            )
 
         preferred_days = prefs.get("preferred_days", [])
         if preferred_days:
-            non_preferred = [s for s in info["shifts"] if s["day"] not in preferred_days]
+            non_preferred = [
+                s for s in info["shifts"] if s["day"] not in preferred_days
+            ]
             if non_preferred:
-                violations.append(f"⚠️ {len(non_preferred)} shift(s) on non-preferred days")
+                violations.append(
+                    f"⚠️ {len(non_preferred)} shift(s) on non-preferred days"
+                )
 
         if violations:
             result += "   Concerns:\n"
@@ -266,7 +304,7 @@ def analyze_roster_fairness(roster_id: str = "") -> str:
         drafts = []
         if os.path.exists(ROSTERS_DIR):
             for filename in os.listdir(ROSTERS_DIR):
-                if filename.endswith('.json'):
+                if filename.endswith(".json"):
                     roster_path = os.path.join(ROSTERS_DIR, filename)
                     r = _load_json(roster_path)
                     if r.get("status") == "draft":
@@ -299,7 +337,9 @@ def analyze_roster_fairness(roster_id: str = "") -> str:
             pass
 
     if not start_date:
-        start_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        start_date = datetime.now().replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
 
     shifts_list = _generate_shifts(start_date, num_days)
     shifts = {s["id"]: s for s in shifts_list}
@@ -323,8 +363,10 @@ def analyze_roster_fairness(roster_id: str = "") -> str:
                 "night_shifts": 0,
                 "weekend_shifts": 0,
                 "hours": 0,
-                "fatigue_score": stats.get(nurse_id, {}).get("fatigue_score", 0),
-                "prefs": nurse.get("preferences", {})
+                "fatigue_score": stats.get(nurse_id, {}).get(
+                    "fatigue_score", 0
+                ),
+                "prefs": nurse.get("preferences", {}),
             }
 
         m = nurse_metrics[nurse_id]
@@ -334,24 +376,28 @@ def analyze_roster_fairness(roster_id: str = "") -> str:
         if shift.get("is_night"):
             m["night_shifts"] += 1
             if m["prefs"].get("avoid_night_shifts"):
-                preference_violations.append({
-                    "nurse": m["name"],
-                    "nurse_id": nurse_id,
-                    "type": "night_shift",
-                    "detail": f"Assigned night shift on {shift.get('date')}"
-                })
+                preference_violations.append(
+                    {
+                        "nurse": m["name"],
+                        "nurse_id": nurse_id,
+                        "type": "night_shift",
+                        "detail": f"Assigned night shift on {shift.get('date')}",
+                    }
+                )
 
         if shift.get("is_weekend"):
             m["weekend_shifts"] += 1
 
         preferred_days = m["prefs"].get("preferred_days", [])
         if preferred_days and shift.get("day") not in preferred_days:
-            preference_violations.append({
-                "nurse": m["name"],
-                "nurse_id": nurse_id,
-                "type": "non_preferred_day",
-                "detail": f"Assigned on {shift.get('day')} (prefers: {', '.join(preferred_days)})"
-            })
+            preference_violations.append(
+                {
+                    "nurse": m["name"],
+                    "nurse_id": nurse_id,
+                    "type": "non_preferred_day",
+                    "detail": f"Assigned on {shift.get('day')} (prefers: {', '.join(preferred_days)})",
+                }
+            )
 
     # Calculate fairness metrics
     if nurse_metrics:
@@ -364,8 +410,12 @@ def analyze_roster_fairness(roster_id: str = "") -> str:
         min_shifts = min(shift_counts)
         shift_variance = max_shifts - min_shifts
 
-        avg_weekends = sum(weekend_counts) / len(weekend_counts) if weekend_counts else 0
-        avg_nights = sum(night_counts) / len(night_counts) if night_counts else 0
+        avg_weekends = (
+            sum(weekend_counts) / len(weekend_counts) if weekend_counts else 0
+        )
+        avg_nights = (
+            sum(night_counts) / len(night_counts) if night_counts else 0
+        )
     else:
         avg_shifts = max_shifts = min_shifts = shift_variance = 0
         avg_weekends = avg_nights = 0
@@ -376,7 +426,9 @@ def analyze_roster_fairness(roster_id: str = "") -> str:
         risk_factors = []
 
         if m["fatigue_score"] >= 0.7:
-            risk_factors.append(f"High fatigue score ({m['fatigue_score']:.2f})")
+            risk_factors.append(
+                f"High fatigue score ({m['fatigue_score']:.2f})"
+            )
 
         if m["total_shifts"] >= 5:
             risk_factors.append(f"Heavy workload ({m['total_shifts']} shifts)")
@@ -385,14 +437,18 @@ def analyze_roster_fairness(roster_id: str = "") -> str:
             risk_factors.append(f"Many night shifts ({m['night_shifts']})")
 
         if m["weekend_shifts"] >= 2:
-            risk_factors.append(f"Multiple weekend shifts ({m['weekend_shifts']})")
+            risk_factors.append(
+                f"Multiple weekend shifts ({m['weekend_shifts']})"
+            )
 
         if risk_factors:
-            burnout_risks.append({
-                "nurse": m["name"],
-                "nurse_id": nurse_id,
-                "factors": risk_factors
-            })
+            burnout_risks.append(
+                {
+                    "nurse": m["name"],
+                    "nurse_id": nurse_id,
+                    "factors": risk_factors,
+                }
+            )
 
     # Calculate empathy score
     # Start at 1.0 and deduct for issues
@@ -421,13 +477,15 @@ def analyze_roster_fairness(roster_id: str = "") -> str:
     result += f"Roster: {roster_id}\n"
     result += f"Nurses scheduled: {len(nurse_metrics)}\n\n"
 
-    result += "EMPATHY SCORE: {:.2f}\n".format(empathy_score)
+    result += f"EMPATHY SCORE: {empathy_score:.2f}\n"
     if empathy_score >= 0.8:
         result += "Assessment: GOOD - Roster is fair and considerate\n\n"
     elif empathy_score >= 0.6:
         result += "Assessment: ACCEPTABLE - Some concerns but workable\n\n"
     else:
-        result += "Assessment: NEEDS ATTENTION - Significant fairness issues\n\n"
+        result += (
+            "Assessment: NEEDS ATTENTION - Significant fairness issues\n\n"
+        )
 
     result += "DISTRIBUTION METRICS:\n"
     result += "-" * 40 + "\n"
@@ -460,15 +518,17 @@ def analyze_roster_fairness(roster_id: str = "") -> str:
 
     result += "NURSE WORKLOAD SUMMARY:\n"
     result += "-" * 40 + "\n"
-    result += f"{'Name':<15} {'Shifts':>6} {'Night':>6} {'Wknd':>6} {'Fatigue':>8}\n"
+    result += (
+        f"{'Name':<15} {'Shifts':>6} {'Night':>6} {'Wknd':>6} {'Fatigue':>8}\n"
+    )
     result += "-" * 40 + "\n"
 
     for nurse_id in sorted(nurse_metrics.keys()):
         m = nurse_metrics[nurse_id]
         fatigue_str = f"{m['fatigue_score']:.2f}"
-        if m['fatigue_score'] >= 0.7:
+        if m["fatigue_score"] >= 0.7:
             fatigue_str += " 🔴"
-        elif m['fatigue_score'] >= 0.4:
+        elif m["fatigue_score"] >= 0.4:
             fatigue_str += " 🟡"
         result += f"{m['name']:<15} {m['total_shifts']:>6} {m['night_shifts']:>6} {m['weekend_shifts']:>6} {fatigue_str:>8}\n"
 
@@ -477,7 +537,8 @@ def analyze_roster_fairness(roster_id: str = "") -> str:
     # Update roster metadata with empathy score
     empathy_notes = (
         f"{len(preference_violations)} preference violation(s), {len(burnout_risks)} burnout risk(s)"
-        if empathy_score < 0.8 else "Good - Roster is fair and considerate"
+        if empathy_score < 0.8
+        else "Good - Roster is fair and considerate"
     )
     roster_file = os.path.join(ROSTERS_DIR, f"{roster_id}.json")
     if os.path.exists(roster_file):
@@ -493,7 +554,10 @@ def analyze_roster_fairness(roster_id: str = "") -> str:
         if os.path.exists(history_file):
             history = _load_json(history_file)
             for log in history.get("logs", []):
-                if log.get("roster_id") == roster_id or log.get("id") == roster_id:
+                if (
+                    log.get("roster_id") == roster_id
+                    or log.get("id") == roster_id
+                ):
                     if "metadata" not in log:
                         log["metadata"] = {}
                     log["metadata"]["empathy_score"] = empathy_score

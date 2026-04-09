@@ -2,11 +2,22 @@
 Empathy Advocate Agent - Reviews rosters for fairness and burnout prevention.
 Reads draft_roster from session state and outputs empathy report.
 """
+
 from google.adk.agents import LlmAgent
+
 from nexshift_agent.sub_agents.config import MODEL_EMPATHY
-from nexshift_agent.sub_agents.tools.data_loader import get_available_nurses, get_shifts_to_fill
-from nexshift_agent.sub_agents.tools.history_tools import get_nurse_stats, get_nurse_history
-from nexshift_agent.sub_agents.tools.empathy_tools import get_roster_assignments, analyze_roster_fairness
+from nexshift_agent.sub_agents.tools.data_loader import (
+    get_available_nurses,
+    get_shifts_to_fill,
+)
+from nexshift_agent.sub_agents.tools.empathy_tools import (
+    analyze_roster_fairness,
+    get_roster_assignments,
+)
+from nexshift_agent.sub_agents.tools.history_tools import (
+    get_nurse_history,
+    get_nurse_stats,
+)
 
 EMPATHY_INSTRUCTION = """
 You are an Empathy Advocate for a hospital nurse rostering system.
@@ -141,6 +152,6 @@ def create_empathy_agent(model_name: str = MODEL_EMPATHY) -> LlmAgent:
             get_available_nurses,
             get_shifts_to_fill,
             get_nurse_stats,
-            get_nurse_history
-        ]
+            get_nurse_history,
+        ],
     )

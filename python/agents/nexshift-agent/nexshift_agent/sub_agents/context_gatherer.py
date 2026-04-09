@@ -2,10 +2,19 @@
 Context Gatherer Agent - First step in the roster generation workflow.
 Gathers all necessary context (nurse stats, shifts, regulations) before roster generation.
 """
+
 from google.adk.agents import LlmAgent
+
 from nexshift_agent.sub_agents.config import MODEL_CONTEXT_GATHERER
-from nexshift_agent.sub_agents.tools.data_loader import get_available_nurses, get_shifts_to_fill, get_regulations
-from nexshift_agent.sub_agents.tools.history_tools import get_nurse_stats, get_shift_history
+from nexshift_agent.sub_agents.tools.data_loader import (
+    get_available_nurses,
+    get_regulations,
+    get_shifts_to_fill,
+)
+from nexshift_agent.sub_agents.tools.history_tools import (
+    get_nurse_stats,
+    get_shift_history,
+)
 
 CONTEXT_GATHERER_INSTRUCTION = """
 You are a Context Gatherer for a nurse rostering system.
@@ -53,7 +62,9 @@ This summary will be used by the RosterSolver.
 """
 
 
-def create_context_gatherer_agent(model_name: str = MODEL_CONTEXT_GATHERER) -> LlmAgent:
+def create_context_gatherer_agent(
+    model_name: str = MODEL_CONTEXT_GATHERER,
+) -> LlmAgent:
     return LlmAgent(
         name="ContextGatherer",
         model=model_name,
@@ -64,6 +75,6 @@ def create_context_gatherer_agent(model_name: str = MODEL_CONTEXT_GATHERER) -> L
             get_shifts_to_fill,
             get_nurse_stats,
             get_shift_history,
-            get_regulations
-        ]
+            get_regulations,
+        ],
     )

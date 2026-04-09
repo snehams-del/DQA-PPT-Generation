@@ -7,30 +7,33 @@ The workflow enforces a strict sequence:
 3. ValidationPipeline (Parallel) - Compliance + Empathy checks run in parallel
 4. RosterPresenter - Synthesizes and presents to user
 """
-import logging
-from google.adk.agents import LlmAgent, SequentialAgent, ParallelAgent
 
-from nexshift_agent.sub_agents.config import MODEL_COORDINATOR
-from nexshift_agent.sub_agents.context_gatherer import create_context_gatherer_agent
-from nexshift_agent.sub_agents.solver_agent import create_solver_agent
+import logging
+
+from google.adk.agents import LlmAgent, ParallelAgent, SequentialAgent
+
 from nexshift_agent.sub_agents.compliance import create_compliance_agent
+from nexshift_agent.sub_agents.config import MODEL_COORDINATOR
+from nexshift_agent.sub_agents.context_gatherer import (
+    create_context_gatherer_agent,
+)
 from nexshift_agent.sub_agents.empathy import create_empathy_agent
 from nexshift_agent.sub_agents.presenter import create_presenter_agent
-
-from nexshift_agent.sub_agents.tools.query_tools import (
-    get_nurse_info,
-    list_nurses,
-    list_nurse_preferences,
-    get_nurse_availability,
-    get_upcoming_shifts,
-    get_staffing_summary
-)
+from nexshift_agent.sub_agents.solver_agent import create_solver_agent
+from nexshift_agent.sub_agents.tools.data_loader import get_regulations
 from nexshift_agent.sub_agents.tools.history_tools import (
+    get_nurse_history,
     get_nurse_stats,
     get_shift_history,
-    get_nurse_history
 )
-from nexshift_agent.sub_agents.tools.data_loader import get_regulations
+from nexshift_agent.sub_agents.tools.query_tools import (
+    get_nurse_availability,
+    get_nurse_info,
+    get_staffing_summary,
+    get_upcoming_shifts,
+    list_nurse_preferences,
+    list_nurses,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -44,8 +47,7 @@ def create_validation_pipeline() -> ParallelAgent:
     empathy_agent = create_empathy_agent()
 
     return ParallelAgent(
-        name="ValidationPipeline",
-        sub_agents=[compliance_agent, empathy_agent]
+        name="ValidationPipeline", sub_agents=[compliance_agent, empathy_agent]
     )
 
 
@@ -75,10 +77,10 @@ def create_rostering_workflow() -> SequentialAgent:
         name="RosteringWorkflow",
         sub_agents=[
             context_gatherer,  # Step 1: Gather context
-            solver,            # Step 2: Generate roster
-            validation,        # Step 3: Validate (parallel)
-            presenter          # Step 4: Present to user
-        ]
+            solver,  # Step 2: Generate roster
+            validation,  # Step 3: Validate (parallel)
+            presenter,  # Step 4: Present to user
+        ],
     )
 
 
@@ -205,36 +207,36 @@ For roster generation requests, delegate to the RosteringWorkflow sub-agent whic
 - Use the appropriate query tool based on user intent
 """
 
+from nexshift_agent.callbacks.format_output import format_model_output
+from nexshift_agent.sub_agents.tools.compliance_tools import (
+    validate_roster_compliance,
+    validate_weekly_hours,
+)
+from nexshift_agent.sub_agents.tools.empathy_tools import (
+    analyze_roster_fairness,
+)
 from nexshift_agent.sub_agents.tools.history_tools import (
-    list_pending_rosters,
-    list_all_rosters,
-    finalize_roster,
-    reject_roster,
-    delete_roster,
+    compare_rosters,
     delete_pending_roster,
+    delete_roster,
+    finalize_roster,
     get_roster,
     get_rosters_by_date_range,
-    compare_rosters
+    list_all_rosters,
+    list_pending_rosters,
+    reject_roster,
 )
 from nexshift_agent.sub_agents.tools.hris_tools import (
     add_nurse,
+    add_time_off_request,
+    list_available_certifications,
+    list_time_off_requests,
     promote_nurse,
+    remove_nurse,
+    remove_time_off_request,
     update_nurse_certifications,
     update_nurse_preferences,
-    remove_nurse,
-    list_available_certifications,
-    add_time_off_request,
-    remove_time_off_request,
-    list_time_off_requests
 )
-from nexshift_agent.sub_agents.tools.compliance_tools import (
-    validate_roster_compliance,
-    validate_weekly_hours
-)
-from nexshift_agent.sub_agents.tools.empathy_tools import (
-    analyze_roster_fairness
-)
-from nexshift_agent.callbacks.format_output import format_model_output
 
 
 def create_coordinator_agent(model_name: str = MODEL_COORDINATOR) -> LlmAgent:
@@ -288,8 +290,8 @@ def create_coordinator_agent(model_name: str = MODEL_COORDINATOR) -> LlmAgent:
             # Direct validation tools
             validate_roster_compliance,
             validate_weekly_hours,
-            analyze_roster_fairness
+            analyze_roster_fairness,
         ],
         sub_agents=[workflow],
-        after_model_callback=format_model_output
+        after_model_callback=format_model_output,
     )

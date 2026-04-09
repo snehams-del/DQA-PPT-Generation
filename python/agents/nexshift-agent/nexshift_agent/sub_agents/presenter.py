@@ -2,15 +2,17 @@
 Roster Presenter Agent - Final step that synthesizes all reports and presents to user.
 Reads from session state and handles user approval/rejection.
 """
+
 from google.adk.agents import LlmAgent
+
 from nexshift_agent.sub_agents.config import MODEL_PRESENTER
 from nexshift_agent.sub_agents.tools.history_tools import (
-    save_draft_roster,
+    delete_roster,
     finalize_roster,
-    reject_roster,
-    list_pending_rosters,
     list_all_rosters,
-    delete_roster
+    list_pending_rosters,
+    reject_roster,
+    save_draft_roster,
 )
 
 PRESENTER_INSTRUCTION = """
@@ -139,6 +141,6 @@ def create_presenter_agent(model_name: str = MODEL_PRESENTER) -> LlmAgent:
             reject_roster,
             list_pending_rosters,
             list_all_rosters,
-            delete_roster
-        ]
+            delete_roster,
+        ],
     )

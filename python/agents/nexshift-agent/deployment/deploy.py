@@ -18,6 +18,7 @@ import logging
 import os
 import sys
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 # Add project root to path
@@ -40,14 +41,18 @@ def check_dependencies():
     try:
         import vertexai
         from vertexai import agent_engines
+
         print("✅ google-cloud-aiplatform installed")
     except ImportError:
         print("❌ Missing google-cloud-aiplatform. Install with:")
-        print("   pip install 'google-cloud-aiplatform[agent_engines,adk]>=1.112'")
+        print(
+            "   pip install 'google-cloud-aiplatform[agent_engines,adk]>=1.112'"
+        )
         sys.exit(1)
 
     try:
         from google.adk.agents import Agent
+
         print("✅ google-adk installed")
     except ImportError:
         print("❌ Missing google-adk. Install with:")
@@ -89,19 +94,29 @@ def deploy_agent(
 
     # Initialize Vertex AI
     print("\n📡 Initializing Vertex AI...")
-    vertexai.init(project=project, location=location, staging_bucket=staging_bucket_uri)
+    vertexai.init(
+        project=project, location=location, staging_bucket=staging_bucket_uri
+    )
 
     # Read requirements from file or use defaults
     if requirements_file and os.path.exists(requirements_file):
         with open(requirements_file) as f:
-            requirements = [line.strip() for line in f if line.strip() and not line.startswith("#")]
+            requirements = [
+                line.strip()
+                for line in f
+                if line.strip() and not line.startswith("#")
+            ]
         print(f"📋 Requirements loaded from {requirements_file}")
     else:
         # Use requirements.txt from project root
         req_path = PROJECT_ROOT / "requirements.txt"
         if req_path.exists():
             with open(req_path) as f:
-                requirements = [line.strip() for line in f if line.strip() and not line.startswith("#")]
+                requirements = [
+                    line.strip()
+                    for line in f
+                    if line.strip() and not line.startswith("#")
+                ]
             print(f"📋 Requirements loaded from {req_path}")
         else:
             requirements = [
@@ -150,7 +165,9 @@ def deploy_agent(
 
     # Check if an agent with this name already exists
     print("\n🔍 Checking for existing agent...")
-    existing_agents = list(agent_engines.list(filter=f"display_name={agent_name}"))
+    existing_agents = list(
+        agent_engines.list(filter=f"display_name={agent_name}")
+    )
 
     print("\n⏳ Deploying agent (this may take a few minutes)...")
     try:
@@ -244,9 +261,12 @@ def list_agents(project: str, location: str):
         print(f"❌ Failed to list agents: {e}")
 
 
-def test_agent(project: str, location: str, message: str = None, resource_name: str = None):
+def test_agent(
+    project: str, location: str, message: str = None, resource_name: str = None
+):
     """Test a deployed agent with a sample query."""
     import asyncio
+
     import vertexai
     from vertexai import agent_engines
 
@@ -290,29 +310,65 @@ def main():
 
     # Deploy command
     deploy_parser = subparsers.add_parser("deploy", help="Deploy the agent")
-    deploy_parser.add_argument("--project", "-p", required=True, help="GCP Project ID")
-    deploy_parser.add_argument("--location", "-l", default=DEFAULT_LOCATION, help="GCP Location (default: us-central1)")
-    deploy_parser.add_argument("--name", "-n", default="nexshift-agent", help="Display name for the agent")
-    deploy_parser.add_argument("--requirements-file", "-r", help="Path to requirements.txt file")
-    deploy_parser.add_argument("--extra-packages", nargs="+", help="Additional packages to include")
-    deploy_parser.add_argument("--service-account", help="Service account email to use")
+    deploy_parser.add_argument(
+        "--project", "-p", required=True, help="GCP Project ID"
+    )
+    deploy_parser.add_argument(
+        "--location",
+        "-l",
+        default=DEFAULT_LOCATION,
+        help="GCP Location (default: us-central1)",
+    )
+    deploy_parser.add_argument(
+        "--name",
+        "-n",
+        default="nexshift-agent",
+        help="Display name for the agent",
+    )
+    deploy_parser.add_argument(
+        "--requirements-file", "-r", help="Path to requirements.txt file"
+    )
+    deploy_parser.add_argument(
+        "--extra-packages", nargs="+", help="Additional packages to include"
+    )
+    deploy_parser.add_argument(
+        "--service-account", help="Service account email to use"
+    )
 
     # Delete command
-    delete_parser = subparsers.add_parser("delete", help="Delete a deployed agent")
-    delete_parser.add_argument("--project", "-p", required=True, help="GCP Project ID")
-    delete_parser.add_argument("--location", "-l", default=DEFAULT_LOCATION, help="GCP Location")
-    delete_parser.add_argument("--resource", help="Agent resource name (or uses deployment_info.json)")
+    delete_parser = subparsers.add_parser(
+        "delete", help="Delete a deployed agent"
+    )
+    delete_parser.add_argument(
+        "--project", "-p", required=True, help="GCP Project ID"
+    )
+    delete_parser.add_argument(
+        "--location", "-l", default=DEFAULT_LOCATION, help="GCP Location"
+    )
+    delete_parser.add_argument(
+        "--resource", help="Agent resource name (or uses deployment_info.json)"
+    )
 
     # List command
     list_parser = subparsers.add_parser("list", help="List deployed agents")
-    list_parser.add_argument("--project", "-p", required=True, help="GCP Project ID")
-    list_parser.add_argument("--location", "-l", default=DEFAULT_LOCATION, help="GCP Location")
+    list_parser.add_argument(
+        "--project", "-p", required=True, help="GCP Project ID"
+    )
+    list_parser.add_argument(
+        "--location", "-l", default=DEFAULT_LOCATION, help="GCP Location"
+    )
 
     # Test command
     test_parser = subparsers.add_parser("test", help="Test a deployed agent")
-    test_parser.add_argument("--project", "-p", required=True, help="GCP Project ID")
-    test_parser.add_argument("--location", "-l", default=DEFAULT_LOCATION, help="GCP Location")
-    test_parser.add_argument("--resource", help="Agent resource name (or uses deployment_info.json)")
+    test_parser.add_argument(
+        "--project", "-p", required=True, help="GCP Project ID"
+    )
+    test_parser.add_argument(
+        "--location", "-l", default=DEFAULT_LOCATION, help="GCP Location"
+    )
+    test_parser.add_argument(
+        "--resource", help="Agent resource name (or uses deployment_info.json)"
+    )
     test_parser.add_argument("--message", "-m", help="Test message to send")
 
     # Check command

@@ -9,7 +9,6 @@ to generate human-readable compliance reports.
 import json
 import os
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "../../data")
 ROSTERS_DIR = os.path.join(DATA_DIR, "rosters")
@@ -18,7 +17,7 @@ ROSTERS_DIR = os.path.join(DATA_DIR, "rosters")
 def _load_json(filepath: str) -> dict:
     """Load JSON file, return empty dict if not found."""
     try:
-        with open(filepath, "r") as f:
+        with open(filepath) as f:
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         return {}
@@ -30,26 +29,75 @@ def _save_json(filepath: str, data: dict) -> None:
         json.dump(data, f, indent=2, default=str)
 
 
-def _load_hris() -> List[dict]:
+def _load_hris() -> list[dict]:
     """Load HRIS data."""
     hris_path = os.path.join(DATA_DIR, "mock_hris.json")
     try:
-        with open(hris_path, "r") as f:
+        with open(hris_path) as f:
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         return []
 
 
-def _generate_shifts(start_date: datetime, num_days: int = 7) -> List[dict]:
+def _generate_shifts(start_date: datetime, num_days: int = 7) -> list[dict]:
     """Generate shift data for validation."""
     shift_templates = [
-        {"ward": "ICU", "start": "00:00", "end": "08:00", "certs": ["ICU"], "level": "Mid", "all_week": True},
-        {"ward": "ICU", "start": "08:00", "end": "16:00", "certs": ["ICU"], "level": "Mid", "all_week": True},
-        {"ward": "ICU", "start": "16:00", "end": "00:00", "certs": ["ICU"], "level": "Mid", "all_week": True},
-        {"ward": "Emergency", "start": "00:00", "end": "08:00", "certs": ["ACLS", "BLS"], "level": "Mid", "all_week": True},
-        {"ward": "Emergency", "start": "08:00", "end": "16:00", "certs": ["ACLS", "BLS"], "level": "Mid", "all_week": True},
-        {"ward": "Emergency", "start": "16:00", "end": "00:00", "certs": ["ACLS", "BLS"], "level": "Mid", "all_week": True},
-        {"ward": "General", "start": "08:00", "end": "16:00", "certs": ["BLS"], "level": "Junior", "all_week": False},
+        {
+            "ward": "ICU",
+            "start": "00:00",
+            "end": "08:00",
+            "certs": ["ICU"],
+            "level": "Mid",
+            "all_week": True,
+        },
+        {
+            "ward": "ICU",
+            "start": "08:00",
+            "end": "16:00",
+            "certs": ["ICU"],
+            "level": "Mid",
+            "all_week": True,
+        },
+        {
+            "ward": "ICU",
+            "start": "16:00",
+            "end": "00:00",
+            "certs": ["ICU"],
+            "level": "Mid",
+            "all_week": True,
+        },
+        {
+            "ward": "Emergency",
+            "start": "00:00",
+            "end": "08:00",
+            "certs": ["ACLS", "BLS"],
+            "level": "Mid",
+            "all_week": True,
+        },
+        {
+            "ward": "Emergency",
+            "start": "08:00",
+            "end": "16:00",
+            "certs": ["ACLS", "BLS"],
+            "level": "Mid",
+            "all_week": True,
+        },
+        {
+            "ward": "Emergency",
+            "start": "16:00",
+            "end": "00:00",
+            "certs": ["ACLS", "BLS"],
+            "level": "Mid",
+            "all_week": True,
+        },
+        {
+            "ward": "General",
+            "start": "08:00",
+            "end": "16:00",
+            "certs": ["BLS"],
+            "level": "Junior",
+            "all_week": False,
+        },
     ]
 
     shifts = []
@@ -64,16 +112,18 @@ def _generate_shifts(start_date: datetime, num_days: int = 7) -> List[dict]:
             if is_weekend and not template.get("all_week", True):
                 continue
 
-            shifts.append({
-                "id": f"shift_{shift_counter:03d}",
-                "ward": template["ward"],
-                "date": current_date.strftime("%Y-%m-%d"),
-                "day": day_name,
-                "start": template["start"],
-                "end": template["end"],
-                "required_certs": template["certs"],
-                "min_level": template["level"]
-            })
+            shifts.append(
+                {
+                    "id": f"shift_{shift_counter:03d}",
+                    "ward": template["ward"],
+                    "date": current_date.strftime("%Y-%m-%d"),
+                    "day": day_name,
+                    "start": template["start"],
+                    "end": template["end"],
+                    "required_certs": template["certs"],
+                    "min_level": template["level"],
+                }
+            )
             shift_counter += 1
 
     return shifts
@@ -113,7 +163,7 @@ def validate_roster_compliance(roster_id: str = "") -> str:
         drafts = []
         if os.path.exists(ROSTERS_DIR):
             for filename in os.listdir(ROSTERS_DIR):
-                if filename.endswith('.json'):
+                if filename.endswith(".json"):
                     roster_path = os.path.join(ROSTERS_DIR, filename)
                     r = _load_json(roster_path)
                     if r.get("status") == "draft":
@@ -150,14 +200,20 @@ def validate_roster_compliance(roster_id: str = "") -> str:
         if generated_at:
             try:
                 if "T" in str(generated_at):
-                    start_date = datetime.fromisoformat(str(generated_at).split("T")[0])
+                    start_date = datetime.fromisoformat(
+                        str(generated_at).split("T")[0]
+                    )
                 else:
-                    start_date = datetime.strptime(str(generated_at).split(" ")[0], "%Y-%m-%d")
+                    start_date = datetime.strptime(
+                        str(generated_at).split(" ")[0], "%Y-%m-%d"
+                    )
             except ValueError:
                 pass
 
     if not start_date:
-        start_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        start_date = datetime.now().replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
 
     # Generate shifts and create lookup
     shifts_list = _generate_shifts(start_date, num_days)
@@ -197,30 +253,34 @@ def validate_roster_compliance(roster_id: str = "") -> str:
         required_certs = [c.upper() for c in shift.get("required_certs", [])]
         for req_cert in required_certs:
             if req_cert not in nurse_certs:
-                cert_violations.append({
-                    "nurse_id": nurse_id,
-                    "nurse_name": nurse_name,
-                    "nurse_certs": nurse_certs,
-                    "shift_id": shift_id,
-                    "ward": shift.get("ward"),
-                    "missing_cert": req_cert,
-                    "date": shift.get("date"),
-                    "time": f"{shift.get('start')}-{shift.get('end')}"
-                })
+                cert_violations.append(
+                    {
+                        "nurse_id": nurse_id,
+                        "nurse_name": nurse_name,
+                        "nurse_certs": nurse_certs,
+                        "shift_id": shift_id,
+                        "ward": shift.get("ward"),
+                        "missing_cert": req_cert,
+                        "date": shift.get("date"),
+                        "time": f"{shift.get('start')}-{shift.get('end')}",
+                    }
+                )
 
         # Check seniority level requirements
         min_level = shift.get("min_level", "Junior")
         if _get_seniority_order(nurse_level) < _get_seniority_order(min_level):
-            level_violations.append({
-                "nurse_id": nurse_id,
-                "nurse_name": nurse_name,
-                "nurse_level": nurse_level,
-                "shift_id": shift_id,
-                "ward": shift.get("ward"),
-                "required_level": min_level,
-                "date": shift.get("date"),
-                "time": f"{shift.get('start')}-{shift.get('end')}"
-            })
+            level_violations.append(
+                {
+                    "nurse_id": nurse_id,
+                    "nurse_name": nurse_name,
+                    "nurse_level": nurse_level,
+                    "shift_id": shift_id,
+                    "ward": shift.get("ward"),
+                    "required_level": min_level,
+                    "date": shift.get("date"),
+                    "time": f"{shift.get('start')}-{shift.get('end')}",
+                }
+            )
 
         # Track Senior coverage per shift
         shift_senior_coverage[shift_id] = {
@@ -229,24 +289,28 @@ def validate_roster_compliance(roster_id: str = "") -> str:
             "nurse_id": nurse_id,
             "ward": shift.get("ward"),
             "date": shift.get("date"),
-            "time": f"{shift.get('start')}-{shift.get('end')}"
+            "time": f"{shift.get('start')}-{shift.get('end')}",
         }
 
     # Check senior coverage - every shift must have a Senior nurse assigned
     senior_coverage_issues = []
     for shift_id, coverage in shift_senior_coverage.items():
         if coverage["nurse_level"] != "Senior":
-            senior_coverage_issues.append({
-                "shift_id": shift_id,
-                "ward": coverage["ward"],
-                "date": coverage["date"],
-                "time": coverage["time"],
-                "assigned_nurse": coverage["nurse_name"],
-                "assigned_level": coverage["nurse_level"]
-            })
+            senior_coverage_issues.append(
+                {
+                    "shift_id": shift_id,
+                    "ward": coverage["ward"],
+                    "date": coverage["date"],
+                    "time": coverage["time"],
+                    "assigned_nurse": coverage["nurse_name"],
+                    "assigned_level": coverage["nurse_level"],
+                }
+            )
 
     # Build result report
-    total_violations = len(cert_violations) + len(level_violations) + len(invalid_refs)
+    total_violations = (
+        len(cert_violations) + len(level_violations) + len(invalid_refs)
+    )
 
     result = "=" * 60 + "\n"
     result += "PROGRAMMATIC COMPLIANCE VALIDATION\n"
@@ -257,7 +321,9 @@ def validate_roster_compliance(roster_id: str = "") -> str:
     if total_violations == 0 and not senior_coverage_issues:
         result += "STATUS: ALL CHECKS PASSED\n\n"
         result += "Certification Requirements: PASS (all nurses have required certs)\n"
-        result += "Seniority Requirements: PASS (all nurses meet minimum level)\n"
+        result += (
+            "Seniority Requirements: PASS (all nurses meet minimum level)\n"
+        )
         result += "Senior Coverage: PASS (every shift has a Senior nurse)\n"
         result += "Reference Validity: PASS (all nurse/shift IDs are valid)\n"
     else:
@@ -289,12 +355,14 @@ def validate_roster_compliance(roster_id: str = "") -> str:
 
         # Senior coverage issues (every shift must have a Senior nurse)
         if senior_coverage_issues:
-            result += f"SENIOR COVERAGE VIOLATIONS ({len(senior_coverage_issues)}):\n"
+            result += (
+                f"SENIOR COVERAGE VIOLATIONS ({len(senior_coverage_issues)}):\n"
+            )
             result += "-" * 50 + "\n"
             for issue in senior_coverage_issues:
                 result += f"  - {issue['shift_id']}: Assigned to {issue['assigned_nurse']} ({issue['assigned_level']})\n"
                 result += f"    Ward: {issue['ward']} | {issue['date']} {issue['time']}\n"
-                result += f"    Required: Senior nurse\n"
+                result += "    Required: Senior nurse\n"
             result += "\n"
         else:
             result += "Senior Coverage: PASS (every shift has a Senior nurse)\n"
@@ -310,13 +378,20 @@ def validate_roster_compliance(roster_id: str = "") -> str:
             result += "Reference Validity: PASS\n"
 
     result += "\n" + "=" * 60 + "\n"
-    result += "Note: This is programmatic validation. Results are deterministic.\n"
+    result += (
+        "Note: This is programmatic validation. Results are deterministic.\n"
+    )
 
     # Update roster metadata with compliance status
-    compliance_status = "PASS" if (total_violations == 0 and not senior_coverage_issues) else "FAIL"
+    compliance_status = (
+        "PASS"
+        if (total_violations == 0 and not senior_coverage_issues)
+        else "FAIL"
+    )
     compliance_notes = (
         f"{total_violations} violation(s), {len(senior_coverage_issues)} senior coverage issue(s)"
-        if compliance_status == "FAIL" else "All checks passed"
+        if compliance_status == "FAIL"
+        else "All checks passed"
     )
     roster_file = os.path.join(ROSTERS_DIR, f"{roster_id}.json")
     if os.path.exists(roster_file):
@@ -332,7 +407,10 @@ def validate_roster_compliance(roster_id: str = "") -> str:
         if os.path.exists(history_file):
             history = _load_json(history_file)
             for log in history.get("logs", []):
-                if log.get("roster_id") == roster_id or log.get("id") == roster_id:
+                if (
+                    log.get("roster_id") == roster_id
+                    or log.get("id") == roster_id
+                ):
                     if "metadata" not in log:
                         log["metadata"] = {}
                     log["metadata"]["compliance_status"] = compliance_status
@@ -368,7 +446,7 @@ def validate_weekly_hours(roster_id: str = "") -> str:
         drafts = []
         if os.path.exists(ROSTERS_DIR):
             for filename in os.listdir(ROSTERS_DIR):
-                if filename.endswith('.json'):
+                if filename.endswith(".json"):
                     roster_path = os.path.join(ROSTERS_DIR, filename)
                     r = _load_json(roster_path)
                     if r.get("status") == "draft":
@@ -386,11 +464,7 @@ def validate_weekly_hours(roster_id: str = "") -> str:
     nurses = {n["id"]: n for n in nurses_list}
 
     # Hour limits by contract type
-    hour_limits = {
-        "FullTime": 40,
-        "PartTime": 30,
-        "Casual": 20
-    }
+    hour_limits = {"FullTime": 40, "PartTime": 30, "Casual": 20}
 
     # Count hours per nurse (each shift is 8 hours)
     hours_per_nurse = {}
@@ -413,14 +487,16 @@ def validate_weekly_hours(roster_id: str = "") -> str:
         max_hours = hour_limits.get(contract_type, 40)
 
         if hours > max_hours:
-            violations.append({
-                "nurse_id": nurse_id,
-                "nurse_name": nurse.get("name", nurse_id),
-                "contract_type": contract_type,
-                "max_hours": max_hours,
-                "assigned_hours": hours,
-                "excess": hours - max_hours
-            })
+            violations.append(
+                {
+                    "nurse_id": nurse_id,
+                    "nurse_name": nurse.get("name", nurse_id),
+                    "contract_type": contract_type,
+                    "max_hours": max_hours,
+                    "assigned_hours": hours,
+                    "excess": hours - max_hours,
+                }
+            )
 
     # Build result
     result = "=" * 60 + "\n"
@@ -435,7 +511,9 @@ def validate_weekly_hours(roster_id: str = "") -> str:
         result += f"STATUS: {len(violations)} VIOLATION(S)\n\n"
         for v in violations:
             result += f"  - {v['nurse_name']} ({v['nurse_id']})\n"
-            result += f"    Contract: {v['contract_type']} (max {v['max_hours']}h)\n"
+            result += (
+                f"    Contract: {v['contract_type']} (max {v['max_hours']}h)\n"
+            )
             result += f"    Assigned: {v['assigned_hours']}h (excess: {v['excess']}h)\n\n"
 
     return result

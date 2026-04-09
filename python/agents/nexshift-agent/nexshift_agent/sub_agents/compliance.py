@@ -2,15 +2,21 @@
 Compliance Officer Agent - Validates rosters against regulations.
 Reads draft_roster from session state and outputs compliance report.
 """
+
 from google.adk.agents import LlmAgent
+
 from nexshift_agent.sub_agents.config import MODEL_COMPLIANCE
-from nexshift_agent.sub_agents.tools.data_loader import get_regulations, get_available_nurses, get_shifts_to_fill
-from nexshift_agent.sub_agents.tools.history_tools import get_nurse_stats
 from nexshift_agent.sub_agents.tools.compliance_tools import (
+    get_nurse_certification_lookup,
     validate_roster_compliance,
     validate_weekly_hours,
-    get_nurse_certification_lookup
 )
+from nexshift_agent.sub_agents.tools.data_loader import (
+    get_available_nurses,
+    get_regulations,
+    get_shifts_to_fill,
+)
+from nexshift_agent.sub_agents.tools.history_tools import get_nurse_stats
 
 COMPLIANCE_INSTRUCTION = """
 You are a Compliance Officer for a hospital nurse rostering system.
@@ -130,6 +136,6 @@ def create_compliance_agent(model_name: str = MODEL_COMPLIANCE) -> LlmAgent:
             get_regulations,
             get_available_nurses,
             get_shifts_to_fill,
-            get_nurse_stats
-        ]
+            get_nurse_stats,
+        ],
     )

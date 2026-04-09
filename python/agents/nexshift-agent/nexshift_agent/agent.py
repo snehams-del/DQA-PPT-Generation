@@ -6,7 +6,9 @@ This module provides flexible orchestration
    - Delegates to RosteringWorkflow for generation tasks
    - Handles direct roster management (approve/reject)
 """
+
 import logging
+
 from nexshift_agent.sub_agents.coordinator import create_coordinator_agent
 
 # Configure logging

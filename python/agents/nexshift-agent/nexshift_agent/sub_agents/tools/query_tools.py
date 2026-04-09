@@ -2,13 +2,19 @@
 Query tools for user-facing information retrieval.
 Allows users to query nurse status, availability, shifts, and staffing info.
 """
-import json
+
 import logging
 import os
-from datetime import datetime, timedelta
-from typing import Optional
-from nexshift_agent.sub_agents.tools.data_loader import load_nurses, generate_shifts
-from nexshift_agent.sub_agents.tools.history_tools import _load_json, NURSE_STATS_FILE
+from datetime import datetime
+
+from nexshift_agent.sub_agents.tools.data_loader import (
+    generate_shifts,
+    load_nurses,
+)
+from nexshift_agent.sub_agents.tools.history_tools import (
+    NURSE_STATS_FILE,
+    _load_json,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -63,8 +69,12 @@ def get_nurse_info(nurse_id: str) -> str:
     result += f"  Last shift: {nurse_stats.get('last_shift_date', 'N/A')}\n"
     result += f"  Consecutive shifts: {nurse_stats.get('consecutive_shifts_current', 0)}\n"
     result += f"  Shifts (30d): {nurse_stats.get('total_shifts_30d', 0)}\n"
-    result += f"  Weekend shifts (30d): {nurse_stats.get('weekend_shifts_30d', 0)}\n"
-    result += f"  Night shifts (30d): {nurse_stats.get('night_shifts_30d', 0)}\n"
+    result += (
+        f"  Weekend shifts (30d): {nurse_stats.get('weekend_shifts_30d', 0)}\n"
+    )
+    result += (
+        f"  Night shifts (30d): {nurse_stats.get('night_shifts_30d', 0)}\n"
+    )
     result += f"  Fatigue: {fatigue:.2f} - {fatigue_indicator}\n"
 
     return result
@@ -100,10 +110,18 @@ def list_nurses(filter_by: str = "") -> str:
             filtered = [n for n in nurses if n.seniority_level == "Mid"]
             filter_desc = "Mid-Level Nurses"
         elif filter_lower == "available" or filter_lower == "fresh":
-            filtered = [n for n in nurses if stats.get(n.id, {}).get("fatigue_score", 0) < 0.4]
+            filtered = [
+                n
+                for n in nurses
+                if stats.get(n.id, {}).get("fatigue_score", 0) < 0.4
+            ]
             filter_desc = "Available Nurses (Low Fatigue)"
         elif filter_lower == "fatigued" or filter_lower == "tired":
-            filtered = [n for n in nurses if stats.get(n.id, {}).get("fatigue_score", 0) >= 0.4]
+            filtered = [
+                n
+                for n in nurses
+                if stats.get(n.id, {}).get("fatigue_score", 0) >= 0.4
+            ]
             filter_desc = "Fatigued Nurses"
         elif filter_lower == "fulltime":
             filtered = [n for n in nurses if n.contract_type == "FullTime"]
@@ -167,7 +185,9 @@ def get_nurse_availability(date: str = "") -> str:
     day_name = check_date.strftime("%A")
     is_weekend = check_date.weekday() >= 5
 
-    result = f"NURSE AVAILABILITY: {check_date.strftime('%Y-%m-%d')} ({day_name})\n"
+    result = (
+        f"NURSE AVAILABILITY: {check_date.strftime('%Y-%m-%d')} ({day_name})\n"
+    )
     result += "=" * 50 + "\n\n"
 
     available = []
@@ -199,11 +219,19 @@ def get_nurse_availability(date: str = "") -> str:
                         constraints.append("Time-off requested")
 
         # Check preferences (soft constraint)
-        if n.preferences.preferred_days and day_name not in n.preferences.preferred_days:
-            constraints.append(f"Prefers: {', '.join(n.preferences.preferred_days)}")
+        if (
+            n.preferences.preferred_days
+            and day_name not in n.preferences.preferred_days
+        ):
+            constraints.append(
+                f"Prefers: {', '.join(n.preferences.preferred_days)}"
+            )
 
         # Categorize
-        if "Max consecutive shifts reached" in constraints or "Time-off requested" in constraints:
+        if (
+            "Max consecutive shifts reached" in constraints
+            or "Time-off requested" in constraints
+        ):
             unavailable.append((n, constraints))
         elif constraints:
             limited.append((n, constraints))
@@ -257,19 +285,23 @@ def list_nurse_preferences() -> str:
             # Handle preferences safely
             prefs = n.preferences
             if prefs:
-                avoid_nights = getattr(prefs, 'avoid_night_shifts', False)
-                preferred_days = getattr(prefs, 'preferred_days', []) or []
-                adhoc_requests = getattr(prefs, 'adhoc_requests', []) or []
+                avoid_nights = getattr(prefs, "avoid_night_shifts", False)
+                preferred_days = getattr(prefs, "preferred_days", []) or []
+                adhoc_requests = getattr(prefs, "adhoc_requests", []) or []
 
-                result += f"  Avoid night shifts: {'Yes' if avoid_nights else 'No'}\n"
+                result += (
+                    f"  Avoid night shifts: {'Yes' if avoid_nights else 'No'}\n"
+                )
 
                 if preferred_days:
                     result += f"  Preferred days: {', '.join(preferred_days)}\n"
                 else:
-                    result += f"  Preferred days: Any\n"
+                    result += "  Preferred days: Any\n"
 
                 if adhoc_requests:
-                    result += f"  Time-off requests: {', '.join(adhoc_requests)}\n"
+                    result += (
+                        f"  Time-off requests: {', '.join(adhoc_requests)}\n"
+                    )
 
                 # Track for summary
                 if avoid_nights:
@@ -279,8 +311,8 @@ def list_nurse_preferences() -> str:
                 if adhoc_requests:
                     has_time_off.append(n.name)
             else:
-                result += f"  Avoid night shifts: No\n"
-                result += f"  Preferred days: Any\n"
+                result += "  Avoid night shifts: No\n"
+                result += "  Preferred days: Any\n"
 
             result += "\n"
 
@@ -296,7 +328,7 @@ def list_nurse_preferences() -> str:
         return result
 
     except Exception as e:
-        return f"Error loading nurse preferences: {str(e)}"
+        return f"Error loading nurse preferences: {e!s}"
 
 
 def get_upcoming_shifts(days: int = 7) -> str:
@@ -310,6 +342,7 @@ def get_upcoming_shifts(days: int = 7) -> str:
         Formatted list of upcoming shifts with requirements.
     """
     from nexshift_agent.sub_agents.tools.data_loader import get_shifts_to_fill
+
     return get_shifts_to_fill(num_days=days)
 
 
@@ -322,7 +355,9 @@ def get_staffing_summary() -> str:
     """
     try:
         logger.info(f"get_staffing_summary called. CWD: {os.getcwd()}")
-        logger.info(f"NURSE_STATS_FILE: {NURSE_STATS_FILE}, exists: {os.path.exists(NURSE_STATS_FILE)}")
+        logger.info(
+            f"NURSE_STATS_FILE: {NURSE_STATS_FILE}, exists: {os.path.exists(NURSE_STATS_FILE)}"
+        )
 
         nurses = load_nurses()
         logger.info(f"Loaded {len(nurses)} nurses")
@@ -334,8 +369,10 @@ def get_staffing_summary() -> str:
         logger.info(f"Generated {len(shifts)} shifts")
 
     except Exception as e:
-        logger.error(f"Error loading data in get_staffing_summary: {e}", exc_info=True)
-        return f"Error loading staffing data: {str(e)}"
+        logger.error(
+            f"Error loading data in get_staffing_summary: {e}", exc_info=True
+        )
+        return f"Error loading staffing data: {e!s}"
 
     result = "STAFFING SUMMARY\n" + "=" * 50 + "\n\n"
 
@@ -345,7 +382,9 @@ def get_staffing_summary() -> str:
     by_fatigue = {"good": 0, "moderate": 0, "high": 0}
 
     for n in nurses:
-        by_seniority[n.seniority_level] = by_seniority.get(n.seniority_level, 0) + 1
+        by_seniority[n.seniority_level] = (
+            by_seniority.get(n.seniority_level, 0) + 1
+        )
         by_contract[n.contract_type] = by_contract.get(n.contract_type, 0) + 1
 
         fatigue = stats.get(n.id, {}).get("fatigue_score", 0)
@@ -377,7 +416,13 @@ def get_staffing_summary() -> str:
 
     # Coverage check
     icu_certified = len([n for n in nurses if "ICU" in n.certifications])
-    emergency_certified = len([n for n in nurses if "ACLS" in n.certifications and "BLS" in n.certifications])
+    emergency_certified = len(
+        [
+            n
+            for n in nurses
+            if "ACLS" in n.certifications and "BLS" in n.certifications
+        ]
+    )
     senior_count = by_seniority["Senior"]
 
     result += "\nCOVERAGE CHECK:\n"
@@ -388,11 +433,19 @@ def get_staffing_summary() -> str:
     # Alerts
     alerts = []
     if by_fatigue["high"] > 0:
-        high_fatigue_names = [n.name for n in nurses if stats.get(n.id, {}).get("fatigue_score", 0) >= 0.7]
-        alerts.append(f"[HIGH] {by_fatigue['high']} nurse(s) at high fatigue: {', '.join(high_fatigue_names)}")
+        high_fatigue_names = [
+            n.name
+            for n in nurses
+            if stats.get(n.id, {}).get("fatigue_score", 0) >= 0.7
+        ]
+        alerts.append(
+            f"[HIGH] {by_fatigue['high']} nurse(s) at high fatigue: {', '.join(high_fatigue_names)}"
+        )
 
     if senior_count < 2:
-        alerts.append("[WARN] Low senior nurse coverage - may impact shift requirements")
+        alerts.append(
+            "[WARN] Low senior nurse coverage - may impact shift requirements"
+        )
 
     if alerts:
         result += "\nALERTS:\n"
