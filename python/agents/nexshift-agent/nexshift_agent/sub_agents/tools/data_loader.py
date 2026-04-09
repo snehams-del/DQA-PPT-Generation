@@ -3,6 +3,10 @@ import os
 from datetime import datetime, timedelta
 
 from nexshift_agent.models.domain import Nurse
+from nexshift_agent.sub_agents.tools.schedule_utils import (
+    check_period_overlap,
+    get_next_unscheduled_date,
+)
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "../../data")
 
@@ -67,7 +71,7 @@ def get_available_nurses() -> str:
     return result
 
 
-def generate_shifts(start_date: datetime = None, num_days: int = 7) -> list:
+def generate_shifts(start_date: datetime | None = None, num_days: int = 7) -> list:
     """
     Generates mock shifts for the scheduling period.
 
@@ -191,11 +195,6 @@ def get_shifts_to_fill(start_date: str = "", num_days: int = 7) -> str:
     Returns:
         Formatted string with shift details including ward, time, and requirements.
     """
-    from nexshift_agent.sub_agents.tools.history_tools import (
-        check_period_overlap,
-        get_next_unscheduled_date,
-    )
-
     # Parse start_date if provided, otherwise use next unscheduled date
     if start_date:
         try:

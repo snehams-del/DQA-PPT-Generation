@@ -9,6 +9,7 @@ from datetime import datetime
 
 from nexshift_agent.sub_agents.tools.data_loader import (
     generate_shifts,
+    get_shifts_to_fill,
     load_nurses,
 )
 from nexshift_agent.sub_agents.tools.history_tools import (
@@ -109,14 +110,14 @@ def list_nurses(filter_by: str = "") -> str:
         elif filter_lower == "mid":
             filtered = [n for n in nurses if n.seniority_level == "Mid"]
             filter_desc = "Mid-Level Nurses"
-        elif filter_lower == "available" or filter_lower == "fresh":
+        elif filter_lower in {"available", "fresh"}:
             filtered = [
                 n
                 for n in nurses
                 if stats.get(n.id, {}).get("fatigue_score", 0) < 0.4
             ]
             filter_desc = "Available Nurses (Low Fatigue)"
-        elif filter_lower == "fatigued" or filter_lower == "tired":
+        elif filter_lower in {"fatigued", "tired"}:
             filtered = [
                 n
                 for n in nurses
@@ -341,8 +342,6 @@ def get_upcoming_shifts(days: int = 7) -> str:
     Returns:
         Formatted list of upcoming shifts with requirements.
     """
-    from nexshift_agent.sub_agents.tools.data_loader import get_shifts_to_fill
-
     return get_shifts_to_fill(num_days=days)
 
 

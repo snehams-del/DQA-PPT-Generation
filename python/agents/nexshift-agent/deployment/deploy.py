@@ -12,7 +12,9 @@ Usage:
 """
 
 import argparse
+import asyncio
 import datetime
+import importlib.util
 import json
 import logging
 import os
@@ -20,6 +22,15 @@ import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
+
+try:
+    import vertexai
+    from vertexai import agent_engines
+    from vertexai.preview.reasoning_engines import AdkApp
+
+    VERTEXAI_AVAILABLE = True
+except ImportError:
+    VERTEXAI_AVAILABLE = False
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -38,23 +49,18 @@ logger = logging.getLogger(__name__)
 
 def check_dependencies():
     """Check if required packages are installed."""
-    try:
-        import vertexai
-        from vertexai import agent_engines
-
+    if importlib.util.find_spec("vertexai"):
         print("✅ google-cloud-aiplatform installed")
-    except ImportError:
+    else:
         print("❌ Missing google-cloud-aiplatform. Install with:")
         print(
             "   pip install 'google-cloud-aiplatform[agent_engines,adk]>=1.112'"
         )
         sys.exit(1)
 
-    try:
-        from google.adk.agents import Agent
-
+    if importlib.util.find_spec("google.adk"):
         print("✅ google-adk installed")
-    except ImportError:
+    else:
         print("❌ Missing google-adk. Install with:")
         print("   pip install google-adk")
         sys.exit(1)
@@ -64,16 +70,11 @@ def deploy_agent(
     project: str,
     location: str,
     agent_name: str = "nexshift-agent",
-    requirements_file: str = None,
-    extra_packages: list[str] = None,
-    service_account: str = None,
+    requirements_file: str | None = None,
+    extra_packages: list[str] | None = None,
+    service_account: str | None = None,
 ):
     """Deploy the agent to Vertex AI Agent Engine."""
-    import vertexai
-    from vertexai import agent_engines
-    from vertexai.preview.reasoning_engines import AdkApp
-
-    # Import the root agent
     from nexshift_agent.agent import root_agent
 
     print("""
@@ -204,10 +205,8 @@ def deploy_agent(
         raise
 
 
-def delete_agent(project: str, location: str, resource_name: str = None):
+def delete_agent(project: str, location: str, resource_name: str | None = None):
     """Delete a deployed agent from Agent Engine."""
-    import vertexai
-    from vertexai import agent_engines
 
     # Try to load deployment info if resource_name not provided
     if not resource_name:
@@ -243,8 +242,6 @@ def delete_agent(project: str, location: str, resource_name: str = None):
 
 def list_agents(project: str, location: str):
     """List all deployed agents in the project."""
-    import vertexai
-    from vertexai import agent_engines
 
     print(f"\n📋 Listing agents in {project}/{location}")
 
@@ -262,13 +259,9 @@ def list_agents(project: str, location: str):
 
 
 def test_agent(
-    project: str, location: str, message: str = None, resource_name: str = None
+    project: str, location: str, message: str | None = None, resource_name: str | None = None
 ):
     """Test a deployed agent with a sample query."""
-    import asyncio
-
-    import vertexai
-    from vertexai import agent_engines
 
     # Try to load deployment info if resource_name not provided
     if not resource_name:

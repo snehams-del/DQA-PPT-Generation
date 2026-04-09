@@ -30,3 +30,17 @@ dev = [
 [tool.ruff]
 # extends the ruff rules established in the root .toml
 extend = "../../../pyproject.toml"
+
+[tool.ruff.lint]
+ignore = [
+    "C901",     # Too complex - domain functions have inherent complexity
+    "PLR0912",  # Too many branches
+    "PLR0915",  # Too many statements
+    "PLR0911",  # Too many return statements
+    "PLR2004",  # Magic value comparisons - domain thresholds are clearer inline
+    "PLW0603",  # Global statement - used in test fixtures
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"deployment/deploy.py" = ["PLC0415"]  # Deferred import to avoid heavy agent init on non-deploy commands

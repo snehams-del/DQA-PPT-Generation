@@ -11,6 +11,18 @@ import json
 import os
 from datetime import datetime, timedelta
 
+from nexshift_agent.sub_agents.tools.data_loader import (
+    generate_shifts,
+    load_nurses,
+)
+from nexshift_agent.sub_agents.tools.schedule_utils import (
+    _load_json as _schedule_load_json,
+)
+from nexshift_agent.sub_agents.tools.schedule_utils import (
+    get_next_unscheduled_date,
+    get_scheduled_periods,
+)
+
 DATA_DIR = os.path.join(os.path.dirname(__file__), "../../data")
 SHIFT_HISTORY_FILE = os.path.join(DATA_DIR, "shift_history.json")
 NURSE_STATS_FILE = os.path.join(DATA_DIR, "nurse_stats.json")
@@ -24,13 +36,7 @@ ROSTERS_DIR = os.path.join(DATA_DIR, "rosters")
 
 def _load_json(filepath: str) -> dict:
     """Load JSON file, return empty dict if not found."""
-    try:
-        with open(filepath) as f:
-            return json.load(f)
-    except FileNotFoundError:
-        return {}
-    except json.JSONDecodeError:
-        return {}
+    return _schedule_load_json(filepath)
 
 
 def _save_json(filepath: str, data: dict) -> None:
@@ -85,128 +91,6 @@ def _calculate_fatigue_score(stats: dict) -> float:
 # =============================================================================
 
 
-def get_scheduled_periods() -> list:
-    """
-    Returns a list of all scheduled periods from finalized and draft rosters.
-    Only includes rosters that still have their roster file.
-
-    Returns:
-        List of dicts with roster_id, status, start, end dates.
-    """
-    history = _load_json(SHIFT_HISTORY_FILE)
-    periods = []
-
-    for log in history.get("logs", []):
-        status = log.get("status", "")
-        if status not in ["finalized", "draft"]:
-            continue
-
-        roster_id = log.get("roster_id") or log.get("id")
-
-        # Verify the roster file still exists
-        roster_file = os.path.join(ROSTERS_DIR, f"{roster_id}.json")
-        if not os.path.exists(roster_file):
-            continue  # Skip if roster file was deleted
-
-        period = log.get("period", {})
-        if period.get("start") and period.get("end"):
-            periods.append(
-                {
-                    "roster_id": roster_id,
-                    "status": status,
-                    "start": period["start"],
-                    "end": period["end"],
-                }
-            )
-
-    return sorted(periods, key=lambda x: x["start"])
-
-
-def get_next_unscheduled_date() -> str:
-    """
-    Finds the next date that doesn't have a finalized roster.
-
-    Returns:
-        Date string in YYYY-MM-DD format for the next unscheduled date.
-    """
-    periods = get_scheduled_periods()
-
-    # Only consider finalized rosters for determining next date
-    finalized_periods = [p for p in periods if p["status"] == "finalized"]
-
-    if not finalized_periods:
-        # No finalized rosters, start from today
-        return datetime.now().strftime("%Y-%m-%d")
-
-    # Find the latest end date from finalized rosters
-    latest_end = max(p["end"] for p in finalized_periods)
-
-    try:
-        latest_end_dt = datetime.strptime(latest_end, "%Y-%m-%d")
-        next_date = latest_end_dt + timedelta(days=1)
-        today = datetime.now().replace(
-            hour=0, minute=0, second=0, microsecond=0
-        )
-        next_date = max(next_date, today)
-        return next_date.strftime("%Y-%m-%d")
-    except ValueError:
-        return datetime.now().strftime("%Y-%m-%d")
-
-
-def check_period_overlap(start_date: str, num_days: int = 7) -> dict:
-    """
-    Checks if the requested period overlaps with existing rosters.
-
-    Args:
-        start_date: Start date in YYYY-MM-DD format
-        num_days: Number of days to schedule
-
-    Returns:
-        Dict with overlap info:
-        - has_overlap: bool
-        - overlapping_rosters: list of roster info
-        - suggested_start: next available start date
-    """
-    try:
-        req_start = datetime.strptime(start_date, "%Y-%m-%d")
-        req_end = req_start + timedelta(days=num_days - 1)
-    except ValueError:
-        return {
-            "has_overlap": False,
-            "overlapping_rosters": [],
-            "suggested_start": start_date,
-            "error": "Invalid date format",
-        }
-
-    periods = get_scheduled_periods()
-    overlapping = []
-
-    for p in periods:
-        try:
-            p_start = datetime.strptime(p["start"], "%Y-%m-%d")
-            p_end = datetime.strptime(p["end"], "%Y-%m-%d")
-
-            # Check for overlap: NOT (req_end < p_start OR req_start > p_end)
-            if not (req_end < p_start or req_start > p_end):
-                overlapping.append(
-                    {
-                        "roster_id": p["roster_id"],
-                        "status": p["status"],
-                        "period": f"{p['start']} to {p['end']}",
-                    }
-                )
-        except ValueError:
-            continue
-
-    # Find suggested start date
-    suggested_start = get_next_unscheduled_date()
-
-    return {
-        "has_overlap": len(overlapping) > 0,
-        "overlapping_rosters": overlapping,
-        "suggested_start": suggested_start,
-        "requested_period": f"{start_date} to {req_end.strftime('%Y-%m-%d')}",
-    }
 
 
 def get_scheduling_status() -> str:
@@ -402,12 +286,6 @@ def get_roster_by_id(roster_id: str) -> str:
     if not roster:
         return f"Roster '{roster_id}' not found."
 
-    # Load nurse names for display
-    from nexshift_agent.sub_agents.tools.data_loader import (
-        generate_shifts,
-        load_nurses,
-    )
-
     nurses = {n.id: n for n in load_nurses()}
 
     # Determine start date for shift generation
@@ -530,7 +408,7 @@ def get_roster_by_id(roster_id: str) -> str:
     result += "=" * 60 + "\n"
 
     nurse_summary = {}
-    for date, day_assignments in assignments_by_date.items():
+    for _date, day_assignments in assignments_by_date.items():
         for a in day_assignments:
             nid = a["nurse_id"]
             if nid not in nurse_summary:
@@ -666,13 +544,7 @@ def get_roster(roster_id: str) -> str:
         result += "No assignments in this roster.\n"
         return result
 
-    # Load nurse names for display
-    from nexshift_agent.sub_agents.tools.data_loader import load_nurses
-
     nurses = {n.id: n.name for n in load_nurses()}
-
-    # Load shift info - try to get period, or infer from generated_at date
-    from nexshift_agent.sub_agents.tools.data_loader import generate_shifts
 
     shifts_map = {}
 
@@ -863,12 +735,6 @@ def get_rosters_by_date_range(start_date: str, end_date: str) -> str:
     result += f"Period: {start_date} to {end_date} ({num_days} days)\n"
     result += f"Found {len(matching_rosters)} roster(s)\n\n"
 
-    # Load nurse data for name lookup
-    from nexshift_agent.sub_agents.tools.data_loader import (
-        generate_shifts,
-        load_nurses,
-    )
-
     nurses = {n.id: n for n in load_nurses()}
 
     # Display each roster with calendar table
@@ -1028,8 +894,6 @@ def save_draft_roster(roster_json: str) -> str:
 
     # Calculate period from shift_ids by looking up shift dates
     if "period" not in roster or not roster.get("period", {}).get("start"):
-        from nexshift_agent.sub_agents.tools.data_loader import generate_shifts
-
         # Infer start date from generated_at or roster metadata
         generated_at = roster.get("generated_at") or roster.get(
             "metadata", {}
@@ -1082,7 +946,7 @@ def save_draft_roster(roster_json: str) -> str:
 
     # Remove existing draft with same ID
     history["logs"] = [
-        l for l in history["logs"] if l.get("roster_id") != roster_id
+        entry for entry in history["logs"] if entry.get("roster_id") != roster_id
     ]
     history["logs"].append(history_entry)
     _save_json(SHIFT_HISTORY_FILE, history)
@@ -1096,8 +960,6 @@ def _get_assignment_dates(roster: dict, rosters_dir: str) -> set:
     Get all dates covered by assignments in a roster.
     Uses shift_id to look up dates from generated shifts.
     """
-    from nexshift_agent.sub_agents.tools.data_loader import generate_shifts
-
     period = roster.get("period", {})
     if not period.get("start"):
         return set()
@@ -1128,8 +990,6 @@ def _remove_assignments_for_dates(roster: dict, dates_to_remove: set) -> list:
     Remove assignments for specific dates from a roster.
     Returns the removed assignments.
     """
-    from nexshift_agent.sub_agents.tools.data_loader import generate_shifts
-
     period = roster.get("period", {})
     if not period.get("start"):
         return []
@@ -1329,10 +1189,10 @@ def finalize_roster(roster_id: str) -> str:
                             # Remove from history
                             history = _load_json(SHIFT_HISTORY_FILE)
                             history["logs"] = [
-                                l
-                                for l in history.get("logs", [])
-                                if l.get("roster_id") != p["roster_id"]
-                                and l.get("id") != p["roster_id"]
+                                entry
+                                for entry in history.get("logs", [])
+                                if entry.get("roster_id") != p["roster_id"]
+                                and entry.get("id") != p["roster_id"]
                             ]
                             _save_json(SHIFT_HISTORY_FILE, history)
                             overwrite_messages.append(
@@ -1590,9 +1450,9 @@ def delete_roster(roster_id: str) -> str:
     history = _load_json(SHIFT_HISTORY_FILE)
     original_count = len(history.get("logs", []))
     history["logs"] = [
-        l
-        for l in history.get("logs", [])
-        if l.get("roster_id") != roster_id and l.get("id") != roster_id
+        entry
+        for entry in history.get("logs", [])
+        if entry.get("roster_id") != roster_id and entry.get("id") != roster_id
     ]
     removed_count = original_count - len(history["logs"])
     _save_json(SHIFT_HISTORY_FILE, history)

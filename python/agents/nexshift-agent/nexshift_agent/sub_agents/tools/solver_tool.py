@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import random
 from collections import defaultdict
 from copy import deepcopy
@@ -15,6 +16,20 @@ from nexshift_agent.models.domain import (
     Roster,
     RosterMetadata,
     Shift,
+)
+from nexshift_agent.sub_agents.tools.data_loader import (
+    generate_shifts as gen_shifts,
+)
+from nexshift_agent.sub_agents.tools.data_loader import (
+    load_nurses,
+)
+from nexshift_agent.sub_agents.tools.history_tools import (
+    NURSE_STATS_FILE,
+    _load_json,
+)
+from nexshift_agent.sub_agents.tools.schedule_utils import (
+    check_period_overlap,
+    get_next_unscheduled_date,
 )
 
 # Configure logger for solver debugging
@@ -117,8 +132,6 @@ def _auto_save_roster(
     This ensures the roster file exists even if the LLM doesn't call save_draft_roster().
     Also adds an entry to shift_history.json so finalize_roster() can update it.
     """
-    import os
-
     ROSTERS_DIR = os.path.join(os.path.dirname(__file__), "../../data/rosters")
     SHIFT_HISTORY_FILE = os.path.join(
         os.path.dirname(__file__), "../../data/shift_history.json"
@@ -164,9 +177,9 @@ def _auto_save_roster(
 
         # Remove existing entry with same ID (if regenerating)
         history["logs"] = [
-            l
-            for l in history["logs"]
-            if l.get("roster_id") != roster_id and l.get("id") != roster_id
+            entry
+            for entry in history["logs"]
+            if entry.get("roster_id") != roster_id and entry.get("id") != roster_id
         ]
         history["logs"].append(history_entry)
 
@@ -196,20 +209,6 @@ def generate_roster(
         JSON string containing the generated roster with assignments.
         If overlap detected, returns warning info instead.
     """
-    # Import here to avoid circular imports
-    from nexshift_agent.sub_agents.tools.data_loader import (
-        generate_shifts as gen_shifts,
-    )
-    from nexshift_agent.sub_agents.tools.data_loader import (
-        load_nurses,
-    )
-    from nexshift_agent.sub_agents.tools.history_tools import (
-        NURSE_STATS_FILE,
-        _load_json,
-        check_period_overlap,
-        get_next_unscheduled_date,
-    )
-
     # Load data automatically
     nurses_objs = load_nurses()
 
@@ -562,7 +561,7 @@ def _analyze_infeasibility(
     # 5b. TIME-OFF REQUESTS ANALYSIS
     # =========================================================================
     time_off_entries = []
-    scheduling_dates = set(s.start_time.date() for s in shifts_objs)
+    scheduling_dates = {s.start_time.date() for s in shifts_objs}
 
     for n in nurses_objs:
         if n.preferences and n.preferences.adhoc_requests:
@@ -693,7 +692,6 @@ def _analyze_infeasibility(
             if (
                 s.start_time.hour == 0 or s.start_time.hour >= 16
             ):  # Evening/night shifts
-                end_hour = s.end_time.hour
                 end_date = s.end_time.date()
 
                 # Check if there's a day shift starting within 8 hours
@@ -815,7 +813,7 @@ def _analyze_infeasibility(
     if fatigued_nurses:
         issues.append(f"nurse fatigue ({len(fatigued_nurses)} affected)")
     if constraint_issues:
-        conflict_types = list(set(c["type"] for c in constraint_issues))
+        conflict_types = list({c["type"] for c in constraint_issues})
         issues.append(f"constraint conflicts ({', '.join(conflict_types)})")
 
     if issues:
@@ -863,18 +861,6 @@ def simulate_staffing_change(
     Returns:
         Simulation report showing if the changes would resolve staffing issues.
     """
-    from nexshift_agent.sub_agents.tools.data_loader import (
-        generate_shifts as gen_shifts,
-    )
-    from nexshift_agent.sub_agents.tools.data_loader import (
-        load_nurses,
-    )
-    from nexshift_agent.sub_agents.tools.history_tools import (
-        NURSE_STATS_FILE,
-        _load_json,
-        get_next_unscheduled_date,
-    )
-
     # Load current data
     nurses_objs = load_nurses()
     nurse_stats = _load_json(NURSE_STATS_FILE)
@@ -1046,7 +1032,7 @@ def simulate_staffing_change(
             hire_counter = 1
 
             for gap in gaps_to_fill:
-                for i in range(gap["nurses_needed"]):
+                for _i in range(gap["nurses_needed"]):
                     new_nurse_id = f"sim_nurse_{hire_counter:03d}"
                     new_nurse = Nurse(
                         id=new_nurse_id,
@@ -1226,7 +1212,7 @@ def _solve_roster_internal(
     # Hard Constraint 5: Minimum rest period between shifts (8 hours)
     # OPTIMIZED: Only check shift pairs that could potentially conflict
     # Two shifts can only conflict if they're within 24 hours of each other
-    # This reduces O(N × S²) to O(N × K) where K is the number of conflicting pairs
+    # This reduces O(N x S^2) to O(N x K) where K is the number of conflicting pairs
 
     # Pre-compute conflicting shift pairs (done once, not per nurse)
     # Sort shifts by start time for efficient neighbor lookup
@@ -1247,7 +1233,7 @@ def _solve_roster_internal(
         f"Found {len(conflicting_pairs)} conflicting shift pairs (out of {len(shifts_objs) * (len(shifts_objs) - 1) // 2} total pairs)"
     )
 
-    # Apply conflict constraints for each nurse - now O(N × K) instead of O(N × S²)
+    # Apply conflict constraints for each nurse - now O(N x K) instead of O(N x S^2)
     for n in nurses_objs:
         for s1_id, s2_id in conflicting_pairs:
             model.AddAtMostOne(
@@ -1524,7 +1510,7 @@ def _solve_roster_internal(
         f"Solver finished: status={status_name}, time={solver.WallTime():.2f}s"
     )
 
-    if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
+    if status in {cp_model.OPTIMAL, cp_model.FEASIBLE}:
         roster_assignments = []
         for n in nurses_objs:
             for s in shifts_objs:

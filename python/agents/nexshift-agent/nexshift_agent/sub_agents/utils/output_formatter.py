@@ -384,8 +384,8 @@ class OutputFormatter:
         sections = {"available": [], "limited": [], "unavailable": []}
 
         current_section = None
-        for line in text.split("\n"):
-            line = line.strip()
+        for raw_line in text.split("\n"):
+            line = raw_line.strip()
             if re.search(r"AVAILABLE\s*\(\d+\)", line, re.I):
                 current_section = "available"
                 count_match = re.search(r"\((\d+)\)", line)
@@ -531,8 +531,8 @@ class OutputFormatter:
                 r"ALERTS:\s*(.*?)(?:\n\n|\Z)", text, re.I | re.S
             )
             if alerts_section:
-                for line in alerts_section.group(1).split("\n"):
-                    line = line.strip()
+                for raw_line in alerts_section.group(1).split("\n"):
+                    line = raw_line.strip()
                     if line and not line.startswith("="):
                         result += f"- {line}\n"
         elif re.search(r"No staffing alerts", text, re.I):
@@ -553,8 +553,8 @@ class OutputFormatter:
         current_date = None
         shifts = []
 
-        for line in text.split("\n"):
-            line = line.strip()
+        for raw_line in text.split("\n"):
+            line = raw_line.strip()
 
             # Date header: "📆 2025-12-04 (Wednesday)"
             date_match = re.search(r"(\d{4}-\d{2}-\d{2})\s*\((\w+)\)", line)
@@ -625,8 +625,8 @@ class OutputFormatter:
         rosters = []
         current_roster = {}
 
-        for line in text.split("\n"):
-            line = line.strip()
+        for raw_line in text.split("\n"):
+            line = raw_line.strip()
 
             # Roster ID line
             roster_match = re.search(r"(roster_\w+)", line)

@@ -115,10 +115,10 @@ def add_nurse(
             "Saturday",
             "Sunday",
         ]
-        for day in preferred_days.split(","):
-            day = day.strip().capitalize()
-            if day in valid_days:
-                day_list.append(day)
+        for raw_day in preferred_days.split(","):
+            cleaned_day = raw_day.strip().capitalize()
+            if cleaned_day in valid_days:
+                day_list.append(cleaned_day)
 
     # Load existing data
     nurses = _load_hris()
@@ -279,22 +279,22 @@ def update_nurse_certifications(
     # Add certifications
     added = []
     if add_certifications:
-        for cert in add_certifications.split(","):
-            cert = cert.strip().upper()
-            if cert not in valid_certs:
-                return f"Error: Invalid certification '{cert}'. Valid options: {', '.join(valid_certs)}"
-            if cert not in current_certs:
-                current_certs.add(cert)
-                added.append(cert)
+        for raw_cert in add_certifications.split(","):
+            cleaned_cert = raw_cert.strip().upper()
+            if cleaned_cert not in valid_certs:
+                return f"Error: Invalid certification '{cleaned_cert}'. Valid options: {', '.join(valid_certs)}"
+            if cleaned_cert not in current_certs:
+                current_certs.add(cleaned_cert)
+                added.append(cleaned_cert)
 
     # Remove certifications
     removed = []
     if remove_certifications:
-        for cert in remove_certifications.split(","):
-            cert = cert.strip().upper()
-            if cert in current_certs:
-                current_certs.remove(cert)
-                removed.append(cert)
+        for raw_cert in remove_certifications.split(","):
+            cleaned_cert = raw_cert.strip().upper()
+            if cleaned_cert in current_certs:
+                current_certs.remove(cleaned_cert)
+                removed.append(cleaned_cert)
 
     if not added and not removed:
         return f"No changes made. {found_nurse['name']} currently has: {', '.join(original_certs)}"
@@ -391,10 +391,10 @@ def update_nurse_preferences(
                 "Sunday",
             ]
             new_days = []
-            for day in preferred_days.split(","):
-                day = day.strip().capitalize()
-                if day in valid_days:
-                    new_days.append(day)
+            for raw_day in preferred_days.split(","):
+                cleaned_day = raw_day.strip().capitalize()
+                if cleaned_day in valid_days:
+                    new_days.append(cleaned_day)
 
         if old_days != new_days:
             prefs["preferred_days"] = new_days
