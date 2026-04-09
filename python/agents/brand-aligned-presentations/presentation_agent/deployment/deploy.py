@@ -21,6 +21,7 @@ import tomllib
 import vertexai
 from dotenv import load_dotenv, set_key
 from vertexai import agent_engines
+from google.cloud import storage
 from vertexai.preview.reasoning_engines import AdkApp
 
 # Add the project root to sys.path
@@ -61,15 +62,80 @@ def load_requirements():
         pyproject_data = tomllib.load(f)
     return pyproject_data["project"]["dependencies"]
 
+
+def setup_staging_bucket(project_id: str, location: str, bucket_name: str) -> str:
+    """Checks if the staging bucket exists, creates it if not."""
+    storage_client = storage.Client(project=project_id)
+    bucket_name_without_prefix = bucket_name.replace("gs://", "")
+
+    try:
+        bucket = storage_client.lookup_bucket(bucket_name_without_prefix)
+        if bucket:
+            logger.info("Staging bucket gs://%s already exists.", bucket_name_without_prefix)
+        else:
+            logger.info("Staging bucket gs://%s not found. Creating...", bucket_name_without_prefix)
+            new_bucket = storage_client.create_bucket(
+                bucket_name_without_prefix, project=project_id, location=location
+            )
+            logger.info(
+                "Successfully created staging bucket gs://%s in %s.",
+                new_bucket.name,
+                location,
+            )
+            new_bucket.iam_configuration.uniform_bucket_level_access_enabled = (
+                True
+            )
+            new_bucket.patch()
+            logger.info(
+                "Enabled uniform bucket-level access for gs://%s.",
+                new_bucket.name,
+            )
+    except Exception as e:
+        logger.error(f"Failed to create or access bucket gs://{bucket_name_without_prefix}. Error: {e}")
+        raise
+
+    return f"gs://{bucket_name_without_prefix}"
+
+
+def handle_default_template(project_id, bucket_name):
+    """Checks for DEFAULT_TEMPLATE_URI, uploads the default template if not set."""
+    if os.getenv("DEFAULT_TEMPLATE_URI"):
+        logger.info("DEFAULT_TEMPLATE_URI is already set.")
+        return os.getenv("DEFAULT_TEMPLATE_URI")
+
+    logger.info("DEFAULT_TEMPLATE_URI not set, handling default template upload...")
+    storage_client = storage.Client(project=project_id)
+    bucket_name_without_prefix = bucket_name.replace("gs://", "")
+    bucket = storage_client.bucket(bucket_name_without_prefix)
+    
+    source_file_name = "docs/Proposal_Template.pptx"
+    destination_blob_name = "Proposal_Template.pptx"
+    blob = bucket.blob(destination_blob_name)
+
+    if not blob.exists():
+        logger.info(f"Uploading {source_file_name} to gs://{bucket_name_without_prefix}/{destination_blob_name}...")
+        blob.upload_from_filename(source_file_name)
+        logger.info("Upload complete.")
+    else:
+        logger.info(f"{destination_blob_name} already exists in the bucket.")
+
+    return f"gs://{bucket_name_without_prefix}/{destination_blob_name}"
+
 def main(mode):
     GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT")
     GOOGLE_CLOUD_LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
-    GCP_STAGING_BUCKET = os.getenv("GCP_STAGING_BUCKET", f"gs://{GOOGLE_CLOUD_PROJECT}-agent-engine-v16")
+    # Ensure GCP_STAGING_BUCKET is just the name, setup_staging_bucket will add gs:// prefix
+    GCP_STAGING_BUCKET_NAME = os.getenv("GCP_STAGING_BUCKET", f"{GOOGLE_CLOUD_PROJECT}-staging-bucket").replace("gs://", "")
     AGENT_ENGINE_ID = os.getenv("AGENT_ENGINE_ID")
+
+    # Set up staging bucket
+    GCP_STAGING_BUCKET = setup_staging_bucket(GOOGLE_CLOUD_PROJECT, GOOGLE_CLOUD_LOCATION, GCP_STAGING_BUCKET_NAME)
     
     vertexai.init(
         project=GOOGLE_CLOUD_PROJECT, location=GOOGLE_CLOUD_LOCATION, staging_bucket=GCP_STAGING_BUCKET
     )
+
+    default_template_uri = handle_default_template(GOOGLE_CLOUD_PROJECT, GCP_STAGING_BUCKET)
 
     # Build env_vars dynamically, ensuring all values are strings
     env_vars = {
@@ -84,7 +150,7 @@ def main(mode):
             os.getenv("IMAGE_GENERATION_MODEL") or "imagen-3.0-generate-002"
         ),
         "GCP_STAGING_BUCKET": str(os.getenv("GCP_STAGING_BUCKET") or ""),
-        "DEFAULT_TEMPLATE_URI": str(os.getenv("DEFAULT_TEMPLATE_URI") or ""),
+        "DEFAULT_TEMPLATE_URI": default_template_uri,
         "ENABLE_RAG": str(os.getenv("ENABLE_RAG") or "false"),
         "ENABLE_DEEP_RESEARCH": str(
             os.getenv("ENABLE_DEEP_RESEARCH") or "false"
@@ -158,3 +224,4 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     main(args.mode)
+
