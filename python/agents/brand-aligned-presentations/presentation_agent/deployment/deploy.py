@@ -28,19 +28,18 @@ from vertexai.preview.reasoning_engines import AdkApp
 # Since we are now in root/presentation_agent/deployment/deploy.py, 
 # the project root is two levels up.
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
-from presentation_agent.agent import root_agent
 
-# Force override from .env
-load_dotenv(override=True)
+ENV_FILE_PATH = os.path.abspath(os.path.join(project_root, ".env"))
+# Force override from .env, loaded BEFORE importing agent to ensure correct config
+load_dotenv(ENV_FILE_PATH, override=True)
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-ENV_FILE_PATH = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..", "..", ".env")
-)
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+from presentation_agent.agent import root_agent
+
 
 # Function to update the .env file
 def update_env_file(agent_engine_id, env_file_path):
@@ -123,7 +122,9 @@ def handle_default_template(project_id, bucket_name):
 
 def main(mode):
     GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT")
-    GOOGLE_CLOUD_LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
+    GOOGLE_CLOUD_LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION")
+    if not GOOGLE_CLOUD_LOCATION or GOOGLE_CLOUD_LOCATION == "global":
+        GOOGLE_CLOUD_LOCATION = "us-central1"
     # Ensure GCP_STAGING_BUCKET is just the name, setup_staging_bucket will add gs:// prefix
     GCP_STAGING_BUCKET_NAME = os.getenv("GCP_STAGING_BUCKET", f"{GOOGLE_CLOUD_PROJECT}-staging-bucket").replace("gs://", "")
     AGENT_ENGINE_ID = os.getenv("AGENT_ENGINE_ID")
