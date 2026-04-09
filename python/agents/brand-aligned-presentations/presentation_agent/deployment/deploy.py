@@ -129,6 +129,11 @@ def main(mode):
             logger.info("no exisiting agent engine app resource found in env")
 
     elif mode == "create":
+        if not GOOGLE_CLOUD_PROJECT or not STAGING_BUCKET:
+            logger.warning("Missing GOOGLE_CLOUD_PROJECT or GCP_STAGING_BUCKET. " \
+            "Skipping Agent Engine creation for CI/validation.")
+            return
+
         logger.info("creating app in agent engine...")
 
         app = AdkApp(
