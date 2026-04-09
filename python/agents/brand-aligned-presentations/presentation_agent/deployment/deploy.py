@@ -37,29 +37,9 @@ load_dotenv(override=True)
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT")
-GOOGLE_CLOUD_LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION")
-STAGING_BUCKET = os.getenv("GCP_STAGING_BUCKET")
-AGENT_ENGINE_ID = os.getenv("AGENT_ENGINE_ID")
-
-
 ENV_FILE_PATH = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "..", ".env")
 )
-
-try:
-    vertexai.init(
-        project=GOOGLE_CLOUD_PROJECT,
-        location=GOOGLE_CLOUD_LOCATION,
-        staging_bucket=STAGING_BUCKET,
-    )
-except Exception as e:
-    # In a CI test environment, credentials or a staging bucket may be missing.
-    print(f"Vertex AI init failed (likely in CI/test environment): {e}")
-    print("Staying alive for test...")
-    import time
-    while True:
-        time.sleep(60)
 
 # Function to update the .env file
 def update_env_file(agent_engine_id, env_file_path):
@@ -72,7 +52,6 @@ def update_env_file(agent_engine_id, env_file_path):
     except Exception as e:
         print(f"Error updating .env file: {e}")
 
-
 def load_requirements():
     """Loads requirements from pyproject.toml."""
     pyproject_path = os.path.abspath(
@@ -82,8 +61,16 @@ def load_requirements():
         pyproject_data = tomllib.load(f)
     return pyproject_data["project"]["dependencies"]
 
-
 def main(mode):
+    GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT")
+    GOOGLE_CLOUD_LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
+    GCP_STAGING_BUCKET = os.getenv("GCP_STAGING_BUCKET", f"{GOOGLE_CLOUD_PROJECT}-agent-engine-v16")
+    AGENT_ENGINE_ID = os.getenv("AGENT_ENGINE_ID")
+    
+    vertexai.init(
+        project=GOOGLE_CLOUD_PROJECT, location=GOOGLE_CLOUD_LOCATION, staging_bucket=GCP_STAGING_BUCKET
+    )
+
     # Build env_vars dynamically, ensuring all values are strings
     env_vars = {
         "GCP_PROJECT": str(os.getenv("GOOGLE_CLOUD_PROJECT")),
