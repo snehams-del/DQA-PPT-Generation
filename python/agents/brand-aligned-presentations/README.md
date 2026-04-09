@@ -1,8 +1,7 @@
 # Brand-Aligned Presentations.
 
-**Last Updated:** April 2026  
 **Architecture:** Multi-Agent System on Vertex AI  
-**Model:** Gemini 2.5 Flash  
+**Model:** Gemini 2.5 Flash or later version
 
 ---
 
