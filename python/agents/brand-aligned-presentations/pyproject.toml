@@ -62,7 +62,6 @@ dev = [
 # This configuration file is used by goo.gle/agent-starter-pack to power remote templating.
 # It defines the template's properties and settings.
 [tool.agent-starter-pack]
-template_id = "adk-agent"
 agent_module = "presentation_agent.agent"
 agent_object = "root_agent"
 
