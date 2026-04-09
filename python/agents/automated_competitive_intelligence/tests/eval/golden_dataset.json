@@ -1,0 +1,34 @@
+[
+  {
+    "prompt": "What is the coverage details URL for BlueCross Gold PPO plan?",
+    "expected_query_contains": [
+      "Provider_Name = 'BlueCross'",
+      "Market_Tier = 'Gold'",
+      "Plan_Type = 'PPO'"
+    ],
+    "expected_url": "https://storage.googleapis.com/suddhasatwa-data-projects-mock/bluecross_gold.md",
+    "expected_specs": {
+      "Deductible": "Individual (In-Network): $1,500, Family (In-Network): $3,000, Individual (Out-of-Network): $4,500",
+      "Out-of-Pocket Maximum": "Individual (In-Network): $6,500, Family (In-Network): $13,000",
+      "Copayments": "Primary Care Visit: $25 Copay, Specialist Visit: $50 Copay, Urgent Care: $50 Copay",
+      "Coinsurance": "Emergency Room: 20% Coinsurance, Inpatient Hospital Services: 20% Coinsurance",
+      "Extra Benefits": "24/7 Nurse Hotline, Comprehensive mental health coverage, Dental and Vision optional add-ons available"
+    }
+  },
+  {
+    "prompt": "Find the coverage URL for Aetna Silver HMO plan.",
+    "expected_query_contains": [
+      "Provider_Name = 'Aetna'",
+      "Market_Tier = 'Silver'",
+      "Plan_Type = 'HMO'"
+    ],
+    "expected_url": "https://storage.googleapis.com/suddhasatwa-data-projects-mock/aetna_silver.md",
+    "expected_specs": {
+      "Deductible": "Individual: $3,500, Family: $7,000",
+      "Out-of-Pocket Maximum": "Individual: $8,700, Family: $17,400",
+      "Copayments": "Primary Care Visit: $40 Copay, Specialist Visit: $80 Copay (Referral Required), Urgent Care: $60 Copay",
+      "Coinsurance": "Emergency Room: 30% Coinsurance, Inpatient Hospital Services: 30% Coinsurance",
+      "Extra Benefits": "Telehealth access at $0 copay, Annual wellness visit included at no cost, Free access to participating fitness centers"
+    }
+  }
+]
