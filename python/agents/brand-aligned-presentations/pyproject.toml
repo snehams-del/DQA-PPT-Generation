@@ -68,6 +68,8 @@ agent_object = "root_agent"
 
 [tool.agent-starter-pack.settings]
 agent_directory = "presentation_agent"
+deployment_targets = ["agent_engine"]
+extra_directories = ["deployment", "eval", "docs"]
 
 [build-system]
 requires = ["hatchling"]
