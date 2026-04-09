@@ -6,6 +6,12 @@ Detects content type and converts to well-formatted markdown.
 import re
 from datetime import datetime, timedelta
 
+from nexshift_agent.sub_agents.config import (
+    DAY_SHIFT_START_HOUR,
+    EVENING_SHIFT_START_HOUR,
+    NIGHT_SHIFT_START_HOUR,
+)
+
 
 class OutputFormatter:
     """Converts agent output to well-formatted markdown."""
@@ -126,7 +132,7 @@ class OutputFormatter:
                 parts = [p.strip() for p in details.split("|")]
                 level = parts[0] if len(parts) > 0 else ""
                 contract = parts[1] if len(parts) > 1 else ""
-                certs = parts[2] if len(parts) > 2 else ""
+                certs = parts[2] if len(parts) > 2 else ""  # noqa: PLR2004
 
                 nurses.append(
                     {
@@ -268,9 +274,9 @@ class OutputFormatter:
 
                     # Determine shift type from start time
                     hour = int(start_time.split(":")[0])
-                    if hour >= 20 or hour < 6:
+                    if hour >= NIGHT_SHIFT_START_HOUR or hour < DAY_SHIFT_START_HOUR:
                         shift_type = "N"  # Night
-                    elif hour >= 14:
+                    elif hour >= EVENING_SHIFT_START_HOUR:
                         shift_type = "E"  # Evening
                     else:
                         shift_type = "D"  # Day

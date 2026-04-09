@@ -11,6 +11,22 @@ import json
 import os
 from datetime import datetime, timedelta
 
+from nexshift_agent.sub_agents.config import (
+    DAY_SHIFT_START_HOUR,
+    DISPLAY_OVERLAP_DATES,
+    EVENING_SHIFT_START_HOUR,
+    FATIGUE_CONSECUTIVE_DIVISOR,
+    FATIGUE_DISPLAY_HIGH,
+    FATIGUE_DISPLAY_MODERATE,
+    FATIGUE_REST_HOURS_DIVISOR,
+    FATIGUE_WEEKLY_HOURS_DIVISOR,
+    FATIGUE_WEIGHT_CONSECUTIVE,
+    FATIGUE_WEIGHT_PATTERN,
+    FATIGUE_WEIGHT_REST_GAP,
+    FATIGUE_WEIGHT_WEEKLY_HOURS,
+    NIGHT_SHIFT_START_HOUR,
+    WEEKEND_WEEKDAY_START,
+)
 from nexshift_agent.sub_agents.tools.data_loader import (
     generate_shifts,
     load_nurses,
@@ -49,9 +65,9 @@ def _get_shift_type(start_time: str) -> str:
     """Determine shift type based on start time."""
     try:
         hour = int(start_time.split(":", maxsplit=1)[0])
-        if hour >= 20 or hour < 6:
+        if hour >= NIGHT_SHIFT_START_HOUR or hour < DAY_SHIFT_START_HOUR:
             return "night"
-        elif hour >= 6 and hour < 14:
+        elif hour >= DAY_SHIFT_START_HOUR and hour < EVENING_SHIFT_START_HOUR:
             return "day"
         else:
             return "evening"
@@ -63,7 +79,7 @@ def _is_weekend(date_str: str) -> bool:
     """Check if date is a weekend."""
     try:
         date = datetime.strptime(date_str, "%Y-%m-%d")
-        return date.weekday() >= 5  # Saturday=5, Sunday=6
+        return date.weekday() >= WEEKEND_WEEKDAY_START  # Saturday=5, Sunday=6
     except ValueError:
         return False
 
@@ -74,11 +90,11 @@ def _calculate_fatigue_score(stats: dict) -> float:
     0.0 = Fresh, 1.0 = Burnout risk
     """
     consecutive_factor = (
-        min(stats.get("consecutive_shifts_current", 0) / 3, 1.0) * 0.3
+        min(stats.get("consecutive_shifts_current", 0) / FATIGUE_CONSECUTIVE_DIVISOR, 1.0) * FATIGUE_WEIGHT_CONSECUTIVE
     )
-    weekend_factor = min(stats.get("weekend_shifts_30d", 0) / 4, 1.0) * 0.25
-    night_factor = min(stats.get("night_shifts_30d", 0) / 8, 1.0) * 0.25
-    preference_factor = (1 - stats.get("preferences_honored_rate", 1.0)) * 0.2
+    weekend_factor = min(stats.get("weekend_shifts_30d", 0) / FATIGUE_WEEKLY_HOURS_DIVISOR, 1.0) * FATIGUE_WEIGHT_WEEKLY_HOURS
+    night_factor = min(stats.get("night_shifts_30d", 0) / FATIGUE_REST_HOURS_DIVISOR, 1.0) * FATIGUE_WEIGHT_REST_GAP
+    preference_factor = (1 - stats.get("preferences_honored_rate", 1.0)) * FATIGUE_WEIGHT_PATTERN
 
     return round(
         consecutive_factor + weekend_factor + night_factor + preference_factor,
@@ -216,9 +232,9 @@ def get_nurse_stats() -> str:
         fatigue = nurse_stats.get("fatigue_score", 0)
 
         # Fatigue indicator
-        if fatigue >= 0.7:
+        if fatigue >= FATIGUE_DISPLAY_HIGH:
             fatigue_indicator = "🔴 HIGH RISK"
-        elif fatigue >= 0.4:
+        elif fatigue >= FATIGUE_DISPLAY_MODERATE:
             fatigue_indicator = "🟡 Moderate"
         else:
             fatigue_indicator = "🟢 Good"
@@ -794,9 +810,9 @@ def get_rosters_by_date_range(start_date: str, end_date: str) -> str:
             # Determine shift type
             try:
                 hour = int(start_time.split(":")[0])
-                if hour >= 20 or hour < 6:
+                if hour >= NIGHT_SHIFT_START_HOUR or hour < DAY_SHIFT_START_HOUR:
                     shift_type = "N"
-                elif hour >= 14:
+                elif hour >= EVENING_SHIFT_START_HOUR:
                     shift_type = "E"
                 else:
                     shift_type = "D"
@@ -1145,8 +1161,8 @@ def finalize_roster(roster_id: str) -> str:
 
                 # Block if overlap includes past/today
                 if past_overlap_dates:
-                    past_dates_str = ", ".join(past_overlap_dates[:5])
-                    if len(past_overlap_dates) > 5:
+                    past_dates_str = ", ".join(past_overlap_dates[:DISPLAY_OVERLAP_DATES])
+                    if len(past_overlap_dates) > DISPLAY_OVERLAP_DATES:
                         past_dates_str += (
                             f" ... ({len(past_overlap_dates)} dates total)"
                         )
@@ -1535,7 +1551,7 @@ def list_all_rosters() -> str:
         ):
             result += f"\n• {r['roster_id']}\t"
             result += f"  Period: {r['period_start']} to {r['period_end']}\n"
-            result += f"  Assignments: {r['assignments']} | Generated: {r['generated_at'][:10] if len(str(r['generated_at'])) >= 10 else r['generated_at']}\n"
+            result += f"  Assignments: {r['assignments']} | Generated: {r['generated_at'][:10] if len(str(r['generated_at'])) >= 10 else r['generated_at']}\n"  # noqa: PLR2004
         result += "\n"
 
     # Finalized rosters

@@ -17,6 +17,36 @@ from nexshift_agent.models.domain import (
     RosterMetadata,
     Shift,
 )
+from nexshift_agent.sub_agents.config import (
+    DAY_SHIFT_START_HOUR,
+    EVENING_SHIFT_START_HOUR,
+    FATIGUE_HIGH_CAPACITY_FACTOR,
+    FATIGUE_MODERATE_CAPACITY_FACTOR,
+    FATIGUE_SOLVER_HIGH,
+    FATIGUE_SOLVER_MODERATE,
+    LATE_SHIFT_CONFLICT_HOUR,
+    MAX_CONSECUTIVE_SHIFTS,
+    MAX_HOURS_BY_CONTRACT,
+    MIN_REST_HOURS,
+    NIGHT_SHIFT_START_HOUR,
+    SENIORITY_ORDER,
+    SOLVER_CAPACITY_THRESHOLD,
+    SOLVER_MAX_TIME_SECONDS,
+    SOLVER_NUM_WORKERS,
+    SOLVER_UTILIZATION_THRESHOLD,
+    WEEKEND_WEEKDAY_START,
+    WEIGHT_AVOID_NIGHT_PENALTY,
+    WEIGHT_DEFICIT_SHIFTS_PENALTY,
+    WEIGHT_EXCESS_SHIFTS_PENALTY,
+    WEIGHT_FATIGUE_HIGH_PENALTY,
+    WEIGHT_FATIGUE_MODERATE_PENALTY,
+    WEIGHT_FATIGUE_NIGHT_PENALTY,
+    WEIGHT_FATIGUE_WEEKEND_PENALTY,
+    WEIGHT_NIGHT_EXCESS_PENALTY,
+    WEIGHT_PREFERRED_DAY_BONUS,
+    WEIGHT_SENIOR_BONUS,
+    WEIGHT_WEEKEND_EXCESS_PENALTY,
+)
 from nexshift_agent.sub_agents.tools.data_loader import (
     generate_shifts as gen_shifts,
 )
@@ -34,41 +64,6 @@ from nexshift_agent.sub_agents.tools.schedule_utils import (
 
 # Configure logger for solver debugging
 logger = logging.getLogger(__name__)
-
-# =============================================================================
-# CONSTANTS
-# =============================================================================
-
-# Seniority level ordering (higher = more senior)
-SENIORITY_ORDER = {"Junior": 1, "Mid": 2, "Senior": 3}
-
-# Maximum weekly hours by contract type
-MAX_HOURS_BY_CONTRACT = {"FullTime": 40, "PartTime": 30, "Casual": 20}
-
-# Scheduling constraints
-MAX_CONSECUTIVE_SHIFTS = 3
-MIN_REST_HOURS = 8
-
-# Fatigue thresholds
-FATIGUE_HIGH_THRESHOLD = 0.8
-FATIGUE_MODERATE_THRESHOLD = 0.5
-
-# Fatigue capacity reduction factors
-FATIGUE_HIGH_CAPACITY_FACTOR = 0.5  # 50% capacity when high fatigue
-FATIGUE_MODERATE_CAPACITY_FACTOR = 0.75  # 75% capacity when moderate fatigue
-
-# Objective function weights (positive = bonus, negative = penalty)
-WEIGHT_SENIOR_BONUS = 3
-WEIGHT_PREFERRED_DAY_BONUS = 5
-WEIGHT_FATIGUE_HIGH_PENALTY = -50
-WEIGHT_FATIGUE_MODERATE_PENALTY = -25
-WEIGHT_FATIGUE_WEEKEND_PENALTY = -30
-WEIGHT_FATIGUE_NIGHT_PENALTY = -30
-WEIGHT_AVOID_NIGHT_PENALTY = -50
-WEIGHT_EXCESS_SHIFTS_PENALTY = -10
-WEIGHT_DEFICIT_SHIFTS_PENALTY = -15
-WEIGHT_WEEKEND_EXCESS_PENALTY = -30
-WEIGHT_NIGHT_EXCESS_PENALTY = -30
 
 
 # =============================================================================
@@ -116,7 +111,7 @@ def _convert_raw_shifts_to_objects(raw_shifts: list) -> list:
 
 def _is_night_shift(shift) -> bool:
     """Check if a shift is a night shift (starts at 20:00+ or before 06:00)."""
-    return shift.start_time.hour >= 20 or shift.start_time.hour < 6
+    return shift.start_time.hour >= NIGHT_SHIFT_START_HOUR or shift.start_time.hour < DAY_SHIFT_START_HOUR
 
 
 def _generate_roster_id() -> str:
@@ -339,9 +334,9 @@ def _analyze_infeasibility(
         max_hours = MAX_HOURS_BY_CONTRACT.get(n.contract_type, 40)
         fatigue = nurse_stats.get(n.id, {}).get("fatigue_score", 0)
         # Reduce capacity for fatigued nurses
-        if fatigue >= FATIGUE_HIGH_THRESHOLD:
+        if fatigue >= FATIGUE_SOLVER_HIGH:
             effective_hours = max_hours * FATIGUE_HIGH_CAPACITY_FACTOR
-        elif fatigue >= FATIGUE_MODERATE_THRESHOLD:
+        elif fatigue >= FATIGUE_SOLVER_MODERATE:
             effective_hours = max_hours * FATIGUE_MODERATE_CAPACITY_FACTOR
         else:
             effective_hours = max_hours
@@ -528,17 +523,17 @@ def _analyze_infeasibility(
     fatigued_nurses = []
     for n in nurses_objs:
         fatigue = nurse_stats.get(n.id, {}).get("fatigue_score", 0)
-        if fatigue >= FATIGUE_MODERATE_THRESHOLD:
+        if fatigue >= FATIGUE_SOLVER_MODERATE:
             fatigued_nurses.append(
                 {
                     "nurse": n.name,
                     "nurse_id": n.id,
                     "fatigue_score": round(fatigue, 2),
                     "status": "HIGH RISK"
-                    if fatigue >= FATIGUE_HIGH_THRESHOLD
+                    if fatigue >= FATIGUE_SOLVER_HIGH
                     else "MODERATE",
                     "capacity_reduction": f"{int((1 - FATIGUE_HIGH_CAPACITY_FACTOR) * 100)}%"
-                    if fatigue >= FATIGUE_HIGH_THRESHOLD
+                    if fatigue >= FATIGUE_SOLVER_HIGH
                     else f"{int((1 - FATIGUE_MODERATE_CAPACITY_FACTOR) * 100)}%",
                 }
             )
@@ -568,14 +563,14 @@ def _analyze_infeasibility(
             for request in n.preferences.adhoc_requests:
                 if request.startswith("Off_"):
                     parts = request.split("_")
-                    if len(parts) >= 2:
+                    if len(parts) >= 2:  # noqa: PLR2004
                         try:
                             off_date_str = parts[1]
                             off_date = datetime.strptime(
                                 off_date_str, "%Y-%m-%d"
                             ).date()
                             reason = (
-                                parts[3] if len(parts) >= 4 else "Unspecified"
+                                parts[3] if len(parts) >= 4 else "Unspecified"  # noqa: PLR2004
                             )
                             # Only include if date falls within scheduling period
                             if off_date in scheduling_dates:
@@ -663,12 +658,12 @@ def _analyze_infeasibility(
         # If a nurse works 3 days in a row, they can't work day 4
         # This can cause issues if we need all nurses every day
         sorted_dates = sorted(shifts_per_day.keys())
-        if len(sorted_dates) > 3:
+        if len(sorted_dates) > MAX_CONSECUTIVE_SHIFTS:
             avg_shifts_per_day = sum(
                 len(shifts_per_day[d]) for d in sorted_dates
             ) / len(sorted_dates)
             if (
-                avg_shifts_per_day > len(nurses_objs) * 0.75
+                avg_shifts_per_day > len(nurses_objs) * SOLVER_UTILIZATION_THRESHOLD
             ):  # More than 75% utilization
                 constraint_issues.append(
                     {
@@ -690,7 +685,7 @@ def _analyze_infeasibility(
         for s in shifts_objs:
             # Night shifts end in the morning
             if (
-                s.start_time.hour == 0 or s.start_time.hour >= 16
+                s.start_time.hour == 0 or s.start_time.hour >= LATE_SHIFT_CONFLICT_HOUR
             ):  # Evening/night shifts
                 end_date = s.end_time.date()
 
@@ -698,12 +693,12 @@ def _analyze_infeasibility(
                 for s2 in shifts_objs:
                     if (
                         s2.start_time.date() == end_date
-                        and s2.start_time.hour < 14
+                        and s2.start_time.hour < EVENING_SHIFT_START_HOUR
                     ):
                         gap_hours = (
                             s2.start_time - s.end_time
                         ).total_seconds() / 3600
-                        if 0 < gap_hours < 8:
+                        if 0 < gap_hours < MIN_REST_HOURS:
                             night_to_day_conflicts.append(
                                 {
                                     "shift1": f"{s.ward} {s.start_time.strftime('%H:%M')}-{s.end_time.strftime('%H:%M')}",
@@ -738,7 +733,7 @@ def _analyze_infeasibility(
             # Each qualified nurse can work ~5 shifts per week (with rest days)
             max_coverage = qualified_count * 5
 
-            if shifts_per_week > max_coverage * 0.9:  # Over 90% of max capacity
+            if shifts_per_week > max_coverage * SOLVER_CAPACITY_THRESHOLD:  # Over 90% of max capacity
                 constraint_issues.append(
                     {
                         "type": "WARD_OVERLOAD",
@@ -763,7 +758,7 @@ def _analyze_infeasibility(
         night_shifts = [
             s
             for s in shifts_objs
-            if s.start_time.hour >= 20 or s.start_time.hour < 6
+            if s.start_time.hour >= NIGHT_SHIFT_START_HOUR or s.start_time.hour < DAY_SHIFT_START_HOUR
         ]
 
         if night_shifts:
@@ -1323,14 +1318,14 @@ def _solve_roster_internal(
                 # Parse adhoc request format: "Off_YYYY-MM-DD_Reason_XXX"
                 if request.startswith("Off_"):
                     parts = request.split("_")
-                    if len(parts) >= 2:
+                    if len(parts) >= 2:  # noqa: PLR2004
                         try:
                             off_date_str = parts[1]
                             off_date = datetime.strptime(
                                 off_date_str, "%Y-%m-%d"
                             ).date()
                             reason = (
-                                parts[3] if len(parts) >= 4 else "Unspecified"
+                                parts[3] if len(parts) >= 4 else "Unspecified"  # noqa: PLR2004
                             )
                             # Block all shifts on this date for this nurse
                             shifts_blocked = 0
@@ -1392,18 +1387,18 @@ def _solve_roster_internal(
 
         for s in shifts_objs:
             # Fatigue-aware scheduling
-            if fatigue_score >= FATIGUE_HIGH_THRESHOLD:
+            if fatigue_score >= FATIGUE_SOLVER_HIGH:
                 objective_terms.append(
                     WEIGHT_FATIGUE_HIGH_PENALTY * assignments[(n.id, s.id)]
                 )
-            elif fatigue_score >= FATIGUE_MODERATE_THRESHOLD:
+            elif fatigue_score >= FATIGUE_SOLVER_MODERATE:
                 objective_terms.append(
                     WEIGHT_FATIGUE_MODERATE_PENALTY * assignments[(n.id, s.id)]
                 )
 
             # Extra penalty for weekend/night shifts for fatigued nurses
-            if fatigue_score >= FATIGUE_MODERATE_THRESHOLD:
-                if s.start_time.weekday() >= 5:
+            if fatigue_score >= FATIGUE_SOLVER_MODERATE:
+                if s.start_time.weekday() >= WEEKEND_WEEKDAY_START:
                     objective_terms.append(
                         WEIGHT_FATIGUE_WEEKEND_PENALTY
                         * assignments[(n.id, s.id)]
@@ -1442,7 +1437,7 @@ def _solve_roster_internal(
         objective_terms.append(WEIGHT_DEFICIT_SHIFTS_PENALTY * deficit)
 
     # Fairness: Distribute weekend shifts fairly
-    weekend_shifts = [s for s in shifts_objs if s.start_time.weekday() >= 5]
+    weekend_shifts = [s for s in shifts_objs if s.start_time.weekday() >= WEEKEND_WEEKDAY_START]
     if weekend_shifts:
         fair_weekend_share = max(1, len(weekend_shifts) // len(nurses_objs))
         for n in nurses_objs:
@@ -1487,8 +1482,8 @@ def _solve_roster_internal(
 
     solver = cp_model.CpSolver()
     # Add solver parameters for better performance
-    solver.parameters.max_time_in_seconds = 30.0
-    solver.parameters.num_search_workers = 8
+    solver.parameters.max_time_in_seconds = SOLVER_MAX_TIME_SECONDS
+    solver.parameters.num_search_workers = SOLVER_NUM_WORKERS
     # Add random seed to get different solutions on regeneration
     solver.parameters.random_seed = random.randint(0, 2**31 - 1)
 

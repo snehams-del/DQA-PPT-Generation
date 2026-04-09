@@ -9,6 +9,25 @@ import json
 import os
 from datetime import datetime, timedelta
 
+from nexshift_agent.sub_agents.config import (
+    BURNOUT_HEAVY_WORKLOAD_SHIFTS,
+    BURNOUT_MANY_NIGHT_SHIFTS,
+    BURNOUT_MULTIPLE_WEEKEND_SHIFTS,
+    DISPLAY_MAX_ITEMS,
+    EMPATHY_ACCEPTABLE_THRESHOLD,
+    EMPATHY_BURNOUT_PENALTY,
+    EMPATHY_BURNOUT_PENALTY_CAP,
+    EMPATHY_GOOD_THRESHOLD,
+    EMPATHY_PREFERENCE_PENALTY,
+    EMPATHY_PREFERENCE_PENALTY_CAP,
+    FATIGUE_DISPLAY_HIGH,
+    FATIGUE_DISPLAY_MODERATE,
+    SHIFT_VARIANCE_HIGH,
+    SHIFT_VARIANCE_HIGH_DEDUCTION,
+    SHIFT_VARIANCE_MODERATE,
+    SHIFT_VARIANCE_MODERATE_DEDUCTION,
+)
+
 DATA_DIR = os.path.join(os.path.dirname(__file__), "../../data")
 ROSTERS_DIR = os.path.join(DATA_DIR, "rosters")
 NURSE_STATS_FILE = os.path.join(DATA_DIR, "nurse_stats.json")
@@ -425,18 +444,18 @@ def analyze_roster_fairness(roster_id: str = "") -> str:
     for nurse_id, m in nurse_metrics.items():
         risk_factors = []
 
-        if m["fatigue_score"] >= 0.7:
+        if m["fatigue_score"] >= FATIGUE_DISPLAY_HIGH:
             risk_factors.append(
                 f"High fatigue score ({m['fatigue_score']:.2f})"
             )
 
-        if m["total_shifts"] >= 5:
+        if m["total_shifts"] >= BURNOUT_HEAVY_WORKLOAD_SHIFTS:
             risk_factors.append(f"Heavy workload ({m['total_shifts']} shifts)")
 
-        if m["night_shifts"] >= 3:
+        if m["night_shifts"] >= BURNOUT_MANY_NIGHT_SHIFTS:
             risk_factors.append(f"Many night shifts ({m['night_shifts']})")
 
-        if m["weekend_shifts"] >= 2:
+        if m["weekend_shifts"] >= BURNOUT_MULTIPLE_WEEKEND_SHIFTS:
             risk_factors.append(
                 f"Multiple weekend shifts ({m['weekend_shifts']})"
             )
@@ -454,18 +473,18 @@ def analyze_roster_fairness(roster_id: str = "") -> str:
     # Start at 1.0 and deduct for issues
     empathy_score = 1.0
 
-    # Deduct for preference violations (up to 0.3)
-    pref_penalty = min(len(preference_violations) * 0.02, 0.3)
+    # Deduct for preference violations
+    pref_penalty = min(len(preference_violations) * EMPATHY_PREFERENCE_PENALTY, EMPATHY_PREFERENCE_PENALTY_CAP)
     empathy_score -= pref_penalty
 
-    # Deduct for shift imbalance (up to 0.2)
-    if shift_variance > 3:
-        empathy_score -= 0.2
-    elif shift_variance > 2:
-        empathy_score -= 0.1
+    # Deduct for shift imbalance
+    if shift_variance > SHIFT_VARIANCE_HIGH:
+        empathy_score -= SHIFT_VARIANCE_HIGH_DEDUCTION
+    elif shift_variance > SHIFT_VARIANCE_MODERATE:
+        empathy_score -= SHIFT_VARIANCE_MODERATE_DEDUCTION
 
-    # Deduct for burnout risks (up to 0.3)
-    burnout_penalty = min(len(burnout_risks) * 0.05, 0.3)
+    # Deduct for burnout risks
+    burnout_penalty = min(len(burnout_risks) * EMPATHY_BURNOUT_PENALTY, EMPATHY_BURNOUT_PENALTY_CAP)
     empathy_score -= burnout_penalty
 
     empathy_score = max(0.0, round(empathy_score, 2))
@@ -478,9 +497,9 @@ def analyze_roster_fairness(roster_id: str = "") -> str:
     result += f"Nurses scheduled: {len(nurse_metrics)}\n\n"
 
     result += f"EMPATHY SCORE: {empathy_score:.2f}\n"
-    if empathy_score >= 0.8:
+    if empathy_score >= EMPATHY_GOOD_THRESHOLD:
         result += "Assessment: GOOD - Roster is fair and considerate\n\n"
-    elif empathy_score >= 0.6:
+    elif empathy_score >= EMPATHY_ACCEPTABLE_THRESHOLD:
         result += "Assessment: ACCEPTABLE - Some concerns but workable\n\n"
     else:
         result += (
@@ -497,10 +516,10 @@ def analyze_roster_fairness(roster_id: str = "") -> str:
     if preference_violations:
         result += f"PREFERENCE VIOLATIONS ({len(preference_violations)}):\n"
         result += "-" * 40 + "\n"
-        for v in preference_violations[:10]:  # Show first 10
+        for v in preference_violations[:DISPLAY_MAX_ITEMS]:
             result += f"  - {v['nurse']}: {v['detail']}\n"
-        if len(preference_violations) > 10:
-            result += f"  ... and {len(preference_violations) - 10} more\n"
+        if len(preference_violations) > DISPLAY_MAX_ITEMS:
+            result += f"  ... and {len(preference_violations) - DISPLAY_MAX_ITEMS} more\n"
         result += "\n"
     else:
         result += "PREFERENCE VIOLATIONS: None\n\n"
@@ -526,9 +545,9 @@ def analyze_roster_fairness(roster_id: str = "") -> str:
     for nurse_id in sorted(nurse_metrics.keys()):
         m = nurse_metrics[nurse_id]
         fatigue_str = f"{m['fatigue_score']:.2f}"
-        if m["fatigue_score"] >= 0.7:
+        if m["fatigue_score"] >= FATIGUE_DISPLAY_HIGH:
             fatigue_str += " 🔴"
-        elif m["fatigue_score"] >= 0.4:
+        elif m["fatigue_score"] >= FATIGUE_DISPLAY_MODERATE:
             fatigue_str += " 🟡"
         result += f"{m['name']:<15} {m['total_shifts']:>6} {m['night_shifts']:>6} {m['weekend_shifts']:>6} {fatigue_str:>8}\n"
 
@@ -537,7 +556,7 @@ def analyze_roster_fairness(roster_id: str = "") -> str:
     # Update roster metadata with empathy score
     empathy_notes = (
         f"{len(preference_violations)} preference violation(s), {len(burnout_risks)} burnout risk(s)"
-        if empathy_score < 0.8
+        if empathy_score < EMPATHY_GOOD_THRESHOLD
         else "Good - Roster is fair and considerate"
     )
     roster_file = os.path.join(ROSTERS_DIR, f"{roster_id}.json")

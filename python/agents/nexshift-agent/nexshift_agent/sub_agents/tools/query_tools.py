@@ -7,6 +7,13 @@ import logging
 import os
 from datetime import datetime
 
+from nexshift_agent.sub_agents.config import (
+    FATIGUE_DISPLAY_HIGH,
+    FATIGUE_DISPLAY_MODERATE,
+    MAX_CONSECUTIVE_SHIFTS,
+    MIN_SENIOR_NURSES,
+    WEEKEND_WEEKDAY_START,
+)
 from nexshift_agent.sub_agents.tools.data_loader import (
     generate_shifts,
     get_shifts_to_fill,
@@ -47,9 +54,9 @@ def get_nurse_info(nurse_id: str) -> str:
     fatigue = nurse_stats.get("fatigue_score", 0)
 
     # Fatigue indicator
-    if fatigue >= 0.7:
+    if fatigue >= FATIGUE_DISPLAY_HIGH:
         fatigue_indicator = "HIGH RISK - Reduce shifts"
-    elif fatigue >= 0.4:
+    elif fatigue >= FATIGUE_DISPLAY_MODERATE:
         fatigue_indicator = "Moderate - Monitor closely"
     else:
         fatigue_indicator = "Good"
@@ -114,14 +121,14 @@ def list_nurses(filter_by: str = "") -> str:
             filtered = [
                 n
                 for n in nurses
-                if stats.get(n.id, {}).get("fatigue_score", 0) < 0.4
+                if stats.get(n.id, {}).get("fatigue_score", 0) < FATIGUE_DISPLAY_MODERATE
             ]
             filter_desc = "Available Nurses (Low Fatigue)"
         elif filter_lower in {"fatigued", "tired"}:
             filtered = [
                 n
                 for n in nurses
-                if stats.get(n.id, {}).get("fatigue_score", 0) >= 0.4
+                if stats.get(n.id, {}).get("fatigue_score", 0) >= FATIGUE_DISPLAY_MODERATE
             ]
             filter_desc = "Fatigued Nurses"
         elif filter_lower == "fulltime":
@@ -147,9 +154,9 @@ def list_nurses(filter_by: str = "") -> str:
         nurse_stats = stats.get(n.id, {})
         fatigue = nurse_stats.get("fatigue_score", 0)
 
-        if fatigue >= 0.7:
+        if fatigue >= FATIGUE_DISPLAY_HIGH:
             status = "[HIGH]"
-        elif fatigue >= 0.4:
+        elif fatigue >= FATIGUE_DISPLAY_MODERATE:
             status = "[MOD]"
         else:
             status = "[OK]"
@@ -184,7 +191,7 @@ def get_nurse_availability(date: str = "") -> str:
         check_date = datetime.now()
 
     day_name = check_date.strftime("%A")
-    is_weekend = check_date.weekday() >= 5
+    is_weekend = check_date.weekday() >= WEEKEND_WEEKDAY_START
 
     result = (
         f"NURSE AVAILABILITY: {check_date.strftime('%Y-%m-%d')} ({day_name})\n"
@@ -203,11 +210,11 @@ def get_nurse_availability(date: str = "") -> str:
         constraints = []
 
         # Check consecutive shift limit
-        if consecutive >= 3:
+        if consecutive >= MAX_CONSECUTIVE_SHIFTS:
             constraints.append("Max consecutive shifts reached")
 
         # Check fatigue
-        if fatigue >= 0.7:
+        if fatigue >= FATIGUE_DISPLAY_HIGH:
             constraints.append("High fatigue risk")
 
         # Check adhoc time-off requests
@@ -387,9 +394,9 @@ def get_staffing_summary() -> str:
         by_contract[n.contract_type] = by_contract.get(n.contract_type, 0) + 1
 
         fatigue = stats.get(n.id, {}).get("fatigue_score", 0)
-        if fatigue >= 0.7:
+        if fatigue >= FATIGUE_DISPLAY_HIGH:
             by_fatigue["high"] += 1
-        elif fatigue >= 0.4:
+        elif fatigue >= FATIGUE_DISPLAY_MODERATE:
             by_fatigue["moderate"] += 1
         else:
             by_fatigue["good"] += 1
@@ -435,13 +442,13 @@ def get_staffing_summary() -> str:
         high_fatigue_names = [
             n.name
             for n in nurses
-            if stats.get(n.id, {}).get("fatigue_score", 0) >= 0.7
+            if stats.get(n.id, {}).get("fatigue_score", 0) >= FATIGUE_DISPLAY_HIGH
         ]
         alerts.append(
             f"[HIGH] {by_fatigue['high']} nurse(s) at high fatigue: {', '.join(high_fatigue_names)}"
         )
 
-    if senior_count < 2:
+    if senior_count < MIN_SENIOR_NURSES:
         alerts.append(
             "[WARN] Low senior nurse coverage - may impact shift requirements"
         )

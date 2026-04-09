@@ -198,7 +198,7 @@ class AgentEvaluator:
         )
 
         # Determine pass/fail
-        passed = tool_trajectory_score >= 0.8 and response_match_score >= 0.6
+        passed = tool_trajectory_score >= EVAL_TOOL_TRAJECTORY_DEFAULT and response_match_score >= 0.6  # noqa: PLR2004
 
         return EvalResult(
             test_name=test_case.name,
@@ -301,6 +301,10 @@ def load_evalset(evalset_path: str) -> dict[str, Any]:
 # ============================================================================
 # Pytest Test Discovery and Execution
 # ============================================================================
+
+# Default thresholds for eval metrics (overridden by evalset JSON config)
+EVAL_TOOL_TRAJECTORY_DEFAULT = 0.8
+EVAL_RESPONSE_MATCH_DEFAULT = 0.5
 
 EVALS_DIR = Path(__file__).parent
 
@@ -438,8 +442,8 @@ if PYTEST_AVAILABLE:
 
             # Get thresholds from evalset
             metrics = evalset.get("metrics", [])
-            tool_threshold = 0.8
-            response_threshold = 0.5
+            tool_threshold = EVAL_TOOL_TRAJECTORY_DEFAULT
+            response_threshold = EVAL_RESPONSE_MATCH_DEFAULT
 
             for metric in metrics:
                 if metric.get("metric_name") == "tool_trajectory_avg_score":

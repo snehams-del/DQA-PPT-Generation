@@ -9,6 +9,8 @@ import json
 import os
 from datetime import datetime, timedelta
 
+from nexshift_agent.sub_agents.config import MAX_INLINE_DATES, SENIORITY_ORDER
+
 DATA_DIR = os.path.join(os.path.dirname(__file__), "../../data")
 HRIS_FILE = os.path.join(DATA_DIR, "mock_hris.json")
 NURSE_STATS_FILE = os.path.join(DATA_DIR, "nurse_stats.json")
@@ -199,7 +201,6 @@ def promote_nurse(nurse_id: str, new_level: str) -> str:
         Confirmation message with the updated details.
     """
     valid_levels = ["Junior", "Mid", "Senior"]
-    seniority_order = {"Junior": 1, "Mid": 2, "Senior": 3}
 
     if new_level not in valid_levels:
         return f"Error: Invalid level '{new_level}'. Must be one of: {', '.join(valid_levels)}"
@@ -220,8 +221,8 @@ def promote_nurse(nurse_id: str, new_level: str) -> str:
         return f"Error: Nurse '{nurse_id}' not found."
 
     current_level = found_nurse.get("seniority_level", "Junior")
-    current_order = seniority_order.get(current_level, 0)
-    new_order = seniority_order.get(new_level, 0)
+    current_order = SENIORITY_ORDER.get(current_level, 0)
+    new_order = SENIORITY_ORDER.get(new_level, 0)
 
     if new_order <= current_order:
         return f"Error: Cannot promote {found_nurse['name']} from {current_level} to {new_level}. Must promote to a higher level."
@@ -596,7 +597,7 @@ def add_time_off_request(
     result += f"Period: {start_date} to {end.strftime('%Y-%m-%d')}\n"
     result += f"Days blocked: {len(added_dates)}\n"
 
-    if len(added_dates) <= 7:
+    if len(added_dates) <= MAX_INLINE_DATES:
         result += f"Dates: {', '.join(added_dates)}\n"
     else:
         result += f"Dates: {added_dates[0]} ... {added_dates[-1]} ({len(added_dates)} days)\n"
@@ -704,7 +705,7 @@ def remove_time_off_request(
     for req in adhoc:
         if req.startswith("Off_"):
             parts = req.split("_")
-            if len(parts) >= 2 and parts[1] in dates_to_remove:
+            if len(parts) >= 2 and parts[1] in dates_to_remove:  # noqa: PLR2004
                 removed.append(req)
                 continue
         remaining.append(req)
@@ -771,11 +772,11 @@ def list_time_off_requests(nurse_id: str = "") -> str:
             parsed = []
             for req in time_off:
                 parts = req.split("_")
-                if len(parts) >= 4:
+                if len(parts) >= 4:  # noqa: PLR2004
                     date = parts[1]
-                    reason = parts[3] if len(parts) > 3 else "Unspecified"
+                    reason = parts[3] if len(parts) > 3 else "Unspecified"  # noqa: PLR2004
                     parsed.append((date, reason))
-                elif len(parts) >= 2:
+                elif len(parts) >= 2:  # noqa: PLR2004
                     parsed.append((parts[1], "Unspecified"))
 
             parsed.sort(key=lambda x: x[0])
