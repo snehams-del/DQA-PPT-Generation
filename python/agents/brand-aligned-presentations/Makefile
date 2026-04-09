@@ -10,4 +10,5 @@ update:
 	uv run python deployment/deploy.py --mode update
 
 test:
-	uv run pytest
+	rm -rf .pytest_cache __pycache__ tests/__pycache__
+	uv run pytest --cache-clear

@@ -108,8 +108,9 @@ skip = "./locust_env/*,uv.lock,.venv,./frontend,**/*.ipynb"
 asyncio_mode = "strict"
 testpaths = ["tests"]
 python_files = ["test_*.py"]
-# Use importlib to avoid "import file mismatch" errors with duplicate test filenames
-import_mode = "importlib"
+# Suggested fix for import file mismatch
+addopts = "--import-mode=importlib --cache-clear"
+pythonpath = ["."]
 
 [[tool.uv.index]]
 name = "pypi"
