@@ -18,6 +18,7 @@ downloads/
 eggs/
 .eggs/
 lib/
+!**/frontend/lib/
 lib64/
 parts/
 sdist/
@@ -26,6 +27,7 @@ wheels/
 share/python-wheels/
 *.egg-info/
 .installed.cfg
+pyvenv.cfg
 *.egg
 MANIFEST
 *.whl
@@ -139,6 +141,9 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+.env*
+!.env.example
+!.env.local.example
 
 # Spyder project settings
 .spyderproject
@@ -179,6 +184,7 @@ cython_debug/
 
 # Others
 .DS_Store
+bin
 
 # Node.js
 node_modules/
@@ -186,6 +192,9 @@ npm-debug.log
 yarn-debug.log
 yarn-error.log
 .pnpm-debug.log
+
+# next.js
+.next/
 
 # Agent Data Files
 python/agents/personalized-shopping/personalized_shopping/shared_libraries/data/
@@ -195,3 +204,32 @@ python/agents/personalized-shopping/personalized_shopping/shared_libraries/searc
 .terraform/
 *.tfstate
 *.tfstate.backup
+
+# Local 'adk web' logs
+adk_web_log.txt
+adk_web_log*.txt
+
+# Local binary directories
+bin/
+
+# Local VSCode settings
+.vscode/
+
+# Gemini CLI
+GEMINI.md
+*plan.md
+
+# Claude Code
+.claude/
+
+# Documentation
+.docs/
+
+# ADK
+.adk/
+go/agents/sail-researcher/researcher
+go/agents/sail-researcher/vendor/*
+go/agents/sail-researcher/server
+
+# Temporary Files for Agent Engine Deployment
+**/*_tmp*/

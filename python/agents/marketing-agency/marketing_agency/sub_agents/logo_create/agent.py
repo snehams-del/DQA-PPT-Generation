@@ -14,30 +14,19 @@
 
 """logo_create_agent: for creating logos"""
 
-import os
-
-from dotenv import load_dotenv
 from google.adk import Agent
 from google.adk.tools import ToolContext, load_artifacts
 from google.genai import Client, types
 
 from . import prompt
 
-MODEL = "gemini-2.5-pro" 
+MODEL = "gemini-2.5-pro"
 MODEL_IMAGE = "imagen-3.0-generate-002"
-
-load_dotenv()
-
-# Only Vertex AI supports image generation for now.
-client = Client(
-    vertexai=True,
-    project=os.getenv("GOOGLE_CLOUD_PROJECT"),
-    location=os.getenv("GOOGLE_CLOUD_LOCATION"),
-)
 
 
 async def generate_image(img_prompt: str, tool_context: "ToolContext"):
     """Generates an image based on the prompt."""
+    client = Client()
     response = client.models.generate_images(
         model=MODEL_IMAGE,
         prompt=img_prompt,
@@ -61,8 +50,7 @@ logo_create_agent = Agent(
     model=MODEL,
     name="logo_create_agent",
     description=(
-        "An agent that generates images and answers "
-        "questions about the images."
+        "An agent that generates images and answers questions about the images."
     ),
     instruction=prompt.LOGO_CREATE_PROMPT,
     output_key="logo_create_output",

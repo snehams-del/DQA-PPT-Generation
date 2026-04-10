@@ -14,14 +14,16 @@
 
 """Basic tests for individual tools."""
 
+import os
 import unittest
 
+import pytest
 from dotenv import load_dotenv
 from google.adk.agents.invocation_context import InvocationContext
 from google.adk.artifacts import InMemoryArtifactService
 from google.adk.sessions import InMemorySessionService
 from google.adk.tools import ToolContext
-import pytest
+
 from travel_concierge.agent import root_agent
 from travel_concierge.tools.memory import memorize
 from travel_concierge.tools.places import map_tool
@@ -68,9 +70,15 @@ class TestAgents(unittest.TestCase):
             self.tool_context.state["itinerary_datetime"], "12/31/2025 11:59:59"
         )
 
+    @pytest.mark.skipif(
+        not os.getenv("GOOGLE_PLACES_API_KEY"),
+        reason="Google Places API key not available",
+    )
     def test_places(self):
         self.tool_context.state["poi"] = {
-            "places": [{"place_name": "Machu Picchu", "address": "Machu Picchu, Peru"}]
+            "places": [
+                {"place_name": "Machu Picchu", "address": "Machu Picchu, Peru"}
+            ]
         }
         result = map_tool(key="poi", tool_context=self.tool_context)
         print(result)

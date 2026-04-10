@@ -14,14 +14,14 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Get changed files
         id: changed_files
-        uses: tj-actions/changed-files@v44
+        uses: tj-actions/changed-files@v47
         with:
           files: python/agents/**
 
@@ -31,10 +31,15 @@ jobs:
           TEMP_JSON_FILE=$(mktemp)
           echo "[]" > "$TEMP_JSON_FILE"
 
-          echo "${{ steps.changed_files.outputs.all_changed_files }}" | \
+          echo "${STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES}" | \
           grep -o 'python/agents/[^/]*' | \
           sort -u | \
           while read -r dir; do
+            if [ -f "$dir/.testignore" ]; then
+              echo "Skipping tests for $dir becuase .testignore is present."
+              continue
+            fi
+
             if [ -f "$dir/pyproject.toml" ]; then
               # Check if the pyproject.toml contains [tool.agent-starter-pack] section
               if grep -q '\[tool\.agent-starter-pack\]' "$dir/pyproject.toml"; then
@@ -58,6 +63,8 @@ jobs:
 
           echo "Detected changes in allow list agents: $matrix_json"
           echo "matrix=$matrix_json" >> $GITHUB_OUTPUT
+        env:
+          STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES: ${{ steps.changed_files.outputs.all_changed_files }}
 
   # JOB 2: Build, test, and interact with GCP for each changed agent.
   test-agent-template:
@@ -79,13 +86,13 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - id: 'auth'
         name: 'Authenticate to Google Cloud'
-        uses: 'google-github-actions/auth@v2'
+        uses: 'google-github-actions/auth@v3'
         with:
           workload_identity_provider: 'projects/628595556591/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
           create_credentials_file: true
@@ -107,7 +114,7 @@ jobs:
             AGENT_NAME=$(basename \"$TEMPLATE_PATH\")
             DEPLOYMENT_TARGET=\"${{ matrix.deployment_target }}\"
             # Use shorter prefix and truncate if needed to stay under 26 chars
-            TRUNCATED_NAME=$(echo \"$AGENT_NAME\" | cut -c1-21)
+            TRUNCATED_NAME=$(echo \"$AGENT_NAME\" | cut -c1-21 | tr '[:upper:]' '[:lower:]' | tr '_' '-')
             AGENT_GENERATED_NAME=\"test-$TRUNCATED_NAME\"
             
             echo \"--- Testing template: $TEMPLATE_PATH with deployment target: $DEPLOYMENT_TARGET ---\"
@@ -130,6 +137,24 @@ jobs:
               echo \"--- Running tests ---\"
               export AGENT_NAME=\"$DEPLOYMENT_TARGET-$AGENT_NAME\"
               make test
+              
+              echo \"--- Starting backend ---\"
+              make backend &
+              BACKEND_PID=$!
+              
+              echo \"--- Waiting 10 seconds ---\"
+              sleep 10
+
+              # Check if backend process is still running
+              if ! kill -0 $BACKEND_PID 2>/dev/null; then
+                echo \"ERROR: Backend process died during startup\"
+                exit 1
+              fi
+
+              echo \"--- Stopping backend and all child processes ---\"
+              kill -TERM -$BACKEND_PID 2>/dev/null || true
+              sleep 2
+              kill -KILL -$BACKEND_PID 2>/dev/null || true
             else
               echo \"--- Unknown task: ${{ matrix.task }} ---\"
               exit 1

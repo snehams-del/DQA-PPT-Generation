@@ -36,11 +36,16 @@ This diagram outlines the agent's workflow, designed to provide informed and con
 ### Prerequisites
 
 *   **Google Cloud Account:** You need a Google Cloud account.
-*   **Python 3.9+:** Ensure you have Python 3.9 or a later version installed.
-*   **Poetry:** Install Poetry by following the instructions on the official Poetry website: [https://python-poetry.org/docs/](https://python-poetry.org/docs/)
+*   **Python 3.10+:** Ensure you have Python 3.10 or a later version installed.
+*   **uv:** For dependency management and packaging. Please follow the instructions on the official [uv website](https://docs.astral.sh/uv/) for installation.
+
+    ```bash
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    ```
+
 *   **Git:** Ensure you have git installed.
 
-### Project Setup with Poetry
+### Project Setup
 
 1.  **Clone the Repository:**
 
@@ -49,44 +54,26 @@ This diagram outlines the agent's workflow, designed to provide informed and con
     cd adk-samples/python/agents/RAG
     ```
 
-2.  **Install Dependencies with Poetry:**
-
-    **Note for Linux users:** If you get an error related to `keyring` during the installation, you can disable it by running the following command:
-    ```bash
-    poetry config keyring.enabled false
-    ```
-    This is a one-time setup.
+2.  **Install Dependencies:**
 
     ```bash
-    poetry install
+    uv sync
     ```
 
-    This command reads the `pyproject.toml` file and installs all the necessary dependencies into a virtual environment managed by Poetry.
+    This command reads the `pyproject.toml` file and installs all the necessary dependencies into a virtual environment.
 
-3.  **Activate the Poetry Shell:**
-
-    ```bash
-    poetry env activate
-    ```
-
-    This activates the virtual environment, allowing you to run commands within the project's environment.
-    Make sure the environment is active. If not, you can also activate it through 
-
-     ```bash
-    source .venv/bin/activate 
-    ```   
-4.  **Set up Environment Variables:**
+3.  **Set up Environment Variables:**
     Rename the file ".env.example" to ".env" 
     Follow the steps in the file to set up the environment variables.
 
-5. **Setup Corpus:**
-    If you have an existing corpus in Vertex AI RAG Engine, please set corpus information in your .env file. For example: RAG_CORPUS='projects/123/locations/us-central1/ragCorpora/456'. 
+4. **Setup Corpus:**
+    If you have an existing corpus in Vertex AI RAG Engine, please set corpus information in your .env file. For example: RAG_CORPUS='projects/123/locations/us-central1/ragCorpora/456'.
 
     If you don't have a corpus setup yet, please follow "How to upload my file to my RAG corpus" section. The `prepare_corpus_and_data.py` script will automatically create a corpus (if needed) and update the `RAG_CORPUS` variable in your `.env` file with the resource name of the created or retrieved corpus.
 
 #### How to upload my file to my RAG corpus
 
-The `rag/shared_libraries/prepare_corpus_and_data.py` script helps you set up a RAG corpus and upload an initial document. By default, it downloads Alphabet's 2024 10-K PDF and uploads it to a new corpus.
+The `rag/shared_libraries/prepare_corpus_and_data.py` script helps you set up a RAG corpus and upload an initial document. By default, it downloads Alphabet's 2025 10-K PDF and uploads it to a new corpus.
 
 1.  **Authenticate with your Google Cloud account:**
     ```bash
@@ -104,9 +91,9 @@ The `rag/shared_libraries/prepare_corpus_and_data.py` script helps you set up a 
     *   **To use the default behavior (upload Alphabet's 10K PDF):**
         Simply run the script:
         ```bash
-        python rag/shared_libraries/prepare_corpus_and_data.py
+        uv run python rag/shared_libraries/prepare_corpus_and_data.py
         ```
-        This will create a corpus named `Alphabet_10K_2024_corpus` (if it doesn't exist) and upload the PDF `goog-10-k-2024.pdf` downloaded from the URL specified in the script.
+        This will create a corpus named `Alphabet_10K_2025_corpus` (if it doesn't exist) and upload the PDF `goog-10-k-2025.pdf` downloaded from the URL specified in the script.
 
     *   **To upload a different PDF from a URL:**
         a. Open the `rag/shared_libraries/prepare_corpus_and_data.py` file.
@@ -122,7 +109,7 @@ The `rag/shared_libraries/prepare_corpus_and_data.py` script helps you set up a 
            ```
         c. Run the script:
            ```bash
-           python rag/shared_libraries/prepare_corpus_and_data.py
+           uv run python rag/shared_libraries/prepare_corpus_and_data.py
            ```
 
     *   **To upload a local PDF file:**
@@ -155,7 +142,7 @@ The `rag/shared_libraries/prepare_corpus_and_data.py` script helps you set up a 
            ```
         d. Run the script:
            ```bash
-           python rag/shared_libraries/prepare_corpus_and_data.py
+           uv run python rag/shared_libraries/prepare_corpus_and_data.py
            ```
 
 More details about managing data in Vertex RAG Engine can be found in the
@@ -183,21 +170,22 @@ Here's a quick example of how a user might interact with the agent:
 
 **Example 1: Document Information Retrieval**
 
-User: What are the key business segments mentioned in Alphabet's 2024 10-K report?
+User: What are the key business segments mentioned in Alphabet's 2025 10-K report?
 
-Agent: According to Alphabet's 2024 10-K report, the key business segments are:
+Agent: According to Alphabet's 2025 10-K report, the key business segments are:
 1. Google Services (including Google Search, YouTube, Google Maps, Play Store)
 2. Google Cloud (offering cloud computing services, data analytics, and AI solutions)
 3. Other Bets (including Waymo for autonomous driving technology)
-[Source: goog-10-k-2024.pdf]
+[Source: goog-10-k-2025.pdf]
 
 ## Evaluating the Agent
 
 The evaluation can be run from the `RAG` directory using
 the `pytest` module:
 
-```
-poetry run pytest eval
+```bash
+uv sync --dev
+uv run pytest eval
 ```
 
 ### Evaluation Process
@@ -207,7 +195,7 @@ The evaluation framework consists of three key components:
 1. **test_eval.py**: The main test script that orchestrates the evaluation process. It uses the `AgentEvaluator` from Google ADK to run the agent against a test dataset and assess its performance based on predefined criteria.
 
 2. **conversation.test.json**: Contains a sequence of test cases structured as a conversation. Each test case includes:
-   - A user query (e.g., questions about Alphabet's 10-K report)
+   - A user query (e.g., questions about Alphabet's 2025 10-K report)
    - Expected tool usage (which tools the agent should call and with what parameters)
    - Reference answers (ideal responses the agent should provide)
 
@@ -229,8 +217,8 @@ This evaluation helps ensure the agent correctly leverages the RAG capabilities 
 The Agent can be deployed to Vertex AI Agent Engine using the following
 commands:
 
-```
-python deployment/deploy.py
+```bash
+uv run python deployment/deploy.py
 ```
 
 After deploying the agent, you'll be able to read the following INFO log message:
@@ -262,8 +250,8 @@ After deploying the agent, follow these steps to test it:
      ```
    - Run the permissions script:
      ```bash
-     chmod +x deployment/grant_permissions.sh
-     ./deployment/grant_permissions.sh
+     chmod +x rag/shared_libraries/grant_permissions.sh
+     ./rag/shared_libraries/grant_permissions.sh
      ```
    This script will:
    - Read the environment variables from your `.env` file
@@ -273,14 +261,34 @@ After deploying the agent, follow these steps to test it:
 3. **Test the Remote Agent:**
    - Run the test script:
      ```bash
-     python deployment/run.py
+     uv run python deployment/run.py
      ```
    This script will:
    - Connect to your deployed agent
    - Send a series of test queries
    - Display the agent's responses with proper formatting
 
-The test script includes example queries about Alphabet's 10-K report. You can modify the queries in `deployment/run.py` to test different aspects of your deployed agent.
+The test script includes example queries about Alphabet's 2025 10-K report. You can modify the queries in `deployment/run.py` to test different aspects of your deployed agent.
+
+### Recommended: Using Agent Starter Pack
+
+The Agent Starter Pack is the recommended way to create and deploy a production-ready version of this agent. We have built custom lifecycle hooks into this template so that the Agent Starter Pack automatically handles building your RAG corpus and granting IAM permissions during deployment.
+
+To create your project using `uv`:
+```bash
+uvx agent-starter-pack create my-rag-agent -a adk@RAG -d agent_engine -ds vertex_ai_search
+cd my-rag-agent
+```
+
+Next, run the installation command. This will prompt you to automatically build the sample RAG Corpus and configure your `.env` file:
+```bash
+make install
+```
+
+Finally, deploy the agent to Google Cloud. This will package your agent, push it to Vertex AI Agent Engine, and automatically grant the new Agent Identity permissions to query your RAG Corpus:
+```bash
+make backend
+```
 
 ## Customization
 

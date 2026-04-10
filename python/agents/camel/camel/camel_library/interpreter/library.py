@@ -35,7 +35,7 @@ from . import camel_value
 def camel_zip(
     *x: collections.abc.Iterable[typing.Any],
 ) -> list[tuple[typing.Any, ...]]:
-  return list(zip(*x))
+    return list(zip(*x, strict=True))
 
 
 _T = typing.TypeVar("_T")
@@ -44,33 +44,38 @@ _T = typing.TypeVar("_T")
 def camel_enumerate(
     x: collections.abc.Iterable[_T], start: int = 0
 ) -> list[tuple[int, _T]]:
-  return list(enumerate(x, start))
+    return list(enumerate(x, start))
 
 
 def camel_reversed(x: collections.abc.Reversible[_T]) -> list[_T]:
-  return list(reversed(x))
+    return list(reversed(x))
 
 
 def camel_bool(x: object) -> bool:
-  return bool(x)
+    return bool(x)
 
 
 def camel_dir(x: object) -> list[str]:
-  return dir(x)
+    return dir(x)
 
 
 def camel_range(
-    start: int, stop: int | None = None, step: int | None = None, /
+    start: int,
+    stop: int | None = None,
+    step: int | None = None,
+    /,
 ) -> list[int]:
-  match (stop, step):
-    case None, None:
-      return list(range(start))
-    case (_, None):
-      return list(range(start, stop))
-    case (None, _):
-      raise TypeError("'NoneType' object cannot be interpreted as an integer")
-    case (_, _):
-      return list(range(start, stop, step))
+    match (stop, step):
+        case None, None:
+            return list(range(start))
+        case (_, None):
+            return list(range(start, stop))
+        case (None, _):
+            raise TypeError(
+                "'NoneType' object cannot be interpreted as an integer"
+            )
+        case (_, _):
+            return list(range(start, stop, step))
 
 
 # pylint: disable=unused-argument
@@ -83,7 +88,7 @@ def camel_print(
     file: typing.Any | None = None,
     flush: bool = False,
 ) -> None:
-  return None
+    return None
 
 
 # pylint: enable=unused-argument
@@ -125,9 +130,9 @@ See https://github.com/bazelbuild/starlark/blob/master/spec.md#built-in-constant
 
 
 class NotEnoughInformationError(Exception):
-  """Raised when the PrivilegedLLM has not provided enough information to the QuarantinedLLM."""
+    """Raised when the PrivilegedLLM has not provided enough information to the QuarantinedLLM."""
 
-  ...
+    ...
 
 
 BUILT_IN_CLASSES: dict[str, camel_value.CaMeLClass] = {
@@ -379,6 +384,6 @@ BUILT_IN_CLASSES: dict[str, camel_value.CaMeLClass] = {
 def make_builtins_namespace(
     variables: dict[str, camel_value.Value[Any]] | None = None,
 ) -> camel_value.Namespace:
-  return camel_value.Namespace(
-      variables=BUILT_IN_FUNCTIONS | BUILT_IN_CLASSES | (variables or {})
-  )
+    return camel_value.Namespace(
+        variables=(BUILT_IN_FUNCTIONS | BUILT_IN_CLASSES | (variables or {}))
+    )

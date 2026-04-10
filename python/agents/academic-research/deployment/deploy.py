@@ -14,15 +14,15 @@
 
 """Deployment script for Academic Research"""
 
-
 import os
 
 import vertexai
 from absl import app, flags
-from academic_research.agent import root_agent
 from dotenv import load_dotenv
 from vertexai import agent_engines
 from vertexai.preview.reasoning_engines import AdkApp
+
+from academic_research.agent import root_agent
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string("project_id", None, "GCP project ID.")
