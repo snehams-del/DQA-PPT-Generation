@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 # --- Helper Function to convert BigQuery rows to JSON ---
 def bq_rows_to_json(rows: List[Any]) -> str:
     """
-    Converts a list of BigQuery Row objects to a JSON string, 
+    Converts a list of BigQuery Row objects to a JSON string,
     handling datetime objects by converting them to IZSO 8601 strings.
     """
     
@@ -151,7 +151,7 @@ def triageQueryTool(hostname: str, alert_type: str) -> str:
         "asset_context": dict(asset_rows[0]) if asset_rows else "No asset context found."
     })
 # --- Investigation Tool ---
-def investigationQueryTool(alert_type: str, hostname: str, parent_process: str = None, destination_ip: str = None) -> str:
+def investigationQueryTool(alert_type: str, hostname: str, parent_process: str | None = None, destination_ip: str | None = None) -> str:
     """
     Performs a detailed investigation based on the alert type.
     - Arg alert_type: The type of alert ('EDR_DETECTION', 'IOC_MATCH', 'PHISHING_EMAIL').
