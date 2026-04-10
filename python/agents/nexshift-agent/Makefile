@@ -2,7 +2,7 @@
 # ========================
 # Commands for development, testing, and deployment to GCP Agent Engine
 
-.PHONY: install run run-cli eval eval-agent eval-case deploy deploy-check deploy-bucket deploy-list deploy-test deploy-delete gcp-enable-apis gcp-setup clean clean-deploy clean-all help
+.PHONY: install lint run run-cli eval eval-agent eval-case deploy deploy-check deploy-bucket deploy-list deploy-test deploy-delete gcp-enable-apis gcp-setup clean clean-deploy clean-all help
 
 # =============================================================================
 # Configuration - All values loaded from .env (see .env.example)
@@ -20,6 +20,13 @@ AGENT_NAME ?= nexshift-agent
 ## Install dependencies via uv sync
 install:
 	uv sync
+
+## Run linters and type checker
+lint:
+	uv sync --dev
+	uv run codespell
+	uv run ruff check .
+	uv run ty check
 
 ## Run the agent in ADK web UI (default port 8001)
 run:
@@ -79,6 +86,9 @@ deploy: deploy-check deploy-bucket
 		--project $(PROJECT_ID) \
 		--location $(DEPLOY_LOCATION) \
 		--name $(AGENT_NAME)
+		
+# Alias for 'make deploy' for backward compatibility
+backend: deploy
 
 ## List deployed agents
 deploy-list:
@@ -149,6 +159,7 @@ help:
 	@echo "  make install      - Install dependencies (uv sync)"
 	@echo "  make run          - Run agent in ADK web UI (port 8001)"
 	@echo "  make run-cli      - Run agent in CLI mode (interactive)"
+	@echo "  make lint         - Run linters and type checker"
 	@echo ""
 	@echo "Evaluation:"
 	@echo "  make eval         - Run all evaluation tests"
