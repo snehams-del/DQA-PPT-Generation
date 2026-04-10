@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Solve the Staffing Puzzle Instantly with AI Optimization."
 authors = [
     {name = "CC Chen", email = "chuancc@google.com"},
+    {name = "Amber Pan", email = "amberpq@google.com"},
 ]
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
