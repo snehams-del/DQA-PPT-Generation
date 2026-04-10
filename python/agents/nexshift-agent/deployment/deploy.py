@@ -20,6 +20,7 @@ import logging
 import os
 import sys
 from pathlib import Path
+from typing import Any
 
 from dotenv import load_dotenv
 
@@ -144,7 +145,7 @@ def deploy_agent(
     agent_engine = AdkApp(agent=root_agent)
 
     # Agent configuration
-    agent_config = {
+    agent_config: dict[str, Any] = {
         "agent_engine": agent_engine,
         "display_name": agent_name,
         "description": "NexShift Nurse Rostering Agent - AI-powered scheduling with OR-Tools optimization",
@@ -285,7 +286,7 @@ def test_agent(
     async def run_test():
         agent = agent_engines.get(resource_name)
         print("\n📨 Response:")
-        async for event in agent.async_stream_query(
+        async for event in agent.async_stream_query(  # ty: ignore[unresolved-attribute]
             user_id="test-user",
             message=test_message,
         ):

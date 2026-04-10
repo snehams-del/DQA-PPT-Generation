@@ -5,6 +5,7 @@ import random
 from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime, timedelta
+from typing import Any, cast
 
 from ortools.sat.python import cp_model
 
@@ -156,9 +157,9 @@ def _auto_save_roster(
         # Load existing history
         if os.path.exists(SHIFT_HISTORY_FILE):
             with open(SHIFT_HISTORY_FILE) as f:
-                history = json.load(f)
+                history: dict[str, Any] = json.load(f)
         else:
-            history = {
+            history: dict[str, Any] = {
                 "logs": [],
                 "metadata": {"created_at": datetime.now().isoformat()},
             }
@@ -907,7 +908,7 @@ def simulate_staffing_change(
                 }
             )
 
-            target_level_num = SENIORITY_ORDER.get(new_level, 0)
+        target_level_num = SENIORITY_ORDER.get(new_level, 0)
 
         promoted = False
         for n in simulated_nurses:
@@ -1141,7 +1142,7 @@ def _solve_roster_internal(
         f"Starting roster generation: {len(nurses_objs)} nurses, {len(shifts_objs)} shifts"
     )
 
-    model = cp_model.CpModel()
+    model = cast(Any, cp_model.CpModel())
 
     # Variables: assignments[(n, s)] is 1 if nurse n works shift s, 0 otherwise
     assignments = {}

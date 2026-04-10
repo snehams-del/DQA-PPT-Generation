@@ -5,6 +5,7 @@ Detects content type and converts to well-formatted markdown.
 
 import re
 from datetime import datetime, timedelta
+from typing import Any
 
 from nexshift_agent.sub_agents.config import (
     DAY_SHIFT_START_HOUR,
@@ -387,7 +388,7 @@ class OutputFormatter:
         result += "\n\n"
 
         # Parse sections
-        sections = {"available": [], "limited": [], "unavailable": []}
+        sections: dict[str, Any] = {"available": [], "limited": [], "unavailable": []}
 
         current_section = None
         for raw_line in text.split("\n"):

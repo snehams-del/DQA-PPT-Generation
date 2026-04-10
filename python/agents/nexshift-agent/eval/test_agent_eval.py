@@ -160,7 +160,7 @@ class AgentEvaluator:
                 ),
             ):
                 if hasattr(event, "content") and event.content:
-                    if hasattr(event.content, "parts"):
+                    if hasattr(event.content, "parts") and event.content.parts:
                         for part in event.content.parts:
                             if hasattr(part, "text") and part.text:
                                 response_parts.append(part.text)

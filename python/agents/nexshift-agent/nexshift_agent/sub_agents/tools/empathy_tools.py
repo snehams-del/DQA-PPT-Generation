@@ -111,7 +111,7 @@ def _generate_shifts(start_date: datetime, num_days: int = 7) -> list[dict]:
                     "start": template["start"],
                     "end": template["end"],
                     "is_night": template["start"] == "00:00"
-                    or template["start"] >= "20:00",
+                    or str(template["start"]) >= "20:00",
                     "is_weekend": is_weekend,
                 }
             )

@@ -442,7 +442,7 @@ def remove_nurse(nurse_id: str) -> str:
             found_nurse = nurse
             break
 
-    if found_nurse is None:
+    if found_nurse is None or found_index is None:
         return f"Error: Nurse '{nurse_id}' not found."
 
     # Remove from HRIS
