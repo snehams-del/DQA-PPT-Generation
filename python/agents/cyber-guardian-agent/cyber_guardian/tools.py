@@ -1,14 +1,15 @@
-import logging
-from google.cloud import bigquery
-import os
 import json
-from datetime import datetime
+import logging
+import os
 import uuid
-from typing import List, Any
+from datetime import datetime
+from typing import Any
+
 import pandas as pd
 import pandas_gbq
-from google.cloud.exceptions import NotFound
 from dotenv import load_dotenv
+from google.cloud import bigquery
+from google.cloud.exceptions import NotFound
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 dotenv_path = os.path.join(current_dir, ".env")
@@ -21,13 +22,13 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # --- Helper Function to convert BigQuery rows to JSON ---
-def bq_rows_to_json(rows: List[Any]) -> str:
+def bq_rows_to_json(rows: list[Any]) -> str:
     """
     Converts a list of BigQuery Row objects to a JSON string,
     handling datetime objects by converting them to IZSO 8601 strings.
     """
-    
-    def datetime_converter(o):
+
+    def datetime_converter(o: Any) -> str:
         """Custom converter for json.dumps to handle non-serializable types."""
         if isinstance(o, datetime):
             # Convert datetime objects to their ISO 8601 string representation
@@ -37,75 +38,75 @@ def bq_rows_to_json(rows: List[Any]) -> str:
 
     # Convert the list of Row objects to a list of dictionaries
     list_of_dicts = [dict(row) for row in rows]
-    
+
     # Use the custom datetime_converter function in json.dumps
     return json.dumps(list_of_dicts, default=datetime_converter)
 
-def init_bq_tables():
+def init_bq_tables() -> None:
     """
     Checks if BQ tables are present; if not, creates dataset and tables from CSV files
     using pandas and pandas_gbq, ensuring timestamp columns are parsed correctly.
     """
     project_id = os.environ.get("GOOGLE_CLOUD_PROJECT")
     dataset_name = os.environ.get("BQ_DATASET", "cyber_guardian_dataset")
-    
+
     if not project_id:
         logger.warning("GOOGLE_CLOUD_PROJECT env var not set. Skipping BQ initialization.")
         return
-        
+
     client = bigquery.Client(project=project_id)
     dataset_id = f"{project_id}.{dataset_name}"
-    
+
     # Create dataset if it doesn't exist
     dataset = bigquery.Dataset(dataset_id)
     client.create_dataset(dataset, exists_ok=True)
     logger.info(f"Dataset {dataset_id} ensured.")
-    
+
     # Path to CSV files
     current_dir = os.path.dirname(os.path.abspath(__file__))
     csv_dir = os.path.abspath(os.path.join(current_dir, "..", "sample_data"))
-    
+
     if not os.path.exists(csv_dir):
         logger.warning(f"CSV directory {csv_dir} does not exist. Skipping table creation.")
         return
-        
+
     # List of columns identified as timestamps across your tables
     timestamp_columns = [
-        "CreationTimestamp", 
-        "EventTimestamp", 
+        "CreationTimestamp",
+        "EventTimestamp",
         "log_timestamp"
     ]
-        
+
     for filename in os.listdir(csv_dir):
         if filename.endswith(".csv"):
             table_name = filename[:-4]
             destination_table = f"{dataset_name}.{table_name}"
             table_ref = client.dataset(dataset_name).table(table_name)
-            
+
             try:
                 client.get_table(table_ref)
                 logger.info(f"Table {table_name} already exists.")
             except NotFound:
                 logger.info(f"Table {table_name} not found. Reading CSV and loading data.")
                 csv_path = os.path.join(csv_dir, filename)
-                
+
                 try:
                     # 1. Read CSV into a pandas DataFrame
                     df = pd.read_csv(csv_path)
-                    
+
                     # 2. Explicitly cast known timestamp columns to datetime
                     for col in timestamp_columns:
                         if col in df.columns:
                             # 'coerce' turns invalid parsing into NaT (Not a Time) rather than failing the whole script
                             df[col] = pd.to_datetime(df[col], errors='coerce')
                             logger.info(f"Converted '{col}' to datetime in table {table_name}.")
-                    
+
                     # 3. Upload DataFrame to BigQuery
                     pandas_gbq.to_gbq(
                         df,
                         destination_table=destination_table,
                         project_id=project_id,
-                        if_exists='fail' 
+                        if_exists='fail'
                     )
                     logger.info(f"Successfully loaded data into {table_name} via pandas_gbq.")
                 except Exception as e:
@@ -121,7 +122,7 @@ def triageQueryTool(hostname: str, alert_type: str) -> str:
     project_id = os.environ["GOOGLE_CLOUD_PROJECT"]
     dataset = os.getenv("BQ_DATASET", "cyber_guardian_dataset")
     client = bigquery.Client(project=project_id)
-    
+
     # 1. Deduplication Check (Now uses AlertType instead of PrimaryIOC)
     dedup_query = f"""
         SELECT IncidentID, CreationTimestamp FROM `{project_id}.{dataset}.incident_management`
@@ -145,7 +146,7 @@ def triageQueryTool(hostname: str, alert_type: str) -> str:
         query_parameters=[bigquery.ScalarQueryParameter("hostname", "STRING", hostname)]
     )
     asset_rows = list(client.query(context_query, job_config=job_config).result())
-    
+
     return json.dumps({
         "is_duplicate": False,
         "asset_context": dict(asset_rows[0]) if asset_rows else "No asset context found."
@@ -192,7 +193,7 @@ def investigationQueryTool(alert_type: str, hostname: str, parent_process: str |
         )
         rows = list(client.query(query, job_config=job_config).result())
         return bq_rows_to_json(rows)
-        
+
     return "Query did not match a known investigation type. Please provide more specific parameters."
 
 
@@ -228,7 +229,7 @@ def getPlaybookTool(triggering_condition: str) -> str:
     project_id = os.environ["GOOGLE_CLOUD_PROJECT"]
     dataset = os.getenv("BQ_DATASET", "cyber_guardian_dataset")
     client = bigquery.Client(project=project_id)
-    
+
     query = f"""
         SELECT ActionCommand, RequiresApproval FROM `{project_id}.{dataset}.response_playbooks`
         WHERE TriggeringCondition = @trigger
@@ -277,7 +278,7 @@ def createIncidentTool(alert_type: str, hostname: str, user: str, severity: str)
             bigquery.ScalarQueryParameter("user", "STRING", user),
         ]
     )
-    
+
     try:
         client.query(insert_query, job_config=job_config).result()  # Wait for the job to complete
         logger.info(f"Successfully created incident {incident_id}")
