@@ -141,7 +141,7 @@ The agent has access to the following tools:
 
 ## Running the Agent
 
-You can run the agent using the ADK commant in your terminal.
+You can run the agent using the ADK command in your terminal.
 from the root project directory:
 
 1.  Run agent in CLI:
