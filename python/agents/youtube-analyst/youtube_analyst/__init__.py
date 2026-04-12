@@ -14,6 +14,7 @@
 """YouTube Analyst Agent package."""
 
 import os
+
 import google.auth
 
 # Initialize environment for Vertex AI if not already set
@@ -27,5 +28,3 @@ os.environ.setdefault("GOOGLE_CLOUD_LOCATION", "global")
 os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "True")
 
 from .agent import root_agent  # noqa: E402
-
-__all__ = ["root_agent"]
