@@ -57,6 +57,23 @@ example_question = "Find the top 5 videos about 'Generative AI' from the last mo
 [tool.agent-starter-pack.settings]
 agent_directory = "youtube_analyst"
 
+[tool.basedpyright]
+reportAny = false
+reportExplicitAny = false
+reportMissingTypeStubs = false
+reportUnknownMemberType = false
+reportUnknownVariableType = false
+typeCheckingMode = "basic"
+include = ["."]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+markers = [
+    "slow: marks tests as slow",
+    "infra_ready: marks tests as requiring cloud infra to be ready",
+]
+
 [tool.ruff]
 extend = "../../../pyproject.toml"
 
@@ -65,6 +82,13 @@ known-first-party = ["youtube_analyst"]
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
+
+[tool.coverage.report]
+skip_empty = true
+
+[tool.coverage.run]
+branch = true
+omit = ["server.py"]
 
 [[tool.uv.index]]
 name = "default"

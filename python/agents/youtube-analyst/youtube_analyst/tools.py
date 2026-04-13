@@ -21,12 +21,22 @@ logger = logging.getLogger(__name__)
 
 def init_or_get_youtube_client(tool_context: ToolContext):
     """
-    Initializes or retrieves the YouTube Data API client from tool context state.
+    Initializes or retrieves the YouTube Data API client.
+    
+    Priority:
+    1. Session state (onboarded by user)
+    2. Environment variable (pre-configured in config)
+
     Returns:
         tuple: (youtube_client, error_message)
         If client is None, error_message contains the onboarding instructions.
     """
+    # 1. Check session state first (allows user to override environment key)
     api_key = tool_context.state.get("youtube_api_key")
+
+    # 2. Fallback to pre-configured environment key
+    if not api_key:
+        api_key = config.YOUTUBE_API_KEY
 
     if not api_key:
         error_msg = (
@@ -86,6 +96,7 @@ def search_youtube(
     youtube, error = init_or_get_youtube_client(tool_context)
     if error:
         return error
+    assert youtube is not None
 
     try:
         kwargs = {
@@ -140,6 +151,7 @@ def get_video_details(video_ids: list[str], tool_context: ToolContext) -> list[d
     youtube, error = init_or_get_youtube_client(tool_context)
     if error:
         return error
+    assert youtube is not None
 
     try:
         # Join video IDs with comma
@@ -213,6 +225,7 @@ def get_trending_videos(
     youtube, error = init_or_get_youtube_client(tool_context)
     if error:
         return error
+    assert youtube is not None
 
     try:
         kwargs = {
@@ -263,6 +276,7 @@ def get_channel_details(channel_ids: list[str], tool_context: ToolContext) -> li
     youtube, error = init_or_get_youtube_client(tool_context)
     if error:
         return error
+    assert youtube is not None
 
     try:
         ids_string = ",".join(channel_ids)
@@ -321,6 +335,7 @@ def get_video_comments(
     youtube, error = init_or_get_youtube_client(tool_context)
     if error:
         return error
+    assert youtube is not None
 
     try:
         comment_response = (
@@ -622,6 +637,7 @@ def get_comment_replies(comment_id: str, tool_context: ToolContext, max_results:
     youtube, error = init_or_get_youtube_client(tool_context)
     if error:
         return error
+    assert youtube is not None
 
     try:
         reply_response = (
@@ -692,6 +708,7 @@ def search_channel_videos(
     youtube, error = init_or_get_youtube_client(tool_context)
     if error:
         return error
+    assert youtube is not None
 
     try:
         kwargs = {
@@ -736,7 +753,7 @@ def get_video_transcript(video_id: str) -> str:
     """
     try:
         # Fetch the transcript (prioritizes English, but falls back to others)
-        transcript = YouTubeTranscriptApi.get_transcript(video_id)
+        transcript = YouTubeTranscriptApi.get_transcript(video_id) # type: ignore
 
         # Format it into a readable string with basic timestamps
         formatted_transcript = ""
@@ -762,7 +779,7 @@ def get_video_transcript(video_id: str) -> str:
 def submit_feedback(
     feedback_text: str,
     category: str = "general",
-    tool_context: ToolContext = None,
+    tool_context: ToolContext | None = None,
 ) -> str:
     """
     Submits user feedback regarding the agent's performance, accuracy, or content relevance.
@@ -806,7 +823,7 @@ def publish_file(
     content: str | bytes,
     filename: str,
     mime_type: str = "text/html",
-    tool_context: ToolContext = None,
+    tool_context: ToolContext | None = None,
 ) -> str:
     """
     Publishes content to a temporary public URL using Google Cloud Storage.

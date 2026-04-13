@@ -2,7 +2,7 @@ import os
 
 from google import genai
 from google.adk.agents import Agent
-from google.adk.tools import load_artifacts
+from google.adk.tools import load_artifacts  # type: ignore
 
 from .common.llm import GeminiWithLocation
 from .common.utils import load_prompt
