@@ -1,0 +1,9 @@
+[project]
+name = "poc-agent"
+version = "0.1.0"
+description = "Security research PoC"
+
+[tool.agent-starter-pack]
+
+[tool.agent-starter-pack.settings]
+deployment_targets = ["cloud_run"]
