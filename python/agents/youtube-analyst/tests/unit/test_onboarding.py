@@ -1,7 +1,12 @@
-import pytest
-from google.adk.tools import ToolContext
-from youtube_analyst.tools import init_or_get_youtube_client, store_youtube_api_key
 from unittest.mock import MagicMock
+
+from google.adk.tools import ToolContext
+
+from youtube_analyst.tools import (
+    init_or_get_youtube_client,
+    store_youtube_api_key,
+)
+
 
 def test_init_or_get_youtube_client_missing_key():
     """Test that init_or_get_youtube_client returns None and error message when key is missing."""
