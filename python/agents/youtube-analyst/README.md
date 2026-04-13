@@ -2,6 +2,21 @@
 
 The YouTube Analyst Agent is a powerful Gemini-powered assistant designed to provide deep insights into YouTube content, channel performance, and audience engagement. It leverages the YouTube Data API to retrieve real-time data and uses Gemini's reasoning capabilities to analyze trends, sentiment, and metrics.
 
+## 🚀 Quick Start (Agent Starter Pack)
+
+To create a production-ready project based on this agent, run the following command:
+
+```bash
+uvx agent-starter-pack create my-youtube-analyst -a adk@youtube-analyst
+```
+
+This will set up a complete project with:
+*   **Infrastructure:** Terraform scripts for Google Cloud resources.
+*   **CI/CD:** Automated deployment pipelines (Cloud Build or GitHub Actions).
+*   **Management:** Built-in scripts for deployment and verification.
+
+---
+
 ## Demo
 
 [![YouTube Analyst Demo](https://img.youtube.com/vi/PEKMLi52OzM/0.jpg)](https://www.youtube.com/watch?v=PEKMLi52OzM)

@@ -7,8 +7,13 @@ authors = [
     { name = "Jasmine Tong", email = "jasminetong@google.com" },
     { name = "Kun Wang", email = "kunwk@google.com" },
 ]
+classifiers = [
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.13",
+]
+keywords = ['agent-catalog', 'adk', 'agent', 'youtube']
 readme = "README.md"
-requires-python = ">=3.10,<3.13"
+requires-python = ">=3.13,<3.14"
 dependencies = [
     "google-adk>=1.27.4",
     "google-genai>=0.2.0",
@@ -22,20 +27,6 @@ dependencies = [
     "google-cloud-storage",
 ]
 
-[dependency-groups]
-dev = [
-    "pytest",
-    "pytest-asyncio>=0.23.0",
-    "ruff>=0.4.6",
-    "agent-starter-pack>=0.32.0",
-]
-
-[tool.ruff]
-extend = "../../../pyproject.toml"
-
-[tool.ruff.lint.isort]
-known-first-party = ["youtube_analyst"]
-
 [build-system]
 requires = ["uv_build>=0.8.14,<0.9.0"]
 build-backend = "uv_build"
@@ -43,8 +34,38 @@ build-backend = "uv_build"
 [tool.uv.build-backend]
 module-root = ""
 
+[dependency-groups]
+dev = [
+    "ipykernel>=6.29.5",
+    "ipython>=8.36.0",
+    "pytest>=8.3.5",
+    "pre-commit>=4.2.0",
+    "ruff>=0.11.5",
+    "deptry>=0.23.0",
+    "pytest-asyncio>=0.23.7",
+    "agent-starter-pack>=0.32.0",
+    "basedpyright>=1.31.3",
+]
+
+[tool.agent_packs]
+template = "adk"
+
 [tool.agent-starter-pack]
 example_question = "Find the top 5 videos about 'Generative AI' from the last month and plot their view counts."
 
 [tool.agent-starter-pack.settings]
 agent_directory = "youtube_analyst"
+
+[tool.ruff]
+extend = "../../../pyproject.toml"
+
+[tool.ruff.lint.isort]
+known-first-party = ["youtube_analyst"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+
+[[tool.uv.index]]
+name = "default"
+url = "https://pypi.org/simple"
+default = true

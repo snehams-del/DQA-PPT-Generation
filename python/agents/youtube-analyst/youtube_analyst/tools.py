@@ -435,7 +435,7 @@ def get_current_date_time():
     """
     Returns the current date and time in UTC (RFC 3339 format).
     """
-    return datetime.datetime.now(datetime.timezone.utc).isoformat()
+    return datetime.datetime.now(datetime.UTC).isoformat()
 
 
 def get_date_range(time_span: str):
@@ -449,7 +449,7 @@ def get_date_range(time_span: str):
         A string representing the date in RFC 3339 format (e.g., '2023-01-01T00:00:00Z').
         Returns empty string if time_span is not recognized.
     """
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
 
     if time_span == "week":
         delta = datetime.timedelta(weeks=1)
@@ -735,7 +735,7 @@ def submit_feedback(
         "user_id": user_id,
         "app_name": app_name,
         "feedback_text": feedback_text,
-        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "timestamp": datetime.datetime.now(datetime.UTC).isoformat(),
     }
 
     # Log it as a WARNING so it stands out from standard INFO traffic
@@ -773,7 +773,7 @@ def publish_file(
         public_url_prefix = f"https://storage.googleapis.com/{bucket_name}"
 
         # Determine path parameters
-        now = datetime.datetime.now(datetime.timezone.utc)
+        now = datetime.datetime.now(datetime.UTC)
         date_str = now.strftime("%Y%m%d")
 
         # Extract session_id if available to group files
