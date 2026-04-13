@@ -28,6 +28,7 @@ from .tools import (
     render_html,
     search_channel_videos,
     search_youtube,
+    store_youtube_api_key,
     submit_feedback,
 )
 from .visualization_agent import visualization_agent
@@ -67,6 +68,7 @@ youtube_agent = Agent(
     sub_agents=[visualization_agent],
     tools=[
         search_youtube,
+        store_youtube_api_key,
         get_trending_videos,
         get_video_details,
         get_channel_details,

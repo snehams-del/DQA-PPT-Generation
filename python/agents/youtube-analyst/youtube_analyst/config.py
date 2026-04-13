@@ -51,11 +51,6 @@ class Config(BaseSettings):
         """Constructs the full model resource name."""
         return f"projects/{self.GOOGLE_CLOUD_PROJECT}/locations/{self.GOOGLE_GENAI_LOCATION}/publishers/google/models/{self.agent_settings.model}"
 
-    # YouTube Specific
-    YOUTUBE_API_KEY: str = Field(
-        default="", description="Google API Key for YouTube Data API"
-    )
-
     YOUTUBE_AGENT_MAX_OUTPUT_TOKENS: int = 8000
     VISUALIZATION_AGENT_MAX_OUTPUT_TOKENS: int = 30000
 

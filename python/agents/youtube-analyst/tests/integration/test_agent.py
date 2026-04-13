@@ -1,6 +1,7 @@
 from google.adk.agents.run_config import RunConfig, StreamingMode
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
+from google.adk.artifacts import InMemoryArtifactService
 from google.genai import types
 
 from youtube_analyst import agent
@@ -13,12 +14,16 @@ def test_agent_stream() -> None:
     """
 
     session_service = InMemorySessionService()
+    artifact_service = InMemoryArtifactService()
 
     session = session_service.create_session_sync(
         user_id="test_user", app_name="test"
     )
     runner = Runner(
-        agent=agent.root_agent, session_service=session_service, app_name="test"
+        agent=agent.root_agent, 
+        session_service=session_service, 
+        artifact_service=artifact_service,
+        app_name="test"
     )
 
     message = types.Content(

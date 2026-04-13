@@ -1,26 +1,27 @@
 TESTOPTS := ""
 TESTPATH := "tests/"
+UV_OPTS := --default-index https://pypi.org/simple
 
 .PHONY: install
 install: ## Install virtual environment with uv
 	@echo "🚀 Creating virtual environment using uv"
-	@uv sync --all-groups --frozen
+	@UV_NO_CONFIG=1 uv sync $(UV_OPTS) --all-groups --frozen
 
 .PHONY: check
 check: ## Check lock file consistency and run static code analysis
 	@echo "🚀 Checking lock file consistency with 'pyproject.toml'"
-	@uv lock --locked
+	@UV_NO_CONFIG=1 uv lock $(UV_OPTS) --locked
 	@echo "🚀 Linting code: Running ruff"
-	@uvx ruff check --fix
+	@UV_NO_CONFIG=1 uv run $(UV_OPTS) ruff check --fix
 	@echo "🚀 Static type checking: Running basedpyright"
-	@uv run basedpyright youtube_analyst
+	@UV_NO_CONFIG=1 uv run $(UV_OPTS) basedpyright youtube_analyst
 	@echo "🚀 Checking for obsolete dependencies: Running deptry"
-	@uv run deptry youtube_analyst
+	@UV_NO_CONFIG=1 uv run $(UV_OPTS) deptry youtube_analyst
 
 .PHONY: test
 test: ## Run all tests
 	@echo "🚀 Testing code: Running pytest"
-	uv run pytest $(TESTPATH) $(TESTOPTS) \
+	@UV_NO_CONFIG=1 uv run $(UV_OPTS) pytest $(TESTPATH) $(TESTOPTS) \
 		--cov \
 		--cov-config=pyproject.toml \
 		--cov-report=xml \
@@ -29,15 +30,15 @@ test: ## Run all tests
 
 .PHONY: web
 web: ## Run the ADK web demo server
-	@uv run adk web --reload youtube_analyst/
+	@UV_NO_CONFIG=1 uv run $(UV_OPTS) adk web --reload .
 
 .PHONY: api_server
 api_server: ## Run the ADK FastAPI server
-	@uv run adk api_server youtube_analyst/
+	@UV_NO_CONFIG=1 uv run $(UV_OPTS) adk api_server .
 
 .PHONY: cli
 cli: ## Run the ADK CLI interface
-	@uv run adk run youtube_analyst
+	@UV_NO_CONFIG=1 uv run $(UV_OPTS) adk run youtube_analyst
 
 .PHONY: help
 help:

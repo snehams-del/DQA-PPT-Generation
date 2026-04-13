@@ -19,13 +19,49 @@ from .config import config
 logger = logging.getLogger(__name__)
 
 
-def get_youtube_client():
-    """Builds and returns the YouTube Data API client."""
-    return build("youtube", "v3", developerKey=config.YOUTUBE_API_KEY)
+def init_or_get_youtube_client(tool_context: ToolContext):
+    """
+    Initializes or retrieves the YouTube Data API client from tool context state.
+    Returns:
+        tuple: (youtube_client, error_message)
+        If client is None, error_message contains the onboarding instructions.
+    """
+    api_key = tool_context.state.get("youtube_api_key")
+
+    if not api_key:
+        error_msg = (
+            "SYSTEM REJECTION: Missing YouTube API Key. "
+            "I cannot access YouTube data without a valid API key. "
+            "SUGGESTED ACTION: "
+            "1. Visit https://developers.google.com/youtube/v3/getting-started to apply for a YouTube Data API v3 key. "
+            "2. Once you have the key, please provide it to me. "
+            "3. I will then use the 'store_youtube_api_key' tool to save it for this session."
+        )
+        return None, error_msg
+
+    try:
+        client = build("youtube", "v3", developerKey=api_key)
+        return client, None
+    except Exception as e:
+        return None, f"ERROR: Failed to initialize YouTube client: {e!s}"
+
+
+def store_youtube_api_key(api_key: str, tool_context: ToolContext) -> str:
+    """
+    Stores the YouTube API key in the persistent tool context state.
+    Call this tool when the user provides a new API key.
+
+    Args:
+        api_key: The YouTube Data API v3 key provided by the user.
+        tool_context: The ADK tool context.
+    """
+    tool_context.state["youtube_api_key"] = api_key
+    return "YouTube API key has been stored successfully. You can now proceed with YouTube data requests."
 
 
 def search_youtube(
     query: str,
+    tool_context: ToolContext,
     max_results: int = 10,
     published_after: str = "",
     region_code: str = "",
@@ -37,6 +73,7 @@ def search_youtube(
 
     Args:
         query: The search term.
+        tool_context: The ADK tool context.
         max_results: Maximum number of results to return (default 10).
         published_after: Filter for videos published after this date (RFC 3339 format, e.g., '2023-01-01T00:00:00Z').
         region_code: ISO 3166-1 alpha-2 country code (e.g., 'US', 'GB', 'JP'). Returns videos viewable in this region.
@@ -46,8 +83,11 @@ def search_youtube(
     Returns:
         A list of dictionaries containing video title, videoId, and channelTitle.
     """
+    youtube, error = init_or_get_youtube_client(tool_context)
+    if error:
+        return error
+
     try:
-        youtube = get_youtube_client()
         kwargs = {
             "q": query,
             "type": "video",
@@ -83,12 +123,13 @@ def search_youtube(
         return []
 
 
-def get_video_details(video_ids: list[str]) -> list[dict]:
+def get_video_details(video_ids: list[str], tool_context: ToolContext) -> list[dict]:
     """
     Retrieves statistics and snippet details for a list of video IDs.
 
     Args:
         video_ids: A list of video ID strings.
+        tool_context: The ADK tool context.
 
     Returns:
         A list of dictionaries containing video statistics and details.
@@ -96,8 +137,11 @@ def get_video_details(video_ids: list[str]) -> list[dict]:
     if not video_ids:
         return []
 
+    youtube, error = init_or_get_youtube_client(tool_context)
+    if error:
+        return error
+
     try:
-        youtube = get_youtube_client()
         # Join video IDs with comma
         ids_string = ",".join(video_ids)
 
@@ -152,21 +196,25 @@ def get_video_details(video_ids: list[str]) -> list[dict]:
 
 
 def get_trending_videos(
-    region_code: str = "US", video_category_id: str = ""
+    tool_context: ToolContext, region_code: str = "US", video_category_id: str = ""
 ) -> list:
     """
     Retrieves the currently trending/most popular videos natively from YouTube, bypassing keyword search.
     Use this to proactively discover "What matters today" without needing a specific search query.
 
     Args:
+        tool_context: The ADK tool context.
         region_code: ISO 3166-1 alpha-2 country code (e.g., 'US', 'GB', 'HK'). Default is 'US'.
         video_category_id: Optional category ID (e.g., '28' for Science & Technology, '20' for Gaming).
 
     Returns:
         A list of dictionaries containing trending video details.
     """
+    youtube, error = init_or_get_youtube_client(tool_context)
+    if error:
+        return error
+
     try:
-        youtube = get_youtube_client()
         kwargs = {
             "part": "id,snippet,statistics",
             "chart": "mostPopular",
@@ -198,12 +246,13 @@ def get_trending_videos(
         return []
 
 
-def get_channel_details(channel_ids: list[str]):
+def get_channel_details(channel_ids: list[str], tool_context: ToolContext):
     """
     Retrieves statistics and snippet details for a list of channel IDs.
 
     Args:
         channel_ids: A list of channel ID strings.
+        tool_context: The ADK tool context.
 
     Returns:
         A list of dictionaries containing channel statistics and details.
@@ -211,8 +260,11 @@ def get_channel_details(channel_ids: list[str]):
     if not channel_ids:
         return []
 
+    youtube, error = init_or_get_youtube_client(tool_context)
+    if error:
+        return error
+
     try:
-        youtube = get_youtube_client()
         ids_string = ",".join(channel_ids)
 
         channel_response = (
@@ -252,21 +304,25 @@ def get_channel_details(channel_ids: list[str]):
 
 
 def get_video_comments(
-    video_id: str, max_results: int = 20, order: str = "time"
+    video_id: str, tool_context: ToolContext, max_results: int = 20, order: str = "time"
 ):
     """
     Retrieves top-level comments for a specific video.
 
     Args:
         video_id: The ID of the video.
+        tool_context: The ADK tool context.
         max_results: Maximum number of comments to return.
         order: The order of comments ('time' or 'relevance'). Default is 'time'.
 
     Returns:
         A list of comment strings.
     """
+    youtube, error = init_or_get_youtube_client(tool_context)
+    if error:
+        return error
+
     try:
-        youtube = get_youtube_client()
         comment_response = (
             youtube.commentThreads()
             .list(
@@ -560,20 +616,24 @@ def parse_timestamp_to_seconds(timestamp_str: str) -> int:
 # --- NEW METADATA/TEXT TOOLS FOR PR3 ---
 
 
-def get_comment_replies(comment_id: str, max_results: int = 50) -> list[str]:
+def get_comment_replies(comment_id: str, tool_context: ToolContext, max_results: int = 50) -> list[str]:
     """
     Retrieves the replies to a specific top-level comment.
     Use this to dig deep into a specific community debate or controversy.
 
     Args:
         comment_id: The ID of the top-level comment (obtained from get_video_comments).
+        tool_context: The ADK tool context.
         max_results: Maximum number of replies to return.
 
     Returns:
         A list of reply strings.
     """
+    youtube, error = init_or_get_youtube_client(tool_context)
+    if error:
+        return error
+
     try:
-        youtube = get_youtube_client()
         reply_response = (
             youtube.comments()
             .list(
@@ -595,7 +655,7 @@ def get_comment_replies(comment_id: str, max_results: int = 50) -> list[str]:
 
 
 def aggregate_comment_sentiment(
-    video_ids: list[str], comments_per_video: int = 10
+    video_ids: list[str], tool_context: ToolContext, comments_per_video: int = 10
 ) -> dict:
     """
     Fetches comments across multiple videos simultaneously to generate a macro-sentiment view.
@@ -603,6 +663,7 @@ def aggregate_comment_sentiment(
 
     Args:
         video_ids: A list of video IDs to fetch comments for.
+        tool_context: The ADK tool context.
         comments_per_video: How many top comments to pull per video.
 
     Returns:
@@ -613,15 +674,18 @@ def aggregate_comment_sentiment(
     for vid in video_ids:
         # Get top 'relevance' comments
         comments_data = get_video_comments(
-            vid, max_results=comments_per_video, order="relevance"
+            vid, tool_context=tool_context, max_results=comments_per_video, order="relevance"
         )
+        # Handle cases where get_video_comments might return the error string
+        if isinstance(comments_data, str) and "SYSTEM REJECTION" in comments_data:
+            return comments_data
         aggregated_data[vid] = comments_data
 
     return aggregated_data
 
 
 def search_channel_videos(
-    channel_id: str, max_results: int = 5, published_after: str = ""
+    channel_id: str, tool_context: ToolContext, max_results: int = 5, published_after: str = ""
 ) -> list[dict]:
     """
     Searches for the most recent videos uploaded by a specific channel.
@@ -629,14 +693,18 @@ def search_channel_videos(
 
     Args:
         channel_id: The ID of the YouTube channel.
+        tool_context: The ADK tool context.
         max_results: Maximum number of videos to return.
         published_after: Filter for videos published after this date (RFC 3339).
 
     Returns:
         A list of dictionaries containing video title, videoId, and publishedAt.
     """
+    youtube, error = init_or_get_youtube_client(tool_context)
+    if error:
+        return error
+
     try:
-        youtube = get_youtube_client()
         kwargs = {
             "channelId": channel_id,
             "type": "video",
