@@ -69,9 +69,13 @@ Expand on the "Key Components" from above.
 
 - Python 3.11+
 - Google Cloud project (for Vertex AI)
-- API key for [Google Maps Platform Places API](https://developers.google.com/maps/documentation/places/web-service/get-api-key)
+- An API key with access to the [Maps Grounding Lite API](https://developers.google.com/maps/documentation/places/web-service/get-api-key)
 - [uv](https://docs.astral.sh/uv/getting-started/installation/)
 - Google Agent Development Kit 1.0+
+
+To enable access Maps Grounding Lite API:
+- The API service "Maps Grounding Lite" must be enabled in the Google Cloud project.
+- Make sure "Maps Grounding Lite API" is added to the list of APIs the API key can access.
 
 ### Recommended: Using Agent Starter Pack
 

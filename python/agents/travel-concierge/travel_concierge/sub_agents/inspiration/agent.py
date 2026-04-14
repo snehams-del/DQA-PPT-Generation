@@ -17,16 +17,18 @@
 from google.adk.agents import Agent
 from google.adk.tools.agent_tool import AgentTool
 
+from travel_concierge import MODEL
 from travel_concierge.shared_libraries.types import (
     DestinationIdeas,
     POISuggestions,
     json_response_config,
 )
 from travel_concierge.sub_agents.inspiration import prompt
-from travel_concierge.tools.places import map_tool
+from travel_concierge.tools.places import get_places_toolset
+
 
 place_agent = Agent(
-    model="gemini-2.5-flash",
+    model=MODEL,
     name="place_agent",
     instruction=prompt.PLACE_AGENT_INSTR,
     description="This agent suggests a few destination given some user preferences",
@@ -37,8 +39,17 @@ place_agent = Agent(
     generate_content_config=json_response_config,
 )
 
+maps_grounding_toolset = []
+try:
+    maps_grounding_toolset = [get_places_toolset()]
+except EnvironmentError:
+    import traceback
+
+    print("ERROR NOT FOUND MAP MCP")
+    traceback.print_exc()
+
 poi_agent = Agent(
-    model="gemini-2.5-flash",
+    model=MODEL,
     name="poi_agent",
     description="This agent suggests a few activities and points of interests given a destination",
     instruction=prompt.POI_AGENT_INSTR,
@@ -47,12 +58,13 @@ poi_agent = Agent(
     output_schema=POISuggestions,
     output_key="poi",
     generate_content_config=json_response_config,
+    tools=maps_grounding_toolset,
 )
 
 inspiration_agent = Agent(
-    model="gemini-2.5-flash",
+    model=MODEL,
     name="inspiration_agent",
     description="A travel inspiration agent who inspire users, and discover their next vacations; Provide information about places, activities, interests,",
     instruction=prompt.INSPIRATION_AGENT_INSTR,
-    tools=[AgentTool(agent=place_agent), AgentTool(agent=poi_agent), map_tool],
+    tools=[AgentTool(agent=place_agent), AgentTool(agent=poi_agent)],
 )
