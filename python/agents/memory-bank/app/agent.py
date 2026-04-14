@@ -13,21 +13,14 @@
 # limitations under the License.
 
 import datetime
-import os
 from zoneinfo import ZoneInfo
 
-import google.auth
 from google.adk.agents import Agent
 from google.adk.agents.callback_context import CallbackContext  # Memory Bank
 from google.adk.apps import App
 from google.adk.models import Gemini
 from google.adk.tools.preload_memory_tool import PreloadMemoryTool  # Memory Bank
 from google.genai import types
-
-_, project_id = google.auth.default()
-os.environ["GOOGLE_CLOUD_PROJECT"] = project_id
-os.environ["GOOGLE_CLOUD_LOCATION"] = "global"
-os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "True"
 
 
 def get_weather(query: str) -> str:

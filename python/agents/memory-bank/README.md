@@ -71,7 +71,7 @@ These work because:
 
 ### Step 1: Install Dependencies
 ```bash
-make install
+uv sync --dev
 ```
 
 ### Step 2: Authenticate with Google Cloud
@@ -155,6 +155,32 @@ memory-bank-sample/
 | `make deploy-cloud-run` | Deploy to Cloud Run |
 | `make local-server` | Run FastAPI server locally with hot-reload |
 | `make lint` | Run code quality checks |
+
+### Alternative: Using Agent Starter Pack
+
+You can also use the [Agent Starter Pack](https://goo.gle/agent-starter-pack) to create a production-ready version of this agent with additional deployment options:
+
+```bash
+# Create and activate a virtual environment
+python -m venv .venv && source .venv/bin/activate # On Windows: .venv\Scripts\activate
+
+# Install the starter pack and create your project
+pip install --upgrade agent-starter-pack
+agent-starter-pack create my-memory-bank -a adk@memory-bank
+```
+
+<details>
+<summary>⚡️ Alternative: Using uv</summary>
+
+If you have [`uv`](https://github.com/astral-sh/uv) installed, you can create and set up your project with a single command:
+```bash
+uvx agent-starter-pack create my-memory-bank -a adk@memory-bank
+```
+This command handles creating the project without needing to pre-install the package into a virtual environment.
+
+</details>
+
+The starter pack will prompt you to select deployment options and provides additional production-ready features including automated CI/CD deployment scripts.
 
 ## Disclaimer
 

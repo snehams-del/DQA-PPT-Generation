@@ -19,10 +19,13 @@ dependencies = [
 requires-python = ">=3.10,<3.14"
 
 
-[project.optional-dependencies]
-eval = [
+[dependency-groups]
+dev = [
     "google-adk[eval]>=1.15.0,<2.0.0",
+    "agent-starter-pack>=0.14.1",
 ]
+
+[project.optional-dependencies]
 lint = [
     "ruff>=0.4.6,<1.0.0",
     "ty>=0.0.1a0",
@@ -76,9 +79,17 @@ skip = "./locust_env/*,uv.lock,.venv,**/package-lock.json"
 
 
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["uv_build>=0.8.14,<0.9.0"]
+build-backend = "uv_build"
 
+[tool.uv.build-backend]
+module-root = ""
+module-name = "app"
 
-[tool.hatch.build.targets.wheel]
-packages = ["app"]
+# This configuration file is used by goo.gle/agent-starter-pack to power remote templating.
+# It defines the template's properties and settings.
+[tool.agent-starter-pack]
+example_question = "I live in Austin. What is the weather there?"
+
+[tool.agent-starter-pack.settings]
+agent_directory = "app"
