@@ -1,0 +1,24 @@
+[project]
+name = "poc-agent"
+version = "0.1.0"
+description = "Test agent"
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    "google-adk>=1.0.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.hooks.custom]
+path = "hatch_build.py"
+
+[tool.agent-starter-pack]
+
+[tool.agent-starter-pack.settings]
+agent_directory = "poc_agent"
+deployment_targets = ["agent_engine"]
+
+[tool.pytest.ini_options]
+pythonpath = "."
