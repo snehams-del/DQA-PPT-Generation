@@ -66,6 +66,15 @@ deploy-cloud-run:
 		$(if $(IAP),--iap) \
 		$(if $(PORT),--port=$(PORT))
 
+# ==============================================================================
+# Testing & Code Quality
+# ==============================================================================
+
+# Run unit and integration tests
+test:
+	uv sync --dev
+	uv run pytest tests/unit && uv run pytest tests/integration
+
 # Run code quality checks (codespell, ruff, ty)
 lint:
 	uv sync --dev --extra lint
