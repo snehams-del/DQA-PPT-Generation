@@ -140,9 +140,8 @@ memory-bank-sample/
 │       ├── deploy.py           # Agent Engine deployment script
 │       ├── telemetry.py        # OpenTelemetry setup
 │       └── typing.py           # Pydantic models
-├── tests/                      # Unit, integration, and eval tests
 ├── Dockerfile                  # Cloud Run container
-├── Makefile                    # Install, deploy, test, eval commands
+├── Makefile                    # Install, deploy, eval commands
 └── pyproject.toml              # Project dependencies
 ```
 
@@ -155,13 +154,7 @@ memory-bank-sample/
 | `make deploy-agent-engine` | Deploy to Vertex AI Agent Engine |
 | `make deploy-cloud-run` | Deploy to Cloud Run |
 | `make local-server` | Run FastAPI server locally with hot-reload |
-| `make test` | Run unit and integration tests |
-| `make eval` | Run agent evaluation |
 | `make lint` | Run code quality checks |
-
-## Agent Guide
-
-See [`AGENT_GUIDE.md`](AGENT_GUIDE.md) for a deeper reference on ADK concepts, Memory Bank integration patterns, deployment mechanics, session management, testing, and debugging strategies.
 
 ## Disclaimer
 

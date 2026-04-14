@@ -42,7 +42,7 @@ logs_bucket_name = os.environ.get("LOGS_BUCKET_NAME")
 AGENT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Agent Engine session and memory configuration
-# Check if we should use in-memory session for testing (set USE_IN_MEMORY_SESSION=true for E2E tests)
+# Check if we should use in-memory session for local development (set USE_IN_MEMORY_SESSION=true)
 use_in_memory_session = os.environ.get("USE_IN_MEMORY_SESSION", "").lower() in (
     "true",
     "1",
@@ -50,7 +50,7 @@ use_in_memory_session = os.environ.get("USE_IN_MEMORY_SESSION", "").lower() in (
 )
 
 if use_in_memory_session:
-    # Use in-memory session/memory for local testing
+    # Use in-memory session/memory for local development
     session_service_uri = None
     memory_service_uri = None
 else:
