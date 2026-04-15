@@ -35,6 +35,7 @@ from PIL import Image
 
 from workflows.shared.gemini import embed_gemini
 from workflows.shared.utils import predict_parallel
+from genmedia4commerce.config import BACKEND_ASSETS_DIR
 
 logger = logging.getLogger(__name__)
 
@@ -54,8 +55,6 @@ CLASSES = [
 ]
 _INVALID_IDX = CLASSES.index("invalid")
 _V1_OVERRIDE_CONF = 0.99
-
-from genmedia4commerce.config import BACKEND_ASSETS_DIR
 
 _SHOES_ASSETS = BACKEND_ASSETS_DIR / "spinning" / "r2v" / "shoes"
 _WEIGHTS_V2_PATH = str(_SHOES_ASSETS / "shoe_classifier_numpy_v2.npz")
@@ -189,7 +188,7 @@ class ShoeClassifierV2:
             branch_outs.append(out)
         feat_out = features @ w["feat_proj_W"].T + w["feat_proj_b"]
         np.maximum(feat_out, 0, feat_out)
-        concat = np.concatenate(branch_outs + [feat_out], axis=-1)
+        concat = np.concatenate([*branch_outs, feat_out], axis=-1)
         h = concat @ w["head_W1"].T + w["head_b1"]
         np.maximum(h, 0, h)
         return h @ w["head_W2"].T + w["head_b2"]

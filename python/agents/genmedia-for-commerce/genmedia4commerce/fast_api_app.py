@@ -25,13 +25,13 @@ if str(GENMEDIA_DIR) not in sys.path:
     sys.path.insert(0, str(GENMEDIA_DIR))
 
 # Load config.env
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # noqa: E402
 
 config_path = GENMEDIA_DIR / "config.env"
 if config_path.exists():
     load_dotenv(config_path)
 
-import logging
+import logging  # noqa: E402
 
 logging.basicConfig(level=logging.INFO)
 
@@ -65,24 +65,36 @@ app.title = "GenMedia for Commerce"
 app.description = "ADK Agent + REST API for GenMedia workflows"
 
 # --- REST API routers (replace legacy mounts) ---
-from chat_api import router as chat_router
+from chat_api import router as chat_router  # noqa: E402
 
-from mcp_server.image_vto.clothes.clothes_api import router as clothes_image_router
-from mcp_server.image_vto.glasses.glasses_api import router as glasses_image_router
-from mcp_server.other.background_changer.background_changer_api import (
+from mcp_server.image_vto.clothes.clothes_api import (  # noqa: E402
+    router as clothes_image_router,
+)
+from mcp_server.image_vto.glasses.glasses_api import (  # noqa: E402
+    router as glasses_image_router,
+)
+from mcp_server.other.background_changer.background_changer_api import (  # noqa: E402
     router as background_changer_router,
 )
-from mcp_server.product_enrichment.product_fitting.product_fitting_api import (
+from mcp_server.product_enrichment.product_fitting.product_fitting_api import (  # noqa: E402
     router as product_fitting_router,
 )
-from mcp_server.shared.catalog.catalog_api import router as catalog_router
-from mcp_server.spinning.interpolation.other.other_api import (
+from mcp_server.shared.catalog.catalog_api import router as catalog_router  # noqa: E402
+from mcp_server.spinning.interpolation.other.other_api import (  # noqa: E402
     router as interpolation_other_router,
 )
-from mcp_server.spinning.r2v.other.other_api import router as r2v_other_router
-from mcp_server.spinning.r2v.shoes.shoes_api import router as shoes_spinning_router
-from mcp_server.video_vto.clothes.clothes_api import router as clothes_video_router
-from mcp_server.video_vto.glasses.glasses_api import router as glasses_video_router
+from mcp_server.spinning.r2v.other.other_api import (  # noqa: E402
+    router as r2v_other_router,
+)
+from mcp_server.spinning.r2v.shoes.shoes_api import (  # noqa: E402
+    router as shoes_spinning_router,
+)
+from mcp_server.video_vto.clothes.clothes_api import (  # noqa: E402
+    router as clothes_video_router,
+)
+from mcp_server.video_vto.glasses.glasses_api import (  # noqa: E402
+    router as glasses_video_router,
+)
 
 app.include_router(product_fitting_router)
 app.include_router(clothes_image_router)
@@ -107,9 +119,9 @@ def collect_feedback(feedback: Feedback) -> dict[str, str]:
 
 # --- Startup: start MCP server ---
 # Note: catalogue is pre-loaded at import time via vector_search module
-import threading
+import threading  # noqa: E402
 
-from mcp_server.server import server as mcp_server
+from mcp_server.server import server as mcp_server  # noqa: E402
 
 _mcp_port = int(os.getenv("MCP_SERVER_PORT", "8081"))
 

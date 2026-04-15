@@ -91,15 +91,15 @@ async def generate_prompt_from_json(request: Request):
         return JSONResponse(content={"prompt": prompt_text})
     except Exception as e:
         logger.error(f"Error in /generate-prompt: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Internal Server Error: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {e}") from e
 
 
 @router.post("/generate-custom-prompt")
 async def generate_custom_prompt(
-    text: str = Form(...),
-    model_image: UploadFile | None = File(None),
-    product_image: UploadFile | None = File(None),
-    custom_field_dict: str = Form(None),
+    text: str = Form(...),  # noqa: B008
+    model_image: UploadFile | None = File(None),  # noqa: B008
+    product_image: UploadFile | None = File(None),  # noqa: B008
+    custom_field_dict: str = Form(None),  # noqa: B008
 ):
     """Generates a structured prompt from user's natural language text and images."""
     try:
@@ -144,12 +144,12 @@ async def generate_custom_prompt(
         return JSONResponse(content=json_response)
     except Exception as e:
         logger.error(f"Error in /generate-custom-prompt: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Internal Server Error: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {e}") from e
 
 
 @router.post("/generate-animation-prompt")
 async def generate_animation_prompt_endpoint(
-    text: str = Form(...), model_image: UploadFile | None = File(None)
+    text: str = Form(...), model_image: UploadFile | None = File(None)  # noqa: B008
 ):
     """Generates an enhanced animation prompt from user's text and model image."""
     try:
@@ -165,20 +165,20 @@ async def generate_animation_prompt_endpoint(
         return JSONResponse(content={"enhanced_prompt": enhanced_prompt})
     except Exception as e:
         logger.error(f"Error in /generate-animation-prompt: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Internal Server Error: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {e}") from e
 
 
 @router.post("/generate-video")
 async def generate_video_from_collage(
-    prompt: str = Form(""),
-    model_image: UploadFile | None = File(None),
-    model_side_image: UploadFile | None = File(None),
-    product_image: UploadFile | None = File(None),
-    number_of_videos: int = Form(4),
-    is_template_product_image: str = Form("false"),
-    background_color: str = Form("0,215,6,255"),
-    zoom_level: int = Form(0),
-    is_animation_mode: str = Form("false"),
+    prompt: str = Form(""),  # noqa: B008
+    model_image: UploadFile | None = File(None),  # noqa: B008
+    model_side_image: UploadFile | None = File(None),  # noqa: B008
+    product_image: UploadFile | None = File(None),  # noqa: B008
+    number_of_videos: int = Form(4),  # noqa: B008
+    is_template_product_image: str = Form("false"),  # noqa: B008
+    background_color: str = Form("0,215,6,255"),  # noqa: B008
+    zoom_level: int = Form(0),  # noqa: B008
+    is_animation_mode: str = Form("false"),  # noqa: B008
 ):
     """Generates videos from a collage of images or animates a single image."""
     try:
@@ -212,7 +212,7 @@ async def generate_video_from_collage(
         return JSONResponse(content=result)
     except Exception as e:
         logger.error(f"Error in /generate-video: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Internal Server Error: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {e}") from e
 
 
 @router.post("/regenerate-video")
@@ -223,11 +223,11 @@ async def regenerate_video(req: RegenerationRequest):
         return JSONResponse(content=result)
     except Exception as e:
         logger.error(f"Error in /regenerate-video: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Internal Server Error: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {e}") from e
 
 
 @router.post("/merge-videos")
-async def merge_videos(videos: list[UploadFile] = File(...), speeds: str = Form(...)):
+async def merge_videos(videos: list[UploadFile] = File(...), speeds: str = Form(...)):  # noqa: B008
     """Merges multiple video files into one."""
     if not videos:
         raise HTTPException(status_code=400, detail="No video files provided.")
@@ -249,7 +249,7 @@ async def merge_videos(videos: list[UploadFile] = File(...), speeds: str = Form(
         )
     except Exception as e:
         logger.error(f"Error in /merge-videos: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
     finally:
         for video in videos:
             video.file.close()

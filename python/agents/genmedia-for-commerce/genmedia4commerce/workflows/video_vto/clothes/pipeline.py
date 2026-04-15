@@ -211,7 +211,7 @@ async def run_animate_model(
 
         r2v_result = await asyncio.get_event_loop().run_in_executor(
             None,
-            lambda: run_r2v_pipeline(
+            lambda eval_ref=eval_ref: run_r2v_pipeline(
                 veo_client=veo_client,
                 upscale_client=None,
                 model_image_bytes=model_image,
@@ -237,7 +237,7 @@ async def run_animate_model(
         logger.info(f"[AnimateModel] Face similarity scores: {scores}")
 
         ranked = sorted(
-            zip(scores, r2v_result["videos"]),
+            zip(scores, r2v_result["videos"], strict=True),
             key=lambda x: x[0],
             reverse=True,
         )
@@ -246,7 +246,7 @@ async def run_animate_model(
 
         filtered = [
             (s, v)
-            for s, v in zip(scores, sorted_videos)
+            for s, v in zip(scores, sorted_videos, strict=True)
             if s >= MIN_SIMILARITY_THRESHOLD
         ]
         rejected = len(sorted_videos) - len(filtered)
