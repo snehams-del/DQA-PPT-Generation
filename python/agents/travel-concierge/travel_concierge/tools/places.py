@@ -1,4 +1,4 @@
-# Copyright 2025 Google LLC
+# Copyright 2026 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@ import os
 
 from dotenv import load_dotenv
 from google.adk.tools.mcp_tool import McpToolset
-from google.adk.tools.mcp_tool.mcp_session_manager import StreamableHTTPConnectionParams
+from google.adk.tools.mcp_tool.mcp_session_manager import (
+    StreamableHTTPConnectionParams,
+)
 
 load_dotenv()
 
@@ -36,8 +38,8 @@ def get_places_toolset() -> McpToolset:
     """
     maps_api_key = os.getenv("GOOGLE_MAPS_API_KEY")
     if not maps_api_key:
-        raise EnvironmentError(
-            "GOOGLE_MAPS_API_KEY must be set to use Google Maps Grounding Lite."
+        raise OSError(
+            "GOOGLE_MAPS_API_KEY must be set."
         )
 
     return McpToolset(
@@ -48,7 +50,8 @@ def get_places_toolset() -> McpToolset:
                 "Content-Type": "application/json",
                 "Accept": "application/json, text/event-stream",
             },
-        )
+        ),
+        errlog=None
     )
 
 

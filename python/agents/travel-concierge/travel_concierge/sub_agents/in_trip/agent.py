@@ -1,4 +1,4 @@
-# Copyright 2025 Google LLC
+# Copyright 2026 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ from travel_concierge.sub_agents.in_trip.tools import (
     weather_impact_check,
 )
 from travel_concierge.tools.memory import memorize
-
 
 # This sub-agent is expected to be called every day closer to the trip, and frequently several times a day during the trip.
 day_of_agent = Agent(

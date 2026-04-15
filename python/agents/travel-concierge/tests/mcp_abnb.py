@@ -1,4 +1,4 @@
-# Copyright 2025 Google LLC
+# Copyright 2026 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 import asyncio
 import json
 
-from dotenv import load_dotenv
 from google.adk.artifacts.in_memory_artifact_service import (
     InMemoryArtifactService,
 )
@@ -26,10 +25,8 @@ from google.adk.sessions import InMemorySessionService
 from google.adk.tools.agent_tool import AgentTool
 from google.adk.tools.mcp_tool import McpToolset
 from google.adk.tools.mcp_tool.mcp_session_manager import StdioConnectionParams
-
-from mcp import StdioServerParameters
-
 from google.genai import types
+from mcp import StdioServerParameters
 
 from travel_concierge.agent import root_agent
 

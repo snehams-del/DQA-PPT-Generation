@@ -1,4 +1,4 @@
-# Copyright 2025 Google LLC
+# Copyright 2026 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
 """Basic tests for individual tools."""
 
 import importlib
-import os
 import unittest
 
 import pytest
@@ -82,14 +81,14 @@ def test_maps_toolset_with_api_key(monkeypatch):
     monkeypatch.setenv("GOOGLE_MAPS_API_KEY", "test-key")
     toolset = get_places_toolset()
     assert toolset is not None
-    from google.adk.tools.mcp_tool import McpToolset
+    from google.adk.tools.mcp_tool import McpToolset # noqa: PLC0415, I001
 
     assert isinstance(toolset, McpToolset)
 
 
 def test_poi_agent_omits_maps_tool_without_api_key(monkeypatch):
     monkeypatch.delenv("GOOGLE_MAPS_API_KEY", raising=False)
-    import travel_concierge.sub_agents.inspiration.agent as insp_agent
+    import travel_concierge.sub_agents.inspiration.agent as insp_agent # noqa: PLC0415, I001
     importlib.reload(insp_agent)
 
     assert not any(
@@ -100,7 +99,7 @@ def test_poi_agent_omits_maps_tool_without_api_key(monkeypatch):
 
 def test_poi_agent_includes_maps_tool_with_api_key(monkeypatch):
     monkeypatch.setenv("GOOGLE_MAPS_API_KEY", "test-key")
-    import travel_concierge.sub_agents.inspiration.agent as insp_agent
+    import travel_concierge.sub_agents.inspiration.agent as insp_agent # noqa: PLC0415, I001
     importlib.reload(insp_agent)
 
     assert any(

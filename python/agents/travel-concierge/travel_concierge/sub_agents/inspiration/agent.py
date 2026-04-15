@@ -1,4 +1,4 @@
-# Copyright 2025 Google LLC
+# Copyright 2026 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
 
 """Inspiration agent. A pre-booking agent covering the ideation part of the trip."""
 
+import logging
+
 from google.adk.agents import Agent
 from google.adk.tools.agent_tool import AgentTool
 
@@ -25,7 +27,6 @@ from travel_concierge.shared_libraries.types import (
 )
 from travel_concierge.sub_agents.inspiration import prompt
 from travel_concierge.tools.places import get_places_toolset
-
 
 place_agent = Agent(
     model=MODEL,
@@ -42,11 +43,8 @@ place_agent = Agent(
 maps_grounding_toolset = []
 try:
     maps_grounding_toolset = [get_places_toolset()]
-except EnvironmentError:
-    import traceback
-
-    print("ERROR NOT FOUND MAP MCP")
-    traceback.print_exc()
+except OSError:
+    logging.warning("Google Maps Grounding Lite tool is not available. Check if GOOGLE_MAPS_API_KEY is set.")
 
 poi_agent = Agent(
     model=MODEL,
