@@ -24,15 +24,8 @@ from workflows.shared.llm_utils import get_generate_content_config
 
 logger = logging.getLogger(__name__)
 
-GARMENT_CATEGORIES = [
-    "top",
-    "full_body_outer",
-    "bottom",
-    "footwear",
-    "dress",
-    "head_accessory",
-]
-VALID_VIEWS = ["front", "back", "other"]
+GARMENT_CATEGORIES = ["top", "full_body_outer", "bottom", "footwear", "dress", "head_accessory"]
+VALID_VIEWS = ["front", "back", "side", "other"]
 
 
 def classify_garments(
@@ -80,7 +73,8 @@ Categories:
 View classification for each image:
 - "front": the image shows the front of the garment. Slightly angled front views also count as "front".
 - "back": the image shows the back of the garment. Slightly angled back views also count as "back".
-- "other": the image is a side view, the garment is worn by a person, there are multiple garments, or the image is not a valid product photo.
+- "side": the image shows the side profile of the garment (e.g., lateral or medial side of a shoe, side view of a torso).
+- "other": the garment is worn by a person, there are multiple garments, or the image is not a valid product photo.
 
 How to determine front vs back — use these cues in order of reliability:
 1. **Closures and hardware**: buttons, main zippers, snaps, front clasps → FRONT. Back zippers (e.g. dresses) → BACK.
@@ -94,8 +88,8 @@ Return a JSON object:
   "category": "<one of: top, full_body_outer, bottom, dress, footwear, head_accessory>",
   "description": "<brief description>",
   "views": [
-    {{"index": 0, "view": "<front|back|other>"}},
-    {{"index": 1, "view": "<front|back|other>"}},
+    {{"index": 0, "view": "<front|back|side|other>"}},
+    {{"index": 1, "view": "<front|back|side|other>"}},
     ...
   ]
 }}

@@ -209,7 +209,7 @@ setup-infra: pull-assets
 	@if [ ! -f config.env ]; then echo "Error: config.env not found"; exit 1; fi
 	@source config.env && \
 		gcloud config set project $$PROJECT_ID --quiet && \
-		gcloud auth application-default set-quota-project $$PROJECT_ID
+		gcloud services enable cloudresourcemanager.googleapis.com --quiet
 	@$(TF_VARS) && cd infra/terraform && terraform init && terraform apply
 
 # Preview infrastructure changes

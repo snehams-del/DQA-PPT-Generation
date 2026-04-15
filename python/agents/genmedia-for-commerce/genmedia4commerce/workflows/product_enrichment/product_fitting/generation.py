@@ -106,7 +106,7 @@ def generate_fitting(
         system_instruction=system_prompt,
         image_config={
             "aspect_ratio": aspect_ratio,
-            "image_size": "1K",
+            "image_size": "2K",
             "output_mime_type": "image/png",
         },
     )
@@ -136,15 +136,15 @@ def _get_full_body_fitting_prompt(
     )
 
     system_prompt = f"""You are an expert fashion photographer creating a product fitting image — showing how a product looks when worn on a real body.{identity_str}
-Dress the model with the provided product. Keep everything else about the person identical — body, pose, skin, hands, proportions.
+Dress the model with the provided product. Keep everything else about the person identical — body, skin tone, proportions, hands.
 Frame the shot to show the ENTIRE garment — from slightly above where it starts to slightly below where it ends."""
 
     user_task = f"""Fit this product on the model. Show the model {view_str}.
 
 Rules:
-- **Keep the model identical** — same body, pose, skin tone, proportions, hands. Only clothing changes.
+- **Keep the model identical** — same body, skin tone, proportions, hands. Only clothing changes. Adjust the pose and angle to match the product in the reference photo.
 - **Reproduce the product exactly** — correct color, pattern, texture, logos, and all design details.
-- **Do NOT invent hidden details** — only reproduce details clearly visible in the reference image. For surfaces not shown in the reference (e.g. underside of a hat brim, inside of a shoe, back of a product shown from the front), keep them plain and neutral, matching the product's base color and material. Do NOT copy or move patterns, prints, or logos onto surfaces where they are not visible in the reference.
+- **Do NOT invent hidden details** — only reproduce details clearly visible in the reference image. Do not infer anything from your internal knowledge, only rely on the provided images. For surfaces not shown in the reference (e.g. underside of a hat brim, inside of a shoe, back of a product shown from the front), keep them plain and neutral, matching the product's base color and material. Do NOT copy or move patterns, prints, or logos onto surfaces where they are not visible in the reference.
 - **Do NOT mirror the design** — the reference image shows the garment as seen from the front, which is the same left/right orientation as looking at the model. A logo on the LEFT side of the reference image must appear on the LEFT side of the model as you look at them (i.e. on the model's right). Do NOT flip or swap sides.
 - **Product must be 100% visible and stand out** — every part of the product must be fully visible. No other garment may cover, overlap, or hide any part of it. Choose complementary garments in colors that contrast with the product so it stands out clearly.
 - **Complete outfit** — add complementary garments that do not hide the product.
@@ -170,15 +170,15 @@ def _get_upper_body_fitting_prompt(
     )
 
     system_prompt = f"""You are an expert fashion photographer creating a product fitting image — showing how a product looks when worn on a real body.{identity_str}
-Dress the model with the provided product. Keep everything else about the person identical — body, pose, skin, hands, proportions.
+Dress the model with the provided product. Keep everything else about the person identical — body, skin tone, proportions, hands.
 Frame the shot from the waist up."""
 
     user_task = f"""Fit this product on the model. Show the model {view_str}. Waist-up shot.
 
 Rules:
-- **Keep the model identical** — same body, pose, skin tone, proportions, hands. Only clothing changes.
+- **Keep the model identical** — same body, skin tone, proportions, hands. Only clothing changes. Adjust the pose and angle to match the product in the reference photo.
 - **Reproduce the product exactly** — correct color, pattern, texture, logos, and all design details.
-- **Do NOT invent hidden details** — only reproduce details clearly visible in the reference image. For surfaces not shown in the reference (e.g. underside of a hat brim, inside of a shoe, back of a product shown from the front), keep them plain and neutral, matching the product's base color and material. Do NOT copy or move patterns, prints, or logos onto surfaces where they are not visible in the reference.
+- **Do NOT invent hidden details** — only reproduce details clearly visible in the reference image. Do not infer anything from your internal knowledge, only rely on the provided images. For surfaces not shown in the reference (e.g. underside of a hat brim, inside of a shoe, back of a product shown from the front), keep them plain and neutral, matching the product's base color and material. Do NOT copy or move patterns, prints, or logos onto surfaces where they are not visible in the reference.
 - **Do NOT mirror the design** — the reference image shows the garment as seen from the front, which is the same left/right orientation as looking at the model. A logo on the LEFT side of the reference image must appear on the LEFT side of the model as you look at them (i.e. on the model's right). Do NOT flip or swap sides.
 - **Product must be 100% visible and stand out** — every part of the product must be fully visible. No other garment may cover, overlap, or hide any part of it. Choose complementary garments in colors that contrast with the product so it stands out clearly.
 - **Realistic fit** — natural wrinkles, drape, fabric tension. Not flat or pasted on.
@@ -200,18 +200,18 @@ def _get_head_fitting_prompt(
         age_str = f" The model is a child ({model_gender}, approximately 12 years old) — the face and head must look like a child's, NOT an adult's."
     else:
         age_str = ""
-    view_str = "from behind (back view)" if garment_view == "back" else "from the front"
+    view_str = f"at the same angle and orientation as the product in the reference photo ({garment_view} view)"
 
     system_prompt = f"""You are an expert fashion photographer creating a product fitting image — showing how a head accessory looks when worn.{identity_str}{age_str}
-Put the provided accessory on the model. Keep the person's face, skin tone, and body the same — but allow natural adjustments (e.g. hair tucked under a hat, slight pose change) so the accessory looks naturally worn.
+Put the provided accessory on the model. Keep the person's face, skin tone, and body the same — but allow natural adjustments (e.g. hair tucked under a hat) so the accessory looks naturally worn.
 Frame from head to chest."""
 
     user_task = f"""Put this accessory on the model. Frame from head to chest. Show the model {view_str}.
 
 Rules:
-- **Keep the model recognizable** — same face, skin tone, proportions. Allow natural adjustments to hair and pose so the accessory fits realistically.
+- **Keep the model recognizable** — same face, skin tone, proportions. Allow natural adjustments to hair and pose so the accessory fits realistically. Match the angle of the product in the reference photo.
 - **Reproduce the product exactly** — correct color, pattern, texture, logos, and all design details.
-- **Do NOT invent hidden details** — only reproduce details clearly visible in the reference image. For surfaces not shown in the reference (e.g. underside of a hat brim, inside of glasses frames), keep them plain and neutral, matching the product's base color and material. Do NOT copy or move patterns, prints, or logos onto surfaces where they are not visible in the reference.
+- **Do NOT invent hidden details** — only reproduce details clearly visible in the reference image. Do not infer anything from your internal knowledge, only rely on the provided images. For surfaces not shown in the reference (e.g. underside of a hat brim, inside of glasses frames), keep them plain and neutral, matching the product's base color and material. Do NOT copy or move patterns, prints, or logos onto surfaces where they are not visible in the reference.
 - **Do NOT mirror the design** — the reference image shows the product as seen from the front. Do NOT flip or swap sides.
 - **Realistic fit** — the accessory must sit naturally on the model's head/face with proper proportions.
 
@@ -231,19 +231,19 @@ def _get_footwear_fitting_prompt(
         age_str = f" The model is a child ({model_gender}, approximately 12 years old) — the legs, feet, and skin must look like a child's, NOT an adult's. Use appropriately small, child-sized footwear."
     else:
         age_str = ""
-    view_str = "from behind (back view)" if garment_view == "back" else "from the front"
+    view_str = f"at the same angle and orientation as the product in the reference photo ({garment_view} view)"
 
     system_prompt = f"""You are an expert fashion photographer creating a product fitting image — showing how footwear looks when worn on a real body.{identity_str}{age_str}
-Put the provided shoes/boots/sandals on the model's feet. Keep the person's body, pose, skin, and proportions identical.
+Put the provided shoes/boots/sandals on the model's feet. Keep the person's body, skin, and proportions identical.
 Choose pants or legwear that match the footwear's style and brand — do NOT keep the model's original clothes.
 Frame the shot tightly from the knees down to the ground, focusing on the feet and shoes."""
 
     user_task = f"""Put this footwear on the model. Frame tightly from KNEES DOWN to the ground — the shoes must be the focal point and take up a large portion of the image. Show the model {view_str}.
 
 Rules:
-- **Keep the model's body identical** — same pose, skin tone, proportions. Only footwear and legwear change.
+- **Keep the model's body identical** — same skin tone, proportions. Only footwear and legwear change. Adjust the pose and angle to match the product in the reference photo.
 - **Reproduce the footwear exactly** — correct color, pattern, texture, logos, sole, laces, and all design details.
-- **Do NOT invent hidden details** — only reproduce details clearly visible in the reference image. For surfaces not shown in the reference (e.g. sole bottom, inside of the shoe), keep them plain and neutral, matching the product's base color and material. Do NOT copy or move patterns, prints, or logos onto surfaces where they are not visible in the reference.
+- **Do NOT invent hidden details** — only reproduce details clearly visible in the reference image. Do not infer anything from your internal knowledge, only rely on the provided images. For surfaces not shown in the reference (e.g. sole bottom, inside of the shoe), keep them plain and neutral, matching the product's base color and material. Do NOT copy or move patterns, prints, or logos onto surfaces where they are not visible in the reference.
 - **Do NOT mirror the design** — the reference image shows the footwear as seen from the front, which is the same left/right orientation as looking at the model. Do NOT flip or swap sides.
 - **Footwear must be the hero** — the shoes must be clearly visible, well-lit, and take up significant space in the frame. Both shoes should be visible.
 - **Tight framing** — show from knees down only. Do NOT show the full body, waist, or torso. The camera is low, near ground level, angled slightly down at the feet.
@@ -262,18 +262,18 @@ def _get_lower_body_fitting_prompt(
 ):
     """Prompt for lower body product fitting — hips down."""
     identity_str = f" The model is the {model_gender} in input." if model_gender else ""
-    view_str = "from behind (back view)" if garment_view == "back" else "from the front"
+    view_str = f"at the same angle and orientation as the product in the reference photo ({garment_view} view)"
 
     system_prompt = f"""You are an expert fashion photographer creating a product fitting image — showing how a product looks when worn on a real body.{identity_str}
-Dress the model with the provided product. Keep everything else about the person identical — body, pose, skin, hands, proportions.
+Dress the model with the provided product. Keep everything else about the person identical — body, skin tone, proportions, hands.
 Frame the shot from waist to feet."""
 
     user_task = f"""Fit this product on the model. Frame from waist to feet. Show the model {view_str}.
 
 Rules:
-- **Keep the model identical** — same body, pose, skin tone, proportions, hands. Only clothing changes.
+- **Keep the model identical** — same body, skin tone, proportions, hands. Only clothing changes. Adjust the pose and angle to match the product in the reference photo.
 - **Reproduce the product exactly** — correct color, pattern, texture, logos, and all design details.
-- **Do NOT invent hidden details** — only reproduce details clearly visible in the reference image. For surfaces not shown in the reference (e.g. underside, inside, back of a product shown from the front), keep them plain and neutral, matching the product's base color and material. Do NOT copy or move patterns, prints, or logos onto surfaces where they are not visible in the reference.
+- **Do NOT invent hidden details** — only reproduce details clearly visible in the reference image. Do not infer anything from your internal knowledge, only rely on the provided images. For surfaces not shown in the reference (e.g. underside, inside, back of a product shown from the front), keep them plain and neutral, matching the product's base color and material. Do NOT copy or move patterns, prints, or logos onto surfaces where they are not visible in the reference.
 - **Do NOT mirror the design** — the reference image shows the garment as seen from the front, which is the same left/right orientation as looking at the model. A logo on the LEFT side of the reference image must appear on the LEFT side of the model as you look at them (i.e. on the model's right). Do NOT flip or swap sides.
 - **Product must be 100% visible and stand out** — every part of the product must be fully visible. No other garment may cover, overlap, or hide any part of it. Choose complementary garments in colors that contrast with the product so it stands out clearly.
 - **Complete lower outfit** — add appropriate complementary items (shoes, socks). Must wear shoes.
