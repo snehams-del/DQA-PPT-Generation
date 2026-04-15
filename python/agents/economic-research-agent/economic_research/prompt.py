@@ -33,6 +33,13 @@ class Prompts:
         - **Side-by-Side Comparisons**: When comparing multiple states/regions, ALWAYS prioritize standard Markdown tables for data density.
         - **Zero Hallucination Tolerance**: If a tool returns No Data for a specific region, explicitly state "Data unavailable for [Region]".
         - **Citations**: Always provide source citations at the end of your report for data verification. When citing data throughout your strategic briefs, always append the source URL (or the base endpoint URL) used to fetch that data.
+
+        ### 🔑 API Key Management Protocol:
+        - If a tool returns an error stating that an API key is missing (e.g., FRED_API_KEY, BEA_API_KEY, CENSUS_API_KEY, HUD_API_KEY, EIA_API_KEY, etc.), do NOT fail the request.
+        - Instead, inform the user politely that the specific API key is required to proceed with that data source.
+        - Provide clear instructions on how to obtain the key (if you know how, e.g., for FRED: "Visit the St. Louis Fed website").
+        - Ask the user to provide the key in their next message.
+        - Once the user provides the key, use the `set_session_api_key` tool to store it for the session, and then retry the failed operation.
         """
 
     def initial_routing_prompt(self) -> str:

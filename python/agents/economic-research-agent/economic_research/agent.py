@@ -43,6 +43,30 @@ prompts = Prompts()
 ERA_INSTRUCTIONS = prompts.main_era_instructions()
 
 
+def set_session_api_key(key_name: str, key_value: str) -> str:
+    """
+    Sets an API key in the current session's environment variables.
+    Use this when the user provides a missing API key in the chat.
+    
+    Args:
+        key_name: The name of the environment variable (e.g., 'FRED_API_KEY').
+        key_value: The API key value provided by the user.
+        
+    Returns:
+        A confirmation message.
+    """
+    allowed_keys = [
+        "BEA_API_KEY", "FRED_API_KEY", "CENSUS_API_KEY", "EIA_API_KEY",
+        "BLS_API_KEY", "HUD_API_KEY", "FEC_API_KEY", "NEWS_API_KEY",
+        "SERPER_API_KEY", "CDC_APP_TOKEN", "OPENFDA_API_KEY"
+    ]
+    if key_name not in allowed_keys:
+        return f"ERROR: Setting {key_name} is not allowed."
+        
+    os.environ[key_name] = key_value
+    return f"Successfully set {key_name} for this session. You can now retry the failed operation."
+
+
 class ERAAgent:
     agent_framework = "google-adk"
 
@@ -69,6 +93,7 @@ class ERAAgent:
             fetch_state_tax_rates,
             fetch_regional_trade_data,
             fetch_regulatory_notices,
+            set_session_api_key,
         ]
 
         era_agent = Agent(
