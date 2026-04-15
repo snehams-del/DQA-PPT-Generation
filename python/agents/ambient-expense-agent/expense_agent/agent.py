@@ -240,9 +240,13 @@ def process_decision(node_input, ctx: Context) -> Event:  # type: ignore[no-unty
     if description:
         parts.append(f'"{description}" ({category}) on {date}.')
     if approved:
-        parts.append("The expense has been logged and will be processed for reimbursement.")
+        parts.append(
+            "The expense has been logged and will be processed for reimbursement."
+        )
     else:
-        parts.append("The submitter will be notified and may resubmit with additional documentation.")
+        parts.append(
+            "The submitter will be notified and may resubmit with additional documentation."
+        )
 
     return Event(output={"status": status, "message": " ".join(parts)})
 
