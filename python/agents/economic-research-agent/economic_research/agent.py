@@ -106,6 +106,25 @@ class ERAAgent:
 
     def query(self, input: str) -> str:
         """Standard Reasoning Engine entry point."""
+        
+        # Security Fix: Extract and mask API keys in input to prevent logging
+        import re
+        allowed_keys = [
+            "BEA_API_KEY", "FRED_API_KEY", "CENSUS_API_KEY", "EIA_API_KEY",
+            "BLS_API_KEY", "HUD_API_KEY", "FEC_API_KEY", "NEWS_API_KEY",
+            "SERPER_API_KEY", "CDC_APP_TOKEN", "OPENFDA_API_KEY"
+        ]
+        modified_input = input
+        for key in allowed_keys:
+            pattern = f"{key}=([^\\s]+)"
+            match = re.search(pattern, input)
+            if match:
+                key_value = match.group(1)
+                # Set it in environment for the session
+                os.environ[key] = key_value
+                # Mask it in the input string
+                modified_input = re.sub(pattern, f"{key}=**********", modified_input)
+                print(f"🔒 [Security] Masked {key} in input and set for session.")
 
         # Cloud Secrets fallback using Secret Manager
         def get_cloud_secret(key_name):
@@ -159,7 +178,7 @@ class ERAAgent:
         runner = InMemoryRunner(app=app)
         runner.auto_create_session = True
 
-        responses = runner.run(new_message=input)
+        responses = runner.run(new_message=modified_input)
         full_text = ""
         for res in responses:
             if hasattr(res, "content") and res.content.parts:
