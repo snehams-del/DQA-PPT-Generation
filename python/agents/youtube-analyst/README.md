@@ -131,6 +131,10 @@ For users who want to deploy the agent as a managed service, we provide automate
   ```bash
   ./deployment/deploy-to-agent-engine.sh
   ```
+- **Deploy to Google Cloud Run:**
+  ```bash
+  ./deployment/deploy-to-cloud-run.sh
+  ```
 - **Deploy to Gemini Enterprise:**
   ```bash
   ./deployment/deploy-to-gemini-enterprise.sh
