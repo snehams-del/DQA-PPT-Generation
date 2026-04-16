@@ -123,6 +123,21 @@ Select `youtube_analyst` from the agent selection menu.
 make cli
 ```
 
+### Deployment (Advanced)
+
+For users who want to deploy the agent as a managed service, we provide automated deployment scripts that rely on the [Agent Starter Pack (ASP)](https://goo.gle/agent-starter-pack).
+
+- **Deploy to Vertex AI Agent Engine:**
+  ```bash
+  ./deployment/deploy-to-agent-engine.sh
+  ```
+- **Deploy to Gemini Enterprise:**
+  ```bash
+  ./deployment/deploy-to-gemini-enterprise.sh
+  ```
+
+*Note: These scripts use `uvx` and have built-in hermetic safeguards (`UV_NO_CONFIG=1`) to ensure reliable installation of the required deployment tools from the public PyPI registry.*
+
 ---
 
 ## Onboarding: YouTube API Key
