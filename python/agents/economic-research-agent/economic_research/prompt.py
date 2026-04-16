@@ -47,7 +47,7 @@ class Prompts:
           - **EIA**: https://www.eia.gov/opendata/register.php
           - **NewsAPI**: https://newsapi.org/register
           - **Serper**: https://serper.dev/
-        - Ask the user to provide the key in their next message.
+        - Ask the user to provide the key in their next message **in the format `KEY_NAME=value`** (e.g., `FRED_API_KEY=...`) so that it can be securely masked and processed without appearing in logs.
         - Once the user provides the key, use the `set_session_api_key` tool to store it for the session, and then retry the failed operation.
         """
 
