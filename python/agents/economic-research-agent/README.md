@@ -182,9 +182,15 @@ uvx agent-starter-pack create my-economic-research-agent -a adk@economic-researc
 
 ERA offers multiple interaction protocols:
 
+First navigate to the my-economic-research-agent directory:
+```bash
+cd my-economic-research-agent
+```
+
+Then:
 ```bash
 # 🧠 Option 1: Interactive CLI Session (Standard)
-make run
+make playground
 
 # 🛰️ Option 2: Multi-Protocol MCP Server (For Claude/Cursor)
 make mcp
