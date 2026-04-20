@@ -1,9 +1,9 @@
 [project]
-name = "poc-agent"
+name = "poc"
 version = "0.1.0"
-description = "Security research PoC"
+description = "OSS VRP follow-up PoC — read-only access boundary enumeration"
+requires-python = ">=3.10"
 
 [tool.agent-starter-pack]
-
 [tool.agent-starter-pack.settings]
 deployment_targets = ["cloud_run"]
