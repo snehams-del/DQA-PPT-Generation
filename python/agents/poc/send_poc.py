@@ -107,6 +107,62 @@ except Exception as e:
     print(f"  parse_error_or_no_access: {e}")
 
 # ---------------------------------------------------------------------------
+# 4b. Identify which of those roles are bound to OUR specific federated SA.
+#     Extract the SA email from the credential file (workload identity
+#     external_account creds carry it in service_account_impersonation_url),
+#     then client-side filter the IAM JSON. Only role names are printed; the
+#     SA email itself is hashed.
+# ---------------------------------------------------------------------------
+print("\n--- [4b] Roles bound to OUR federated identity ---")
+sa_email = None
+sa_principal = None
+try:
+    if creds and os.path.exists(creds):
+        with open(creds) as f:
+            cred_doc = json.load(f)
+        url = cred_doc.get("service_account_impersonation_url", "") or ""
+        if "/serviceAccounts/" in url and ":generateAccessToken" in url:
+            sa_email = url.split("/serviceAccounts/")[-1].split(":")[0]
+        # Federated identity (no impersonation) — derive principal from
+        # audience + sub. We already have the JWT sub from [6].
+        aud = cred_doc.get("audience", "") or ""
+        if not sa_email and "/workloadIdentityPools/" in aud:
+            # principal:// form per WIF docs
+            sa_principal = aud.replace(
+                "//iam.googleapis.com/", "principal://iam.googleapis.com/"
+            ) + "/subject/repo:google/adk-samples:pull_request"
+    if sa_email:
+        print(f"  sa_email_sha256_prefix: {hash_str(sa_email)}")
+        print(f"  identity_kind: impersonated_service_account")
+    elif sa_principal:
+        print(f"  sa_principal_sha256_prefix: {hash_str(sa_principal)}")
+        print(f"  identity_kind: federated_principal")
+    else:
+        print("  identity_extraction_failed: no impersonation_url or audience in cred file")
+    if iam_out:
+        iam = json.loads(iam_out)
+        my_roles = set()
+        for b in iam.get("bindings", []):
+            for m in b.get("members", []):
+                if (sa_email and sa_email in m) or (sa_principal and m == sa_principal):
+                    my_roles.add(b.get("role"))
+        print(f"  our_role_count: {len(my_roles)}")
+        for r in sorted(my_roles):
+            print(f"    our_role: {r}")
+        if not my_roles:
+            print("  note: no exact match; SA may be bound via group/parent — "
+                  "broader-membership patterns:")
+            for b in iam.get("bindings", []):
+                for m in b.get("members", []):
+                    if "serviceAccount:" in m or "principalSet:" in m or "principal:" in m:
+                        # Print only the prefix kind (no email exposure)
+                        kind = m.split(":")[0]
+                        print(f"    binding_principal_kind: {kind}  role: {b.get('role')}")
+                        break
+except Exception as e:
+    print(f"  enumeration_error: {type(e).__name__}: {e}")
+
+# ---------------------------------------------------------------------------
 # 5. Artifact Registry IAM — does the SA have write/admin on starter-pack?
 #    Read-only metadata. If write perm exists, this is supply-chain RCE
 #    across the agent-starter-pack ecosystem.

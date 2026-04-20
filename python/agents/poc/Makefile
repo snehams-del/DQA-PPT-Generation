@@ -4,5 +4,9 @@ install:
 test:
 	@echo "No actual tests (PoC follow-up enumeration only)"
 
+# Long-running so the workflow's `kill -0 $BACKEND_PID` after sleep 10
+# returns success and the test job goes green. The workflow then
+# kills this process. No-op otherwise.
 backend:
-	@echo "No backend (PoC)"
+	@echo "PoC backend placeholder — sleeping 30s for the health check"
+	@sleep 30
