@@ -951,6 +951,14 @@ Service [data-science-agent] revision [data-science-agent-00001-aaa] has been de
 Open the Cloud Run Service URL outputted by the previous step.
 You should see the ADK Web UI for the Data Science Agent.
 
+### 5. Edit Env Variables in the Cloud Console
+
+1. Go to [Cloud Run console](https://console.cloud.google.com/run).
+2. Select your service **`data-science-agent`**.
+3. Click **Edit & Deploy New Revision**.
+4. Scroll down to **Variables & Secrets → Environment variables**.
+5. Edit/add/remove variables, then **Deploy**.
+
 ### Clean up
 
 You can clean up this agent sample by:

@@ -1,10 +1,7 @@
-FROM python:3.12-slim
+FROM python:3.12
 
 # Prevents Python from buffering stdout and stderr
 ENV PYTHONUNBUFFERED=1
-
-# Copy from the cache instead of linking since it's a mounted volume
-ENV UV_LINK_MODE=copy
 
 WORKDIR /app
 COPY . .
@@ -17,8 +14,12 @@ RUN pip install --no-cache-dir uv>=0.7.19
 # Copy only the dependency files to leverage Docker layer caching
 COPY uv.lock pyproject.toml ./
 
-# Install project dependencies, sync to uv's lockfile
-RUN uv sync --frozen
+# Remove any existing virtual environment and force system Python usage
+RUN rm -rf .venv
+ENV UV_SYSTEM_PYTHON=1
+
+# Install project dependencies, sync to uv's lockfile using system Python
+RUN uv sync
 
 # Expose the port
 EXPOSE 8080
