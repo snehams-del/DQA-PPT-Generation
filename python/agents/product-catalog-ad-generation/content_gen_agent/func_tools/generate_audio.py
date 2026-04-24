@@ -20,6 +20,7 @@ import os
 import random
 import time
 from http import HTTPStatus
+from typing import Any
 
 import aiohttp
 import google.auth
@@ -70,7 +71,9 @@ async def generate_audio(
 
     try:
         # Get credentials
-        creds, _ = google.auth.default()
+        creds, _ = google.auth.default(
+            scopes=["https://www.googleapis.com/auth/cloud-platform"]
+        )
         auth_req = google.auth.transport.requests.Request()
         creds.refresh(auth_req)
         token = creds.token
@@ -196,7 +199,7 @@ async def _generate_voiceover_content(prompt: str, text: str) -> bytes | None:
             input=synthesis_input, voice=voice, audio_config=audio_config
         )
         return response.audio_content
-    except GoogleAPICallError as e:
+    except (GoogleAPICallError, Exception) as e:
         logging.error(
             "Failed to generate voiceover content: %s", e, exc_info=True
         )
@@ -240,7 +243,7 @@ async def generate_audio_and_voiceover(
     voiceover_prompt: str,
     voiceover_text: str,
     generation_mode: str = "both",
-) -> dict[str, str | list[str]]:
+) -> dict[str, Any]:
     """
     Generates a background audio track, a voiceover, or both in a
     single function call.
@@ -284,15 +287,17 @@ async def generate_audio_and_voiceover(
         return {"failures": [f"Invalid generation_mode: {generation_mode}"]}
 
     results = await asyncio.gather(*tasks, return_exceptions=True)
-    response: dict[str, str | list[str]] = {"failures": []}
+    failures: list[str] = []
+    response: dict[str, str | list[str]] = {"failures": failures}
     result_index = 0
 
     if generation_mode in ["audio", "both"]:
         audio_res = results[result_index]
-        if isinstance(audio_res, Exception) or not audio_res:
-            response["failures"].append(
-                f"audio: {audio_res or 'Unknown error'}"
-            )
+        if isinstance(audio_res, BaseException):
+            failures.append(f"audio: {audio_res}")
+            response["audio_name"] = STATIC_AUDIO_FALLBACK
+        elif not audio_res:
+            failures.append("audio: Unknown error")
             response["audio_name"] = STATIC_AUDIO_FALLBACK
         else:
             response["audio_name"] = audio_res["name"]
@@ -300,10 +305,10 @@ async def generate_audio_and_voiceover(
 
     if generation_mode in ["voiceover", "both"]:
         vo_res = results[result_index]
-        if isinstance(vo_res, Exception) or not vo_res:
-            response["failures"].append(
-                f"voiceover: {vo_res or 'Unknown error'}"
-            )
+        if isinstance(vo_res, BaseException):
+            failures.append(f"voiceover: {vo_res}")
+        elif not vo_res:
+            failures.append("voiceover: Unknown error")
         else:
             response["voiceover_name"] = vo_res["name"]
 

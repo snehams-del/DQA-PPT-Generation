@@ -15,7 +15,8 @@
 model."""
 
 import logging
-from typing import Literal
+import os
+from typing import Any, Literal, cast
 
 from google import genai
 from google.api_core import exceptions as api_exceptions
@@ -30,7 +31,9 @@ from content_gen_agent.utils.evaluation_prompts import (
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
-EVALUATION_MODEL = "gemini-3-flash-preview"
+EVALUATION_MODEL = os.getenv(
+    "EVALUATION_MODEL_NAME", os.getenv("MODEL_NAME", "gemini-2.5-flash")
+)
 
 
 class EvalResult(BaseModel):
@@ -86,25 +89,29 @@ async def evaluate_media(
     try:
         client = genai.Client()
         internal_prompt = _get_internal_prompt(mime_type, evaluation_criteria)
+        contents: list[str | types.Part] = [
+            internal_prompt,
+            types.Part.from_bytes(data=media_bytes, mime_type=mime_type),
+        ]
 
         response = await client.aio.models.generate_content(
             model=EVALUATION_MODEL,
-            contents=[
-                internal_prompt,
-                types.Part.from_bytes(data=media_bytes, mime_type=mime_type),
-            ],
+            contents=cast(Any, contents),
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
                 response_schema=EvalResult,
             ),
         )
 
-        result = response.parsed
+        result = cast(EvalResult | None, response.parsed)
+        if result is None:
+            logging.warning("Evaluation response was empty.")
+            return None
         logging.info("Overall Evaluation Decision: %s", result.decision)
         if result.decision == "Fail":
             logging.warning("Evaluation failed reason: %s", result.reason)
         return result
-    except (api_exceptions.GoogleAPICallError, ValueError) as e:
+    except (api_exceptions.GoogleAPICallError, ValueError, Exception) as e:
         logging.error("Media evaluation failed: %s", e, exc_info=True)
         return None
 

@@ -35,6 +35,8 @@ from .func_tools.generate_video import generate_video
 from .utils.storytelling import STORYTELLING_INSTRUCTIONS
 
 COMPANY_NAME = os.environ.get("COMPANY_NAME", "ACME Corp")
+MODEL_NAME = os.environ.get("MODEL_NAME", "gemini-2.5-flash")
+
 SYSTEM_INSTRUCTION: str = f"""
 ROLE: You are a Personalized Ad Generation Assistant.
 By default you are an assistant for {COMPANY_NAME},
@@ -92,7 +94,7 @@ accomplish this.
 
 root_agent = Agent(
     name="content_generation_agent",
-    model="gemini-3-flash-preview",
+    model=MODEL_NAME,
     instruction=SYSTEM_INSTRUCTION,
     tools=[
         load_artifacts,

@@ -11,6 +11,7 @@ requires-python = ">=3.12"
 
 dependencies = [
     "google-adk==1.18.0",
+    "google-auth>=2.49.1",
     "google-cloud-aiplatform[adk,agent-engines]==1.126.1",
     "google-cloud-bigquery>=3.35.1",
     "google-genai==1.49.0",
@@ -23,11 +24,27 @@ dependencies = [
     "aiohttp>=3.12.15",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.4.2",
+    "pytest-asyncio>=0.23.7",
+    "python-dotenv>=1.1.1",
+    "agent-starter-pack>=0.32.0",
+    "ruff>=0.13.0",
+    "mypy>=1.18.2",
+]
+deployment = [
+    "absl-py>=2.3.1",
+]
+
 [dependency-groups]
 dev = [
     "pytest>=8.4.2",
     "pytest-asyncio>=0.23.7",
     "python-dotenv>=1.1.1",
+    "agent-starter-pack>=0.32.0",
+    "ruff>=0.13.0",
+    "mypy>=1.18.2",
 ]
 deployment = [
     "absl-py>=2.3.1",
@@ -37,16 +54,40 @@ deployment = [
 extend = "../../../pyproject.toml"
 
 [tool.ruff.lint]
-ignore = ["PLR0911", "C901"]
+ignore = ["PLR0911", "C901", "UP007", "UP045"]
 
 [tool.ruff.lint.per-file-ignores]
-"__init__.py" = ["F401"]
+"__init__.py" = ["E402", "F401", "I001"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["content_gen_agent"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["content_gen_agent"]
+
+[tool.agent-starter-pack]
+agent_directory = "content_gen_agent"
+example_question = "Generate a short vertical ad for a skincare product aimed at busy professionals."
+deployment_targets = ["agent_engine", "cloud_run"]
+
+[tool.pytest.ini_options]
+addopts = "-p no:langsmith_plugin"
+pythonpath = "."
+testpaths = ["tests"]
+
+[tool.mypy]
+exclude = [
+    "^\\.venv/",
+    "^scripts/",
+]
+
+[[tool.mypy.overrides]]
+module = ["moviepy"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["google.cloud.storage"]
+ignore_missing_imports = true
 
 [build-system]
 requires = ["hatchling"]

@@ -20,8 +20,10 @@ Handles the generation of storylines, visual style guides,
 import asyncio
 import json
 import logging
+import os
 import time
-from typing import Union
+from collections.abc import Sequence
+from typing import Any, Optional, Union, cast
 
 from dotenv import load_dotenv
 from google import genai
@@ -48,9 +50,47 @@ load_dotenv()
 client = initialize_gemini_client()
 
 # --- Configuration ---
-STORYLINE_MODEL = "gemini-3-flash-preview"
-IMAGE_GEN_MODEL = "gemini-3-pro-image-preview"
+STORYLINE_MODEL = os.getenv(
+    "STORYLINE_MODEL_NAME", os.getenv("MODEL_NAME", "gemini-2.5-flash")
+)
+IMAGE_GEN_MODEL = os.getenv(
+    "IMAGE_GEN_MODEL_NAME", "gemini-3-pro-image-preview"
+)
 MAX_RETRIES = 3
+
+
+def _parse_story_data_from_response_text(raw_text: str) -> dict[str, Any] | None:
+    """Attempts to parse story JSON from model text output."""
+    text = raw_text.strip()
+    if not text:
+        return None
+
+    # Handle fenced code blocks like ```json ... ```.
+    if text.startswith("```"):
+        lines = text.splitlines()
+        if lines and lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].strip() == "```":
+            lines = lines[:-1]
+        text = "\n".join(lines).strip()
+
+    candidates = [text]
+
+    # Try parsing the outermost JSON object if extra prose surrounds it.
+    first_brace = text.find("{")
+    last_brace = text.rfind("}")
+    if first_brace != -1 and last_brace != -1 and first_brace < last_brace:
+        candidates.append(text[first_brace : last_brace + 1])
+
+    for candidate in candidates:
+        try:
+            parsed = json.loads(candidate)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(parsed, dict):
+            return cast(dict[str, Any], parsed)
+
+    return None
 
 
 # pylint: disable=too-many-arguments
@@ -60,10 +100,10 @@ async def generate_storyline(
     tool_context: ToolContext,
     company_name: str,
     num_images: int = 5,
-    photo_filenames: list[str] | None = None,
+    photo_filenames: Optional[list[str]] = None,
     style_preference: str = "photorealistic",
-    user_provided_asset_sheet_filename: str | None = None,
-) -> dict[str, str | None | list[dict[str, str]]]:
+    user_provided_asset_sheet_filename: Optional[str] = None,
+) -> dict[str, Any]:
     """Generates a storyline, visual style guide, and asset sheet.
 
     Args:
@@ -128,9 +168,7 @@ async def generate_storyline(
     if "error" in story_data:
         return {"status": "failed", "detail": story_data["error"]}
 
-    asset_sheet_filename = (
-        user_provided_asset_sheet_filename  # will be overwritten if None
-    )
+    asset_sheet_filename: str | None = user_provided_asset_sheet_filename
 
     # Generate the asset sheet from scratch using the generated storyline text
     if not user_provided_asset_sheet_filename:
@@ -152,7 +190,11 @@ async def generate_storyline(
     vsg_filename = await _save_json_artifact(
         tool_context,
         "visual_style_guide",
-        story_data["visual_style_guide"],
+        {
+            "visual_style_guide": cast(
+                dict[str, Any], story_data.get("visual_style_guide", {})
+            )
+        },
     )
     storyline_filename = await _save_json_artifact(
         tool_context, "storyline", {"storyline": story_data.get("storyline")}
@@ -237,7 +279,7 @@ def _generate_storyline_text(
     style_guide: str,
     company_name: str,
     image_parts: list[genai.types.Part] | None = None,
-) -> dict[str, str | dict[str, list[dict[str, str] | str]]]:
+) -> dict[str, Any]:
     """Generates the storyline and visual style guide text.
 
     Args:
@@ -298,7 +340,7 @@ def _generate_storyline_text(
     """
     try:
         logging.info("Generating storyline and visual style guide...")
-        contents = []
+        contents: list[str | genai.types.Part] = []
         if image_parts:
             contents.extend(image_parts)
             generation_prompt += """
@@ -311,19 +353,52 @@ def _generate_storyline_text(
         contents.append(generation_prompt)
         response = client.models.generate_content(
             model=STORYLINE_MODEL,
-            contents=contents,
+            contents=cast(Any, contents),
             config=types.GenerateContentConfig(
                 response_mime_type="application/json"
             ),
         )
-        if response.text:
-            story_data = json.loads(response.text)
+
+        parsed_response = cast(Any, getattr(response, "parsed", None))
+        if isinstance(parsed_response, dict):
             logging.info(
                 "Successfully generated storyline and visual style guide."
             )
-            return story_data
+            return cast(dict[str, Any], parsed_response)
+
+        if response.text:
+            story_data = _parse_story_data_from_response_text(response.text)
+            if story_data is not None:
+                logging.info(
+                    "Successfully generated storyline and visual style guide."
+                )
+                return story_data
+
+            # One recovery attempt: ask the model to repair malformed JSON.
+            repair_prompt = (
+                "Return only valid JSON for the following content. "
+                "Required top-level keys: 'storyline' and 'visual_style_guide'.\n\n"
+                f"{response.text}"
+            )
+            repair_response = client.models.generate_content(
+                model=STORYLINE_MODEL,
+                contents=cast(Any, [repair_prompt]),
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json"
+                ),
+            )
+            if repair_response.text:
+                repaired_story_data = _parse_story_data_from_response_text(
+                    repair_response.text
+                )
+                if repaired_story_data is not None:
+                    logging.info(
+                        "Recovered storyline JSON after repair pass."
+                    )
+                    return repaired_story_data
+
         return {"error": "Received an empty response from the model."}
-    except (json.JSONDecodeError, ValueError) as e:
+    except (json.JSONDecodeError, ValueError, Exception) as e:
         logging.error("Error generating storyline text: %s", e, exc_info=True)
         return {"error": f"Error generating storyline text: {e}"}
 
@@ -355,7 +430,7 @@ async def _save_product_photo_artifact(
 
 
 def _process_visual_style_guide(
-    visual_style_guide: dict[str, list[dict[str, str] | str]],
+    visual_style_guide: dict[str, Any],
 ) -> dict[str, str]:
     """Processes the visual style guide into formatted strings.
 
@@ -395,11 +470,13 @@ def _process_visual_style_guide(
 
 
 def _create_asset_sheet_prompt(
-    story_data: dict[str, str | dict[str, list[dict[str, str] | str]]],
+    story_data: dict[str, Any],
     style_guide: str,
 ) -> str:
     """Creates the prompt for the asset sheet image."""
-    visual_style_guide = story_data.get("visual_style_guide", {})
+    visual_style_guide = cast(
+        dict[str, Any], story_data.get("visual_style_guide", {})
+    )
     processed_vsg = _process_visual_style_guide(visual_style_guide)
 
     return f"""A visual asset sheet for a commercial.
@@ -417,17 +494,20 @@ def _create_asset_sheet_prompt(
 
 
 async def _generate_and_select_best_image(
-    contents: list[Union[str, "types.Part"]],
+    contents: Sequence[Union[str, "types.Part"]],
     image_prompt: str,
-) -> dict[str, str | bytes]:
+) -> dict[str, Any] | None:
     """
     Generates multiple images and selects the best one based on evaluation.
     """
+    if client is None:
+        return None
+
     tasks = [
         call_gemini_image_api(
             client=client,
             model=IMAGE_GEN_MODEL,
-            contents=contents,
+            contents=list(contents),
             image_prompt=image_prompt,
         )
         for _ in range(MAX_RETRIES)
@@ -446,22 +526,23 @@ async def _generate_and_select_best_image(
         key=lambda x: calculate_evaluation_score(x.get("evaluation")),
     )
 
-    if best_attempt["evaluation"].decision != "Pass":
+    evaluation = best_attempt.get("evaluation")
+    if evaluation and evaluation.decision != "Pass":
         score = calculate_evaluation_score(best_attempt["evaluation"])
         logging.warning(
             "No image passed evaluation.Selecting best attempt with score: %s",
             score,
         )
 
-    return best_attempt
+    return cast(dict[str, Any], best_attempt)
 
 
 async def _generate_asset_sheet_image(
-    story_data: dict[str, str | dict[str, list[dict[str, str] | str]]],
+    story_data: dict[str, Any],
     photo_filenames: list[str],
     tool_context: ToolContext,
     style_guide: str,
-) -> str | dict[str, str]:
+) -> str | None:
     """Generates and evaluates asset sheet images, saving the best one.
 
     Args:
@@ -478,7 +559,7 @@ async def _generate_asset_sheet_image(
     image_prompt = _create_asset_sheet_prompt(story_data, style_guide)
     logging.info("Generating asset sheet image for prompt: '%s'", image_prompt)
 
-    contents = [image_prompt]
+    contents: list[str | types.Part] = [image_prompt]
     for filename in photo_filenames:
         try:
             photo_part = await tool_context.load_artifact(filename)
@@ -491,22 +572,23 @@ async def _generate_asset_sheet_image(
                 e,
                 exc_info=True,
             )
-            return {
-                "status": "failed",
-                "detail": f"Failed to load product photo: {e}",
-            }
+            return None
 
     best_attempt = await _generate_and_select_best_image(contents, image_prompt)
-
-    if "status" in best_attempt and best_attempt["status"] == "failed":
-        return best_attempt
+    if not best_attempt:
+        return None
 
     asset_sheet_filename = "asset_sheet.png"
+    image_bytes = cast(bytes | None, best_attempt.get("image_bytes"))
+    mime_type = cast(str | None, best_attempt.get("mime_type"))
+    if not image_bytes or not mime_type:
+        return None
+
     await tool_context.save_artifact(
         asset_sheet_filename,
         genai.types.Part.from_bytes(
-            data=best_attempt["image_bytes"],
-            mime_type=best_attempt["mime_type"],
+            data=image_bytes,
+            mime_type=mime_type,
         ),
     )
     logging.info("Saved asset sheet image to %s", asset_sheet_filename)

@@ -18,7 +18,7 @@ import json
 import logging
 import os
 from collections.abc import Awaitable
-from typing import NotRequired, TypedDict
+from typing import Any, NotRequired, Optional, TypedDict, cast
 
 from dotenv import load_dotenv
 from google.adk.tools import ToolContext
@@ -41,7 +41,7 @@ logging.basicConfig(
 
 load_dotenv()
 
-GCP_PROJECT = os.getenv("GCP_PROJECT")
+GCP_PROJECT = os.getenv("GCP_PROJECT") or os.getenv("GOOGLE_CLOUD_PROJECT")
 
 IMAGE_GEN_MODEL_GEMINI = "gemini-3-pro-image-preview"
 
@@ -108,10 +108,17 @@ async def generate_one_image(
             "detail": "Input image(s) are required for image generation.",
         }
 
-    contents = [prompt, *input_images]
+    if client is None:
+        return {
+            "status": "failed",
+            "detail": "Gemini client not initialized.",
+        }
+
+    contents: list[str | types.Part] = [prompt, *input_images]
+    active_client = cast(Any, client)
     tasks = [
         call_gemini_image_api(
-            client=client,
+            client=active_client,
             model=IMAGE_GEN_MODEL_GEMINI,
             contents=contents,
             image_prompt=prompt,
@@ -134,7 +141,8 @@ async def generate_one_image(
         key=lambda x: calculate_evaluation_score(x.get("evaluation")),
     )
 
-    if best_attempt.get("evaluation").decision != "Pass":
+    best_evaluation = best_attempt.get("evaluation")
+    if best_evaluation and best_evaluation.decision != "Pass":
         score = calculate_evaluation_score(best_attempt["evaluation"])
         logging.warning(
             "No image passed evaluation for '%s'. Best score: %s",
@@ -194,7 +202,7 @@ def _create_image_generation_task(
 async def generate_images_from_storyline(
     prompts: list[str],
     tool_context: ToolContext,
-    scene_numbers: list[int] | None = None,
+    scene_numbers: Optional[list[int]] = None,
     logo_filename: str = LOGO_GCS_URI,
     asset_sheet_filename: str = ASSET_SHEET_FILENAME,
     logo_prompt_present: bool = True,
@@ -247,7 +255,7 @@ async def generate_images_from_storyline(
             )
         ]
 
-    logo_image = None
+    logo_image: types.Part | None = None
     if logo_prompt_present:
         if not logo_filename:
             return [
@@ -260,8 +268,10 @@ async def generate_images_from_storyline(
                     }
                 )
             ]
-        logo_filename = await ensure_image_artifact(logo_filename, tool_context)
-        if not logo_filename:
+        ensured_logo_filename = await ensure_image_artifact(
+            logo_filename, tool_context
+        )
+        if not ensured_logo_filename:
             return [
                 json.dumps(
                     {
@@ -270,23 +280,23 @@ async def generate_images_from_storyline(
                     }
                 )
             ]
-        logo_image = await tool_context.load_artifact(logo_filename)
+        logo_image = await tool_context.load_artifact(ensured_logo_filename)
         if not logo_image:
             return [
                 json.dumps(
                     {
                         "status": "failed",
                         "detail": (
-                            f"Failed to load logo content from '{logo_filename}'."
+                            f"Failed to load logo content from '{ensured_logo_filename}'."
                         ),
                     }
                 )
             ]
 
-    asset_sheet_filename = await ensure_image_artifact(
+    ensured_asset_sheet_filename = await ensure_image_artifact(
         asset_sheet_filename, tool_context
     )
-    if not asset_sheet_filename:
+    if not ensured_asset_sheet_filename:
         return [
             json.dumps(
                 {
@@ -297,7 +307,9 @@ async def generate_images_from_storyline(
                 }
             )
         ]
-    asset_sheet_image = await tool_context.load_artifact(asset_sheet_filename)
+    asset_sheet_image = await tool_context.load_artifact(
+        ensured_asset_sheet_filename
+    )
     if not asset_sheet_image:
         return [
             json.dumps(
@@ -305,7 +317,7 @@ async def generate_images_from_storyline(
                     "status": "failed",
                     "detail": (
                         f"Failed to load asset sheet content from "
-                        f"'{asset_sheet_filename}'."
+                        f"'{ensured_asset_sheet_filename}'."
                     ),
                 }
             )
@@ -322,9 +334,15 @@ async def generate_images_from_storyline(
 
         prompt = prompts[i]
         is_logo_scene = logo_prompt_present and i == len(prompts) - 1
+        if is_logo_scene and logo_image is None:
+            continue
         tasks.append(
             _create_image_generation_task(
-                scene_num, prompt, is_logo_scene, logo_image, asset_sheet_image
+                scene_num,
+                prompt,
+                is_logo_scene,
+                cast(types.Part, logo_image),
+                asset_sheet_image,
             )
         )
 

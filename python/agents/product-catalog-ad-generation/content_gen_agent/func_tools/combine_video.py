@@ -18,12 +18,13 @@ import logging
 import os
 import tempfile
 import time
+from typing import Optional
 
 from dotenv import load_dotenv
 from google import genai
 from google.adk.tools import ToolContext
 from google.api_core import exceptions as api_exceptions
-from google.cloud import storage
+from google.cloud.storage import Client
 from moviepy import (
     AudioFileClip,
     CompositeAudioClip,
@@ -104,7 +105,9 @@ def _upload_to_gcs(video_bytes: bytes, filename: str) -> str | None:
         The GCS URI of the uploaded file, or None if the upload fails.
     """
     try:
-        project_id = os.getenv("GCP_PROJECT")
+        project_id = os.getenv("GCP_PROJECT") or os.getenv(
+            "GOOGLE_CLOUD_PROJECT"
+        )
         if not project_id:
             logging.error("GCP_PROJECT environment variable not set.")
             return None
@@ -115,7 +118,7 @@ def _upload_to_gcs(video_bytes: bytes, filename: str) -> str | None:
         folder_path = _get_datetime_folder_path()
         blob_name = f"{folder_path}{filename}"
 
-        storage_client = storage.Client()
+        storage_client = Client()
         bucket = storage_client.bucket(bucket_name)
         blob = bucket.blob(blob_name)
         blob.upload_from_string(video_bytes, content_type="video/mp4")
@@ -148,7 +151,7 @@ async def _load_single_clip(
             f.write(artifact.inline_data.data)
 
         clip = VideoFileClip(temp_path)
-        clip_index_str = filename.split("_")[0]
+        clip_index_str = filename.split("_", maxsplit=1)[0]
         if clip_index_str.isdigit():
             clip_index = int(clip_index_str)
             if 0 <= clip_index < len(storyline):
@@ -307,8 +310,8 @@ async def combine(
     audio_file: str,
     num_images: int,
     tool_context: ToolContext,
-    voiceover_file: str | None = None,
-) -> dict[str, str] | None:
+    voiceover_file: Optional[str] = None,
+) -> dict[str, str]:
     """Combines videos, audio, and voiceover into a single file.
 
     Args:
@@ -321,11 +324,14 @@ async def combine(
           Defaults to None.
 
     Returns:
-        A dictionary with the combined video artifact name and GCS URI.
+        A dictionary containing either success metadata or a failure detail.
     """
     if not video_files:
         logging.warning("No video files provided to combine.")
-        return None
+        return {
+            "status": "failed",
+            "detail": "No video files provided to combine.",
+        }
 
     with tempfile.TemporaryDirectory() as temp_dir:
         video_clips, _ = await _load_and_process_video_clips(
@@ -333,8 +339,17 @@ async def combine(
         )
         if not video_clips:
             logging.error("No valid video clips could be loaded.")
-            return None
+            return {
+                "status": "failed",
+                "detail": "No valid video clips could be loaded.",
+            }
 
-        return await _combine_and_upload_video(
+        result = await _combine_and_upload_video(
             video_clips, audio_file, voiceover_file, tool_context, temp_dir
         )
+        if result is None:
+            return {
+                "status": "failed",
+                "detail": "An error occurred during video combination.",
+            }
+        return result

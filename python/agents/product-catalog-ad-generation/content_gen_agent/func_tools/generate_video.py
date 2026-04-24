@@ -19,12 +19,12 @@ import os
 import re
 from collections.abc import Coroutine
 from dataclasses import dataclass
+from typing import Any, Optional, cast
 
 from google import genai
 from google.adk.tools import ToolContext
 from google.api_core import exceptions as api_exceptions
-from google.api_core import operation
-from google.cloud import storage
+from google.cloud.storage import Client
 from google.genai.types import GenerateVideosConfig
 from google.genai.types import Image as GenImage
 
@@ -64,14 +64,14 @@ def _get_gcs_files(folder_prefix: str) -> list[str]:
     Returns:
         A list of GCS URIs for the found images.
     """
-    project_id = os.getenv("GCP_PROJECT")
+    project_id = os.getenv("GCP_PROJECT") or os.getenv("GOOGLE_CLOUD_PROJECT")
     if not project_id:
         logging.error("GCP_PROJECT environment variable not set.")
         return []
 
     bucket_name = f"{project_id}-contentgen-static"
     try:
-        storage_client = storage.Client()
+        storage_client = Client()
         blobs = storage_client.list_blobs(bucket_name, prefix=folder_prefix)
         return [
             f"gs://{bucket_name}/{blob.name}"
@@ -84,10 +84,10 @@ def _get_gcs_files(folder_prefix: str) -> list[str]:
 
 
 async def _monitor_video_operation(
-    operation: operation.Operation,
+    operation: Any,
     image_identifier: str,
     vertex_client: genai.Client,
-) -> tuple[GenImage | None, str | None]:
+) -> tuple[Any | None, str | None]:
     """Monitors a video generation operation until completion.
 
     Args:
@@ -103,7 +103,7 @@ async def _monitor_video_operation(
         image_identifier,
         operation.name,
     )
-    while not operation.done:
+    while not bool(getattr(operation, "done", False)):
         await asyncio.sleep(15)
         operation = vertex_client.operations.get(operation)
         logging.info(
@@ -113,21 +113,27 @@ async def _monitor_video_operation(
             operation.done,
         )
 
-    if operation.error:
-        error_message = operation.error.get("message", str(operation.error))
+    operation_error = getattr(operation, "error", None)
+    if operation_error:
+        if isinstance(operation_error, dict):
+            error_message = str(operation_error.get("message", operation_error))
+        else:
+            error_message = str(operation_error)
         logging.error(
             "Operation for %s failed with error: %s",
             image_identifier,
             error_message,
         )
         return None, error_message
-    if not (operation.result and hasattr(operation.result, "generated_videos")):
+    operation_result = getattr(operation, "result", None)
+    generated_videos = getattr(operation_result, "generated_videos", None)
+    if not generated_videos:
         logging.warning(
             "No generated videos found in the response for %s.",
             image_identifier,
         )
         return None, "No videos found in the response."
-    return operation.result.generated_videos[0], None
+    return generated_videos[0], None
 
 
 def _round_to_nearest_veo_duration(duration: int) -> int:
@@ -160,37 +166,44 @@ async def _generate_single_video(
         A tuple containing the video result and an error message.
     """
     try:
-        request = {
-            "model": VIDEO_MODEL,
-            "source": {
-                "prompt": video_input.video_query,
-                "image": video_input.input_image,
-            },
-            "config": GenerateVideosConfig(
-                aspect_ratio=VIDEO_ASPECT_RATIO,
-                generate_audio=False,
-                number_of_videos=1,
-                duration_seconds=_round_to_nearest_veo_duration(
-                    video_input.duration
-                ),
-                fps=VIDEO_FPS,
-                person_generation="allow_all",
-                enhance_prompt=True,
+        config = GenerateVideosConfig(
+            aspect_ratio=VIDEO_ASPECT_RATIO,
+            generate_audio=False,
+            number_of_videos=1,
+            duration_seconds=_round_to_nearest_veo_duration(
+                video_input.duration
             ),
-        }
-        operation = vertex_client.models.generate_videos(**request)
+            fps=VIDEO_FPS,
+            person_generation="allow_all",
+            enhance_prompt=True,
+        )
+        video_operation = vertex_client.models.generate_videos(
+            model=VIDEO_MODEL,
+            source=cast(
+                Any,
+                {
+                    "prompt": video_input.video_query,
+                    "image": video_input.input_image,
+                },
+            ),
+            config=config,
+        )
         video, error = await _monitor_video_operation(
-            operation, video_input.image_identifier, vertex_client
+            video_operation,
+            video_input.image_identifier,
+            vertex_client,
         )
 
-        if error or not (video and video.video and video.video.video_bytes):
+        video_payload = getattr(video, "video", None)
+        video_bytes = getattr(video_payload, "video_bytes", None)
+        if error or not video_bytes:
             return None, error or "Generated video has no content."
 
         filename = f"{video_input.image_identifier}.mp4"
         await tool_context.save_artifact(
             filename,
             genai.types.Part.from_bytes(
-                data=video.video.video_bytes, mime_type="video/mp4"
+                data=video_bytes, mime_type="video/mp4"
             ),
         )
         return {"name": filename}, None
@@ -210,8 +223,8 @@ def _initialize_vertex_client() -> genai.Client:
     Raises:
         ValueError: If GCP_PROJECT or GCP_LOCATION are not set.
     """
-    project_id = os.getenv("GCP_PROJECT")
-    location = os.getenv("GCP_LOCATION")
+    project_id = os.getenv("GCP_PROJECT") or os.getenv("GOOGLE_CLOUD_PROJECT")
+    location = os.getenv("GCP_LOCATION") or os.getenv("GOOGLE_CLOUD_LOCATION")
     if not project_id or not location:
         raise ValueError("GCP_PROJECT or GCP_LOCATION not set.")
     return genai.Client(vertexai=True, project=project_id, location=location)
@@ -219,7 +232,7 @@ def _initialize_vertex_client() -> genai.Client:
 
 def _get_image_sources(
     scene_numbers: list[int] | None, num_images: int
-) -> list[tuple[str, str]]:
+) -> list[str]:
     """Determines the image sources based on scene numbers or total count."""
     if scene_numbers:
         image_filenames = [f"{i}_.png" for i in scene_numbers]
@@ -266,7 +279,11 @@ async def _create_video_tasks(
     tool_context: ToolContext,
     vertex_client: genai.Client,
     logo_prompt_present: bool,
-) -> tuple[list[Coroutine], list[str], list[dict[str, str]]]:
+) -> tuple[
+    list[Coroutine[Any, Any, tuple[dict[str, str] | None, str | None]]],
+    list[str],
+    list[dict[str, str]],
+]:
     """Creates video generation tasks for the given images.
 
     Returns:
@@ -324,8 +341,8 @@ def _process_results(
 
     successful_videos.sort(
         key=lambda v: (
-            int(re.match(r"(\d+)", v["name"]).group(1))
-            if re.match(r"(\d+)", v["name"])
+            int(match.group(1))
+            if (match := re.match(r"(\d+)", v["name"]))
             else -1
         )
     )
@@ -337,9 +354,9 @@ async def generate_video(
     video_queries: list[str],
     tool_context: ToolContext,
     num_images: int,
-    scene_numbers: list[int] | None = None,
+    scene_numbers: Optional[list[int]] = None,
     logo_prompt_present: bool = True,
-) -> dict[str, str | list[dict[str, str]]]:
+) -> dict[str, Any]:
     """Generates videos in parallel from a list of prompts and images.
 
     Args:
@@ -381,7 +398,7 @@ async def generate_video(
         logo_prompt_present,
     )
 
-    successful_videos = []
+    successful_videos: list[dict[str, str]] = []
     if tasks:
         results = await asyncio.gather(*tasks)
         successful_videos, failed_videos = _process_results(

@@ -14,7 +14,7 @@
 """Utility functions for interacting with the Gemini API."""
 
 import logging
-from typing import TypedDict
+from typing import Any, TypedDict, cast
 
 from google import auth, genai
 from google.api_core import exceptions as api_exceptions
@@ -83,7 +83,7 @@ async def call_gemini_image_api(
     try:
         response = await client.aio.models.generate_content(
             model=model,
-            contents=contents,
+            contents=cast(Any, contents),
             config=GENERATE_CONTENT_CONFIG,
         )
         if (
@@ -107,6 +107,7 @@ async def call_gemini_image_api(
         ValueError,
         api_exceptions.ResourceExhausted,
         genai.errors.ServerError,
+        Exception,
     ) as e:
         logging.error(
             "Error calling image generation API: %s", e, exc_info=True
@@ -123,7 +124,7 @@ def initialize_gemini_client() -> genai.Client | None:
     try:
         client = genai.Client()
         return client
-    except (auth.exceptions.DefaultCredentialsError, ValueError) as e:
+    except (auth.exceptions.DefaultCredentialsError, ValueError, Exception) as e:
         logging.error(
             "Failed to initialize Gemini client: %s", e, exc_info=True
         )

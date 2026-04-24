@@ -17,7 +17,7 @@ import logging
 import os
 
 from google.adk.tools import ToolContext
-from google.cloud import storage
+from google.cloud.storage import Client
 from google.genai import types
 
 # --- Configuration ---
@@ -28,25 +28,20 @@ logging.basicConfig(
 IMAGE_MIME_TYPE = "image/png"
 
 
-async def _load_gcs_image(
-    gcs_uri: str, storage_client: storage.Client
-) -> types.Part | None:
-    """Loads an image from GCS and returns it as a Part object.
+def _load_gcs_image(gcs_uri: str, storage_client: Client) -> bytes | None:
+    """Loads image bytes from GCS.
 
     Args:
         gcs_uri: The GCS URI of the image. Does not start with "gs://"
         storage_client: The GCS storage client.
 
     Returns:
-        A Part object containing the image data, or None on failure.
+        Image bytes, or None on failure.
     """
     try:
         bucket_name, blob_name = gcs_uri.split("/", 1)
         blob = storage_client.bucket(bucket_name).blob(blob_name)
-        image_bytes = blob.download_as_bytes()
-        return types.Part.from_bytes(
-            data=image_bytes, mime_type=IMAGE_MIME_TYPE
-        )
+        return blob.download_as_bytes()
     except Exception as e:
         logging.error(f"Failed to load image from '{gcs_uri}': {e}")
         return None
@@ -72,12 +67,18 @@ async def ensure_image_artifact(
     """
     if image_filename.startswith("gs://"):
         try:
-            storage_client = storage.Client()
+            storage_client = Client()
             gcs_uri = image_filename.replace("gs://", "")
-            image_part = await _load_gcs_image(gcs_uri, storage_client)
-            if image_part:
+            image_bytes = _load_gcs_image(gcs_uri, storage_client)
+            if image_bytes:
                 artifact_filename = gcs_uri.split("/")[-1]
-                await tool_context.save_artifact(artifact_filename, image_part)
+                await tool_context.save_artifact(
+                    artifact_filename,
+                    types.Part.from_bytes(
+                        data=image_bytes,
+                        mime_type=IMAGE_MIME_TYPE,
+                    ),
+                )
                 logging.info(
                     "Saved image from GCS URI '%s' as artifact '%s'",
                     gcs_uri,
@@ -94,7 +95,7 @@ async def ensure_image_artifact(
                 exc_info=True,
             )
             # Fall through to try loading as an artifact
-            image_filename = image_filename.split("/")[-1]
+            image_filename = image_filename.rsplit("/", maxsplit=1)[-1]
 
     try:
         logging.info(
@@ -134,8 +135,7 @@ async def load_image_resource(
 
     if source_path.startswith("gs://"):
         gcs_uri = source_path.replace("gs://", "")
-        _bucket_name, _blob_name = gcs_uri.split("/", 1)
-        storage_client = storage.Client()
+        storage_client = Client()
         image_bytes = _load_gcs_image(gcs_uri, storage_client)
     else:
         artifact = await tool_context.load_artifact(source_path)
