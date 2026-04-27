@@ -1,0 +1,30 @@
+[project]
+name = "openregistry-hong-kong-companies-registry"
+version = "0.1.0"
+description = "ADK agent with live access to Hong Kong Companies Registry (公司註冊處) (Hong Kong SAR) via the OpenRegistry MCP server"
+authors = [
+    { name = "Sophymarine" }
+]
+license = { text = "Apache License 2.0" }
+readme = "README.md"
+requires-python = ">=3.10"
+
+dependencies = [
+    "google-adk>=1.13.0",
+    "google-genai>=1.17.0",
+    "python-dotenv>=1.1.0",
+]
+
+[tool.ruff]
+extend = "../../../pyproject.toml"
+
+[tool.ruff.lint.isort]
+known-first-party = ["openregistry_hk"]
+
+[tool.agent-starter-pack.settings]
+agent_directory = "openregistry_hk"
+deployment_targets = ["agent_engine", "cloud_run"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
