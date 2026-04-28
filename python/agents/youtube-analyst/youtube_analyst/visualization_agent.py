@@ -2,16 +2,21 @@ import os
 
 from google import genai
 from google.adk.agents import Agent
-from google.adk.tools import load_artifacts
+from google.adk.tools import load_artifacts  # type: ignore
 
+from .common.llm import GeminiWithLocation
+from .common.utils import load_prompt
 from .config import config
-from .utils import load_prompt
-from .visualization_tools import execute_visualization_code
+from .visualization_tools import (
+    execute_visualization_code,
+)
 
 visualization_agent = Agent(
-    model=config.agent_settings.model,
+    model=GeminiWithLocation(
+        model=config.agent_settings.model, location=config.GOOGLE_GENAI_LOCATION
+    ),
     name="visualization_agent",
-    description="Agent specialized in creating interactive visualizations.",
+    description="Agent specialized in creating interactive and static visualizations.",
     instruction=load_prompt(
         os.path.dirname(__file__), "visualization_agent.txt"
     ),

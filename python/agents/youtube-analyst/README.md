@@ -2,6 +2,21 @@
 
 The YouTube Analyst Agent is a powerful Gemini-powered assistant designed to provide deep insights into YouTube content, channel performance, and audience engagement. It leverages the YouTube Data API to retrieve real-time data and uses Gemini's reasoning capabilities to analyze trends, sentiment, and metrics.
 
+## 🚀 Quick Start (Agent Starter Pack)
+
+To create a production-ready project based on this agent, run the following command:
+
+```bash
+uvx agent-starter-pack create my-youtube-analyst -a adk@youtube-analyst
+```
+
+This will set up a complete project with:
+*   **Infrastructure:** Terraform scripts for Google Cloud resources.
+*   **CI/CD:** Automated deployment pipelines (Cloud Build or GitHub Actions).
+*   **Management:** Built-in scripts for deployment and verification.
+
+---
+
 ## Demo
 
 [![YouTube Analyst Demo](https://img.youtube.com/vi/PEKMLi52OzM/0.jpg)](https://www.youtube.com/watch?v=PEKMLi52OzM)
@@ -19,17 +34,7 @@ This agent assists marketers, content creators, and researchers in understanding
 
 ### Architecture
 
-```mermaid
-graph TD
-    User[User] -->|Query| RootAgent[YouTube Analyst Agent]
-    RootAgent -->|Calls| YouTubeTools[YouTube Data API Tools]
-    YouTubeTools -->|Returns Data| RootAgent
-    RootAgent -->|Delegates| VizAgent[Visualization Agent]
-    VizAgent -->|Generates Code| PythonExec[Python Executor]
-    PythonExec -->|Returns Artifact| VizAgent
-    VizAgent -->|Returns Chart| RootAgent
-    RootAgent -->|Final Response| User
-```
+![YouTube Analyst Architecture](architecture.png)
 
 ## Agent Details
 
@@ -56,67 +61,97 @@ graph TD
     *   `analyze_sentiment_heuristic`: Performs keyword-based sentiment scoring on text.
     *   `render_html`: Renders HTML content (used for reports).
     *   `execute_visualization_code`: Executes generated plotting code to produce artifacts.
+    *   `store_youtube_api_key`: Stores the user-provided API key for the session.
 
 ## Setup and Installation
 
 ### Folder Structure
 ```
 youtube-analyst/
-├── README.md                 # Documentation
-├── pyproject.toml            # Dependencies and configuration
-├── .env                      # Environment variables (credentials)
-└── youtube_analyst/          # Main Package
-    ├── __init__.py
-    ├── agent.py              # Main Agent logic
+├── README.md                 # This file
+├── pyproject.toml            # Dependencies and project configuration
+├── Makefile                  # Automation for install, check, test, and web UI
+├── .env.example              # Template for environment variables
+├── tests/                    # Unit and integration tests
+└── youtube_analyst/          # Main agent package
+    ├── __init__.py           # Environment initialization
+    ├── agent.py              # Agent and sub-agent definition
     ├── config.py             # Configuration loader
-    ├── tools.py              # YouTube API tools
-    ├── visualization_agent.py # Sub-agent for charting
-    ├── visualization_tools.py # Tools for code execution & plotting
-    └── prompts/              # System instructions
+    ├── tools.py              # YouTube API and utility tools
+    ├── visualization_agent.py # Visualization sub-agent logic
+    ├── visualization_tools.py # Tools for code execution
+    ├── skills/               # Modular skill sets
+    └── prompts/              # System instructions (RoA philosophy)
 ```
 
 ### Prerequisites
 
-- Python 3.11+
-- [uv](https://github.com/astral-sh/uv) (for dependency management)
-- Google Cloud Project (with Vertex AI enabled)
-- [YouTube Data API Key](https://developers.google.com/youtube/v3/getting-started)
+- **Python 3.13**: The project is pinned to this version for stability and feature compatibility.
+- [uv](https://docs.astral.sh/uv/): Used for fast dependency management and virtual environment creation.
+- **Google Cloud Project**: Required for Vertex AI and Gemini model access.
+- **YouTube Data API key**: You will be prompted to provide this in the chat during your first interaction.
 
-### Installation
+### Installation (Local Development)
 
-1.  **Clone the repository and navigate to the agent:**
+1.  **Clone the repository:**
     ```bash
-    cd python/agents/youtube-analyst
+    git clone https://github.com/google/adk-samples.git
+    cd adk-samples/python/agents/youtube-analyst
     ```
 
-2.  **Install dependencies:**
+2.  **Install the environment:**
     ```bash
-    uv sync
+    make install
     ```
 
-3.  **Configure Environment:**
-    Create a `.env` file in the `youtube-analyst` directory:
+3.  **Configure Credentials:**
     ```bash
-    GOOGLE_CLOUD_PROJECT=your-project-id
-    GOOGLE_CLOUD_LOCATION=global
-    GOOGLE_GENAI_USE_VERTEXAI=1
-    GOOGLE_API_KEY=your-youtube-data-api-key
+    cp .env.example .env
     ```
+    Edit `.env` and set `GOOGLE_CLOUD_PROJECT` and `GOOGLE_CLOUD_LOCATION=global`.
 
-## Usage
+### Running the Agent
 
-### Running in CLI
-Interact with the agent directly in your terminal:
+**Web Interface (Recommended):**
 ```bash
-uv run adk run youtube_analyst
+make web
+```
+Select `youtube_analyst` from the agent selection menu.
+
+**Command Line Interface:**
+```bash
+make cli
 ```
 
-### Running with Web UI
-For a richer experience with interactive charts:
-```bash
-uv run adk web
-```
-*Select `youtube_analyst` from the dropdown menu.*
+### Deployment (Advanced)
+
+For users who want to deploy the agent as a managed service, we provide automated deployment scripts that rely on the [Agent Starter Pack (ASP)](https://goo.gle/agent-starter-pack).
+
+- **Deploy to Vertex AI Agent Engine:**
+  ```bash
+  ./deployment/deploy-to-agent-engine.sh
+  ```
+- **Deploy to Google Cloud Run:**
+  ```bash
+  ./deployment/deploy-to-cloud-run.sh
+  ```
+- **Deploy to Gemini Enterprise:**
+  ```bash
+  ./deployment/deploy-to-gemini-enterprise.sh
+  ```
+
+*Note: These scripts use `uvx` and have built-in hermetic safeguards (`UV_NO_CONFIG=1`) to ensure reliable installation of the required deployment tools from the public PyPI registry.*
+
+---
+
+## Onboarding: YouTube API Key
+
+This agent requires a YouTube Data API v3 key. To maintain security and allow for frictionless setup, YouBuddy features an interactive onboarding flow:
+
+1.  Apply for a key at [Google Developers Console](https://developers.google.com/youtube/v3/getting-started).
+2.  When the agent detects a missing key, it will provide instructions.
+3.  Paste your key into the chat.
+4.  The agent securely stores the key in the session state using the `store_youtube_api_key` tool.
 
 ## Example Interactions
 
@@ -150,23 +185,24 @@ Arguments: {"view_count": 50000, "like_count": 2500, "comment_count": 150}
 [youtube_agent]: The latest video from Running HK has an engagement rate of 5.3%. Would you like me to visualize this against other running KOLs?
 ```
 
-## Troubleshooting
-
-- **API Errors:** If you see "Quota Exceeded" or 403 errors, ensure your `GOOGLE_API_KEY` is valid and has the YouTube Data API v3 enabled in the Google Cloud Console.
-- **Visualization Failures:** If a chart fails to render, ask the agent to "try again" or "check the data format." The visualization agent writes code dynamically, and sometimes a retry fixes syntax issues.
-- **Empty Results:** If searches return nothing, try broadening your query or removing date filters.
-
 ## Customization
 
 - **Add New Metrics:** Extend `tools.py` to calculate custom metrics like "views per subscriber" or "comment-to-like ratio."
 - **Enhance Sentiment:** Replace the heuristic sentiment tool in `tools.py` with a call to the Gemini API for more nuanced analysis of comments.
 - **Database Integration:** Modify `tools.py` to save analysis results to BigQuery or a local SQL database for long-term tracking.
 
+## Troubleshooting
+
+- **API Errors:** If you see "Quota Exceeded" or 403 errors, ensure your key is valid and has the YouTube Data API v3 enabled.
+- **Python Version**: If `uv sync` fails, ensure you have Python 3.13 installed (e.g., via `pyenv` or `brew install python@3.13`).
+- **Visualization Failures:** If a chart fails to render, ask the agent to "try again." The visualization agent writes code dynamically, and a retry often fixes syntax issues.
+
 ## Authors
 
 - Pili Hu
 - Jasmine Tong
 - Kun Wang
+- Jeff Yang
 
 ## Disclaimer
 
