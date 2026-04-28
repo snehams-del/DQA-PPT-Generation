@@ -43,6 +43,7 @@ load_dotenv()
 ARIZE_API_KEY = os.getenv("ARIZE_API_KEY")
 ARIZE_SPACE_ID = os.getenv("ARIZE_SPACE_ID")
 GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT")
+GOOGLE_CLOUD_LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION")
 
 if not all([ARIZE_API_KEY, ARIZE_SPACE_ID, GOOGLE_CLOUD_PROJECT]):
     raise ValueError(
@@ -50,7 +51,7 @@ if not all([ARIZE_API_KEY, ARIZE_SPACE_ID, GOOGLE_CLOUD_PROJECT]):
     )
 
 # Initialize Vertex AI
-vertexai.init(project=GOOGLE_CLOUD_PROJECT, location="us-central1")
+vertexai.init(project=GOOGLE_CLOUD_PROJECT, location=GOOGLE_CLOUD_LOCATION)
 
 # Initialize Arize client
 arize_client = ArizeDatasetsClient(api_key=ARIZE_API_KEY)
@@ -59,7 +60,7 @@ arize_client = ArizeDatasetsClient(api_key=ARIZE_API_KEY)
 phoenix_model = GeminiModel(
     model=MODEL,
     project=GOOGLE_CLOUD_PROJECT,
-    location="us-central1",
+    location=GOOGLE_CLOUD_LOCATION,
 )
 
 
