@@ -51,3 +51,9 @@ deployment_targets = ["agent_engine", "cloud_run"]
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[[tool.uv.index]]
+name = "pypi"
+url = "https://pypi.org/simple"
+default = true
+
