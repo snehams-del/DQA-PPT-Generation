@@ -371,7 +371,7 @@ First, update `mcp-toolbox/tools.yaml` for your Cloud SQL instance:
   postgresql: # GCP -  CLOUD SQL
     kind: cloud-sql-postgres
     project: <your-project-id>
-    region: us-central1
+    region: us-east1
     instance: software-assistant
     database: tickets-db
     user: postgres
