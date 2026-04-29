@@ -58,7 +58,7 @@ def create(env_vars: dict[str, str]) -> None:
         display_name="Travel-Concierge-ADK",
         description="An Example AgentEngine Deployment",
         requirements=[
-            "google-adk (==1.18.0)",
+            "google-adk (>=1.31.0,<2.0.0)",
             "google-cloud-aiplatform[agent_engines] (>=1.93.1)",
             "google-genai (>=1.9.0)",
             "pydantic (>=2.10.6,<3.0.0)",
