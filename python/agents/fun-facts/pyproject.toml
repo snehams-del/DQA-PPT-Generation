@@ -1,5 +1,6 @@
 [project]
 name = "fun-facts"
+authors = [{ name = "Holt Skinner", email = "holtskinner@google.com" }]
 version = "0.1.0"
 description = "The agent uses the **Gemini** model and **Google Search** grounding to provide wacky and interesting fun facts about any topic you provide."
 readme = "README.md"
