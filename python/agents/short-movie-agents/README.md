@@ -1,5 +1,5 @@
 # Short Movie Agents
-ADK version: 1.14.1, Owner: @rsamborski
+ADK version: 1.31.1, Owner: @rsamborski
 
 Short Movie Agents demo is an ADK example showcasing a multi-agent architecture to construct end to end videos based on the user's intent. It includes agents which have a different role each:
 
