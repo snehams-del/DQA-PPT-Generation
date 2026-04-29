@@ -48,9 +48,9 @@ def create() -> None:
         adk_app,
         display_name=root_agent.name,
         requirements=[
-            "google-adk>=1.27.0",
-            "google-cloud-aiplatform[agent-engines]>=1.142.0",
-            "google-genai>=1.68.0",
+            "google-adk>=1.31.1",
+            "google-cloud-aiplatform[agent-engines]>=1.148.1",
+            "google-genai>=1.73.1",
             "pydantic>=2.12.5",
             "python-dotenv>=1.2.2",
             "absl-py>=2.1.0",
