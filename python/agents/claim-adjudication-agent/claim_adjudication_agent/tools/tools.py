@@ -23,7 +23,7 @@ CLAIM_DOCUMENTS_BUCKET = os.environ.get(
     "CLAIM_DOCUMENTS_BUCKET"
 )
 CLAIM_DOCUMENTS_BUCKET_FOLDER = os.getenv(
-    "CLAIM_DOCUMENTS_BUCKET_FOLDER", "health_claim_documents"
+    "CLAIM_DOCUMENTS_BUCKET_FOLDER"
 )
 
 logger.info(f"CLAIM_DOCUMENTS_BUCKET: {CLAIM_DOCUMENTS_BUCKET}")
@@ -240,6 +240,15 @@ def get_claims_details(
                 else:
                     continue
 
+<<<<<<< HEAD
+=======
+                # 2. --- MODIFICATION ---
+                # REMOVED: File download and Base64 encoding
+                # file_content_binary = blob.download_as_bytes()
+                # content_base64 = base64.b64encode(file_content_binary).decode('utf-8')
+
+                # 3. Append to results list
+>>>>>>> upstream/main
                 results.append(
                     {
                         "name": file_name,
@@ -248,6 +257,10 @@ def get_claims_details(
                         "gcs_path": f"gs://{CLAIM_DOCUMENTS_BUCKET}/{blob.name}",
                     }
                 )
+<<<<<<< HEAD
+=======
+                tool_context.state["active_policy_type"] = "Elevate"
+>>>>>>> upstream/main
 
                 logger.info(f"Successfully processed and found: {file_name}")
 
