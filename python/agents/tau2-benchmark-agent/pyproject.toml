@@ -2,14 +2,16 @@
 name = "tau2-benchmark-agent"
 version = "0.1.0"
 description = "ADK Agent for Tau2-Bench benchmark evaluation using Google ADK"
-authors = [{ name = "Google ADK Team", email = "no-reply@google.com" }]
+authors = [
+    { name = "Selcuk Gun", email = "5055758+selcukgun@users.noreply.github.com" },
+]
 license = {text = "Apache License 2.0"}
 readme = "README.md"
 requires-python = ">=3.10"
 
 dependencies = [
-    "google-adk==1.19.0",
-    "google-genai==1.51.0",
+    "google-adk>=1.31.0",
+    "google-genai>=1.72.0",
     "loguru==0.7.3",
     "tenacity==9.1.2",
     "tau2", # Just the name here
