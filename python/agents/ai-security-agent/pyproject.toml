@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "A sophisticated multi-agent system for comprehensive AI safety testing and vulnerability assessment"
 authors = [
     { name = "Google LLC" },
-    { name = "Ankul Jain" }
+    { name = "Ankul Jain", email = "ankuljain@google.com" }
 ]
 license = {text = "Apache License 2.0"}
 readme = "README.md"
