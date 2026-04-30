@@ -16,6 +16,7 @@ import pathlib
 
 import dotenv
 import pytest
+import vertexai
 from google.adk.evaluation.agent_evaluator import AgentEvaluator
 
 pytest_plugins = ("pytest_asyncio",)
@@ -24,6 +25,11 @@ pytest_plugins = ("pytest_asyncio",)
 @pytest.fixture(scope="session", autouse=True)
 def load_env():
     dotenv.load_dotenv()
+    # Ensure vertexai is initialized with the correct region for evaluations
+    import os
+    project = os.getenv("GOOGLE_CLOUD_PROJECT")
+    if project:
+        vertexai.init(project=project, location="us-east1")
 
 
 @pytest.mark.asyncio
