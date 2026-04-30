@@ -35,4 +35,8 @@ async def test_eval_full_conversation():
             pathlib.Path(__file__).parent / "data/conversation.test.json"
         ),
         num_runs=1,
+        criteria={
+            "response_match_score": 0.35,
+            "tool_trajectory_avg_score": 0.05,
+        },
     )
