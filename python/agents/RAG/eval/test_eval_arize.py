@@ -39,7 +39,8 @@ GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT")
 if not all([ARIZE_API_KEY, ARIZE_SPACE_ID, GOOGLE_CLOUD_PROJECT]):
     warnings.warn(
         "Missing required environment variables: ARIZE_API_KEY, ARIZE_SPACE_ID, GOOGLE_CLOUD_PROJECT. "
-        "Arize evaluations will be skipped."
+        "Arize evaluations will be skipped.",
+        stacklevel=2,
     )
     # Define a dummy arize_client to avoid NameError during collection
     arize_client = None
@@ -61,7 +62,7 @@ def create_arize_dataset():
     """Create an Arize dataset from the test data."""
     if arize_client is None:
         return None
-    
+
     test_data = load_test_data()
 
     # Transform data for Arize format - simplified structure
@@ -440,4 +441,3 @@ def run_evaluation_experiment():
 
 if __name__ == "__main__":
     run_evaluation_experiment()
-
