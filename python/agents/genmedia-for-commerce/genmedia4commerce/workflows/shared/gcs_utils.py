@@ -111,7 +111,7 @@ def upload_folder_to_gcs(
 
     # Create blob objects with explicit names
     blob_file_pairs = []
-    for file_path, blob_name in zip(file_paths, blob_names):
+    for file_path, blob_name in zip(file_paths, blob_names, strict=False):
         blob = bucket.blob(blob_name)
         blob_file_pairs.append((file_path, blob))
 
@@ -124,7 +124,7 @@ def upload_folder_to_gcs(
     uploaded_uris = []
     errors = []
 
-    for (file_path, blob), result in zip(blob_file_pairs, results):
+    for (file_path, blob), result in zip(blob_file_pairs, results, strict=False):
         if isinstance(result, Exception):
             errors.append(f"Failed to upload {file_path}: {result}")
         else:
@@ -214,7 +214,7 @@ def save_and_upload_to_gcs(
     bucket_name: str,
     gcs_destination_prefix: str = "shoe_spinning_outputs",
     project_id: str | None = None,
-    pre_sampled_frames: list[bytes] = None,
+    pre_sampled_frames: list[bytes] | None = None,
     image_format: str = "png",
 ) -> list[str]:
     """
@@ -398,7 +398,7 @@ def _build_manifest(
         "metadata": f"{base_uri}clips/clips_metadata.json",
     }
 
-    for clip, meta in zip(result["clips"], clips_meta):
+    for clip, meta in zip(result["clips"], clips_meta, strict=False):
         clip_name = f"{product_id}_clip_{clip['index']}"
         clip_base = f"{base_uri}clips/{clip_name}"
 
@@ -414,7 +414,7 @@ def _build_manifest(
         frame_map = {}
         if "sampled_frame_indices" in clip and "frame_classifications" in clip:
             frame_map = dict(
-                zip(clip["sampled_frame_indices"], clip["frame_classifications"])
+                zip(clip["sampled_frame_indices"], clip["frame_classifications"], strict=False)
             )
 
         for i in range(num_frames):

@@ -85,7 +85,7 @@ Light and camera movement: Static camera; medium shot (waist up).
 LOWER_BODY_VEO_PROMPT = """
 Subject: Identical lower body from reference images. Garment details must remain perfectly consistent. Frame strictly from the waist down (waist to shoes); upper body and head are outside the frame. Do not invent details; reproduce the garment and shoes exactly from references.
 
-Scene: Professional studio, high-key white background, centered framing. 
+Scene: Professional studio, high-key white background, centered framing.
 Lighting: Bright, even studio lighting highlighting technical fabric textures.
 
 Movement & Physics: Natural human motion with organic weight shifts. Avoid mechanical rotation. Model must move with fluid, lifelike steps and weight distribution. Fabric should show realistic tension and folding during movement.
@@ -328,7 +328,7 @@ async def run_animate_product_fitting(
         logger.info(f"[AnimateFitting] Scores: {scores}")
 
         ranked = sorted(
-            zip(scores, video_bytes_list),
+            zip(scores, video_bytes_list, strict=False),
             key=lambda x: x[0],
             reverse=True,
         )
@@ -337,7 +337,7 @@ async def run_animate_product_fitting(
 
         filtered = [
             (s, v)
-            for s, v in zip(scores, sorted_videos)
+            for s, v in zip(scores, sorted_videos, strict=False)
             if s >= MIN_SIMILARITY_THRESHOLD
         ]
 

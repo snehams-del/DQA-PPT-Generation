@@ -91,7 +91,7 @@ async def enhance_image_endpoint(
         )
     except Exception as e:
         logger.error(f"Error in /enhance-image: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Internal Server Error: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {e}") from e
 
 
 @router.post("/generate-vto")
@@ -113,7 +113,7 @@ async def generate_vto_endpoint(
         logger.error(f"Error reading uploaded files: {e}")
         raise HTTPException(
             status_code=400, detail=f"Error reading uploaded files: {e}"
-        )
+        ) from e
 
     if not glasses_images:
         raise HTTPException(
@@ -162,4 +162,4 @@ async def edit_frame_endpoint(
         return JSONResponse(content={"edited_frame_image": edited_frame_b64})
     except Exception as e:
         logger.error(f"Error in /edit-frame: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Internal Server Error: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {e}") from e

@@ -92,7 +92,7 @@ target-version = "py310"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "RUF"]
-ignore = ["E501", "C901", "B006"]
+ignore = ["E501", "C901", "B006", "B008", "E402"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["genmedia4commerce", "agents", "mcp_server", "workflows"]

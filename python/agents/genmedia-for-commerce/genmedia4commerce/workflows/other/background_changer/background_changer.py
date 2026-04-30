@@ -228,11 +228,7 @@ Generate the image.""",
 
     logger.info("[Background Changer] Step 2: Face improvement with correction...")
 
-    correction_message = user_message + [
-        step1_result,
-        "No, the face is different. Use this face:",
-        reference_face,
-    ]
+    correction_message = [*user_message, step1_result, "No, the face is different. Use this face:", reference_face]
 
     step2_result = generate_nano(
         client=client,

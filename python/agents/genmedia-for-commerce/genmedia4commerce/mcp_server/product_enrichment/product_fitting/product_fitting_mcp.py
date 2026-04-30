@@ -124,7 +124,7 @@ async def run_product_fitting(
         try:
             return base64.b64decode(val)
         except Exception as e:
-            raise ValueError(f"Invalid base64 for {label}: {e}")
+            raise ValueError(f"Invalid base64 for {label}: {e}") from e
 
     garment_images_bytes: list[bytes | str] = []
     for idx, img_b64 in enumerate(garment_images_base64):
@@ -232,7 +232,7 @@ async def run_product_fitting_animation(
         back_bytes = base64.b64decode(back_image_base64) if back_image_base64 else None
 
     except Exception as e:
-        raise ValueError(f"Invalid encoding: {e}")
+        raise ValueError(f"Invalid encoding: {e}") from e
 
     logger.info(
         f"[MCP product_fitting] Starting animation: framing={framing}, "

@@ -391,13 +391,7 @@ def fix_fitting(
     """
     logger.debug("[Fitting] Starting fix attempt")
 
-    fix_message = original_message + [
-        generated_image,
-        f"""No, the garment reproduction has issues:
-{eval_feedback}
-
-Fix ONLY the issues described above. Keep everything else identical — same pose, body, composition, setting, complementary garments. Reproduce the garment details exactly as shown in the reference images. Generate the corrected image.""",
-    ]
+    fix_message = [*original_message, generated_image, f"""No, the garment reproduction has issues:\n{eval_feedback}\n\nFix ONLY the issues described above. Keep everything else identical — same pose, body, composition, setting, complementary garments. Reproduce the garment details exactly as shown in the reference images. Generate the corrected image."""]
 
     result = generate_nano(
         client, fix_message, model=model, config=original_config, timeout=timeout
