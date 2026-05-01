@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import pathlib
 
 import dotenv
@@ -26,7 +27,6 @@ pytest_plugins = ("pytest_asyncio",)
 def load_env():
     dotenv.load_dotenv()
     # Ensure vertexai is initialized with the correct region for evaluations
-    import os
     project = os.getenv("GOOGLE_CLOUD_PROJECT")
     if project:
         vertexai.init(project=project, location="us-east1")

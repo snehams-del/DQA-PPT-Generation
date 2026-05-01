@@ -35,7 +35,9 @@ warnings.filterwarnings(
 )
 
 
-def generate_class_methods_from_agent(agent_instance: Any) -> list[dict[str, Any]]:
+def generate_class_methods_from_agent(
+    agent_instance: Any,
+) -> list[dict[str, Any]]:
     """Generate method specifications with schemas from agent's register_operations().
 
     See: https://docs.cloud.google.com/agent-builder/agent-engine/use/custom#supported-operations
@@ -43,12 +45,15 @@ def generate_class_methods_from_agent(agent_instance: Any) -> list[dict[str, Any
     registered_operations = _agent_engines_utils._get_registered_operations(
         agent=agent_instance
     )
-    class_methods_spec = _agent_engines_utils._generate_class_methods_spec_or_raise(
-        agent=agent_instance,
-        operations=registered_operations,
+    class_methods_spec = (
+        _agent_engines_utils._generate_class_methods_spec_or_raise(
+            agent=agent_instance,
+            operations=registered_operations,
+        )
     )
     class_methods_list = [
-        _agent_engines_utils._to_dict(method_spec) for method_spec in class_methods_spec
+        _agent_engines_utils._to_dict(method_spec)
+        for method_spec in class_methods_spec
     ]
     return class_methods_list
 
@@ -119,9 +124,7 @@ def print_deployment_success(
     if service_account:
         print(f"Service Account: {service_account}")
     else:
-        default_sa = (
-            f"service-{project_number}@gcp-sa-aiplatform-re.iam.gserviceaccount.com"
-        )
+        default_sa = f"service-{project_number}@gcp-sa-aiplatform-re.iam.gserviceaccount.com"
         print(f"Service Account: {default_sa}")
     playground_url = f"https://console.cloud.google.com/vertex-ai/agents/agent-engines/locations/{location}/agent-engines/{agent_engine_id}/playground?project={project}"
     print(f"\n📊 Open Console Playground: {playground_url}\n")
@@ -149,10 +152,14 @@ def setup_agent_identity(client: Any, project: str, display_name: str) -> Any:
     click.echo(f"🔐 Granting IAM roles to: {principal}")
     proj_client = resourcemanager_v3.ProjectsClient()
     policy = proj_client.get_iam_policy(
-        request=iam_policy_pb2.GetIamPolicyRequest(resource=f"projects/{project}")
+        request=iam_policy_pb2.GetIamPolicyRequest(
+            resource=f"projects/{project}"
+        )
     )
     for role in roles:
-        policy.bindings.append(policy_pb2.Binding(role=role, members=[principal]))
+        policy.bindings.append(
+            policy_pb2.Binding(role=role, members=[principal])
+        )
     proj_client.set_iam_policy(
         request=iam_policy_pb2.SetIamPolicyRequest(
             resource=f"projects/{project}", policy=policy
@@ -264,7 +271,7 @@ def setup_agent_identity(client: Any, project: str, display_name: str) -> Any:
     default=False,
     help="Enable agent identity for per-agent IAM access control (Preview feature)",
 )
-def deploy_agent_engine_app(
+def deploy_agent_engine_app(  # noqa: PLR0915
     project: str | None,
     location: str,
     display_name: str,
@@ -304,7 +311,9 @@ def deploy_agent_engine_app(
 
     # Enable telemetry by default for Agent Engine
     env_vars.setdefault("GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY", "true")
-    env_vars.setdefault("OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT", "true")
+    env_vars.setdefault(
+        "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT", "true"
+    )
 
     if not project:
         _, project = google.auth.default()
@@ -399,7 +408,9 @@ def deploy_agent_engine_app(
 
     # Deploy the agent (create or update)
     action = "Updating" if matching_agents else "Creating"
-    click.echo(f"\n🚀 {action} agent: {display_name} (this can take 3-5 minutes)...")
+    click.echo(
+        f"\n🚀 {action} agent: {display_name} (this can take 3-5 minutes)..."
+    )
 
     if matching_agents:
         remote_agent = client.agent_engines.update(
