@@ -18,6 +18,7 @@ import uuid
 import google.auth
 from dotenv import load_dotenv
 from google.adk.agents import Agent
+from google.adk.apps import App
 from google.adk.tools.retrieval.vertex_ai_rag_retrieval import (
     VertexAiRagRetrieval,
 )
@@ -68,3 +69,8 @@ with using_session(session_id=uuid.uuid4()):
         instruction=return_instructions_root(),
         tools=tools,
     )
+
+app = App(
+    root_agent=root_agent,
+    name="rag_agent",
+)

@@ -21,7 +21,7 @@ from google.adk.artifacts import GcsArtifactService, InMemoryArtifactService
 from google.cloud import logging as google_cloud_logging
 from vertexai.agent_engines.templates.adk import AdkApp
 
-from rag.agent import root_agent
+from rag.agent import app as adk_app
 from rag.app_utils.telemetry import setup_telemetry
 from rag.app_utils.typing import Feedback
 
@@ -56,7 +56,7 @@ class AgentEngineApp(AdkApp):
 gemini_location = os.environ.get("GOOGLE_CLOUD_LOCATION")
 logs_bucket_name = os.environ.get("LOGS_BUCKET_NAME")
 agent_engine = AgentEngineApp(
-    app=root_agent,
+    app=adk_app,
     artifact_service_builder=lambda: (
         GcsArtifactService(bucket_name=logs_bucket_name)
         if logs_bucket_name
