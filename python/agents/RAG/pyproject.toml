@@ -93,3 +93,4 @@ example_question = "What are the key business segments mentioned in Alphabet's 2
 
 [tool.agent-starter-pack.settings]
 agent_directory = "rag"
+deployment_targets = ["agent_engine"]
