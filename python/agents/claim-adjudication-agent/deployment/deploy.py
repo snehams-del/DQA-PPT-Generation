@@ -55,6 +55,7 @@ def create() -> None:
             "python-dotenv>=1.2.2",
             "absl-py>=2.1.0",
             "pandas>=2.2.3,<3.0.0",
+            "google-cloud-logging>=3.14.0",
         ],
         extra_packages=["./claim_adjudication_agent"],
     )
