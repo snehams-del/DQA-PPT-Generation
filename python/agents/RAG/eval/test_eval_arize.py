@@ -11,41 +11,35 @@ import uuid
 from typing import Any
 
 import pandas as pd
-
-# Google Cloud imports for Vertex AI evaluations
 import vertexai
-
-# Arize imports
-from arize.experimental.datasets import ArizeDatasetsClient
-from arize.experimental.datasets.experiments.types import EvaluationResult
-from arize.experimental.datasets.utils.constants import GENERATIVE
+from arize.client import ArizeClient
+from arize.experiments import EvaluationResult
 from dotenv import load_dotenv
-
-# ADK imports for running the agent
 from google.adk.runners import InMemoryRunner
 from google.genai.types import Part, UserContent
 from vertexai.preview.evaluation import EvalTask
 
-# Import the RAG agent
 from rag.agent import root_agent
 
 load_dotenv()
 
-# Environment variables
-ARIZE_API_KEY = os.getenv("ARIZE_API_KEY")
-ARIZE_SPACE_ID = os.getenv("ARIZE_SPACE_ID")
-GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT")
+def _init_clients() -> tuple[Any, str, str]:
+    """Initialize and validate Arize/Vertex clients at runtime."""
+    arize_api_key = os.getenv("ARIZE_API_KEY")
+    arize_space_id = os.getenv("ARIZE_SPACE_ID")
+    google_cloud_project = os.getenv("GOOGLE_CLOUD_PROJECT")
 
-if not all([ARIZE_API_KEY, ARIZE_SPACE_ID, GOOGLE_CLOUD_PROJECT]):
-    raise ValueError(
-        "Missing required environment variables: ARIZE_API_KEY, ARIZE_SPACE_ID, GOOGLE_CLOUD_PROJECT"
-    )
+    if not arize_api_key:
+        raise ValueError("ARIZE_API_KEY is required to run Arize experiments")
+    if not arize_space_id:
+        raise ValueError("ARIZE_SPACE_ID is required to run Arize experiments")
+    if not google_cloud_project:
+        raise ValueError(
+            "GOOGLE_CLOUD_PROJECT is required to run Arize experiments"
+        )
 
-# Initialize Vertex AI
-vertexai.init(project=GOOGLE_CLOUD_PROJECT, location="us-central1")
-
-# Initialize Arize client (developer_key is deprecated, only api_key needed)
-arize_client = ArizeDatasetsClient(api_key=ARIZE_API_KEY)
+    vertexai.init(project=google_cloud_project, location="us-central1")
+    return ArizeClient(api_key=arize_api_key), arize_space_id, google_cloud_project
 
 
 def load_test_data() -> list[dict]:
@@ -56,6 +50,8 @@ def load_test_data() -> list[dict]:
 
 def create_arize_dataset():
     """Create an Arize dataset from the test data."""
+    arize_client, arize_space_id, _ = _init_clients()
+
     test_data = load_test_data()
 
     # Transform data for Arize format - simplified structure
@@ -85,13 +81,13 @@ def create_arize_dataset():
     dataset_name = f"rag_agent_evaluation_dataset-{uuid.uuid4()}"
 
     print(f"Creating dataset: {dataset_name}")
-    dataset_id = arize_client.create_dataset(
-        space_id=ARIZE_SPACE_ID,
-        dataset_name=dataset_name,
-        data=df,
-        dataset_type=GENERATIVE,
+    dataset = arize_client.datasets.create(
+        space=arize_space_id,
+        name=dataset_name,
+        examples=df,
     )
 
+    dataset_id = str(dataset.id)
     print(f"Dataset created with ID: {dataset_id}")
     time.sleep(5)  # Wait after dataset creation
     return {"id": dataset_id}
@@ -236,7 +232,7 @@ def evaluate_with_vertex_ai_single_metric(
 
 def trajectory_exact_match_evaluator(
     output: str, dataset_row: dict
-) -> EvaluationResult:
+) -> Any:
     """Evaluator for trajectory exact match using Vertex AI evaluation API."""
     try:
         metadata = json.loads(output)
@@ -280,7 +276,7 @@ def trajectory_exact_match_evaluator(
 
 def trajectory_precision_evaluator(
     output: str, dataset_row: dict
-) -> EvaluationResult:
+) -> Any:
     """Evaluator for trajectory precision using Vertex AI evaluation API."""
     high_precision = 0.9
     medium_precision = 0.7
@@ -339,7 +335,7 @@ def trajectory_precision_evaluator(
 
 def tool_name_match_evaluator(
     output: str, dataset_row: dict
-) -> EvaluationResult:
+) -> Any:
     """Evaluator for tool name matching, ignoring parameters."""
     max_score = 1.0
     good_score = 0.7
@@ -398,6 +394,7 @@ def tool_name_match_evaluator(
 
 def run_evaluation_experiment():
     """Run the complete evaluation experiment using Arize."""
+    arize_client, arize_space_id, _ = _init_clients()
 
     # Create dataset
     print("Creating Arize dataset...")
@@ -412,28 +409,18 @@ def run_evaluation_experiment():
 
     # Run experiment
     print("Running experiment...")
-    experiment_result = arize_client.run_experiment(
-        space_id=ARIZE_SPACE_ID,
-        dataset_id=dataset["id"],
+    experiment, experiment_result = arize_client.experiments.run(
+        space=arize_space_id,
+        dataset=dataset["id"],
         task=task_function,
         evaluators=evaluators,
-        experiment_name=f"rag_agent_evaluation_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}",
+        name=f"rag_agent_evaluation_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}",
         concurrency=2,  # Reduce concurrency to be more gentle on APIs
         exit_on_error=False,
         dry_run=False,
     )
 
-    # Handle the experiment result - it might be a tuple or have different structure
-    if hasattr(experiment_result, "id"):
-        experiment_id = experiment_result.id
-    elif isinstance(experiment_result, tuple) and len(experiment_result) > 0:
-        experiment_id = (
-            experiment_result[0].id
-            if hasattr(experiment_result[0], "id")
-            else str(experiment_result[0])
-        )
-    else:
-        experiment_id = "unknown"
+    experiment_id = str(experiment.id) if experiment is not None else "unknown"
 
     print(f"Experiment completed! Experiment ID: {experiment_id}")
     print("View results in the Arize UI")

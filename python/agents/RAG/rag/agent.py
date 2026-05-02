@@ -14,6 +14,8 @@
 
 import os
 import uuid
+import warnings
+from typing import Any
 
 import google.auth
 from dotenv import load_dotenv
@@ -30,18 +32,35 @@ from .prompts import return_instructions_root
 
 load_dotenv()
 
-_, project_id = google.auth.default()
-os.environ.setdefault("GOOGLE_CLOUD_PROJECT", project_id)
-os.environ["GOOGLE_CLOUD_LOCATION"] = "global"
+project_id = os.getenv("GOOGLE_CLOUD_PROJECT")
+if not project_id:
+    _, detected_project_id = google.auth.default()
+    project_id = detected_project_id
+os.environ.setdefault(
+    "GOOGLE_CLOUD_PROJECT", project_id or "your-default-project"
+)
+os.environ.setdefault("GOOGLE_CLOUD_LOCATION", "global")
 os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "True")
 
-_ = instrument_adk_with_arize()
+instrument_adk_with_arize()
 
 # Initialize tools list
-tools = []
+tools: list[Any] = []
 
 # Only add RAG retrieval tool if RAG_CORPUS is configured
 rag_corpus = os.environ.get("RAG_CORPUS")
+gcp_project = os.environ.get("GOOGLE_CLOUD_PROJECT")
+
+if rag_corpus and gcp_project and not rag_corpus.startswith(
+    f"projects/{gcp_project}/"
+):
+    warnings.warn(
+        "RAG_CORPUS project does not match GOOGLE_CLOUD_PROJECT. "
+        "Skipping RAG retrieval tool to avoid permission errors.",
+        stacklevel=2,
+    )
+    rag_corpus = None
+
 if rag_corpus:
     ask_vertex_retrieval = VertexAiRagRetrieval(
         name="retrieve_rag_documentation",
@@ -61,7 +80,7 @@ if rag_corpus:
     )
     tools.append(ask_vertex_retrieval)
 
-with using_session(session_id=uuid.uuid4()):
+with using_session(session_id=str(uuid.uuid4())):
     root_agent = Agent(
         model="gemini-2.5-flash",
         name="ask_rag_agent",

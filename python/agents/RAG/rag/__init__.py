@@ -15,10 +15,20 @@
 import os
 
 import google.auth
+from dotenv import load_dotenv
+
+load_dotenv()
+
+project_id = os.getenv("GOOGLE_CLOUD_PROJECT")
+if not project_id:
+    _, project_id = google.auth.default()
+os.environ.setdefault(
+    "GOOGLE_CLOUD_PROJECT", project_id or "your-default-project"
+)
+os.environ.setdefault("GOOGLE_CLOUD_LOCATION", "global")
+os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "True")
 
 from . import agent
+from .agent import root_agent
 
-_, project_id = google.auth.default()
-os.environ.setdefault("GOOGLE_CLOUD_PROJECT", project_id)
-os.environ["GOOGLE_CLOUD_LOCATION"] = "global"
-os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "True")
+__all__ = ["agent", "root_agent"]

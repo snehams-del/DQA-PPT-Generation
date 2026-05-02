@@ -9,6 +9,8 @@ This agent is designed to answer questions related to documents you uploaded to 
 
 This diagram outlines the agent's workflow, designed to provide informed and context-aware responses. User queries are processed by agent development kit. The LLM determines if external knowledge (RAG corpus) is required. If so, the `VertexAiRagRetrieval` tool fetches relevant information from the configured Vertex RAG Engine corpus. The LLM then synthesizes this retrieved information with its internal knowledge to generate an accurate answer, including citations pointing back to the source documentation URLs.
 
+The [Agent Starter Pack](https://goo.gle/agent-starter-pack) (ASP) is the recommended way to create a production-ready project from this sample.
+
 ## Agent Details
 | Attribute         | Details                                                                                                                                                                                             |
 | :---------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -32,11 +34,11 @@ This diagram outlines the agent's workflow, designed to provide informed and con
 *   **Clear Instructions:** Adheres to strict guidelines for providing factual
     answers and proper citations.
 
-## Setup and Installation Instructions
+## Setup and Installation
 ### Prerequisites
 
 *   **Google Cloud Account:** You need a Google Cloud account.
-*   **Python 3.10+:** Ensure you have Python 3.10 or a later version installed.
+*   **Python 3.11+:** Ensure you have Python 3.11 or a later version installed.
 *   **uv:** For dependency management and packaging. Please follow the instructions on the official [uv website](https://docs.astral.sh/uv/) for installation.
 
     ```bash
@@ -45,7 +47,19 @@ This diagram outlines the agent's workflow, designed to provide informed and con
 
 *   **Git:** Ensure you have git installed.
 
-### Project Setup
+### Agent Starter Pack (recommended)
+
+Create a production-ready project scaffold with ASP:
+
+```bash
+uvx agent-starter-pack create my-rag-agent -a adk@RAG -d agent_engine -ds vertex_ai_search
+cd my-rag-agent
+uv sync --group dev
+```
+
+The generated project includes deployment automation and prompts to help configure your RAG corpus and required environment variables.
+
+### Local Development from This Repository
 
 1.  **Clone the Repository:**
 
@@ -57,14 +71,13 @@ This diagram outlines the agent's workflow, designed to provide informed and con
 2.  **Install Dependencies:**
 
     ```bash
-    uv sync
+    uv sync --group dev
     ```
 
     This command reads the `pyproject.toml` file and installs all the necessary dependencies into a virtual environment.
 
 3.  **Set up Environment Variables:**
-    Rename the file ".env.example" to ".env" 
-    Follow the steps in the file to set up the environment variables.
+    Copy `.env.example` to `.env` and set values for this agent.
 
 4. **Setup Corpus:**
     If you have an existing corpus in Vertex AI RAG Engine, please set corpus information in your .env file. For example: RAG_CORPUS='projects/123/locations/us-central1/ragCorpora/456'.
@@ -155,12 +168,12 @@ from the root project directory:
 1.  Run agent in CLI:
 
     ```bash
-    adk run rag
+    uv run adk run rag
     ```
 
 2.  Run agent with ADK Web UI:
     ```bash
-    adk web
+    uv run adk web
     ```
     Select the RAG from the dropdown
 
@@ -184,7 +197,7 @@ The evaluation can be run from the `RAG` directory using
 the `pytest` module:
 
 ```bash
-uv sync --dev
+uv sync --group dev
 uv run pytest eval
 ```
 
@@ -269,26 +282,6 @@ After deploying the agent, follow these steps to test it:
    - Display the agent's responses with proper formatting
 
 The test script includes example queries about Alphabet's 2025 10-K report. You can modify the queries in `deployment/run.py` to test different aspects of your deployed agent.
-
-### Recommended: Using Agent Starter Pack
-
-The Agent Starter Pack is the recommended way to create and deploy a production-ready version of this agent. We have built custom lifecycle hooks into this template so that the Agent Starter Pack automatically handles building your RAG corpus and granting IAM permissions during deployment.
-
-To create your project using `uv`:
-```bash
-uvx agent-starter-pack create my-rag-agent -a adk@RAG -d agent_engine -ds vertex_ai_search
-cd my-rag-agent
-```
-
-Next, run the installation command. This will prompt you to automatically build the sample RAG Corpus and configure your `.env` file:
-```bash
-make install
-```
-
-Finally, deploy the agent to Google Cloud. This will package your agent, push it to Vertex AI Agent Engine, and automatically grant the new Agent Identity permissions to query your RAG Corpus:
-```bash
-make backend
-```
 
 ## Customization
 
