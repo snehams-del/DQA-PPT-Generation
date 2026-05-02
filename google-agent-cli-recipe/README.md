@@ -25,7 +25,7 @@ A production-ready retail agent built with ADK that combines semantic product se
 ### 1. Set up environment
 
 ```bash
-cd python/agents/google-agent-cli-recipe
+cd google-agent-cli-recipe
 cp .env.example .env
 # Edit .env and set GOOGLE_CLOUD_PROJECT
 ```
@@ -109,11 +109,7 @@ The agent ships with 5 sample products in `data/sample-products.csv`:
 ## Evaluation
 
 ```bash
-# Run eval suite
 python -m pytest tests/ -v
-
-# Or use the eval runner
-python eval/run.py --skill retail-product-search --project-id $GOOGLE_CLOUD_PROJECT
 ```
 
 ## Cleanup
