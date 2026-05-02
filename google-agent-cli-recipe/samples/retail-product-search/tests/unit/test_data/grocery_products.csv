@@ -1,0 +1,11 @@
+product_id,name,price,description,category,brand,image_url,rating,stock
+groc-001,Organic Extra Virgin Olive Oil,14.99,Cold-pressed single-origin organic olive oil from Kalamata Greece 500ml,Oils & Vinegars,OliveGrove,https://example.com/images/groc-001.jpg,4.8,60
+groc-002,Sourdough Bread Loaf,6.99,Artisan sourdough bread baked fresh daily with organic flour,Bakery,FreshOven,,4.5,0
+groc-003,Free-Range Eggs 12-Pack,7.49,Pasture-raised free-range large eggs from local farms,Dairy & Eggs,FarmFresh,https://example.com/images/groc-003.jpg,4.7,150
+groc-004,Almond Butter,11.99,Stone-ground raw almond butter with no added salt or sugar 16oz,Spreads,NutCraft,,4.6,40
+groc-005,Matcha Green Tea Powder,29.99,Ceremonial grade Japanese matcha from Uji region 30g tin,Tea & Coffee,TeaHouse,https://example.com/images/groc-005.jpg,4.4,25
+groc-006,Dark Chocolate Bar 85%,4.99,Single-origin 85% cacao dark chocolate bar from Ecuador 100g,Snacks,CocoaArts,https://example.com/images/groc-006.jpg,4.3,200
+groc-007,Organic Baby Spinach,3.99,Pre-washed organic baby spinach leaves 5oz clamshell,Produce,GreenLeaf,,4.1,0
+groc-008,Wild-Caught Salmon Fillet,18.99,Fresh Atlantic wild-caught salmon fillet skin-on per pound,Seafood,OceanFresh,https://example.com/images/groc-008.jpg,4.9,10
+groc-009,Gluten-Free Granola,9.99,Crunchy oat-free granola with nuts seeds and dried berries 12oz,Breakfast,GrainFree,,4.2,75
+groc-010,Sparkling Water Variety Pack,12.99,12-pack naturally flavored sparkling water in lemon lime and grapefruit,Beverages,FizzNatural,https://example.com/images/groc-010.jpg,4.0,300

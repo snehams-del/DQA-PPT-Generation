@@ -1,0 +1,7 @@
+event_id,user_id,product_id,event_type,timestamp,session_id
+evt-201,user-300,groc-001,purchase,2025-01-17T09:00:00Z,sess-020
+evt-202,user-300,groc-003,purchase,2025-01-17T09:01:00Z,sess-020
+evt-203,user-300,groc-006,purchase,2025-01-17T09:02:00Z,sess-020
+evt-204,user-300,groc-001,review,2025-01-18T10:00:00Z,sess-021
+evt-205,user-300,groc-008,detail-page-view,2025-01-19T09:00:00Z,sess-022
+evt-206,user-300,groc-008,purchase,2025-01-19T09:05:00Z,sess-022

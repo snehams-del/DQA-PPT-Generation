@@ -1,0 +1,11 @@
+product_id,name,price,description,category,brand,image_url,rating,stock
+fash-001,Classic Fit Oxford Shirt,59.99,100% cotton button-down oxford shirt in light blue with chest pocket,Men's Shirts,Brooks & Co,https://example.com/images/fash-001.jpg,4.3,150
+fash-002,High-Rise Slim Jeans,89.99,Stretch denim high-rise slim jeans in dark indigo wash with raw hem,Women's Bottoms,DenimCraft,https://example.com/images/fash-002.jpg,4.5,80
+fash-003,Leather Chelsea Boots,199.99,Italian calfskin Chelsea boots with cushioned insole and rubber sole,Footwear,Artisan Walk,https://example.com/images/fash-003.jpg,4.7,30
+fash-004,Merino Wool Cardigan,119.99,Lightweight merino wool V-neck cardigan in charcoal grey,Knitwear,WoolLux,https://example.com/images/fash-004.jpg,4.4,45
+fash-005,Canvas Tote Bag,34.99,Heavy-duty organic cotton canvas tote with interior zipper pocket,Bags,EcoCarry,,4.1,200
+fash-006,Silk Scarf,79.99,Hand-printed 100% silk twill scarf in geometric pattern 90x90cm,Accessories,SilkHouse,https://example.com/images/fash-006.jpg,4.6,60
+fash-007,Running Sneakers,129.99,Lightweight mesh running shoes with responsive foam midsole,Footwear,StrideFit,https://example.com/images/fash-007.jpg,4.8,100
+fash-008,Linen Blazer,179.99,Unstructured Italian linen blazer in navy with patch pockets,Men's Outerwear,SartoriaLux,https://example.com/images/fash-008.jpg,4.2,20
+fash-009,Crossbody Leather Bag,149.99,Pebbled leather crossbody bag with adjustable strap and card slots,Bags,Artisan Walk,https://example.com/images/fash-009.jpg,4.5,35
+fash-010,Cotton Crew Socks 6-Pack,24.99,Combed cotton crew socks in assorted colors with reinforced toe and heel,Basics,EverydayFit,,4.0,500

@@ -1,0 +1,7 @@
+event_id,user_id,product_id,event_type,timestamp,session_id
+,user-100,elec-001,detail-page-view,2025-01-15T10:30:00Z,sess-001
+evt-bad-2,,elec-001,detail-page-view,2025-01-15T10:30:00Z,sess-001
+evt-bad-3,user-100,,detail-page-view,2025-01-15T10:30:00Z,sess-001
+evt-bad-4,user-100,elec-001,invalid-event-type,2025-01-15T10:30:00Z,sess-001
+evt-bad-5,user-100,elec-001,,2025-01-15T10:30:00Z,sess-001
+evt-good,user-100,elec-001,detail-page-view,2025-01-15T10:30:00Z,sess-001

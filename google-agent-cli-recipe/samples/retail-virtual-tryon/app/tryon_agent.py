@@ -21,7 +21,7 @@ def try_on_product(product_id: str, user_photo_uri: str, product_description: st
     Returns:
         GCS URI of the generated try-on image, or an error message.
     """
-    from google_agent_cli_recipe.tools.tryon_processor import generate_tryon
+    from app.tryon_processor import generate_tryon
 
     project_id = os.getenv("GOOGLE_CLOUD_PROJECT", "")
     output_bucket = os.getenv("TRYON_OUTPUT_BUCKET", "")

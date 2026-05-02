@@ -1,0 +1,7 @@
+event_id,user_id,product_id,event_type,timestamp,session_id,event_metadata
+evt-001,user-100,elec-001,detail-page-view,2025-01-15T10:30:00Z,sess-001,
+evt-002,user-100,elec-001,add-to-cart,2025-01-15T10:32:00Z,sess-001,
+evt-003,user-100,elec-001,purchase,2025-01-15T10:35:00Z,sess-001,"{""quantity"": 1}"
+evt-004,user-101,elec-003,detail-page-view,2025-01-15T11:00:00Z,sess-002,
+evt-005,user-101,elec-002,detail-page-view,2025-01-15T11:05:00Z,sess-002,
+evt-006,user-101,elec-003,add-to-cart,2025-01-15T11:10:00Z,sess-002,

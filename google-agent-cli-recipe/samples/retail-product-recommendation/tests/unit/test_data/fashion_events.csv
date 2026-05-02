@@ -1,0 +1,7 @@
+event_id,user_id,product_id,event_type,timestamp,session_id
+evt-101,user-200,fash-001,search,2025-01-16T14:00:00Z,sess-010
+evt-102,user-200,fash-002,detail-page-view,2025-01-16T14:02:00Z,sess-010
+evt-103,user-200,fash-003,detail-page-view,2025-01-16T14:05:00Z,sess-010
+evt-104,user-200,fash-003,add-to-wishlist,2025-01-16T14:06:00Z,sess-010
+evt-105,user-200,fash-002,add-to-cart,2025-01-16T14:10:00Z,sess-010
+evt-106,user-200,fash-002,purchase,2025-01-16T14:15:00Z,sess-010

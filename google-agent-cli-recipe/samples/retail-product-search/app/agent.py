@@ -21,7 +21,7 @@ from google.adk.apps import App
 from google.adk.models import Gemini
 from google.genai import types
 
-from google_agent_cli_recipe.tools.retrievers import search_collection
+from app.retrievers import search_collection
 
 LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
 LLM = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")

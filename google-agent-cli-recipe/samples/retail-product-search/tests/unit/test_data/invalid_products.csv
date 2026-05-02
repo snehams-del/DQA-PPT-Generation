@@ -1,0 +1,9 @@
+product_id,name,price,description,category,brand,image_url,rating,stock
+,Missing ID,19.99,Product without an ID,Audio,Brand,,4.0,10
+inv-002,,29.99,Product without a name,Audio,Brand,,4.0,10
+inv-003,No Price,,Product without a price,Audio,Brand,,4.0,10
+inv-004,Bad Price,not_a_number,Product with non-numeric price,Audio,Brand,,4.0,10
+inv-005,Bad Rating,19.99,Product with invalid rating,Audio,Brand,,6.5,10
+inv-006,Bad Stock,19.99,Product with non-integer stock,Audio,Brand,,4.0,ten
+inv-007,Valid Product,19.99,A perfectly valid product,Audio,Brand,,4.0,10
+inv-008,Negative Rating,19.99,Product with negative rating,Audio,Brand,,-1.0,10

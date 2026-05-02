@@ -1,0 +1,25 @@
+[project]
+name = "retail-product-recommendation"
+version = "0.1.0"
+description = "Product recommendation agent using Vertex AI and BigQuery"
+requires-python = ">=3.10"
+license = {text = "Apache-2.0"}
+
+dependencies = [
+    "google-cloud-bigquery>=3.0",
+    "google-cloud-storage>=2.0",
+    "pyyaml>=6.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-mock>=3.14",
+    "pytest-cov>=4.1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-s -v"
+log_cli = true
+log_cli_level = "INFO"
