@@ -112,13 +112,20 @@ The typical methodology involves:
 
 ## F. Deploy
 
-Deployment guidelines should follow standard Agent Garden and Agent Engine procedures, which have been tested and verified for this project configuration.
+Deployment guidelines should follow standard Agent Garden and Agent Runtime procedures, which have been tested and verified for this project configuration.
 
-### Agent Starter Pack Deployment
+### Google Agents CLI Deployment
 
-You can use the [Agent Starter Pack](https://goo.gle/agent-starter-pack) to create a production-ready version with automated CI/CD deployment scripts (Cloud Run, etc).
+You can use the [Google Agents CLI](https://github.com/google/agents-cli) to create a production-ready version with automated CI/CD deployment scripts (Cloud Run, etc).
+
+**Install the CLI** (one-time):
 
 ```bash
-# Install the starter pack
-uvx agent-starter-pack create my-nurse-handover -a adk@nurse-handover
+uvx google-agents-cli setup
+```
+
+**Create the project from this sample** (replace `my-nurse-handover` with your project name):
+
+```bash
+agents-cli create my-nurse-handover -a adk@nurse-handover
 ```
