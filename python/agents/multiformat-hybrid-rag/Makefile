@@ -42,16 +42,16 @@ setup-infra:
 	@echo "Provisioning infrastructure (APIs, BQ, VS2, Cloud Run, IAM)..."
 	@$(TF_VARS) && cd infra/terraform/dev && terraform init && terraform apply -auto-approve
 	@echo "Building all images in parallel..."
-	@. ./config.env && \
+	@set -a && . ./config.env && set +a && { \
 	gcloud builds submit --config=data_ingestion_pipeline/preprocess_service/cloudbuild.yaml \
 		--substitutions=_IMAGE="$$PREPROCESS_SERVICE_IMAGE" --project="$$PROJECT_ID" . & \
 	gcloud builds submit --config=data_ingestion_pipeline/chunk_index_service/cloudbuild.yaml \
 		--substitutions=_IMAGE="$$CHUNK_INDEX_SERVICE_IMAGE" --project="$$PROJECT_ID" . & \
 	gcloud builds submit --config=data_ingestion_pipeline/cloudbuild.yaml \
 		--substitutions=_IMAGE="$$PIPELINE_IMAGE" --project="$$PROJECT_ID" . & \
-	wait && echo "All images built."
+	wait && echo "All images built."; }
 	@echo "Deploying Cloud Run services..."
-	@. ./config.env && \
+	@set -a && . ./config.env && set +a && { \
 	gcloud run deploy $${PROJECT_NAME:-multiformat-hybrid-rag}-preprocess \
 		--image="$$PREPROCESS_SERVICE_IMAGE" \
 		--region="$$DEFAULT_REGION" \
@@ -62,7 +62,7 @@ setup-infra:
 		--region="$$DEFAULT_REGION" \
 		--project="$$PROJECT_ID" \
 		--quiet & \
-	wait && echo "All services deployed."
+	wait && echo "All services deployed."; }
 
 tf-plan:
 	@if [ ! -f ./config.env ]; then echo "Error: config.env not found"; exit 1; fi
