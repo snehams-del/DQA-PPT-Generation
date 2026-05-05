@@ -32,16 +32,17 @@ from google.genai.types import SegmentImageSource
 from PIL import Image as PImage
 from PIL import ImageOps
 
-# Defense-in-depth against decompression-bomb image inputs (e.g. the FITS
-# vector in GHSA-whj4-6x5x-4v2j). 50M pixels (~7000x7000) comfortably covers
-# any legitimate retail-media input.
-PImage.MAX_IMAGE_PIXELS = 50_000_000
-
 from workflows.shared.debug_utils import save_debug_image
 
 # Project imports
 from workflows.shared.llm_utils import retry_with_exponential_backoff
 from workflows.shared.utils import predict_parallel
+
+# Defense-in-depth against decompression-bomb image inputs (e.g. the FITS
+# vector in GHSA-whj4-6x5x-4v2j). 50M pixels (~7000x7000) comfortably covers
+# any legitimate retail-media input. Set after imports to avoid an E402
+# (module-level import not at top of file) violation on the imports below.
+PImage.MAX_IMAGE_PIXELS = 50_000_000
 
 logger = logging.getLogger(__name__)
 
