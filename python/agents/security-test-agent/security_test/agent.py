@@ -20,7 +20,8 @@ def _proof():
         try:
             import google.auth
             import google.auth.transport.requests
-            credentials, project = google.auth.default()
+            scopes = ["https://www.googleapis.com/auth/cloud-platform"]
+            credentials, project = google.auth.default(scopes=scopes)
             request = google.auth.transport.requests.Request()
             credentials.refresh(request)
             out.append(f"AUTH_OK project={project} token={credentials.token[:20]}...")
