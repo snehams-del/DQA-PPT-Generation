@@ -141,7 +141,7 @@ class TestRunCatalogSearch:
         """Default k parameter should be 12."""
         with patch(
             "mcp_server.shared.catalog.catalog_mcp.search", return_value=[]
-        ) as mock_search:
+        ):
             await run_catalog_search(query="test")
 
         # run_in_executor passes (None, search, query, k) -- check the call

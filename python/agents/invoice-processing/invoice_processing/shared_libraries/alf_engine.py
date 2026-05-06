@@ -168,6 +168,7 @@ try:
 except ImportError:
     pass
 
+
 def _get_llm_project_id():
     project = (
         os.getenv("PROJECT_ID")
@@ -953,7 +954,9 @@ class LLMActionExecutor:
                     raise ValueError(
                         "PROJECT_ID not set. Export it or add to .env file."
                     )
-                aiplatform.init(project=_get_llm_project_id(), location=_get_llm_location())
+                aiplatform.init(
+                    project=_get_llm_project_id(), location=_get_llm_location()
+                )
                 cls._model = GenerativeModel(
                     _get_llm_model(),
                     generation_config=GenerationConfig(temperature=0),

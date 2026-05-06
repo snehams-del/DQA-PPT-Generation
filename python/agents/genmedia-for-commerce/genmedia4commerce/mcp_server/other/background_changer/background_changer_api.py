@@ -52,7 +52,7 @@ async def change_background_endpoint(
         logger.error(f"Error reading uploaded files: {e}")
         raise HTTPException(
             status_code=400, detail=f"Error reading uploaded files: {e}"
-        )
+        ) from e
 
     if not background_description and not background_image_bytes:
         raise HTTPException(

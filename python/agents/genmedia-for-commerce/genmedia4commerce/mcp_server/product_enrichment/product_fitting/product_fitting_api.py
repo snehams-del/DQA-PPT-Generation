@@ -5,7 +5,10 @@ import logging
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from mcp_server.product_enrichment.product_fitting.product_fitting_mcp import run_product_fitting, run_product_fitting_animation
+from mcp_server.product_enrichment.product_fitting.product_fitting_mcp import (
+    run_product_fitting,
+    run_product_fitting_animation,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -99,18 +102,18 @@ class ProductFittingVideoRequest(BaseModel):
     prompt: str = Field(default="", description="Custom prompt")
 
 
-
 @router.post("/generate-video")
 async def generate_video(request: ProductFittingVideoRequest) -> dict:
     """Generate product fitting video."""
-    logger.info(f"[REST product_fitting] Called /generate-video, framing={request.framing}")
+    logger.info(
+        f"[REST product_fitting] Called /generate-video, framing={request.framing}"
+    )
     result = await run_product_fitting_animation(
         front_image_base64=request.front_image_base64,
         back_image_base64=request.back_image_base64,
         framing=request.framing,
         number_of_videos=1,
         prompt=request.prompt,
-
     )
     if result.get("error"):
         raise HTTPException(status_code=422, detail=result["error"])

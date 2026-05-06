@@ -20,15 +20,19 @@ def test_agent_stream() -> None:
         user_id="test_user", app_name="test"
     )
     runner = Runner(
-        agent=agent.root_agent, 
-        session_service=session_service, 
+        agent=agent.root_agent,
+        session_service=session_service,
         artifact_service=artifact_service,
-        app_name="test"
+        app_name="test",
     )
 
     message = types.Content(
         role="user",
-        parts=[types.Part.from_text(text="What are the latest videos from Google Cloud channel?")],
+        parts=[
+            types.Part.from_text(
+                text="What are the latest videos from Google Cloud channel?"
+            )
+        ],
     )
 
     events = list(

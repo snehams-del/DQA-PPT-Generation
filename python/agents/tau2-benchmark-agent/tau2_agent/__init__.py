@@ -24,4 +24,4 @@ os.environ.setdefault("GOOGLE_CLOUD_LOCATION", "global")
 os.environ.setdefault("VERTEXAI_LOCATION", "global")
 os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "True")
 
-from . import adk_agent  # noqa: E402, F401
+from . import adk_agent  # noqa: E402

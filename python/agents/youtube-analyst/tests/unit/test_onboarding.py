@@ -30,9 +30,11 @@ def test_init_or_get_youtube_client_env_fallback(mock_config):
 
     # We patch 'build' to avoid actual API calls
     with patch("youtube_analyst.tools.build") as mock_build:
-        client, error = init_or_get_youtube_client(mock_context)
+        _client, error = init_or_get_youtube_client(mock_context)
         assert error is None
-        mock_build.assert_called_with("youtube", "v3", developerKey="env_key_123")
+        mock_build.assert_called_with(
+            "youtube", "v3", developerKey="env_key_123"
+        )
 
 
 def test_store_and_get_api_key():
@@ -49,6 +51,6 @@ def test_store_and_get_api_key():
 
     # After storing, init_or_get_youtube_client should try to use the session key
     with patch("youtube_analyst.tools.build") as mock_build:
-        client, error = init_or_get_youtube_client(mock_context)
+        _client, error = init_or_get_youtube_client(mock_context)
         assert error is None
         mock_build.assert_called_with("youtube", "v3", developerKey=test_key)

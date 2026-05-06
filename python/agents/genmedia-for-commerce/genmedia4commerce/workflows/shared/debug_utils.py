@@ -21,7 +21,6 @@ Images are saved to src/shared/debug/{timestamp}/
 
 import io
 import logging
-import os
 from datetime import datetime
 from pathlib import Path
 

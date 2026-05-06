@@ -122,7 +122,7 @@ async def r2v_preprocess(images: list[UploadFile] = File(...)):
         )
     except Exception as e:
         logger.error(f"[R2V Preprocess] Error: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/generate-prompt")
@@ -147,7 +147,7 @@ async def r2v_generate_prompt(images: list[UploadFile] = File(...)):
         )
     except Exception as e:
         logger.error(f"[R2V Generate Prompt] Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/generate")
@@ -205,7 +205,7 @@ async def r2v_generate(
         )
     except Exception as e:
         logger.error(f"[R2V Generate] Error for index {index}: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/pipeline")
@@ -288,7 +288,7 @@ async def r2v_pipeline(images: list[UploadFile] = File(...)):
         )
     except Exception as e:
         logger.error(f"[R2V Pipeline] Error: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/merge")
@@ -312,4 +312,4 @@ async def r2v_merge(videos: list[UploadFile] = File(...), speeds: str = Form(...
         )
     except Exception as e:
         logger.error(f"[R2V Merge] Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e

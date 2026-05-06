@@ -54,6 +54,7 @@ except ImportError:
 # LLM configuration (mirrors acting_agent / alf_engine.py)
 # ---------------------------------------------------------------------------
 
+
 def get_llm_project_id():
     """Return PROJECT_ID from env (deferred for Agent Engine compatibility).
 
@@ -91,6 +92,7 @@ def get_llm_model():
 def get_llm_call_delay():
     """Return API_CALL_DELAY_SECONDS from env (deferred for Agent Engine compatibility)."""
     return float(os.getenv("API_CALL_DELAY_SECONDS", "1.0"))
+
 
 # ---------------------------------------------------------------------------
 # Master data loader (optional — provides domain-agnostic configuration)

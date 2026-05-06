@@ -418,7 +418,7 @@ class TestReplaceBackground:
             mock_segmentation_client, sample_image_bytes, background_color="#FF0000"
         )
 
-        img = Image.open(io.BytesIO(result))
+        Image.open(io.BytesIO(result))
         # Result should have red background visible
         assert isinstance(result, bytes)
 

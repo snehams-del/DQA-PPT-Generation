@@ -290,6 +290,7 @@ def upscale_image_bytes(client, image_bytes, upscale_factor="x4"):
 
     # Debug: save before upscaling
     import hashlib
+
     img_hash = hashlib.md5(image_bytes).hexdigest()[:6]
     save_debug_image(image_bytes, f"upscale_input_{img_hash}", prefix="upscale")
 
@@ -677,8 +678,8 @@ def create_canvas(
     margin_side: int = 0,
     bg_color: tuple = (255, 255, 255, 255),
     zoom_factor: float = 1.0,
-    target_diagonal: float = None,
-    target_height: float = None,
+    target_diagonal: float | None = None,
+    target_height: float | None = None,
     add_shadow: bool = False,
 ) -> bytes:
     """
@@ -918,7 +919,7 @@ def stack_and_canvas_images(
     if n == 4:
         stacked_last = stack_images_horizontally(images[2], images[3], padding=0.20)
         canvas_images = create_canvas_with_height_scaling(
-            images[0:2] + [stacked_last],
+            [*images[0:2], stacked_last],
             canvas_height=canvas_height,
             canvas_width=canvas_width,
             margin_top=margin_top,

@@ -47,22 +47,30 @@ def set_session_api_key(key_name: str, key_value: str) -> str:
     """
     Sets an API key in the current session's environment variables.
     Use this when the user provides a missing API key in the chat.
-    
+
     Args:
         key_name: The name of the environment variable (e.g., 'FRED_API_KEY').
         key_value: The API key value provided by the user.
-        
+
     Returns:
         A confirmation message.
     """
     allowed_keys = [
-        "BEA_API_KEY", "FRED_API_KEY", "CENSUS_API_KEY", "EIA_API_KEY",
-        "BLS_API_KEY", "HUD_API_KEY", "FEC_API_KEY", "NEWS_API_KEY",
-        "SERPER_API_KEY", "CDC_APP_TOKEN", "OPENFDA_API_KEY"
+        "BEA_API_KEY",
+        "FRED_API_KEY",
+        "CENSUS_API_KEY",
+        "EIA_API_KEY",
+        "BLS_API_KEY",
+        "HUD_API_KEY",
+        "FEC_API_KEY",
+        "NEWS_API_KEY",
+        "SERPER_API_KEY",
+        "CDC_APP_TOKEN",
+        "OPENFDA_API_KEY",
     ]
     if key_name not in allowed_keys:
         return f"ERROR: Setting {key_name} is not allowed."
-        
+
     os.environ[key_name] = key_value
     return f"Successfully set {key_name} for this session. You can now retry the failed operation."
 
@@ -106,13 +114,22 @@ class ERAAgent:
 
     def query(self, input: str) -> str:
         """Standard Reasoning Engine entry point."""
-        
+
         # Security Fix: Extract and mask API keys in input to prevent logging
         import re
+
         allowed_keys = [
-            "BEA_API_KEY", "FRED_API_KEY", "CENSUS_API_KEY", "EIA_API_KEY",
-            "BLS_API_KEY", "HUD_API_KEY", "FEC_API_KEY", "NEWS_API_KEY",
-            "SERPER_API_KEY", "CDC_APP_TOKEN", "OPENFDA_API_KEY"
+            "BEA_API_KEY",
+            "FRED_API_KEY",
+            "CENSUS_API_KEY",
+            "EIA_API_KEY",
+            "BLS_API_KEY",
+            "HUD_API_KEY",
+            "FEC_API_KEY",
+            "NEWS_API_KEY",
+            "SERPER_API_KEY",
+            "CDC_APP_TOKEN",
+            "OPENFDA_API_KEY",
         ]
         modified_input = input
         for key in allowed_keys:
@@ -123,8 +140,12 @@ class ERAAgent:
                 # Set it in environment for the session
                 os.environ[key] = key_value
                 # Mask it in the input string
-                modified_input = re.sub(pattern, f"{key}=**********", modified_input)
-                print(f"🔒 [Security] Masked {key} in input and set for session.")
+                modified_input = re.sub(
+                    pattern, f"{key}=**********", modified_input
+                )
+                print(
+                    f"🔒 [Security] Masked {key} in input and set for session."
+                )
 
         # Cloud Secrets fallback using Secret Manager
         def get_cloud_secret(key_name):

@@ -134,13 +134,15 @@ def pull_assets():
 
 
 if not project_id:
-    raise ValueError("PROJECT_ID is not set. Check config.env or environment variables.")
+    raise ValueError(
+        "PROJECT_ID is not set. Check config.env or environment variables."
+    )
 MEDIA_BUCKET = f"{project_id}-genmedia-for-commerce-media-payloads"
 
 # ---------------------------------------------------------------------------
 # Shared Gemini client (reused across agent utilities)
 # ---------------------------------------------------------------------------
-from google import genai  # noqa: E402
+from google import genai
 
 try:
     genai_client = genai.Client(

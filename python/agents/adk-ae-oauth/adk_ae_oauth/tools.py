@@ -21,9 +21,9 @@ https://fmind.medium.com/powering-up-your-agent-in-production-with-adk-oauth-and
 import json
 import logging
 
+from google.adk.tools import ToolContext
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
-from google.adk.tools import ToolContext
 from googleapiclient.discovery import build
 
 from adk_ae_oauth import auths
@@ -137,9 +137,7 @@ def read_drive_file(file_id: str, tool_context: ToolContext) -> dict:
 
         # 3. Get file metadata to determine mime type
         file_meta = (
-            service.files()
-            .get(fileId=file_id, fields="id,name,mimeType")
-            .execute()
+            service.files().get(fileId=file_id, fields="id,name,mimeType").execute()
         )
         file_name = file_meta.get("name", "unknown")
         mime_type = file_meta.get("mimeType", "")
@@ -150,38 +148,36 @@ def read_drive_file(file_id: str, tool_context: ToolContext) -> dict:
         if mime_type == "application/vnd.google-apps.document":
             # Google Docs → export as plain text
             content = (
-                service.files()
-                .export(fileId=file_id, mimeType="text/plain")
-                .execute()
+                service.files().export(fileId=file_id, mimeType="text/plain").execute()
             )
-            text_content = content.decode("utf-8") if isinstance(content, bytes) else content
+            text_content = (
+                content.decode("utf-8") if isinstance(content, bytes) else content
+            )
 
         elif mime_type == "application/vnd.google-apps.spreadsheet":
             # Google Sheets → export as CSV
             content = (
-                service.files()
-                .export(fileId=file_id, mimeType="text/csv")
-                .execute()
+                service.files().export(fileId=file_id, mimeType="text/csv").execute()
             )
-            text_content = content.decode("utf-8") if isinstance(content, bytes) else content
+            text_content = (
+                content.decode("utf-8") if isinstance(content, bytes) else content
+            )
 
         elif mime_type == "application/vnd.google-apps.presentation":
             # Google Slides → export as plain text
             content = (
-                service.files()
-                .export(fileId=file_id, mimeType="text/plain")
-                .execute()
+                service.files().export(fileId=file_id, mimeType="text/plain").execute()
             )
-            text_content = content.decode("utf-8") if isinstance(content, bytes) else content
+            text_content = (
+                content.decode("utf-8") if isinstance(content, bytes) else content
+            )
 
         else:
             # Regular files (text, csv, json, etc.) → download directly
-            content = (
-                service.files()
-                .get_media(fileId=file_id)
-                .execute()
+            content = service.files().get_media(fileId=file_id).execute()
+            text_content = (
+                content.decode("utf-8") if isinstance(content, bytes) else content
             )
-            text_content = content.decode("utf-8") if isinstance(content, bytes) else content
 
         return {
             "status": "success",
@@ -194,5 +190,5 @@ def read_drive_file(file_id: str, tool_context: ToolContext) -> dict:
         logger.error(f"Error reading Drive file: {e}")
         return {
             "status": "error",
-            "message": f"Failed to read file: {str(e)}",
+            "message": f"Failed to read file: {e!s}",
         }

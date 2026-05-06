@@ -14,7 +14,6 @@
 
 """Test cases for the Health Claim Adjudication Agent."""
 
-
 import dotenv
 import pytest
 from google.adk.runners import InMemoryRunner

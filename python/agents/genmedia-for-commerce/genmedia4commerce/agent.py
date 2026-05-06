@@ -75,7 +75,6 @@ if not logger.handlers:
 project_id = os.environ["GOOGLE_CLOUD_PROJECT"]
 
 
-
 async def build_conversational_history(
     callback_context: CallbackContext, llm_request: LlmRequest
 ) -> None:

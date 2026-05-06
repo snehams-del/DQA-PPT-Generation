@@ -281,19 +281,19 @@ def preprocess_classify_images(
 
     images_to_split = [
         img_bytes
-        for img_bytes, pred in zip(images_bytes_list, initial_predictions)
+        for img_bytes, pred in zip(images_bytes_list, initial_predictions, strict=False)
         if pred.strip().lower() == "multiple"
     ]
 
     single_images_valid = [
         img_bytes
-        for img_bytes, pred in zip(images_bytes_list, initial_predictions)
+        for img_bytes, pred in zip(images_bytes_list, initial_predictions, strict=False)
         if pred.strip().lower() not in ["multiple", "invalid"]
     ]
 
     single_images_pred = [
         pred.strip().lower()
-        for _, pred in zip(images_bytes_list, initial_predictions)
+        for _, pred in zip(images_bytes_list, initial_predictions, strict=False)
         if pred.strip().lower() not in ["multiple", "invalid"]
     ]
 
@@ -338,12 +338,12 @@ def preprocess_classify_images(
         logger.info(f"✓ Splitted predictions: {splitted_predictions}")
         splitted_valid = [
             img_bytes
-            for img_bytes, pred in zip(split_images_bytes_list, splitted_predictions)
+            for img_bytes, pred in zip(split_images_bytes_list, splitted_predictions, strict=False)
             if pred.strip().lower() not in ["multiple", "invalid"]
         ]
         splitted_pred = [
             pred.strip().lower()
-            for _, pred in zip(split_images_bytes_list, splitted_predictions)
+            for _, pred in zip(split_images_bytes_list, splitted_predictions, strict=False)
             if pred.strip().lower() not in ["multiple", "invalid"]
         ]
 
@@ -359,7 +359,7 @@ def preprocess_classify_images(
             f"Video generation status is 'exclude', skipping upscaling. Classifications: {final_classifications}"
         )
         return (
-            list(zip(all_valid_images, final_classifications)),
+            list(zip(all_valid_images, final_classifications, strict=False)),
             video_gen_status,
             False,
         )
@@ -378,7 +378,7 @@ def preprocess_classify_images(
                 f"{final_classifications}"
             )
             return (
-                list(zip(all_valid_images, final_classifications)),
+                list(zip(all_valid_images, final_classifications, strict=False)),
                 video_gen_status,
                 True,
             )
@@ -425,7 +425,7 @@ def preprocess_classify_images(
     logger.info(f"Final classifications: {final_classifications}")
 
     return (
-        list(zip(all_valid_images, final_classifications)),
+        list(zip(all_valid_images, final_classifications, strict=False)),
         video_gen_status,
         has_velcro,
     )
@@ -441,10 +441,10 @@ def run_video_gen_pipeline_r2v(
     veo_model: str = "veo-3.1-generate-001",
     reference_type: str = "asset",
     product_consistency_model: str = "gemini-3-flash-preview",
-    product_id: str = None,
-    gcs_bucket: str = None,
+    product_id: str | None = None,
+    gcs_bucket: str | None = None,
     gcs_destination_prefix: str = "shoe_spinning_outputs",
-    gcs_project_id: str = None,
+    gcs_project_id: str | None = None,
     upscale_images: bool = True,
     disable_logging: bool = True,
 ):

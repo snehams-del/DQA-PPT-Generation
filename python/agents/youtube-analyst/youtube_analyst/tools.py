@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 def init_or_get_youtube_client(tool_context: ToolContext):
     """
     Initializes or retrieves the YouTube Data API client.
-    
+
     Priority:
     1. Session state (onboarded by user)
     2. Environment variable (pre-configured in config)
@@ -134,7 +134,9 @@ def search_youtube(
         return f"ERROR: YouTube API returned {e.resp.status}"
 
 
-def get_video_details(video_ids: list[str], tool_context: ToolContext) -> list[dict] | str:
+def get_video_details(
+    video_ids: list[str], tool_context: ToolContext
+) -> list[dict] | str:
     """
     Retrieves statistics and snippet details for a list of video IDs.
 
@@ -208,7 +210,9 @@ def get_video_details(video_ids: list[str], tool_context: ToolContext) -> list[d
 
 
 def get_trending_videos(
-    tool_context: ToolContext, region_code: str = "US", video_category_id: str = ""
+    tool_context: ToolContext,
+    region_code: str = "US",
+    video_category_id: str = "",
 ) -> list[dict] | str:
     """
     Retrieves the currently trending/most popular videos natively from YouTube, bypassing keyword search.
@@ -259,7 +263,9 @@ def get_trending_videos(
         return f"ERROR: YouTube API returned {e.resp.status}"
 
 
-def get_channel_details(channel_ids: list[str], tool_context: ToolContext) -> list[dict] | str:
+def get_channel_details(
+    channel_ids: list[str], tool_context: ToolContext
+) -> list[dict] | str:
     """
     Retrieves statistics and snippet details for a list of channel IDs.
 
@@ -318,7 +324,10 @@ def get_channel_details(channel_ids: list[str], tool_context: ToolContext) -> li
 
 
 def get_video_comments(
-    video_id: str, tool_context: ToolContext, max_results: int = 20, order: str = "time"
+    video_id: str,
+    tool_context: ToolContext,
+    max_results: int = 20,
+    order: str = "time",
 ) -> list[str] | str:
     """
     Retrieves top-level comments for a specific video.
@@ -621,7 +630,9 @@ def parse_timestamp_to_seconds(timestamp_str: str) -> int:
 # --- NEW METADATA/TEXT TOOLS FOR PR3 ---
 
 
-def get_comment_replies(comment_id: str, tool_context: ToolContext, max_results: int = 50) -> list[str] | str:
+def get_comment_replies(
+    comment_id: str, tool_context: ToolContext, max_results: int = 50
+) -> list[str] | str:
     """
     Retrieves the replies to a specific top-level comment.
     Use this to dig deep into a specific community debate or controversy.
@@ -661,7 +672,9 @@ def get_comment_replies(comment_id: str, tool_context: ToolContext, max_results:
 
 
 def aggregate_comment_sentiment(
-    video_ids: list[str], tool_context: ToolContext, comments_per_video: int = 10
+    video_ids: list[str],
+    tool_context: ToolContext,
+    comments_per_video: int = 10,
 ) -> dict | str:
     """
     Fetches comments across multiple videos simultaneously to generate a macro-sentiment view.
@@ -680,17 +693,26 @@ def aggregate_comment_sentiment(
     for vid in video_ids:
         # Get top 'relevance' comments
         comments_data = get_video_comments(
-            vid, tool_context=tool_context, max_results=comments_per_video, order="relevance"
+            vid,
+            tool_context=tool_context,
+            max_results=comments_per_video,
+            order="relevance",
         )
         # Handle cases where get_video_comments might return the error string
-        if isinstance(comments_data, str) and "SYSTEM REJECTION" in comments_data:
+        if (
+            isinstance(comments_data, str)
+            and "SYSTEM REJECTION" in comments_data
+        ):
             return comments_data
         aggregated_data[vid] = comments_data
     return aggregated_data
 
 
 def search_channel_videos(
-    channel_id: str, tool_context: ToolContext, max_results: int = 5, published_after: str = ""
+    channel_id: str,
+    tool_context: ToolContext,
+    max_results: int = 5,
+    published_after: str = "",
 ) -> list[dict] | str:
     """
     Searches for the most recent videos uploaded by a specific channel.
@@ -753,7 +775,7 @@ def get_video_transcript(video_id: str) -> str:
     """
     try:
         # Fetch the transcript (prioritizes English, but falls back to others)
-        transcript = YouTubeTranscriptApi.get_transcript(video_id) # type: ignore
+        transcript = YouTubeTranscriptApi.get_transcript(video_id)  # type: ignore
 
         # Format it into a readable string with basic timestamps
         formatted_transcript = ""

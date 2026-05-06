@@ -47,7 +47,9 @@ async def before_model_callback(
             logger.error(
                 "[Callback: before_model_callback] No 'active_case_id' found in state."
             )
-            logger.info("[Callback: before_model_callback] Proceeding with LLM call.")
+            logger.info(
+                "[Callback: before_model_callback] Proceeding with LLM call."
+            )
             return None
 
         logger.info(
@@ -63,7 +65,9 @@ async def before_model_callback(
             logger.error(
                 f"[Callback: before_model_callback] No document list found for key: {active_case_id}"
             )
-            logger.info("[Callback: before_model_callback] Proceeding with LLM call.")
+            logger.info(
+                "[Callback: before_model_callback] Proceeding with LLM call."
+            )
             return None
 
         logger.info(
@@ -75,7 +79,9 @@ async def before_model_callback(
             logger.error(
                 "[Callback: before_model_callback] No user message found in request to append files to."
             )
-            logger.info("[Callback: before_model_callback] Proceeding with LLM call.")
+            logger.info(
+                "[Callback: before_model_callback] Proceeding with LLM call."
+            )
             return None
 
         user_message_parts = llm_request.contents[-1].parts

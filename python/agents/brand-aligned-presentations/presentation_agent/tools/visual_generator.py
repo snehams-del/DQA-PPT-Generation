@@ -59,7 +59,9 @@ async def generate_visual(prompt: str) -> str:
                 "Global genai client was None. Re-initializing for Vertex AI."
             )
             _genai_client = genai.Client(
-                vertexai=True, project=GOOGLE_CLOUD_PROJECT, location=GOOGLE_CLOUD_LOCATION
+                vertexai=True,
+                project=GOOGLE_CLOUD_PROJECT,
+                location=GOOGLE_CLOUD_LOCATION,
             )
 
         model_name = "gemini-2.5-flash-image"

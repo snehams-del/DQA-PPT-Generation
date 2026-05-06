@@ -8,9 +8,11 @@ from google.adk.agents.callback_context import CallbackContext
 from google.adk.models.llm_request import LlmRequest
 from google.cloud import storage
 from google.genai import types
+
 from small_business_loan_agent.shared_libraries.logging_config import get_logger
 
 logger = get_logger(__name__)
+
 
 def get_gcs_data_bucket() -> str:
     """Get the GCS data bucket name from environment or fallback to default."""

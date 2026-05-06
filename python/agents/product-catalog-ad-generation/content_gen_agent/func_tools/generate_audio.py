@@ -14,16 +14,10 @@
 """Generates background audio and voiceovers using Google Cloud services."""
 
 import asyncio
-import base64
 import logging
-import os
 import random
 import time
-from http import HTTPStatus
 
-import aiohttp
-import google.auth
-import google.auth.transport.requests
 from google import genai
 from google.adk.tools import ToolContext
 from google.api_core.exceptions import GoogleAPICallError

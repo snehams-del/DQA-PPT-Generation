@@ -3,17 +3,17 @@
 Modernized Deployment script for Economic Research Agent using Vertex AI Agent Engine (ADK 2.1+).
 """
 
+import datetime
+import json
 import logging
 import os
+from typing import Any
 
 import cloudpickle
 import vertexai
+from dotenv import set_key
 from vertexai import agent_engines
 from vertexai.preview.reasoning_engines import AdkApp
-import json
-import datetime
-from typing import Any
-from dotenv import set_key
 
 import economic_research
 from economic_research.agent import ERAAgent
@@ -21,13 +21,17 @@ from economic_research.agent import ERAAgent
 logging.getLogger("google.cloud.aiplatform").setLevel(logging.DEBUG)
 cloudpickle.register_pickle_by_value(economic_research)
 
+
 def update_env_file(agent_engine_id: str, env_file_path: str):
     """Updates the .env file with the agent engine ID."""
     try:
         set_key(env_file_path, "AGENT_ENGINE_ID", agent_engine_id)
-        print(f"Updated AGENT_ENGINE_ID in {env_file_path} to {agent_engine_id}")
+        print(
+            f"Updated AGENT_ENGINE_ID in {env_file_path} to {agent_engine_id}"
+        )
     except Exception as e:
         print(f"Error updating .env file: {e}")
+
 
 def write_deployment_metadata(
     remote_agent: Any,
@@ -45,6 +49,7 @@ def write_deployment_metadata(
         json.dump(metadata, f, indent=2)
 
     print(f"Agent Engine ID written to {metadata_file}")
+
 
 def deploy_era_to_vertex(project_id: str, location: str = "us-central1"):
     print(
@@ -96,12 +101,14 @@ def deploy_era_to_vertex(project_id: str, location: str = "us-central1"):
 
     print("✅ Modern Deployment Successful!")
     print(f"Agent Engine ID: {remote_agent.resource_name}")
-    
+
     # Apply fix for automatic ID picking
     env_file_path = os.path.join(project_root, ".env")
     update_env_file(remote_agent.resource_name, env_file_path)
-    write_deployment_metadata(remote_agent, os.path.join(project_root, "deployment_metadata.json"))
-    
+    write_deployment_metadata(
+        remote_agent, os.path.join(project_root, "deployment_metadata.json")
+    )
+
     return remote_agent.resource_name
 
 
