@@ -13,7 +13,7 @@ dependencies = [
     "google-cloud-storage>=2.0.0",
     "google-cloud-vectorsearch>=0.4.0",
     "kfp>=2.0.0",
-    "langchain-text-splitters>=0.3.0",
+    "langchain-text-splitters>=1.1.2",
     "python-dotenv>=1.0.0",
 ]
 
