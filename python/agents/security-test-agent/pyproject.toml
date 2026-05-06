@@ -1,5 +1,5 @@
 [project]
-name = "security-test-agent"
+name = "security_test_agent"
 version = "0.1.0"
 description = "Security test"
 authors = [{ name = "Test", email = "test@test.com" }]
@@ -20,3 +20,6 @@ deployment_targets = ["cloud_run"]
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["security_test"]
