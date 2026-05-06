@@ -1,182 +1,80 @@
 # Blogger Agent
 
-This project contains the core logic for the Blogger Agent, a multi-agent system designed to assist users in creating technical blog posts. The agent is built using the Google Agent Development Kit (ADK) and follows a modular architecture.
+This sample contains a multi-agent technical writing assistant built with the Google Agent Development Kit (ADK).
 
-## Getting Started with uv
+## Overview
 
-This project uses [uv](https://github.com/astral-sh/uv) for dependency management.
+The orchestrator coordinates four specialist sub-agents to help users go from idea to final publication:
 
-### Installation
+- Plan a technical outline.
+- Write a complete first draft.
+- Iteratively edit based on feedback.
+- Generate social media copy.
 
-First, you need to install uv. You can do this using `pip`:
+## Quick Start With Agent Starter Pack (Recommended)
 
-```bash
-pip install uv
-```
-
-### Project Setup
-
-Once uv is installed, you can install the project's dependencies:
+The fastest way to create a production-ready project from this sample is:
 
 ```bash
-uv pip install -r requirements.txt
+uvx agent-starter-pack create my-blog-writer -a adk@blogger-agent
+cd my-blog-writer
 ```
 
-This will create a virtual environment for the project and install all the required libraries.
+The starter pack scaffolds CI/CD, deployment options, and other production assets.
 
-### Running the Agent and Tests
+## Local Development (This Repository)
 
-To run any scripts or tests within the project's virtual environment, use `uv run`:
-
-**Run the main agent (interactive playground):**
+### 1. Install Dependencies
 
 ```bash
-uv run adk web
+uv sync --group dev
 ```
 
-**Run the main agent (command-line interface):**
+### 2. Configure Environment
+
+Create a `.env` file in this directory and set at least:
+
+```bash
+GOOGLE_CLOUD_PROJECT=<your-project-id>
+GOOGLE_CLOUD_LOCATION=global
+GOOGLE_GENAI_USE_VERTEXAI=True
+```
+
+### 3. Authenticate
+
+```bash
+gcloud auth application-default login
+gcloud auth application-default set-quota-project $GOOGLE_CLOUD_PROJECT
+```
+
+### 4. Run the Agent
+
+CLI:
 
 ```bash
 uv run adk run blogger_agent
 ```
 
-**Run the integration test:**
+Web UI:
 
 ```bash
-uv run python -m tests.test_agent
+uv run adk web
 ```
 
-**Run the evaluation (smoke test):**
+## Tests, Lint, and Type Checks
+
+Run from this folder:
 
 ```bash
-uv run pytest eval/test_eval.py
+uv run pytest -s -W default
+uv run ruff check . --fix
+uv run ruff format .
+uv run mypy .
 ```
 
-## Alternative: Using Agent Starter Pack
+## Project Layout
 
-You can also use the [Agent Starter Pack](https://goo.gle/agent-starter-pack) to create a production-ready version of this agent with additional deployment options:
-
-```bash
-# Create and activate a virtual environment
-python -m venv .venv && source .venv/bin/activate
-# On Windows: .venv\\Scripts\\activate
-
-# Install the starter pack and create your project
-pip install --upgrade agent-starter-pack
-agent-starter-pack create my-blogger-agent -a adk@blogger-agent
-```
-
-<details>
-<summary>⚡️ Alternative: Using uv</summary>
-
-If you have [`uv`](https://github.com/astral-sh/uv) installed, you can create and set up your project with a single command:
-
-```bash
-uvx agent-starter-pack create my-blogger-agent -a adk@blogger-agent
-```
-
-This command handles creating the project without needing to pre-install the package into a virtual environment.
-</details>
-
-The starter pack will prompt you to select deployment options and provides additional production-ready features including automated CI/CD deployment scripts.
-
-## Project Structure
-
-The project is organized as follows:
-
-*   `blogger_agent/`: The main Python package for the agent.
-    *   `agent.py`: Defines the main `interactive_blogger_agent` and orchestrates the sub-agents.
-    *   `sub_agents/`: Contains the individual sub-agents, each responsible for a specific task.
-        *   `blog_planner.py`: Generates the blog post outline.
-        *   `blog_writer.py`: Writes the blog post.
-        *   `blog_editor.py`: Edits the blog post based on user feedback.
-        *   `social_media_writer.py`: Generates social media posts.
-    *   `tools.py`: Defines the custom tools used by the agents.
-    *   `config.py`: Contains the configuration for the agents, such as the models to use.
-*   `eval/`: Contains the evaluation framework for the agent.
-*   `tests/`: Contains integration tests for the agent.
-
-## Agent Architecture
-
-The Blogger Agent is a multi-agent system composed of a main orchestrator agent and several specialized sub-agents.
-
-![adk_web.png](adk_web.png)
-
-### Main Agent
-
-*   **`interactive_blogger_agent`**: This is the main agent that interacts with the user. It manages the workflow of creating a blog post and delegates tasks to the appropriate sub-agents.
-
-### Sub-Agents
-
-The sub-agents are defined in the `blogger_agent/sub_agents/` directory. Each sub-agent is responsible for a specific task in the blog post creation process:
-
-*   **`robust_blog_planner`**: Generates a blog post outline. It uses a loop to ensure a valid outline is created and can use Google Search to gather information.
-*   **`robust_blog_writer`**: Writes the blog post based on the approved outline. It can also use Google Search to find relevant information and examples.
-*   **`blog_editor`**: Edits the blog post based on user feedback.
-*   **`social_media_writer`**: Generates social media posts to promote the blog post.
-
-## Tools
-
-The agents use the following custom tools, defined in `blogger_agent/tools.py`:
-
-*   **`save_blog_post_to_file`**: Saves the blog post to a file.
-*   **`analyze_codebase`**: Analyzes the codebase in a given directory to provide context for the blog post.
-
-The agents also use the built-in `google_search` tool.
-
-## Workflow
-
-The `interactive_blogger_agent` follows this workflow:
-
-1.  **Analyze Codebase (Optional):** If the user provides a directory, the agent analyzes the codebase to understand its structure and content.
-2.  **Plan:** The agent delegates the task of generating a blog post outline to the `robust_blog_planner`.
-3.  **Refine:** The user can provide feedback to refine the outline. The agent continues to refine the outline until it is approved by the user.
-4.  **Visuals:** The agent asks the user to choose their preferred method for including visual content.
-5.  **Write:** Once the user approves the outline, the agent delegates the task of writing the blog post to the `robust_blog_writer`.
-6.  **Edit:** After the first draft is written, the agent presents it to the user and asks for feedback. The `blog_editor` revises the blog post based on the feedback. This process is repeated until the user is satisfied with the result.
-7.  **Social Media:** After the user approves the blog post, the agent asks if they want to generate social media posts. If the user agrees, the `social_media_writer` is used.
-8.  **Export:** When the user approves the final version, the agent asks for a filename and saves the blog post as a markdown file using the `save_blog_post_to_file` tool.
-
-## Example Conversation
-
-**User:** I want to write a blog post about the new Google Gemini 2.5 Flash Preview model, also known as Nanobanana.
-
-**Agent:** I can do that. Here is a blog post outline for an article about the Google Gemini 2.5 Flash Preview model.
-
----
-
-## Blog Post Outline: Introducing Gemini 2.5 Flash: Google's Newest, Fastest AI Model
-
-### I. Title
-Gemini 2.5 Flash: The Speed and Efficiency of Nanobanana
-
-### II. Introduction
-*   **Hook:** Announcing Google's latest AI model, Gemini 2.5 Flash, nicknamed Nanobanana.
-*   **Context:** Explain that this new model is designed for speed and efficiency, making it ideal for on-device applications.
-*   **Thesis Statement:** This post will explore the key features of Gemini 2.5 Flash, its capabilities, and how it compares to other models in the Gemini family.
-
-### III. Main Body
-
-#### A. What is Gemini 2.5 Flash?
-*   **Lightweight and Cost-Effective:** Describe how Gemini 2.5 Flash is a smaller, more efficient model compared to its predecessors.
-*   **Multimodal Capabilities:** Explain that it can process text, audio, images, and video.
-*   **1-Million Token Context Window:** Discuss the large context window and its implications for processing large amounts of information.
-*   **'Thinking' Capability:** Detail the new feature that provides transparency into the model's reasoning process.
-
-#### B. Key Features and Enhancements
-*   **Speed and Efficiency:** Emphasize the model's performance on low-power devices.
-*   **Controlled Generation, Function Calling, and Search:** Discuss the model's advanced functionalities.
-*   **Specialized Versions:** Mention the specialized versions for live API, image generation, and text-to-speech.
-
-#### C. How to Get Access
-*   **Availability:** Explain that the model is available through the Gemini API, Google AI Studio, and Vertex AI.
-
-### IV. Conclusion
-*   **Summary:** Recap the key features and benefits of Gemini 2.5 Flash.
-*   **Call to Action:** Encourage readers to explore the new model and its capabilities.
-
----
-
-**User:** looks good, write it
-
-**Agent:** You have two options for including visual content in your blog post...
+- `blogger_agent/`: main package and agent definitions.
+- `blogger_agent/sub_agents/`: planner, writer, editor, and social agents.
+- `eval/`: evaluation datasets and evaluation tests.
+- `tests/`: integration and smoke tests.

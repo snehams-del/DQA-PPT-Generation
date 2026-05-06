@@ -4,7 +4,11 @@ This directory contains integration tests for the `blogger-agent`.
 
 ## How to Run
 
-To run the test, you first need to install the required dependencies by running `uv pip install -r requirements.txt` from the root of the project.
+To run the test, first install dependencies from the project root:
+
+```bash
+uv sync --group dev
+```
 
 You can run the test from the root of the project using the following command:
 

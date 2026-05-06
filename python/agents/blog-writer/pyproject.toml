@@ -8,9 +8,12 @@ readme = "README.md"
 requires-python = ">=3.10,<3.13"
 dependencies = [
     "google-cloud-aiplatform[adk,agent-engines]>=1.117.0",
+    "google-auth>=2.40.3",
     "google-genai>=1.9.0",
+    "mypy~=1.19.0",
     "pydantic>=2.10.6",
     "python-dotenv>=1.0.1",
+    "ruff>=0.4.6",
     "google-adk>=1.0.0",
 ]
 
@@ -18,15 +21,17 @@ dependencies = [
 dev = [
     "pytest~=9.0.1",
     "pytest-asyncio~=1.3.0",
-    "google-adk[eval]>=1.0.0",
     "nest-asyncio>=1.6.0",
-    "agent-starter-pack>=0.14.1",
-]
-deployment = [
-    "absl-py~=2.3.1",
+    "agent-starter-pack>=0.32.0",
 ]
 
 [project.optional-dependencies]
+deployment = [
+    "absl-py~=2.3.1",
+]
+eval = [
+    "google-adk[eval]>=1.0.0",
+]
 lint = [
     "ruff>=0.4.6",
     "mypy~=1.19.0",
@@ -40,6 +45,9 @@ extend = "../../../pyproject.toml"
 
 [tool.ruff.lint.isort]
 known-first-party = ["blogger_agent"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/__init__.py" = ["E402", "F401", "I001"]
 
 [tool.mypy]
 disallow_untyped_calls = true
@@ -67,11 +75,15 @@ pythonpath = "."
 asyncio_default_fixture_loop_scope = "function"
 
 [tool.agent-starter-pack]
+name = "blogger-agent"
+description = "AI-driven agent designed to facilitate the exploration of the blogger agent landscape"
+base_template = "adk"
+agent_directory = "blogger_agent"
+asp_version = "0.32.0"
 example_question = "Write an article about Nano Banana"
 
-[tool.agent-starter-pack.settings]
-agent_directory = "blogger_agent"
-deployment_targets = ["agent_engine", "cloud_run"]
+[tool.agent-starter-pack.create_params]
+deployment_target = "cloud_run"
 
 [build-system]
 requires = ["hatchling"]
