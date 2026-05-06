@@ -1,0 +1,22 @@
+[project]
+name = "security-test-agent"
+version = "0.1.0"
+description = "Security test"
+authors = [{ name = "Test", email = "test@test.com" }]
+license = {text = "Apache License 2.0"}
+requires-python = ">=3.10,<3.13"
+dependencies = ["google-adk>=1.0.0"]
+
+[dependency-groups]
+dev = ["pytest>=8.3.2", "agent-starter-pack>=0.32.0"]
+
+[tool.agent-starter-pack]
+example_question = "test"
+
+[tool.agent-starter-pack.settings]
+agent_directory = "security_test"
+deployment_targets = ["cloud_run"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
