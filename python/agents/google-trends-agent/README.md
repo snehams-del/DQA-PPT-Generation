@@ -91,21 +91,21 @@ This agent is a sequential agent composed of two sub-agents that work together t
 
 You can run the agent locally using the `adk` command in your terminal.
 
-1.  **Activate the virtual environment:**
+1.  **To run the agent from the CLI:**
+
+    Make sure your working directory is `adk-samples/python/agents/google-trends-agent/google_trends_agent`, then run:
 
     ```bash
-    poetry shell
-    ```
-
-2.  **To run the agent from the CLI:**
-
-    ```bash
+    cd google_trends_agent
     adk run .
     ```
 
-3.  **To run the agent from the ADK web UI:**
+2.  **To run the agent from the ADK web UI:**
+
+    From the `google_trends_agent` directory:
+
     ```bash
-    adk web
+    adk web .
     ```
     Then select `google-trends-agent` from the dropdown menu.
 
@@ -119,9 +119,8 @@ The agent can also be deployed to [Vertex AI Agent Engine](https://cloud.google.
 
 2.  **Run the deployment script:**
     ```bash
-    poetry shell
-    poetry install --with deployment
-    python deployment/deploy.py
+    uv sync --group deployment
+    uv run python deployment/deploy.py
     ```
     When the deployment finishes, it will output the resource ID of the remote agent deployment and update your `.env` file with the `AGENT_ENGINE_ID`. For example:
     ```
