@@ -107,10 +107,10 @@ Ensure your service account (or user account) has the following permissions:
 
     **Required Variables:**
     - `GOOGLE_CLOUD_PROJECT`: Your Google Cloud Project ID.
-    - `GOOGLE_CLOUD_LOCATION`: The target region (e.g., `us-central1`).
+    - `GOOGLE_CLOUD_LOCATION`: The target region (e.g., `us-east1`).
     - `GEMINI_MODEL_NAME`: The spefcific LLM version to use (e.g., `gemini-2.5-flash`).
     - `IMAGE_GENERATION_MODEL`:The Imagen model version (e.g., `imagen-3.0-generate-002`).
-    - `GCP_STAGING_BUCKET`: GCS Bucket name for storing artifacts (e.g., `gs://my-bucket`). If not provided, a new bucket named `YOUR_PROJECT_ID-staging-bucket` will be created in the `GOOGLE_CLOUD_LOCATION` (defaults to `us-central1`).
+    - `GCP_STAGING_BUCKET`: GCS Bucket name for storing artifacts (e.g., `gs://my-bucket`). If not provided, a new bucket named `YOUR_PROJECT_ID-staging-bucket` will be created in the `GOOGLE_CLOUD_LOCATION` (defaults to `us-east1`).
     - `DEFAULT_TEMPLATE_URI`: GCS URI of the master PowerPoint template (e.g., `gs://bucket/Proposal_Template.pptx`). If not provided, the default `docs/Proposal_Template.pptx` will be uploaded to your `GCP_STAGING_BUCKET` and used automatically.
     - `AS_APP`: The Gemini Enterprise App ID.
     - `DATASTORE_ID`: (Optional) Full path to the Vertex AI Search Datastore for internal RAG.(Format: `projects/{PROJECT_ID}/locations/{LOCATION}/collections/default_collection/dataStores/{DATA_STORE_ID}`).
@@ -222,7 +222,7 @@ Once deployed, register the agent so it can be discovered as a Tool/Agent in Gem
 
 ---
 ## 9. Example
-**User Prompt:** "Create a 10-slide presentation for analyzing investment opportunities in the biotech industry. Use the default template. Don’t generate the presentation until I ask, I need to check the presentation outline first."
+**User Prompt:** "Create a 10-slide presentation for analyzing investment opportunities in the biotech industry in USA. Use the default template. Don’t generate the presentation until I ask, I need to check the presentation outline first."
 
 **Agent Output:**
 Inspect the template and plan the deck outline.
