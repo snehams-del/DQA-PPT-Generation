@@ -1,19 +1,53 @@
 [project]
 name = "security-audit-helper"
 version = "0.1.0"
-description = "An agent that helps perform security audits"
+description = "A Gemini-powered agent for security audit workflows."
+readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "google-adk>=1.31.0",
+    "google-genai>=0.2.0",
+    "google-auth>=2.49.1",
+    "python-dotenv>=1.2.1",
+]
+
+[build-system]
+requires = ["uv_build>=0.8.14,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-root = ""
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+    "pytest-asyncio>=0.23.7",
+    "pytest-cov>=4.0.0",
+    "ruff>=0.11.5",
+    "agent-starter-pack>=0.32.0",
 ]
 
 [tool.agent-starter-pack]
-example_question = "Scan for vulnerabilities."
+example_question = "Scan this project for common security vulnerabilities."
 
 [tool.agent-starter-pack.settings]
 agent_directory = "security_audit_helper"
 deployment_targets = ["cloud_run"]
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+extend = "../../../pyproject.toml"
+
+[tool.ruff.lint.isort]
+known-first-party = ["security_audit_helper"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+
+[[tool.uv.index]]
+name = "default"
+url = "https://pypi.org/simple"
+default = true
