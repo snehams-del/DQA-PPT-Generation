@@ -179,7 +179,10 @@ def check_assertion(assertion: dict, result: dict, skill_md: str, evalset: dict 
         prices = re.findall(r"\$?([\d]+\.?\d*)", resp)
         if not prices:
             return False, "No prices found in response"
-        ok = all(float(p) <= assertion["value"] for p in prices if float(p) > 1)
+        valid_prices = [float(p) for p in prices if float(p) >= 0.01]
+        if not valid_prices:
+            return False, "No valid prices found in response"
+        ok = all(p <= assertion["value"] for p in valid_prices)
         return ok, f"All prices under ${assertion['value']}" if ok else f"Price over ${assertion['value']}"
 
     else:
