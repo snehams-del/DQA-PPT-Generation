@@ -91,8 +91,7 @@ from google.genai import types
 client = genai.Client(vertexai=True, project=PROJECT_ID, location="us-central1")
 
 # flash: fastest, cheapest, GA (gemini-2.5-flash-image)
-# flash-3.1: balanced, preview (gemini-3.1-flash-image-preview)
-# pro: best quality, preview (gemini-3-pro-image-preview)
+# pro: best quality, GA (gemini-2.5-pro-image)
 response = client.models.generate_content(
     model="gemini-2.5-flash-image",
     contents=[

@@ -23,13 +23,12 @@ privacy_notice: "Your photo is processed securely and not stored unless you opt 
 # fidelity for apparel. Up to 4 variations per request. Uses recontext_image API.
 #
 # Switch to a Gemini tier ONLY when you need text prompt control (color changes,
-# scene edits). Gemini tiers: flash / flash-3.1 / pro.
+# scene edits). Gemini tiers: flash / pro.
 #
 # Models:
-#   vto        virtual-try-on-001              Dedicated VTO Imagen — recommended
+#   vto        virtual-try-on-001              Dedicated VTO Imagen -- recommended
 #   flash      gemini-2.5-flash-image          Prompt-based, fastest
-#   flash-3.1  gemini-3.1-flash-image-preview  Prompt-based, balanced
-#   pro        gemini-3-pro-image-preview      Prompt-based, best quality
+#   pro        gemini-2.5-pro-image            Prompt-based, best quality
 tryon_model: "vto"
 
 # --- Guardrails ---
@@ -73,8 +72,7 @@ that layers on top of the product search agent.
 |-------|----------|-----|-------------|-----------------|
 | `vto` ⭐ | `virtual-try-on-001` | `recontext_image` | No (image-only) | **Default** — clothing, footwear, apparel |
 | `flash` | `gemini-2.5-flash-image` | `generate_content` | Yes | High-volume + text variations |
-| `flash-3.1` | `gemini-3.1-flash-image-preview` | `generate_content` | Yes | Balanced + text variations |
-| `pro` | `gemini-3-pro-image-preview` | `generate_content` | Yes | Editorial + complex scenes |
+| `pro` | `gemini-2.5-pro-image` | `generate_content` | Yes | Editorial + complex scenes |
 
 The dedicated VTO model is purpose-built and gives the highest fidelity for clothing. Reach for Gemini only when you need to drive variations with a text prompt (e.g. "show in red", "outdoor scene").
 

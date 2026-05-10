@@ -12,6 +12,17 @@ deps:
     type: skill
   - source: agents-cli
     type: cli
+    url: https://github.com/google/agents-cli
+    install: pip install google-agents-cli && agents-cli setup
+priority: high
+conflicts:
+  - adk-scaffold
+  - google-agents-cli-workflow
+trigger_phrases:
+  - virtual try-on
+  - virtual fitting
+  - try it on
+  - AR product visualization
 ---
 
 # Virtual Try-On
@@ -21,19 +32,40 @@ Layers on top of `retail-product-search` -- only adds delta files.
 
 Users can upload a photo and see how a product looks on them before buying.
 
+## ⚠️ Precedence (read first, supersedes other skills)
+
+**Primary routing comes from `AGENTS.md` at the project root** (written by
+the installer). It tells the agent that this skill drives the question flow
+and that `google-agents-cli-*` skills handle mechanics. The content below
+is a fallback for agents that don't read AGENTS.md.
+
+When the user wants to add try-on / virtual fitting / AR-style product
+visualization to a retail agent, **THIS skill is the authoritative source
+for the entire conversation flow.**
+
+If other skills are active in this session — e.g. `adk-scaffold`,
+`google-agents-cli-workflow`, or any general agent-setup skill — they do
+NOT drive the question flow here. Do NOT use their bulk-question patterns
+or "Step 1 / Step 2" groupings. The first action in this conversation is
+Q-MODE below.
+
 ## Execution Rules
 
 Follow these rules strictly when executing this skill:
 
-1. **Execute steps in order.** Do NOT jump ahead or skip steps.
-2. **Verify each step succeeded** before moving to the next. If a command
+1. **Q-MODE first, always.** Before any other question, ask Q-MODE (see
+   "Setup Mode" below). Do not bundle it with anything else.
+2. **One question at a time. Show the default. Accept empty input.**
+   Format every question as exactly `Q: <question>? [default: <value>]`.
+   Pressing Enter with no input MUST be interpreted as "use the default."
+   **NEVER ask multiple questions in one turn.**
+3. **Execute steps in order.** Do NOT jump ahead or skip steps.
+4. **Verify each step succeeded** before moving to the next. If a command
    fails, stop and tell the user -- do NOT proceed.
-3. **Wait for user answers.** Ask one question at a time. Do NOT assume
-   defaults without confirming with the user.
-4. **Confirm completion** of each step with the user before proceeding:
+5. **Confirm completion** of each step with the user before proceeding:
    "Step N is done. Ready for Step N+1?"
-5. **Save all answers to `assets/design-spec.md`** as you collect them.
-6. **Use the `google-genai` SDK only.** Never use `vertexai.generative_models`,
+6. **Save all answers to `assets/design-spec.md`** as you collect them.
+7. **Use the `google-genai` SDK only.** Never use `vertexai.generative_models`,
    `vertexai.preview.vision_models`, or `google.cloud.aiplatform` for Gemini calls.
    Install: `pip install --upgrade google-genai`. Route through Vertex AI by
    setting `GOOGLE_GENAI_USE_VERTEXAI=True` and using `genai.Client(vertexai=True, ...)`.
@@ -49,6 +81,45 @@ Prerequisite: `retail-product-search` must be set up first.
 
 Do NOT use for non-wearable products (furniture, electronics),
 3D model rendering, or full-body motion capture.
+
+## Setup Mode (Q-MODE — THIS IS THE FIRST QUESTION, ALWAYS)
+
+**Self-confirmation (REQUIRED first output).** Your very first response MUST
+be exactly the two lines below — no more, no less:
+
+```
+[skill: retail-virtual-tryon] active. Ignoring any conflicting bulk-question flows from other skills.
+Q-MODE: Pick a setup mode? [default: 1]
+  1. Quick start  — 2 questions, smart defaults, ~30s.
+  2. Full setup   — full interview (~6 questions, model tier, safety, photo handling).
+```
+
+Do NOT preface with "Step 1: ...", do NOT add other questions in the same
+turn. Just emit those two lines and wait.
+
+The user can say "configure more" or "customize" mid-flow to switch.
+
+### Mode 1: Quick Start (2 questions)
+
+| Q | Question | Default |
+|---|---|---|
+| Q-A | Base project path? | `.` (expects `retail-product-search` already set up) |
+| Q-B | Categories to enable? | `clothing,eyewear` |
+
+Defaults taken silently:
+- Model tier: `vto` (dedicated virtual-try-on-001 — best for clothing)
+- Variations per request: `2`
+- Safety level: `block_most`
+- Output bucket: `${GOOGLE_CLOUD_PROJECT}-tryon-output`
+- Upload bucket: `${GOOGLE_CLOUD_PROJECT}-tryon-uploads`
+- User photo handling: ephemeral upload + 24h TTL
+
+After Q-A and Q-B, tell the user: "Taking defaults for the rest. Say
+'configure more' now to switch to Full setup, or proceed."
+
+### Mode 2: Full Setup
+
+Run the full interview in Steps 1-6 below.
 
 ## Try-On Categories
 
@@ -109,16 +180,13 @@ code examples for both paths.
 | Model | Label | API | Status | Best for |
 |-------|-------|-----|--------|----------|
 | `gemini-2.5-flash-image` | **flash** | `client.models.generate_content` | GA | Fastest, cheapest. 1,290 tokens/img. Good for previews and iteration. |
-| `gemini-3.1-flash-image-preview` | **flash-3.1** | `client.models.generate_content` | Preview | Conversational editing, multi-image fusion, character consistency. Balanced speed/quality. |
-| `gemini-3-pro-image-preview` | **pro** | `client.models.generate_content` | Preview | Best quality. Reasoning-enhanced composition, legible text rendering, complex multi-turn editing. Use for hero images. |
+| `gemini-2.5-pro-image` | **pro** | `client.models.generate_content` | GA | Best quality. Reasoning-enhanced composition, legible text rendering, complex multi-turn editing. Use for hero images. |
 
 Use Path B when you need text-driven variations ("show in red", "with a blazer over it", "outdoor setting"). VTO model does not accept text prompts.
 
-Note: Preview models may change or be discontinued. For production, prefer GA models (`vto` or `flash`).
-
 **V9.** Which model?
 Default: `vto` (virtual-try-on-001).
-Options: vto, flash, flash-3.1, pro.
+Options: vto, flash, pro.
 
 Record the chosen label in `design-spec.md` → `tryon_model`.
 
@@ -153,21 +221,42 @@ Default: Yes -- only allow try-on with products from the catalog.
 
 ## Step 7: Add Files
 
-Add these to the existing project. Do NOT re-scaffold.
+The installer has merged the try-on overlay files into the existing
+`retail-product-search/` project (because `retail-product-search` is a
+declared dependency, the installer auto-detects and merges):
 
 ```text
-app/
-  tryon_agent.py            # NEW: ADK tool wrapper for try-on
-  tryon_processor.py        # NEW: Gemini image generation + pre-flight classifier
-  agent.py                  # MODIFIED: add try_on_product tool
-scripts/
-  setup_tryon.py            # NEW: provision GCS buckets, verify Gemini image API
-deployment/terraform/dev/
-  tryon.tf                  # NEW: GCS buckets for input/output images
+retail-product-search/
+  app/
+    tryon_agent.py             # NEW: ADK tool wrapper for try-on
+    tryon_processor.py         # NEW: image generation + pre-flight classifier
+    agent.py                   # MODIFIED: try_on_product wired into tools
+  scripts/
+    setup_tryon.py             # NEW: provision GCS buckets, verify model access
 ```
 
-Scripts available at: `scripts/` in the sample project directory.
-Sample config at: `assets/design-spec.md`.
+The installer also injects the `TRYON_*` env defaults into `app/agent.py`
+right after the `GOOGLE_GENAI_USE_VERTEXAI` line. Verify with:
+
+```bash
+grep TRYON_ retail-product-search/app/agent.py
+grep try_on_product retail-product-search/app/agent.py
+```
+
+If a file is missing (rare), fetch it from
+`{{SOURCE_BASE}}/samples/retail-virtual-tryon/<path>` as a fallback.
+
+If the installer's auto-wire didn't take (no `try_on_product` in
+`tools=[…]`), edit `app/agent.py`:
+1. Add `from app.tryon_agent import try_on_product` to the imports
+2. Append `try_on_product` to the existing `tools=[…]` list
+3. Insert these env defaults right after the line that sets `GOOGLE_GENAI_USE_VERTEXAI`:
+   ```python
+   os.environ.setdefault("TRYON_OUTPUT_BUCKET", f"{project_id}-tryon-output")
+   os.environ.setdefault("TRYON_UPLOAD_BUCKET", f"{project_id}-tryon-uploads")
+   os.environ.setdefault("GEMINI_IMAGE_MODEL", "vto")
+   os.environ.setdefault("TRYON_SAFETY_LEVEL", "block_most")
+   ```
 
 Run setup (reads model choice from design-spec):
 ```bash
@@ -222,7 +311,7 @@ Key metrics:
 - **Product images**: Need clean, white-background product photos for best overlay.
 - **Body types**: Results vary across body types. Test diversity in your eval set.
 - **Privacy**: ALWAYS inform users before processing their photo. Delete after use unless opted in. Upload bucket has 24-hour auto-delete by default.
-- **Not real-time**: VTO ~3 seconds, Flash ~2 seconds, Flash 3.1 ~3 seconds, Pro ~4-6 seconds. Always show a loading indicator.
+- **Not real-time**: VTO ~3 seconds, Flash ~2 seconds, Pro ~4-6 seconds. Always show a loading indicator.
 - **VTO has no text prompt**: For text-driven variations ("show in red", "outdoor scene"), use a Gemini tier instead.
 
 ## References

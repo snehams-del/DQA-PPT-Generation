@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Skill evaluation runner — works with any skill in evals/sets/.
+"""Skill spec-coverage checker — verifies SKILL.md completeness via simulated queries.
 
-Loads the skill's SKILL.md as agent context, simulates responses with Gemini,
-and scores binary pass/fail assertions. No live GCP infra required for basic eval.
+Loads the skill's SKILL.md as context, sends test queries to Gemini, and checks
+whether the responses (and the spec itself) cover expected topics, fields, and
+behaviors. This is NOT an end-to-end agent evaluation — it measures spec quality,
+not deployed agent correctness.
 
 Usage:
     python evals/run.py --skill retail-virtual-tryon --project-id $PROJECT
@@ -43,31 +45,24 @@ def load_evalset(skill: str) -> dict:
     return json.loads(path.read_text())
 
 
-def _load_sample_catalog(skill: str) -> str:
-    """Load sample product catalog if available for this skill."""
-    # Skills that depend on product-search share the same sample catalog
+def _load_sample_catalog(evalset: dict) -> str:
+    """Load sample product catalog if the evalset declares uses_catalog: true."""
+    if not evalset.get("uses_catalog", False):
+        return ""
     catalog_path = ROOT / "samples" / "retail-product-search" / "assets" / "sample-products.csv"
     if not catalog_path.exists():
-        return ""
-    # Only inject catalog for skills that answer product queries
-    catalog_skills = {
-        "retail-product-search",
-        "retail-product-recommendation",
-        "retail-content-generation",
-    }
-    if skill not in catalog_skills:
         return ""
     return catalog_path.read_text()
 
 
-def simulate_agent(query: str, skill_md: str, project_id: str, skill: str = "") -> dict:
+def simulate_agent(query: str, skill_md: str, project_id: str, evalset: dict = None) -> dict:
     """Simulate skill agent response using Gemini with SKILL.md as context."""
     from google import genai
     from google.genai import types
 
     client = genai.Client(vertexai=True, project=project_id, location="global")
 
-    catalog = _load_sample_catalog(skill)
+    catalog = _load_sample_catalog(evalset or {})
     catalog_section = ""
     if catalog:
         catalog_section = f"""
@@ -103,11 +98,12 @@ Be specific and actionable. Keep response under 300 words."""
     return {"response": text, "response_lower": text.lower()}
 
 
-def check_assertion(assertion: dict, result: dict, skill_md: str) -> tuple[bool, str]:
+def check_assertion(assertion: dict, result: dict, skill_md: str, evalset: dict = None) -> tuple[bool, str]:
     """Check one assertion. Returns (passed, reason)."""
     atype = assertion["type"]
     resp = result.get("response_lower", "")
     skill = skill_md.lower()
+    evalset = evalset or {}
 
     if atype == "response_not_empty":
         ok = len(resp.strip()) > 10
@@ -119,7 +115,7 @@ def check_assertion(assertion: dict, result: dict, skill_md: str) -> tuple[bool,
 
     elif atype == "contains_keyword":
         kw = assertion["value"].lower()
-        ok = kw in resp or kw in skill
+        ok = kw in resp
         return ok, f"Found '{kw}'" if ok else f"Missing '{kw}'"
 
     elif atype == "skill_covers":
@@ -139,7 +135,7 @@ def check_assertion(assertion: dict, result: dict, skill_md: str) -> tuple[bool,
 
     elif atype == "mentions_model":
         model = assertion["model"].lower()
-        ok = model in resp or model in skill
+        ok = model in resp
         return ok, f"Model '{model}' mentioned" if ok else f"Model '{model}' missing"
 
     elif atype == "no_hallucination":
@@ -163,8 +159,8 @@ def check_assertion(assertion: dict, result: dict, skill_md: str) -> tuple[bool,
         if field == "price":
             ok = field in resp or bool(re.search(r"\$[\d]+\.?\d*", resp))
         elif field == "brand":
-            # Known brands from sample catalog
-            brands = ["sony", "generic", "anker", "keychron", "benq"]
+            # Brand evidence: declared in evalset (catalog_brands) or the literal word
+            brands = [b.lower() for b in evalset.get("catalog_brands", [])]
             ok = field in resp or any(b in resp for b in brands)
         else:
             ok = field in resp
@@ -210,7 +206,7 @@ def run_eval(skill: str, project_id: str, verbose: bool = False) -> float:
             logger.info(f"EVAL: {eval_id}")
             logger.info(f"QUERY: {query}")
 
-        result = simulate_agent(query, skill_md, project_id, skill=skill)
+        result = simulate_agent(query, skill_md, project_id, evalset=evalset)
 
         if verbose:
             logger.info(f"RESPONSE: {result['response'][:200]}...")
@@ -219,7 +215,7 @@ def run_eval(skill: str, project_id: str, verbose: bool = False) -> float:
         case_total = len(case["assertions"])
 
         for assertion in case["assertions"]:
-            ok, reason = check_assertion(assertion, result, skill_md)
+            ok, reason = check_assertion(assertion, result, skill_md, evalset)
             total += 1
             if ok:
                 passed += 1

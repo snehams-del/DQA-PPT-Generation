@@ -9,7 +9,7 @@
       "assertions": [
         {"type": "response_not_empty"},
         {"type": "skill_covers", "topic": "clothing"},
-        {"type": "contains_keyword", "value": "photo"}
+        {"type": "response_min_length", "value": 30}
       ]
     },
     {

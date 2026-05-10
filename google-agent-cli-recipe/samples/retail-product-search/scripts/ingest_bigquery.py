@@ -166,25 +166,49 @@ def ingest(
     """Ingest products into BigQuery."""
     client = bigquery.Client(project=project_id)
 
-    # Create dataset if needed
+    # Check if dataset already exists. Never modify or delete existing datasets.
     dataset_ref = f"{project_id}.{dataset_id}"
     try:
         client.get_dataset(dataset_ref)
+        if sys.stdin.isatty():
+            # Interactive terminal -- ask the user for a new name
+            logger.warning(f"Dataset {dataset_ref} already exists.")
+            try:
+                new_name = input("  Enter a different dataset name (or Ctrl+C to cancel): ").strip()
+            except (EOFError, KeyboardInterrupt):
+                print()
+                logger.info("Cancelled.")
+                sys.exit(0)
+            if not new_name:
+                logger.error("No name provided. Exiting.")
+                sys.exit(1)
+            dataset_id = new_name
+            dataset_ref = f"{project_id}.{dataset_id}"
+            try:
+                client.get_dataset(dataset_ref)
+                logger.error(f"Dataset {dataset_ref} also exists. Re-run with --dataset-id <unique_name>.")
+                sys.exit(1)
+            except Exception:
+                pass  # New name is available
+        else:
+            # Non-interactive (agent/subprocess) -- fail with a clear message
+            logger.error(
+                f"Dataset {dataset_ref} already exists. "
+                f"Re-run with a different name: --dataset-id {dataset_id}_v2"
+            )
+            sys.exit(1)
     except Exception:
-        logger.info(f"Creating dataset {dataset_ref}")
-        dataset = bigquery.Dataset(dataset_ref)
-        dataset.location = "US"
-        client.create_dataset(dataset)
+        pass  # Dataset doesn't exist, safe to create
 
-    # Create table if needed
+    logger.info(f"Creating dataset {dataset_ref}")
+    dataset = bigquery.Dataset(dataset_ref)
+    dataset.location = "US"
+    client.create_dataset(dataset)
+
     table_ref = f"{project_id}.{dataset_id}.{table_id}"
-    try:
-        client.get_table(table_ref)
-        logger.info(f"Table {table_ref} already exists")
-    except Exception:
-        logger.info(f"Creating table {table_ref}")
-        table = bigquery.Table(table_ref, schema=SCHEMA)
-        client.create_table(table)
+    logger.info(f"Creating table {table_ref}")
+    table = bigquery.Table(table_ref, schema=SCHEMA)
+    client.create_table(table)
 
     # Load products
     if source_format == "json":
@@ -221,7 +245,7 @@ def main():
     parser = argparse.ArgumentParser(description="Ingest product catalog to BigQuery")
     parser.add_argument("--config", default="", help="Path to design-spec.md (provides defaults for other args)")
     parser.add_argument("--project-id", help="GCP project ID")
-    parser.add_argument("--dataset-id", default="products_dataset", help="BigQuery dataset ID")
+    parser.add_argument("--dataset-id", default="retail_skill_products", help="BigQuery dataset ID")
     parser.add_argument("--table-id", default="products", help="BigQuery table ID")
     parser.add_argument("--gcs-bucket", help="GCS bucket name (used with --gcs-path)")
     parser.add_argument("--gcs-path", help="Path to data file in GCS bucket")

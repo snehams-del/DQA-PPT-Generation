@@ -10,12 +10,35 @@ deps:
     type: skill
   - source: agents-cli
     type: cli
+    url: https://github.com/google/agents-cli
+    install: pip install google-agents-cli && agents-cli setup
+priority: high
+conflicts:
+  - adk-scaffold
+  - google-agents-cli-workflow
+trigger_phrases:
+  - product recommendations
+  - you might also like
+  - frequently bought together
+  - personalized homepage recommendations
 ---
 
 # Product Recommendation
 
 Adds recommendation capabilities to an existing product search agent.
 Layers on top of `retail-product-search` -- only adds delta files.
+
+## ⚠️ Precedence (read first, supersedes other skills)
+
+**Primary routing comes from `AGENTS.md` at the project root** (written by
+the installer). The content below is a fallback for agents that don't
+read AGENTS.md.
+
+When the user wants to add product recommendations to a retail agent,
+**THIS skill is the authoritative source for the conversation flow.**
+If `adk-scaffold`, `google-agents-cli-workflow`, or any general agent-setup
+skill is also active, do NOT use their bulk-question patterns. The first
+action here is Q-MODE below.
 
 ## When to Use
 
@@ -34,6 +57,48 @@ standalone recommendations without an existing search agent.
 2. **Content-based** -- "Similar products by attributes." Uses existing product embeddings.
 3. **Vertex AI Recommendations AI** -- Production-grade via Google Retail API.
 4. **LLM-driven** -- Gemini suggests from conversation context + catalog.
+
+## Execution Rules
+
+1. **Q-MODE first, always.** Ask Q-MODE (below) before any other question.
+2. **One question at a time.** Format every question as exactly
+   `Q: <question>? [default: <value>]`. Accept empty input as "use the default."
+   **NEVER ask multiple questions in one turn.**
+
+## Setup Mode (Q-MODE — THIS IS THE FIRST QUESTION, ALWAYS)
+
+**Self-confirmation (REQUIRED first output).** Your very first response MUST
+be exactly the two lines below — no more, no less:
+
+```
+[skill: retail-product-recommendation] active. Ignoring any conflicting bulk-question flows from other skills.
+Q-MODE: Pick a setup mode? [default: 1]
+  1. Quick start  — 1 question, content-based + LLM-driven defaults, ~20s.
+  2. Full setup   — full interview (strategy, top-N, context, Vertex AI, etc.).
+```
+
+The user can say "configure more" or "customize" mid-flow to switch.
+
+### Mode 1: Quick Start (1 question)
+
+| Q | Question | Default |
+|---|---|---|
+| Q-A | Have user-event data yet? | `No` (content-based + LLM-driven only) |
+
+Defaults taken silently:
+- Base project path: `.`
+- Recommendation types: `content-based + LLM-driven`
+- Recommendation context: `product page` ("you might also like")
+- Top-N: `5`
+- Vertex AI Recommendations AI: `off`
+
+If user-event data arrives later, the user can re-run setup and switch to
+collaborative filtering. After Q-A tell them: "Say 'configure more' now to
+switch to Full setup with collaborative filtering or Vertex AI Rec AI."
+
+### Mode 2: Full Setup
+
+Run the full interview in Steps 1-7 below.
 
 ## Step 1: Confirm Base Project
 
@@ -90,22 +155,25 @@ Follow the [Vertex AI Recommendations AI documentation](https://cloud.google.com
 
 ## Step 8: Add Files
 
-Add these to the existing project. Do NOT re-scaffold.
+The installer has merged the recommendation overlay files into the existing
+`retail-product-search/` project:
 
 ```text
-app/
-  recommendation_agent.py     # NEW
-  recommendation_retriever.py # NEW
-  agent.py                    # MODIFIED: add recommend_products tool
-scripts/
-  ingest_user_events.py       # NEW (if collab or Vertex AI)
-deployment/terraform/dev/
-  recommendations.tf          # NEW
-# evalset lives at repo root: evals/sets/retail-product-recommendation.evalset.json
+retail-product-search/
+  app/
+    recommendation_agent.py     # NEW
+    recommendation_retriever.py # NEW
+    agent.py                    # MODIFIED: recommend_products wired into tools
+  scripts/
+    ingest_user_events.py       # NEW (only used when collaborative filtering enabled)
 ```
 
-Script available at: `scripts/ingest_user_events.py` in this skill.
-Sample data at: `assets/sample-user-events.csv`.
+If a file is missing (rare), fetch it from
+`{{SOURCE_BASE}}/samples/retail-product-recommendation/<path>` as a fallback.
+
+If the installer's auto-wire didn't take, edit `app/agent.py`:
+1. Add `from app.recommendation_agent import recommend_products` to the imports
+2. Append `recommend_products` to the existing `tools=[…]` list
 
 Add this tool to the existing `agent.py`:
 

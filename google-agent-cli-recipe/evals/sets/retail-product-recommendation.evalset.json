@@ -1,7 +1,8 @@
 {
   "skill": "retail-product-recommendation",
   "version": "1.0",
-  "description": "Evaluation cases for the retail product recommendation skill — covers recommendation types, cold start, relevance, and configuration.",
+  "description": "Evaluation cases for the retail product recommendation skill -- covers recommendation types, cold start, relevance, and configuration.",
+  "uses_catalog": true,
   "eval_cases": [
     {
       "eval_id": "basic_recommendation",

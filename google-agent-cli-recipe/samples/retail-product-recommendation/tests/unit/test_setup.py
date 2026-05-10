@@ -36,7 +36,7 @@ class TestSetupRecommendation:
         spec.write_text(f"---\n{yaml_lines}\n---\n")
         return str(spec)
 
-    @patch("scripts.setup.subprocess.run")
+    @patch("_shared.setup_utils.subprocess.run")
     def test_collaborative_with_events_runs_ingestion(self, mock_run, tmp_path):
         mock_run.return_value = MagicMock(returncode=0)
         spec = self._make_spec(tmp_path)
@@ -52,14 +52,14 @@ class TestSetupRecommendation:
         finally:
             os.chdir(old_cwd)
 
-    @patch("scripts.setup.subprocess.run")
+    @patch("_shared.setup_utils.subprocess.run")
     def test_content_based_skips_events(self, mock_run, tmp_path, capsys):
         spec = self._make_spec(tmp_path, {"recommendation_type": "content-based"})
         result = setup(spec, dry_run=True)
         assert result is True
         mock_run.assert_not_called()
 
-    @patch("scripts.setup.subprocess.run")
+    @patch("_shared.setup_utils.subprocess.run")
     def test_collaborative_no_events_warns(self, mock_run, tmp_path):
         spec = self._make_spec(tmp_path, {"has_user_events": "No"})
         result = setup(spec, dry_run=True)

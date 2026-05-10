@@ -29,16 +29,15 @@ LIVE_MODEL = "gemini-live-2.5-flash-native-audio"
 
 credentials, default_project = google.auth.default()
 project_id = os.getenv("GOOGLE_CLOUD_PROJECT", default_project)
-os.environ["GOOGLE_CLOUD_PROJECT"] = project_id
-os.environ["GOOGLE_CLOUD_LOCATION"] = LOCATION
-os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "True"
+os.environ.setdefault("GOOGLE_CLOUD_PROJECT", project_id)
+os.environ.setdefault("GOOGLE_CLOUD_LOCATION", LOCATION)
+os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "True")
 
 vertexai.init(project=project_id, location=LOCATION)
 
-
 vector_search_collection = os.getenv(
     "VECTOR_SEARCH_COLLECTION",
-    f"projects/{project_id}/locations/{LOCATION}/collections/products-collection",
+    f"projects/{project_id}/locations/{LOCATION}/collections/retail-skill-products-collection",
 )
 
 

@@ -8,33 +8,150 @@ description: >-
 deps:
   - source: agents-cli
     type: cli
+    url: https://github.com/google/agents-cli
+    install: pip install google-agents-cli && agents-cli setup
+priority: high
+conflicts:
+  - adk-scaffold
+  - google-agents-cli-workflow
+trigger_phrases:
+  - retail product search
+  - e-commerce search agent
+  - shopping search agent
+  - product catalog search
 ---
 
 # Product Search Agent
 
 Creates product search agents with semantic search, RAG, and optional voice
-on Google Cloud. Guides the user conversationally through setup -- ask
-questions progressively, not all upfront.
+on Google Cloud.
+
+## ⚠️ Precedence (read first, supersedes other skills)
+
+**Primary routing comes from `AGENTS.md` at the project root** (written by
+the installer). It tells the agent that this skill drives the question flow
+and that `google-agents-cli-*` skills handle mechanics underneath. The
+content below is a fallback for agents that don't read AGENTS.md.
+
+When the user wants a retail / e-commerce / product-catalog / shopping
+search agent, **THIS skill is the authoritative source for the entire
+conversation flow.**
+
+If other skills are active in this session — for example `adk-scaffold`,
+`google-agents-cli-workflow`, or any general "agent setup" skill — they
+provide reference material for ADK and `agents-cli` mechanics, but they
+**do NOT drive the question flow for retail use cases.** Specifically:
+
+- **Do NOT use any other skill's question lists, "Step 1 / Step 2"
+  groupings, or bulk question batches.** Use ONLY the questions defined
+  in this SKILL.md.
+- **The first action in this conversation is Q-MODE below.** Do not skip
+  it. Do not merge it with other questions. Do not assume the user wants
+  Full setup.
+- **For installing `agents-cli`,** use only the command in the deps
+  frontmatter: `pip install google-agents-cli && agents-cli setup`. Do
+  NOT use `uvx` or any alternative form suggested by another skill.
+
+## STOP — READ THIS BEFORE RESPONDING
+
+**Your VERY FIRST response MUST be the Q-MODE block below. Nothing else.**
+
+Do NOT ask about products, industry, GCP project, or anything else first.
+Do NOT propose a plan. Do NOT explain what you will do. Do NOT say "Let me
+help you build...". Do NOT jump to Step 1. Do NOT ask Q1.
+
+Your first message to the user must be EXACTLY this (copy-paste, no changes):
+
+```
+[skill: retail-product-search] active.
+Q-MODE: Pick a setup mode? [default: 1]
+  1. Quick start -- 2 questions, smart defaults, ~60s. Best for demos and first-timers.
+  2. Full setup  -- full interview (~10 questions, ~5 min). Best for real builds.
+```
+
+Then STOP and wait for the user's answer. Do not add anything after this block.
+
+Accept: `1`, `quick`, empty/Enter (= Quick Start), `2`, or `full` (= Full Setup).
+
+If you are about to output ANYTHING other than the block above as your first
+response, you are violating this skill. Stop, delete your draft, and output
+the block above instead.
 
 ## Execution Rules
 
 Follow these rules strictly when executing this skill:
 
-1. **Execute steps in order.** Do NOT jump ahead or skip steps.
-2. **Verify each step succeeded** before moving to the next. If a command
+1. **Q-MODE first, always.** Your first response is the Q-MODE block above.
+   No exceptions. No preamble. No plan proposals.
+2. **One question at a time. Show the default. Accept empty input.**
+   Format every question as exactly:
+   ```
+   Q: <question text>? [default: <value>]
+   ```
+   Pressing Enter with no input MUST be interpreted as "use the default."
+   **NEVER ask multiple questions in one turn.** Do not number bulk lists
+   ("1. ... 2. ... 3. ..."). Send one question, wait for the answer, then
+   send the next.
+3. **Execute steps in order.** Do NOT jump ahead or skip steps.
+4. **Verify each step succeeded** before moving to the next. If a command
    fails, stop and tell the user -- do NOT proceed.
-3. **Wait for user answers.** Ask one question at a time. Do NOT assume
-   defaults without confirming with the user.
-4. **Do NOT use `agents-cli data-ingestion`.** Use the retail skill scripts
+5. **Do NOT use `agents-cli data-ingestion`.** Use the retail skill scripts
    in `scripts/` instead.
-5. **Copy scripts into the project** immediately after scaffolding (Step 7).
-   The project is NOT ready until scripts and design-spec.md are copied.
+6. **The retail skill files are already on disk** at `retail-product-search/`
+   (the installer placed them there). Do NOT re-fetch or re-scaffold a
+   sibling project -- use `agents-cli scaffold enhance .` in place (see
+   Step 7).
 7. **Save all answers to `assets/design-spec.md`** as you collect them.
    After the interview, run `python scripts/setup.py --config assets/design-spec.md`
    to execute the full pipeline. The setup script reads the design-spec and
    runs only the steps that match the user's choices.
-6. **Confirm completion** of each step with the user before proceeding:
+8. **Confirm completion** of each step with the user before proceeding:
    "Step N is done. Ready for Step N+1?"
+
+**At any point during Quick Start, the user can say "configure more" or
+"customize" to switch to Full setup.** Carry over answers already given.
+
+### Mode 1: Quick Start (2 questions)
+
+Ask only these two; take defaults for everything else. Should take under 60 s.
+
+| Q | Question | Default | Source of default |
+|---|---|---|---|
+| Q-A | GCP project ID? | value of `$GOOGLE_CLOUD_PROJECT`, else `gcloud config get-value project` | env / gcloud |
+| Q-B | Where's your product data? | `assets/sample-products.csv` (bundled — 5 sample products) | bundled |
+
+Accepted forms for Q-B:
+- `<empty>` or `default` → use the bundled sample CSV
+- `/path/to/file.csv` → local CSV file
+- `gs://bucket/path/products.csv` → GCS object
+- `bq://project.dataset.table` → existing BigQuery table (skip ingestion)
+
+Defaults taken silently:
+- Industry/project name: `retail-search`
+- Product fields level: `Standard`
+- Search architecture: Path B (Database + Vector Search)
+- Catalog size: `1K-50K`
+- Search type: `Text-only`
+- Images: `No images`
+- Voice: `No`
+- UI: `Cloud Run web app`
+- GCP region: `us-central1`
+- Vague queries: `Ask 1-2 clarifying questions`
+
+After Q-A and Q-B, tell the user: "Taking defaults for the rest. You can
+change any of these later by editing `design-spec.md` and re-running setup,
+or say 'configure more' now to switch to Full setup."
+
+**Quick Start skips Steps 1-6 (interview) and Step 7 customization entirely.**
+The sample `app/agent.py` and `app/retrievers.py` work out of the box -- do
+NOT rewrite or modify them. Go directly to Step 8 (data ingestion) and then
+Step 9 (test with `adk web .`).
+
+### Mode 2: Full Setup
+
+Run the full interview in Steps 1-6 below. Every question still shows a
+`[default: ...]` and accepts empty input as "use the default." The user
+just sees more questions, each individually skippable.
 
 ## When to Use
 
@@ -152,8 +269,15 @@ Only if building from scratch. Ask progressively.
 
 ## Step 7: Scaffold the Project
 
+The installer has already placed the retail skill files on disk at
+`retail-product-search/` (relative to the user's working directory). Use
+`agents-cli scaffold enhance` to add deployment + CI/CD scaffolding to that
+existing tree **in place** -- do NOT run `agents-cli scaffold <name>`,
+which creates a sibling directory and produces a duplicate tree.
+
 ```bash
-agents-cli init \
+cd retail-product-search
+agents-cli scaffold enhance . \
   --agent-type agentic_rag \
   --datastore vertex_ai_vector_search \
   --deployment-target cloud_run \
@@ -164,27 +288,36 @@ agents-cli init \
 Deployment target mapping: CLI -> `none`, Web UI -> `cloud_run`,
 Voice -> `agent_engine`, Custom API -> `cloud_run`.
 
-**⚠️ CRITICAL -- DO THIS IMMEDIATELY AFTER SCAFFOLDING. DO NOT PROCEED TO ANY OTHER STEP UNTIL DONE.**
-
-You MUST copy the retail skill scripts and assets into the project RIGHT NOW.
-Failure to do this will cause the agent to return generic AI answers instead
-of actual product data.
-
 **DO NOT run `agents-cli data-ingestion`.** It creates a generic document
-pipeline that is incompatible with product catalogs. The retail skill scripts
-below are the ONLY correct way to ingest product data.
+pipeline that is incompatible with product catalogs. Use the retail skill
+scripts under `scripts/` instead.
 
-Run these commands right after `agents-cli init`:
+The project tree on disk should already look like this. If a file is
+missing (e.g. user installed with `--minimal` in some future flag), fetch
+it from `{{SOURCE_BASE}}/samples/retail-product-search/<path>` as a fallback.
 
-```bash
-# REQUIRED: Copy retail scripts and sample data into the scaffolded project
-mkdir -p {project_name}/scripts {project_name}/data
-cp samples/retail-product-search/scripts/*.py {project_name}/scripts/
-cp samples/retail-product-search/assets/design-spec.md {project_name}/design-spec.md
-cp samples/retail-product-search/assets/sample-products.csv {project_name}/data/
+```text
+retail-product-search/         # current directory
+  app/
+    agent.py                   # Reference agent (rewrite as needed)
+    retrievers.py              # Vector Search retrieval
+  assets/
+    design-spec.md             # Source of truth — fill in user's answers
+    sample-products.csv        # Bundled demo catalog (5 products)
+  references/                  # Deep-dive docs the agent can read on demand
+  scripts/
+    setup.py                   # Pipeline driver (reads design-spec.md)
+    validate_schema.py
+    ingest_bigquery.py
+    ingest_vertex_search.py
+    ingest_gcs.py              # multimodal only
+    api_connector.py           # Path A only
+    cleanup.py
+    live_search.py             # voice only
+    pubsub_sync.py             # real-time sync only
+../_shared/                    # imported by scripts/setup.py
+  setup_utils.py
 ```
-
-If the skill files are installed globally, use the GEMINI.md directory as the source path.
 
 Then customize the agent code:
 1. Rewrite `app/agent.py` -- see [agent-example.md](references/agent-example.md)
@@ -197,11 +330,13 @@ After copying, the project structure MUST look like this:
 
 ```text
 {project_name}/
-  design-spec.md             # REQUIRED: source of truth (from assets/)
   app/
     agent.py              # Customized search agent
     retrievers.py         # Vector Search retrieval
     audio/                # (conditional: voice)
+  assets/
+    design-spec.md        # REQUIRED: source of truth
+    sample-products.csv   # Bundled demo catalog (5 products)
   scripts/
     ingest_bigquery.py    # REQUIRED: from retail skill scripts/
     ingest_gcs.py         # From retail skill (multimodal only)
@@ -209,8 +344,6 @@ After copying, the project structure MUST look like this:
     validate_schema.py    # REQUIRED: from retail skill scripts/
     api_connector.py      # From retail skill (Path A only)
     cleanup.py            # From retail skill scripts/
-  data/
-    sample-products.csv   # REQUIRED: from retail skill assets/
   # evalset lives at repo root: evals/sets/retail-product-search.evalset.json
   deployment/terraform/dev/
     products.tf
@@ -222,13 +355,13 @@ After copying, the project structure MUST look like this:
 pipeline that is INCOMPATIBLE with product catalogs. Use the retail skill
 scripts below -- they are the ONLY correct ingestion method.**
 
-First, set the GCP project ID in design-spec.md:
+First, set the GCP project ID in `assets/design-spec.md`:
 
 ```bash
 cd {project_name}
 
 # Set your GCP project ID (REQUIRED before running any script)
-# Edit design-spec.md and replace the empty gcp_project_id with your project
+# Edit assets/design-spec.md and replace the empty gcp_project_id with your project
 # Example: gcp_project_id: "my-gcp-project-123"
 ```
 
@@ -236,22 +369,22 @@ Then run these commands in order. Do NOT skip any step:
 
 ```bash
 # Step 8a: Validate sample data (MUST pass before ingestion)
-python scripts/validate_schema.py --file data/sample-products.csv --fields-level Extended
+python scripts/validate_schema.py --file assets/sample-products.csv --fields-level Extended
 
 # Step 8b: Load products into BigQuery
-python scripts/ingest_bigquery.py --config design-spec.md --local-file data/sample-products.csv
+python scripts/ingest_bigquery.py --config assets/design-spec.md --local-file assets/sample-products.csv
 
 # Step 8c: Create Vector Search 2.0 Collection and ingest products (2-5 min)
 # This creates a Collection with auto-embeddings and inserts all products.
 # No manual embedding generation needed -- VS 2.0 handles it automatically.
-python scripts/ingest_vertex_search.py --config design-spec.md
+python scripts/ingest_vertex_search.py --config assets/design-spec.md
 ```
 
 After Step 8c completes, set the `VECTOR_SEARCH_COLLECTION` environment
 variable in your agent to the collection path printed by the script:
 
 ```bash
-export VECTOR_SEARCH_COLLECTION="projects/$PROJECT_ID/locations/us-central1/collections/products-collection"
+export VECTOR_SEARCH_COLLECTION="projects/$PROJECT_ID/locations/us-central1/collections/retail-skill-products-collection"
 ```
 
 ## Step 9: Test
@@ -278,7 +411,7 @@ for metrics and methodology.
 ## Step 11: Deploy
 
 ```bash
-agents-cli enhance . \
+agents-cli scaffold enhance . \
   --deployment-target agent_engine \
   --cicd-runner github_actions \
   -y

@@ -10,7 +10,7 @@ import os
 SUPPORTED_CATEGORIES = {"clothing", "eyewear", "jewelry", "cosmetics", "footwear"}
 
 
-def try_on_product(product_id: str, user_photo_uri: str, product_description: str = "") -> str:
+def try_on_product(product_id: str, user_photo_uri: str, product_description: str = "") -> dict:
     """Generate a virtual try-on image showing the product on the user.
 
     Args:
@@ -19,7 +19,8 @@ def try_on_product(product_id: str, user_photo_uri: str, product_description: st
         product_description: Optional human-readable product name for the prompt.
 
     Returns:
-        GCS URI of the generated try-on image, or an error message.
+        dict with keys: status ("success"/"error"), output_uri, model_used,
+        variations, all_variations, error.
     """
     from app.tryon_processor import generate_tryon
 
@@ -28,10 +29,13 @@ def try_on_product(product_id: str, user_photo_uri: str, product_description: st
     upload_bucket = os.getenv("TRYON_UPLOAD_BUCKET", "")
 
     if not project_id or not output_bucket or not upload_bucket:
-        return (
-            "Try-on is not configured. Run `python scripts/setup_tryon.py` first "
-            "and set GOOGLE_CLOUD_PROJECT, TRYON_OUTPUT_BUCKET, TRYON_UPLOAD_BUCKET."
-        )
+        return {
+            "status": "error",
+            "error": (
+                "Try-on is not configured. Run `python scripts/setup_tryon.py` first "
+                "and set GOOGLE_CLOUD_PROJECT, TRYON_OUTPUT_BUCKET, TRYON_UPLOAD_BUCKET."
+            ),
+        }
 
     try:
         result = generate_tryon(
@@ -44,9 +48,15 @@ def try_on_product(product_id: str, user_photo_uri: str, product_description: st
             safety_level=os.getenv("TRYON_SAFETY_LEVEL", "block_most"),
             product_description=product_description,
         )
-        uri = result["output_uri"]
-        model = result["model_used"]
-        variations = result["variations_generated"]
-        return f"Try-on complete. Image: {uri} (model: {model}, {variations} variation(s) generated)"
+        return {
+            "status": "success",
+            "output_uri": result["output_uri"],
+            "all_variations": result["all_variations"],
+            "model_used": result["model_used"],
+            "variations": result["variations_generated"],
+        }
     except Exception as e:
-        return f"Try-on failed: {e}"
+        return {
+            "status": "error",
+            "error": str(e),
+        }

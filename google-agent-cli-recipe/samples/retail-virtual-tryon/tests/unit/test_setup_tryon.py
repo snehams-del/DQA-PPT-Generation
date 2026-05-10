@@ -26,8 +26,7 @@ class TestResolveModel:
 
     def test_gemini_labels_resolve_to_full_ids(self):
         assert resolve_model_id("flash") == "gemini-2.5-flash-image"
-        assert resolve_model_id("flash-3.1") == "gemini-3.1-flash-image-preview"
-        assert resolve_model_id("pro") == "gemini-3-pro-image-preview"
+        assert resolve_model_id("pro") == "gemini-2.5-pro-image"
 
     def test_full_id_passes_through(self):
         assert resolve_model_id("gemini-2.5-flash-image") == "gemini-2.5-flash-image"
@@ -129,10 +128,10 @@ class TestConstants:
         assert VTO_MODEL == "virtual-try-on-001"
 
     def test_all_gemini_tiers_defined(self):
-        assert set(GEMINI_IMAGE_MODELS.keys()) == {"flash", "flash-3.1", "pro"}
+        assert set(GEMINI_IMAGE_MODELS.keys()) == {"flash", "pro"}
 
     def test_all_models_includes_vto_and_gemini(self):
-        assert set(ALL_MODELS.keys()) == {"vto", "flash", "flash-3.1", "pro"}
+        assert set(ALL_MODELS.keys()) == {"vto", "flash", "pro"}
         assert ALL_MODELS["vto"] == "virtual-try-on-001"
 
     def test_all_safety_levels_defined(self):

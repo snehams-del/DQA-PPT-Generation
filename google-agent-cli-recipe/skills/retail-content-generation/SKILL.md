@@ -9,6 +9,17 @@ deps:
     type: skill
   - source: agents-cli
     type: cli
+    url: https://github.com/google/agents-cli
+    install: pip install google-agents-cli && agents-cli setup
+priority: high
+conflicts:
+  - adk-scaffold
+  - google-agents-cli-workflow
+trigger_phrases:
+  - product description generation
+  - product SEO copy
+  - product marketing copy
+  - product content generation
 ---
 
 # Product Content Generation
@@ -17,7 +28,61 @@ Generates product content at scale using Gemini. Layers on top of
 `retail-product-search` -- reads product data from BigQuery and generates
 enriched content.
 
+## ⚠️ Precedence (read first, supersedes other skills)
+
+**Primary routing comes from `AGENTS.md` at the project root** (written by
+the installer). The content below is a fallback for agents that don't
+read AGENTS.md.
+
+When the user wants to add content generation to a retail agent, **THIS
+skill is the authoritative source for the conversation flow.** If
+`adk-scaffold`, `google-agents-cli-workflow`, or any general agent-setup
+skill is also active, do NOT use their bulk-question patterns. The first
+action here is Q-MODE below.
+
 ## Execution Rules
+
+1. **Q-MODE first, always.** Ask Q-MODE (below) before any other question.
+2. **One question at a time.** Format every question as exactly
+   `Q: <question>? [default: <value>]`. Accept empty input as "use the default."
+   **NEVER ask multiple questions in one turn.**
+
+## Setup Mode (Q-MODE — THIS IS THE FIRST QUESTION, ALWAYS)
+
+**Self-confirmation (REQUIRED first output).** Your very first response MUST
+be exactly the two lines below — no more, no less:
+
+```
+[skill: retail-content-generation] active. Ignoring any conflicting bulk-question flows from other skills.
+Q-MODE: Pick a setup mode? [default: 1]
+  1. Quick start  — 1 question, professional tone, default lengths, ~20s.
+  2. Full setup   — full interview (brand voice, lengths, languages, A/B variants).
+```
+
+The user can say "configure more" or "customize" mid-flow to switch.
+
+### Mode 1: Quick Start (1 question)
+
+| Q | Question | Default |
+|---|---|---|
+| Q-A | Which content types to enable? | `descriptions, SEO titles, meta descriptions` |
+
+Defaults taken silently:
+- Base project path: `.`
+- Brand voice: `professional`
+- Description length: `100-150 words`
+- SEO title: `< 60 chars, brand + key feature`
+- Meta description: `< 160 chars, include CTA`
+- Languages: `English only`
+- A/B variants: `disabled`
+- Batch size: `10`
+
+After Q-A tell the user: "Say 'configure more' now to switch to Full setup
+for marketing copy, translations, or A/B variants."
+
+### Mode 2: Full Setup
+
+Run the full interview in Steps 1-9 below.
 
 Follow these rules strictly when executing this skill:
 
@@ -156,23 +221,26 @@ Options: BigQuery table, JSON file, CSV file.
 
 ## Step 10: Add Files
 
-Add these to the existing project. Do NOT re-scaffold.
+The installer has merged the content-generation overlay files into the
+existing `retail-product-search/` project:
 
 ```text
-app/
-  content_agent.py            # NEW: content generation tool
-  content_generator.py        # NEW: Gemini content generation logic
-  agent.py                    # MODIFIED: add generate_content tool
-scripts/
-  generate_content.py         # NEW: batch content generation
-  export_content.py           # NEW: export generated content
-deployment/terraform/dev/
-  content.tf                  # NEW: BigQuery content_generated table
-# evalset lives at repo root: evals/sets/retail-content-generation.evalset.json
+retail-product-search/
+  app/
+    content_agent.py            # NEW: ADK tool for content generation
+    content_generator.py        # NEW: Gemini content generation logic
+    agent.py                    # MODIFIED: generate_product_content wired into tools
+  scripts/
+    generate_content.py         # NEW: batch content generation
+    export_content.py           # NEW: export generated content
 ```
 
-Scripts available at: `scripts/` in this skill.
-Sample config at: `assets/design-spec.md`.
+If a file is missing (rare), fetch it from
+`{{SOURCE_BASE}}/samples/retail-content-generation/<path>` as a fallback.
+
+If the installer's auto-wire didn't take, edit `app/agent.py`:
+1. Add `from app.content_agent import generate_product_content` to the imports
+2. Append `generate_product_content` to the existing `tools=[…]` list
 
 Add this tool to the existing `agent.py`:
 

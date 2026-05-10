@@ -38,7 +38,7 @@ class TestSetupTryon:
         spec.write_text(f"---\n{yaml_lines}\ntryon_categories:\n{cats_yaml}\n---\n")
         return str(spec)
 
-    @patch("scripts.setup.subprocess.run")
+    @patch("_shared.setup_utils.subprocess.run")
     def test_runs_setup_tryon_script(self, mock_run, tmp_path):
         mock_run.return_value = MagicMock(returncode=0)
         spec = self._make_spec(tmp_path)
@@ -48,7 +48,7 @@ class TestSetupTryon:
         result = setup(spec, dry_run=True)
         assert result is True
 
-    @patch("scripts.setup.subprocess.run")
+    @patch("_shared.setup_utils.subprocess.run")
     def test_no_transparent_images_warns(self, mock_run, tmp_path, capsys):
         mock_run.return_value = MagicMock(returncode=0)
         spec = self._make_spec(tmp_path, {"has_transparent_images": "No"})
@@ -58,7 +58,7 @@ class TestSetupTryon:
         setup(spec, dry_run=True)
         # Warning is logged, not printed to capsys
 
-    @patch("scripts.setup.subprocess.run")
+    @patch("_shared.setup_utils.subprocess.run")
     def test_multiple_categories(self, mock_run, tmp_path):
         mock_run.return_value = MagicMock(returncode=0)
         spec = self._make_spec(tmp_path, {"tryon_categories": ["Clothing", "Eyewear", "Jewelry"]})

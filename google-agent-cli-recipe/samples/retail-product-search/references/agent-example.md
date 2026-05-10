@@ -25,7 +25,7 @@ from app.retrievers import search_collection
 
 LLM_LOCATION = "global"
 LOCATION = os.getenv("GCP_REGION", "us-central1")
-LLM = "gemini-3-flash-preview"
+LLM = "gemini-2.5-flash"
 
 credentials, project_id = google.auth.default()
 os.environ["GOOGLE_CLOUD_PROJECT"] = project_id

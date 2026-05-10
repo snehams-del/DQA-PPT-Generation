@@ -38,16 +38,20 @@ def export(
     table_ref = f"{project_id}.{dataset_id}.content_generated"
 
     conditions = []
+    query_params = []
     if content_type:
-        conditions.append(f"content_type = '{content_type}'")
+        conditions.append("content_type = @content_type")
+        query_params.append(bigquery.ScalarQueryParameter("content_type", "STRING", content_type))
     if language:
-        conditions.append(f"language = '{language}'")
+        conditions.append("language = @language")
+        query_params.append(bigquery.ScalarQueryParameter("language", "STRING", language))
 
     where = f" WHERE {' AND '.join(conditions)}" if conditions else ""
     query = f"SELECT * FROM `{table_ref}`{where} ORDER BY product_id, content_type, variant"
 
     logger.info(f"Querying: {query}")
-    results = client.query(query).result()
+    job_config = bigquery.QueryJobConfig(query_parameters=query_params) if query_params else None
+    results = client.query(query, job_config=job_config).result()
     rows = [dict(row.items()) for row in results]
 
     if not rows:
@@ -84,7 +88,7 @@ def main():
     parser = argparse.ArgumentParser(description="Export generated product content")
     parser.add_argument("--config", default="", help="Path to design-spec.md")
     parser.add_argument("--project-id", help="GCP project ID")
-    parser.add_argument("--dataset-id", default="products_dataset", help="BigQuery dataset")
+    parser.add_argument("--dataset-id", default="retail_skill_products", help="BigQuery dataset")
     parser.add_argument("--format", choices=["csv", "json"], default="csv", help="Output format")
     parser.add_argument("--output", required=True, help="Output file path")
     parser.add_argument("--type", default="", help="Filter by content type")

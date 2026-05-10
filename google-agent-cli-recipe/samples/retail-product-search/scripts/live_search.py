@@ -38,7 +38,7 @@ from google.cloud import vectorsearch
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
-MODEL = "gemini-3.1-flash-live-preview"
+MODEL = "gemini-live-2.5-flash-native-audio"
 
 SYSTEM_INSTRUCTION = """You are a helpful product search assistant for an online store.
 

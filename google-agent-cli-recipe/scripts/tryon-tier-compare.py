@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""tryon-tier-compare.py — compare flash / flash-3.1 / pro Gemini image tiers.
+"""tryon-tier-compare.py -- compare flash / pro Gemini image tiers.
 
 Generates a try-on image with each model tier on the same input, measures
 latency, and saves output URIs side by side so you can judge visual quality.
@@ -36,7 +36,7 @@ def main():
     parser.add_argument("--safety-level", default="block_most",
                         choices=["block_most", "block_some", "block_few"])
     parser.add_argument("--tiers", default="vto,flash,pro",
-                        help="Comma-separated model labels to compare (vto / flash / flash-3.1 / pro)")
+                        help="Comma-separated model labels to compare (vto / flash / pro)")
     args = parser.parse_args()
 
     if not args.project_id:

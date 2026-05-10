@@ -235,24 +235,24 @@ def cleanup(config: dict, dry_run: bool, only: list[str]) -> None:
     logger.info("")
 
     if "bigquery" in only:
-        delete_bigquery(project_id, "products_dataset", dry_run)
+        delete_bigquery(project_id, "retail_skill_products", dry_run)
 
     if "gcs" in only:
-        delete_gcs(project_id, ["products", "embeddings", "images", "data-ingestion"], dry_run)
+        delete_gcs(project_id, ["retail-skill-products", "retail-skill-embeddings", "retail-skill-images"], dry_run)
 
     if "vectorsearch" in only:
-        delete_vectorsearch_collection(project_id, location, "products-collection", dry_run)
+        delete_vectorsearch_collection(project_id, location, "retail-skill-products-collection", dry_run)
         # Also clean up legacy v1 indexes if any remain from previous runs
-        delete_vectorsearch_v1_index(project_id, location, "products_index", dry_run)
+        delete_vectorsearch_v1_index(project_id, location, "retail_skill_products_index", dry_run)
 
     if "pubsub" in only:
-        delete_pubsub(project_id, "product-changes", dry_run)
+        delete_pubsub(project_id, "retail-skill-product-changes", dry_run)
 
     if "cloudrun" in only:
         delete_cloudrun(project_id, location, project_name, dry_run)
 
     if "cloudfunctions" in only:
-        delete_cloudfunctions(project_id, location, "pubsub-product-sync", dry_run)
+        delete_cloudfunctions(project_id, location, "retail-skill-pubsub-sync", dry_run)
 
     logger.info("")
     if dry_run:
@@ -284,12 +284,16 @@ def main():
         only = ALL_RESOURCE_TYPES
 
     if not dry_run:
-        logger.warning("This will permanently delete GCP resources. Press Ctrl+C to cancel.")
-        import time
-        for i in range(5, 0, -1):
-            print(f"  Deleting in {i}...", end="\r")
-            time.sleep(1)
-        print()
+        project_id = config.get("gcp_project_id", "unknown")
+        print(f"\nYou are about to permanently delete GCP resources in project: {project_id}")
+        print(f"Resource types: {', '.join(only)}")
+        try:
+            answer = input("\nAre you sure? Type 'yes' to confirm: ").strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            answer = ""
+        if answer != "yes":
+            print("Aborted. No resources were deleted.")
+            sys.exit(0)
 
     cleanup(config, dry_run, only)
 

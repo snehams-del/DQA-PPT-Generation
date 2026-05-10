@@ -4,7 +4,7 @@
    highest fidelity for apparel. Default for clothing/footwear/standard items.
    API: client.models.recontext_image with RecontextImageSource
 
-2. **gemini-{2.5-flash,3.1-flash-preview,3-pro-preview}-image** — prompt-based.
+2. **gemini-{2.5-flash,2.5-pro}-image** -- prompt-based.
    Use when you need text-driven variations (color changes, scene, style).
    API: client.models.generate_content with multi-modal contents
 
@@ -24,20 +24,12 @@ logger = logging.getLogger(__name__)
 
 # ── Model registry ────────────────────────────────────────────────────────────
 
-# Dedicated VTO Imagen model (recontext_image API, image-only)
-VTO_MODEL = "virtual-try-on-001"
-
-# Gemini image generation tiers (generate_content API, supports text prompts)
-GEMINI_IMAGE_MODELS = {
-    "flash":     "gemini-2.5-flash-image",
-    "flash-3.1": "gemini-3.1-flash-image-preview",
-    "pro":       "gemini-3-pro-image-preview",
-}
-
-# All supported model IDs/labels combined
-ALL_MODELS = {
-    "vto":      VTO_MODEL,         # default for clothing/apparel
-    **GEMINI_IMAGE_MODELS,         # flash / flash-3.1 / pro
+# Each entry: label -> {id, api}. `api` is the google-genai client method
+# used to invoke the model: "recontext_image" (Imagen VTO) or "generate_content".
+MODELS = {
+    "vto":   {"id": "virtual-try-on-001",     "api": "recontext_image"},
+    "flash": {"id": "gemini-2.5-flash-image", "api": "generate_content"},
+    "pro":   {"id": "gemini-2.5-pro-image",   "api": "generate_content"},
 }
 
 # Safety levels (used by Gemini path; VTO has its own filter handling)
@@ -47,19 +39,25 @@ SAFETY_LEVELS = {
     "block_few":  "BLOCK_ONLY_HIGH",
 }
 
-DEFAULT_MODEL = "vto"               # virtual-try-on-001 — best for clothing
+DEFAULT_LABEL = "vto"               # virtual-try-on-001 — best for clothing
 DEFAULT_SAFETY_LEVEL = "block_most"
 PRE_FLIGHT_MODEL = "gemini-2.5-flash"  # cheap classifier for product cutouts
 
 
 def resolve_model(model_label_or_id: str) -> str:
     """Resolve a label (vto/flash/pro) or full model ID to a model ID."""
-    return ALL_MODELS.get(model_label_or_id, model_label_or_id) or VTO_MODEL
+    if model_label_or_id in MODELS:
+        return MODELS[model_label_or_id]["id"]
+    return model_label_or_id or MODELS[DEFAULT_LABEL]["id"]
 
 
 def is_vto_model(model_id: str) -> bool:
     """True if this model uses the recontext_image API (Imagen VTO)."""
-    return model_id == VTO_MODEL or model_id.startswith("virtual-try-on-")
+    for entry in MODELS.values():
+        if entry["id"] == model_id:
+            return entry["api"] == "recontext_image"
+    # Forward-compat: future virtual-try-on-* IDs also use recontext_image
+    return model_id.startswith("virtual-try-on-")
 
 
 def _make_client(project_id: str, location: str = "us-central1"):
@@ -116,7 +114,7 @@ def _generate_with_vto(
     config = types.RecontextImageConfig(number_of_images=min(num_variations, 4))
 
     response = client.models.recontext_image(
-        model=VTO_MODEL,
+        model=MODELS["vto"]["id"],
         source=source,
         config=config,
     )
@@ -185,7 +183,7 @@ def generate_tryon(
         project_id: GCP project ID.
         output_bucket: GCS bucket for output images.
         upload_bucket: GCS bucket for ephemeral user uploads.
-        model_label_or_id: 'vto' (default), 'flash', 'flash-3.1', 'pro', or full model ID.
+        model_label_or_id: 'vto' (default), 'flash', 'pro', or full model ID.
         safety_level: 'block_most' / 'block_some' / 'block_few' (Gemini path only).
         num_variations: Number of variations to generate (1–4).
         product_description: Used only for the Gemini path (text prompt).
@@ -196,7 +194,7 @@ def generate_tryon(
     from google.cloud import storage
 
     model_id = resolve_model(
-        model_label_or_id or os.getenv("GEMINI_IMAGE_MODEL", DEFAULT_MODEL)
+        model_label_or_id or os.getenv("GEMINI_IMAGE_MODEL", DEFAULT_LABEL)
     )
     effective_safety = safety_level or os.getenv("TRYON_SAFETY_LEVEL", DEFAULT_SAFETY_LEVEL)
 
@@ -219,8 +217,8 @@ def generate_tryon(
     product_is_cutout = False
     try:
         product_is_cutout = is_product_cutout(product_bytes, project_id)
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning("Pre-flight classifier failed: %s. Proceeding without cutout detection.", e)
 
     adjusted_safety = effective_safety
     if product_is_cutout and effective_safety == "block_most" and not is_vto_model(model_id):
@@ -245,9 +243,14 @@ def generate_tryon(
                 client, photo_bytes, product_bytes, model_id, prompt, num_variations,
             )
     except Exception as e:
-        # On safety block for cutout products via Gemini, retry with block_few
-        if "SAFETY" in str(e).upper() and product_is_cutout and not is_vto_model(model_id):
-            logger.warning("Safety block on cutout product. Retrying with block_few.")
+        safety_retry = os.getenv("TRYON_SAFETY_RETRY", "").lower() in ("true", "1", "yes")
+        if ("SAFETY" in str(e).upper() and product_is_cutout
+                and not is_vto_model(model_id) and safety_retry):
+            logger.warning(
+                "SAFETY RETRY: Safety block on cutout product (model=%s). "
+                "Retrying with block_few because TRYON_SAFETY_RETRY=true.",
+                model_id,
+            )
             adjusted_safety = "block_few"
             output_image_bytes = _generate_with_gemini(
                 client, photo_bytes, product_bytes, model_id,

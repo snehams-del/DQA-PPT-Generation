@@ -12,6 +12,7 @@ Usage:
 
 import argparse
 import logging
+import os
 import sys
 from pathlib import Path
 
@@ -27,8 +28,7 @@ VTO_MODEL = "virtual-try-on-001"
 # Gemini image generation tiers — prompt-based, use when text steering needed
 GEMINI_IMAGE_MODELS = {
     "flash": "gemini-2.5-flash-image",
-    "flash-3.1": "gemini-3.1-flash-image-preview",
-    "pro": "gemini-3-pro-image-preview",
+    "pro": "gemini-2.5-pro-image",
 }
 
 # All supported model labels combined ('vto' is the default)
@@ -63,7 +63,7 @@ def create_bucket_if_needed(project_id: str, bucket_name: str, location: str = "
 
 
 def resolve_model_id(model_label: str) -> str:
-    """Resolve a label (vto/flash/flash-3.1/pro) or a full model ID.
+    """Resolve a label (vto/flash/pro) or a full model ID.
 
     Default: 'vto' → virtual-try-on-001 (the dedicated Imagen VTO model).
     """
@@ -109,8 +109,7 @@ def print_model_comparison():
     logger.info("")
     logger.info("Gemini image tiers (use when text-driven variations needed):")
     logger.info("  flash      gemini-2.5-flash-image            Fastest, 1290 tokens/img, good quality")
-    logger.info("  flash-3.1  gemini-3.1-flash-image-preview    Fast,    2520 tokens/img, better quality")
-    logger.info("  pro        gemini-3-pro-image-preview         Slower,  2520 tokens/img, best quality")
+    logger.info("  pro        gemini-2.5-pro-image               Best quality, 2520 tokens/img")
     logger.info("")
     logger.info("Recommendation: use 'vto' for clothing/apparel, switch to a Gemini tier")
     logger.info("only when you need prompt-based control (color changes, scene edits).")
@@ -171,7 +170,7 @@ def main():
     parser.add_argument(
         "--model",
         default="",
-        help="Try-on model: vto (default, virtual-try-on-001) | flash | flash-3.1 | pro",
+        help="Try-on model: vto (default, virtual-try-on-001) | flash | pro",
         dest="model",
     )
     parser.add_argument(

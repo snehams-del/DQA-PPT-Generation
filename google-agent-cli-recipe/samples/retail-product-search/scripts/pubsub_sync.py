@@ -43,7 +43,7 @@ def fetch_product(product_id: str) -> dict | None:
     """Fetch product from BigQuery by ID."""
     client = bigquery.Client(project=PROJECT_ID)
     query = f"""
-        SELECT * FROM `{PROJECT_ID}.products_dataset.products`
+        SELECT * FROM `{PROJECT_ID}.retail_skill_products.products`
         WHERE product_id = @product_id
         LIMIT 1
     """

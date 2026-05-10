@@ -79,7 +79,7 @@ are inserted.
 # Basic usage
 python scripts/ingest_vertex_search.py \
     --project-id my-project \
-    --collection-id products-collection
+    --collection-id retail-skill-products-collection
 
 # Using design-spec.md for defaults
 python scripts/ingest_vertex_search.py --config design-spec.md
@@ -87,7 +87,7 @@ python scripts/ingest_vertex_search.py --config design-spec.md
 
 ### Pipeline
 
-1. Fetch products from BigQuery (`products_dataset.products`)
+1. Fetch products from BigQuery (`retail_skill_products.products`)
 2. Create Vector Search 2.0 Collection if it doesn't exist (with auto-embedding config)
 3. Batch-insert products as data objects (250 per batch)
 4. VS 2.0 auto-generates embeddings from the configured text template
@@ -96,7 +96,7 @@ python scripts/ingest_vertex_search.py --config design-spec.md
 
 | Flag | Default | Config key |
 |------|---------|------------|
-| `--collection-id` | products-collection | `collection_id` |
+| `--collection-id` | retail-skill-products-collection | `collection_id` |
 | `--embedding-model` | gemini-embedding-001 | `embedding_model` |
 | `--embedding-fields` | name,description,category,brand | `embedding_fields` |
 | `--location` | us-central1 | `gcp_region` |
@@ -107,7 +107,7 @@ After ingestion, set the `VECTOR_SEARCH_COLLECTION` environment variable
 in your agent to the collection path printed by the script:
 
 ```bash
-export VECTOR_SEARCH_COLLECTION="projects/PROJECT_ID/locations/us-central1/collections/products-collection"
+export VECTOR_SEARCH_COLLECTION="projects/PROJECT_ID/locations/us-central1/collections/retail-skill-products-collection"
 ```
 
 ---
@@ -200,7 +200,7 @@ Only needed when `catalog_change_frequency` is "Real-time (Cloud Pub/Sub trigger
 gcloud functions deploy pubsub-sync \
     --gen2 \
     --runtime python311 \
-    --trigger-topic product-changes \
+    --trigger-topic retail-skill-product-changes \
     --entry-point handle_product_event \
     --region us-central1
 ```

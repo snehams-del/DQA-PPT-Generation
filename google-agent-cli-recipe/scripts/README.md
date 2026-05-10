@@ -8,7 +8,7 @@ Runnable scripts that turn the testing guides into one-line commands.
 | [quality-check.sh](quality-check.sh) | Pass rates for all skills + verbose baselines saved | ~$0.04 | ~2 min | Yes |
 | [quality-prompts.py](quality-prompts.py) | Real-world prompts stress-test for one skill | ~$0.05 | ~3 min | Yes |
 | [quality-ab-compare.sh](quality-ab-compare.sh) | A/B compare a SKILL.md change | ~$0.10 | ~3 min | Yes |
-| [tryon-tier-compare.py](tryon-tier-compare.py) | Side-by-side flash / flash-3.1 / pro tiers | ~$0.30 | ~2 min | Yes |
+| [tryon-tier-compare.py](tryon-tier-compare.py) | Side-by-side flash / pro tiers | ~$0.30 | ~2 min | Yes |
 | [quality-log.sh](quality-log.sh) | Append pass rates to a CSV for tracking drift | ~$0.04 | ~2 min | Yes |
 
 ---
@@ -68,7 +68,7 @@ cat evals/baselines/retail-virtual-tryon.txt          # read failures
     --description "denim jacket"
 ```
 
-Generates one image per tier (flash / flash-3.1 / pro), prints latencies, and gives you GCS URIs to compare visually.
+Generates one image per tier (flash / pro), prints latencies, and gives you GCS URIs to compare visually.
 
 ---
 

@@ -11,51 +11,16 @@ Usage:
 
 import argparse
 import logging
-import subprocess
 import sys
 from pathlib import Path
 
-import yaml
+# Add samples/ to sys.path so _shared/ is importable as a top-level package.
+# Do NOT add an __init__.py to samples/ — that would break this import.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+from _shared.setup_utils import load_config, run_step
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger(__name__)
-
-
-def load_config(config_path: str) -> dict:
-    """Load design-spec.md YAML frontmatter."""
-    if not Path(config_path).exists():
-        return {}
-    text = Path(config_path).read_text()
-    if text.startswith("---"):
-        lines = text.split("\n")
-        yaml_lines = []
-        in_frontmatter = False
-        for line in lines:
-            if line.strip() == "---":
-                if not in_frontmatter:
-                    in_frontmatter = True
-                    continue
-                else:
-                    break
-            if in_frontmatter:
-                yaml_lines.append(line)
-        yaml_text = "\n".join(yaml_lines)
-        return yaml.safe_load(yaml_text) or {}
-    return yaml.safe_load(text) or {}
-
-
-def run_step(description: str, cmd: list, dry_run: bool = False) -> bool:
-    """Run a pipeline step. Returns True on success."""
-    logger.info(f"\n  {description}")
-    if dry_run:
-        logger.info(f"    [dry-run] {' '.join(cmd)}")
-        return True
-    logger.info(f"    Running: {' '.join(cmd)}")
-    result = subprocess.run(cmd, capture_output=False)
-    if result.returncode != 0:
-        logger.error(f"    FAILED (exit code {result.returncode})")
-        return False
-    return True
 
 
 def setup(config_path: str, dry_run: bool = False):

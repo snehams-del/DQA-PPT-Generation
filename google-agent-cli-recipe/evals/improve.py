@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Self-improving skill optimizer — Karpathy pattern applied to SKILL.md files.
+"""Experimental — see README ("Experimental" section) for caveats.
+
+Self-improving skill optimizer — Karpathy pattern applied to SKILL.md files.
 
 Three-agent loop:
   Executor  — runs evals/run.py, returns pass_rate + failures
@@ -21,9 +23,6 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from google import genai
-from google.genai import types
-
 ROOT = Path(__file__).parent.parent
 SKILLS_DIR = ROOT / "skills"
 HISTORY_DIR = Path(__file__).parent / "history"
@@ -34,11 +33,18 @@ logger = logging.getLogger(__name__)
 
 # ── Executor ──────────────────────────────────────────────────────────────────
 
-def executor(skill: str, project_id: str) -> tuple[float, list]:
-    """Run eval suite and return (pass_rate, failure_details)."""
+def executor(skill: str, project_id: str, skill_md_override: str = "") -> tuple[float, list]:
+    """Run eval suite and return (pass_rate, failure_details).
+
+    Args:
+        skill: Skill name (used to locate evalset and SKILL.md on disk).
+        project_id: GCP project ID for Gemini API calls.
+        skill_md_override: If provided, use this content instead of reading
+            SKILL.md from disk. Used by --dry-run to test proposed mutations.
+    """
     from evals.run import load_skill_md, load_evalset, simulate_agent, check_assertion
 
-    skill_md = load_skill_md(skill)
+    skill_md = skill_md_override or load_skill_md(skill)
     evalset = load_evalset(skill)
     cases = evalset["eval_cases"]
 
@@ -50,10 +56,10 @@ def executor(skill: str, project_id: str) -> tuple[float, list]:
         if not query and "input" in case:
             query = case["input"].get("query", str(case["input"]))
 
-        result = simulate_agent(query, skill_md, project_id, skill=skill)
+        result = simulate_agent(query, skill_md, project_id, evalset=evalset)
 
         for assertion in case["assertions"]:
-            ok, reason = check_assertion(assertion, result, skill_md)
+            ok, reason = check_assertion(assertion, result, skill_md, evalset)
             total += 1
             if ok:
                 passed += 1
@@ -76,6 +82,9 @@ def analyst(current_skill_md: str, failures: list, pass_rate: float, round_num: 
     """Diagnose failures and recommend a mutation strategy."""
     if not failures:
         return ""
+
+    from google import genai
+    from google.genai import types
 
     client = genai.Client(vertexai=True, project=project_id, location="global")
 
@@ -114,6 +123,9 @@ Be concrete. Specify which section needs changing and what to add/change."""
 
 def mutator(current_skill_md: str, diagnosis: str, project_id: str) -> str:
     """Apply ONE targeted mutation to SKILL.md based on the analyst's diagnosis."""
+    from google import genai
+    from google.genai import types
+
     client = genai.Client(vertexai=True, project=project_id, location="global")
 
     prompt = f"""You are improving an AI skill specification (SKILL.md).
@@ -166,7 +178,31 @@ def save_history(skill: str, round_num: int, skill_md: str, pass_rate: float, fa
 
 # ── Main loop ─────────────────────────────────────────────────────────────────
 
-def improve(skill: str, project_id: str, max_rounds: int = 5, target_rate: float = 1.0, dry_run: bool = False):
+def _confirm_mutation(current_md: str, new_md: str) -> bool:
+    """Show a summary of the proposed change and ask for confirmation."""
+    import difflib
+    diff = list(difflib.unified_diff(
+        current_md.splitlines(keepends=True),
+        new_md.splitlines(keepends=True),
+        fromfile="SKILL.md (current)",
+        tofile="SKILL.md (proposed)",
+        n=3,
+    ))
+    if not diff:
+        return False
+    # Show first 40 lines of diff to keep it readable
+    preview = "".join(diff[:40])
+    if len(diff) > 40:
+        preview += f"\n... ({len(diff) - 40} more diff lines)\n"
+    logger.info(f"\n--- Proposed mutation ---\n{preview}")
+    try:
+        answer = input("\nApply this mutation? [y/N] ").strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        return False
+    return answer in ("y", "yes")
+
+
+def improve(skill: str, project_id: str, max_rounds: int = 5, target_rate: float = 1.0, dry_run: bool = False, auto_confirm: bool = False):
     """Run the Karpathy self-improvement loop on a skill's SKILL.md."""
     skill_path = SKILLS_DIR / skill / "SKILL.md"
     if not skill_path.exists():
@@ -205,7 +241,8 @@ def improve(skill: str, project_id: str, max_rounds: int = 5, target_rate: float
         logger.info("=" * 60)
 
         # Analyst: diagnose failures
-        _, current_failures = executor(skill, project_id)
+        override = current_md if dry_run else ""
+        _, current_failures = executor(skill, project_id, skill_md_override=override)
         if not current_failures:
             logger.info("  No failures to diagnose. Stopping.")
             break
@@ -223,11 +260,15 @@ def improve(skill: str, project_id: str, max_rounds: int = 5, target_rate: float
             continue
 
         if not dry_run:
+            if not auto_confirm and not _confirm_mutation(current_md, new_md):
+                logger.info("  Mutation rejected by user. Skipping round.")
+                continue
             skill_path.write_text(new_md)
 
         # Executor: test the mutation
         logger.info("  Executor: running evals on mutated skill...")
-        new_rate, new_failures = executor(skill, project_id)
+        override = new_md if dry_run else ""
+        new_rate, new_failures = executor(skill, project_id, skill_md_override=override)
         save_history(skill, round_num, new_md, new_rate, new_failures, diagnosis)
 
         if new_rate > best_rate:
@@ -267,6 +308,7 @@ def main():
     parser.add_argument("--rounds", type=int, default=5, help="Max optimization rounds (default: 5)")
     parser.add_argument("--target", type=float, default=1.0, help="Target pass rate 0–1 (default: 1.0)")
     parser.add_argument("--dry-run", action="store_true", help="Show mutations without writing to SKILL.md")
+    parser.add_argument("--yes", "-y", action="store_true", help="Skip confirmation prompts (for CI)")
     args = parser.parse_args()
 
     if not args.project_id:
@@ -283,6 +325,7 @@ def main():
         max_rounds=args.rounds,
         target_rate=args.target,
         dry_run=args.dry_run,
+        auto_confirm=args.yes,
     )
 
 

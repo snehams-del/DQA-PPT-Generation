@@ -44,6 +44,10 @@ python scripts/cleanup.py --config assets/design-spec.md --confirm     # delete
 
 ## Running the Agent
 
+Run all `adk` commands from this sample directory (`samples/retail-product-search/`).
+The agent uses `from app.retrievers import ...`, which resolves only when the CWD
+is this directory (or `samples/retail-product-search/` is on `PYTHONPATH`).
+
 Text mode (default):
 ```bash
 adk web .

@@ -1,7 +1,8 @@
 {
   "skill": "retail-content-generation",
   "version": "1.0",
-  "description": "Evaluation cases for the retail content generation skill — covers descriptions, SEO, brand voice, translations, and A/B testing.",
+  "description": "Evaluation cases for the retail content generation skill -- covers descriptions, SEO, brand voice, translations, and A/B testing.",
+  "uses_catalog": true,
   "eval_cases": [
     {
       "eval_id": "product_description",

@@ -44,27 +44,27 @@ class TestSetupContentGeneration:
         spec.write_text(f"---\n{yaml_lines}{langs_section}\n---\n")
         return str(spec)
 
-    @patch("scripts.setup.subprocess.run")
+    @patch("_shared.setup_utils.subprocess.run")
     def test_generates_description_content(self, mock_run, tmp_path):
         mock_run.return_value = MagicMock(returncode=0)
         spec = self._make_spec(tmp_path)
         result = setup(spec, dry_run=True)
         assert result is True
 
-    @patch("scripts.setup.subprocess.run")
+    @patch("_shared.setup_utils.subprocess.run")
     def test_all_type_runs_multiple(self, mock_run, tmp_path):
         mock_run.return_value = MagicMock(returncode=0)
         spec = self._make_spec(tmp_path, {"content_type": "all"})
         setup(spec, dry_run=True)
         # "all" should call generate for description, seo_title, meta_description, marketing_copy
 
-    @patch("scripts.setup.subprocess.run")
+    @patch("_shared.setup_utils.subprocess.run")
     def test_with_translations(self, mock_run, tmp_path):
         mock_run.return_value = MagicMock(returncode=0)
         spec = self._make_spec(tmp_path, {"target_languages": ["es", "fr"]})
         setup(spec, dry_run=True)
 
-    @patch("scripts.setup.subprocess.run")
+    @patch("_shared.setup_utils.subprocess.run")
     def test_multiple_variants(self, mock_run, tmp_path):
         mock_run.return_value = MagicMock(returncode=0)
         spec = self._make_spec(tmp_path, {"ab_variants": "3"})

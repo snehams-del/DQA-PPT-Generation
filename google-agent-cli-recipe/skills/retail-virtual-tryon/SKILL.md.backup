@@ -109,16 +109,13 @@ code examples for both paths.
 | Model | Label | API | Status | Best for |
 |-------|-------|-----|--------|----------|
 | `gemini-2.5-flash-image` | **flash** | `client.models.generate_content` | GA | Fastest, cheapest. 1,290 tokens/img. Good for previews and iteration. |
-| `gemini-3.1-flash-image-preview` | **flash-3.1** | `client.models.generate_content` | Preview | Conversational editing, multi-image fusion, character consistency. Balanced speed/quality. |
-| `gemini-3-pro-image-preview` | **pro** | `client.models.generate_content` | Preview | Best quality. Reasoning-enhanced composition, legible text rendering, complex multi-turn editing. Use for hero images. |
+| `gemini-2.5-pro-image` | **pro** | `client.models.generate_content` | GA | Best quality. Reasoning-enhanced composition, legible text rendering, complex multi-turn editing. Use for hero images. |
 
 Use Path B when you need text-driven variations ("show in red", "with a blazer over it", "outdoor setting"). VTO model does not accept text prompts.
 
-Note: Preview models may change or be discontinued. For production, prefer GA models (`vto` or `flash`).
-
 **V9.** Which model?
 Default: `vto` (virtual-try-on-001).
-Options: vto, flash, flash-3.1, pro.
+Options: vto, flash, pro.
 
 Record the chosen label in `design-spec.md` → `tryon_model`.
 
@@ -222,7 +219,7 @@ Key metrics:
 - **Product images**: Need clean, white-background product photos for best overlay.
 - **Body types**: Results vary across body types. Test diversity in your eval set.
 - **Privacy**: ALWAYS inform users before processing their photo. Delete after use unless opted in. Upload bucket has 24-hour auto-delete by default.
-- **Not real-time**: VTO ~3 seconds, Flash ~2 seconds, Flash 3.1 ~3 seconds, Pro ~4-6 seconds. Always show a loading indicator.
+- **Not real-time**: VTO ~3 seconds, Flash ~2 seconds, Pro ~4-6 seconds. Always show a loading indicator.
 - **VTO has no text prompt**: For text-driven variations ("show in red", "outdoor scene"), use a Gemini tier instead.
 
 ## References

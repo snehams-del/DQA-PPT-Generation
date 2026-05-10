@@ -23,8 +23,7 @@ python scripts/setup_tryon.py --project-id $PROJECT --model pro --safety-level b
 | Label | Model ID | Best for |
 |-------|----------|----------|
 | `flash` | `gemini-2.5-flash-image` | High-volume, cost-sensitive |
-| `flash-3.1` | `gemini-3.1-flash-image-preview` | Balanced |
-| `pro` | `gemini-3-pro-image-preview` | Luxury, editorial |
+| `pro` | `gemini-2.5-pro-image` | Luxury, editorial |
 
 ## Skill
 

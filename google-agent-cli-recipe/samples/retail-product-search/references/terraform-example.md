@@ -10,7 +10,7 @@ Adapt the schema and resource names to your project.
 
 # BigQuery dataset and products table
 resource "google_bigquery_dataset" "products" {
-  dataset_id = "products_dataset"
+  dataset_id = "retail_skill_products"
   project    = var.project_id
   location   = var.region
 
@@ -40,12 +40,12 @@ resource "google_bigquery_table" "products" {
 
 # Pub/Sub for real-time product sync (optional -- only if catalog changes in real-time)
 resource "google_pubsub_topic" "product_changes" {
-  name    = "product-changes"
+  name    = "retail-skill-product-changes"
   project = var.project_id
 }
 
 resource "google_pubsub_subscription" "product_changes_sub" {
-  name    = "product-changes-sync"
+  name    = "retail-skill-product-changes-sync"
   topic   = google_pubsub_topic.product_changes.name
   project = var.project_id
 
@@ -57,7 +57,7 @@ resource "google_pubsub_subscription" "product_changes_sub" {
 }
 
 resource "google_cloudfunctions2_function" "pubsub_sync" {
-  name     = "pubsub-product-sync"
+  name     = "retail-skill-pubsub-sync"
   location = var.region
   project  = var.project_id
 

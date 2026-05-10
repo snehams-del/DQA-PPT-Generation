@@ -22,6 +22,7 @@ Usage:
 import argparse
 import json
 import logging
+import os
 import sys
 import time
 from pathlib import Path
@@ -209,7 +210,7 @@ def main():
     parser = argparse.ArgumentParser(description="Generate product content with Gemini")
     parser.add_argument("--config", default="", help="Path to design-spec.md")
     parser.add_argument("--project-id", help="GCP project ID")
-    parser.add_argument("--dataset-id", default="products_dataset", help="BigQuery dataset")
+    parser.add_argument("--dataset-id", default="retail_skill_products", help="BigQuery dataset")
     parser.add_argument("--table-id", default="products", help="BigQuery products table")
     parser.add_argument("--type", choices=CONTENT_TYPES, default=None, help="Content type to generate (or set content_type in design-spec.md)")
     parser.add_argument("--model", default=DEFAULT_MODEL, help="Gemini model")

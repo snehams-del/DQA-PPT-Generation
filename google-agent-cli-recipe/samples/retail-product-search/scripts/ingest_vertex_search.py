@@ -217,9 +217,9 @@ def main():
     parser.add_argument("--config", default="", help="Path to design-spec.md (provides defaults for other args)")
     parser.add_argument("--project-id", help="GCP project ID")
     parser.add_argument("--location", default="us-central1", help="GCP region")
-    parser.add_argument("--dataset-id", default="products_dataset", help="BigQuery dataset")
+    parser.add_argument("--dataset-id", default="retail_skill_products", help="BigQuery dataset")
     parser.add_argument("--table-id", default="products", help="BigQuery table")
-    parser.add_argument("--collection-id", default="products-collection", help="Vector Search 2.0 Collection ID")
+    parser.add_argument("--collection-id", default="retail-skill-products-collection", help="Vector Search 2.0 Collection ID")
     parser.add_argument("--embedding-model", default=DEFAULT_EMBEDDING_MODEL, help="Auto-embedding model (default: gemini-embedding-001)")
     parser.add_argument("--embedding-fields", default=",".join(DEFAULT_EMBEDDING_FIELDS), help="Comma-separated fields for embedding text template")
 
@@ -232,7 +232,7 @@ def main():
             args.project_id = cfg.get("gcp_project_id", "")
         if args.location == "us-central1" and cfg.get("gcp_region"):
             args.location = cfg["gcp_region"]
-        if cfg.get("collection_id") and args.collection_id == "products-collection":
+        if cfg.get("collection_id") and args.collection_id == "retail-skill-products-collection":
             args.collection_id = cfg["collection_id"]
         if cfg.get("embedding_model"):
             model_name = cfg["embedding_model"].split(" ")[0]

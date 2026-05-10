@@ -87,7 +87,7 @@ class TestSetupPathSelection:
         spec.write_text(f"---\n{yaml_lines}\n---\n# Body\n")
         return str(spec)
 
-    @patch("scripts.setup.subprocess.run")
+    @patch("_shared.setup_utils.subprocess.run")
     def test_path_b_runs_validate_bigquery_vectorsearch(self, mock_run, tmp_path):
         mock_run.return_value = MagicMock(returncode=0)
         spec = self._make_spec(tmp_path)
@@ -103,7 +103,7 @@ class TestSetupPathSelection:
         finally:
             os.chdir(old_cwd)
 
-    @patch("scripts.setup.subprocess.run")
+    @patch("_shared.setup_utils.subprocess.run")
     def test_path_a_runs_api_connector(self, mock_run, tmp_path):
         mock_run.return_value = MagicMock(returncode=0)
         spec = self._make_spec(tmp_path, {"has_existing_api": "Yes"})
@@ -118,7 +118,7 @@ class TestSetupPathSelection:
         finally:
             os.chdir(old_cwd)
 
-    @patch("scripts.setup.subprocess.run")
+    @patch("_shared.setup_utils.subprocess.run")
     def test_images_yes_runs_gcs_upload(self, mock_run, tmp_path):
         mock_run.return_value = MagicMock(returncode=0)
         spec = self._make_spec(tmp_path, {"has_images": "Yes"})
@@ -135,7 +135,7 @@ class TestSetupPathSelection:
         finally:
             os.chdir(old_cwd)
 
-    @patch("scripts.setup.subprocess.run")
+    @patch("_shared.setup_utils.subprocess.run")
     def test_voice_yes_shows_instructions(self, mock_run, tmp_path, capsys):
         mock_run.return_value = MagicMock(returncode=0)
         spec = self._make_spec(tmp_path, {"voice_capabilities": "Yes"})
@@ -158,7 +158,7 @@ class TestSetupPathSelection:
         with pytest.raises(SystemExit):
             setup(str(spec))
 
-    @patch("scripts.setup.subprocess.run")
+    @patch("_shared.setup_utils.subprocess.run")
     def test_large_catalog_shows_warning(self, mock_run, tmp_path, capsys):
         mock_run.return_value = MagicMock(returncode=0)
         spec = self._make_spec(tmp_path, {"catalog_size": "500K+"})

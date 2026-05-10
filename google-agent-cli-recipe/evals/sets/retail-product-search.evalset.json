@@ -1,7 +1,9 @@
 {
   "skill": "retail-product-search",
   "version": "1.0",
-  "description": "Evaluation cases for the retail product search skill — covers search quality, edge cases, and agent behavior.",
+  "description": "Evaluation cases for the retail product search skill -- covers search quality, edge cases, and agent behavior.",
+  "uses_catalog": true,
+  "catalog_brands": ["Sony", "Generic", "Anker", "Keychron", "BenQ"],
   "eval_cases": [
     {
       "eval_id": "headphones_under_200",
