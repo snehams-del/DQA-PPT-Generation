@@ -20,27 +20,16 @@ import logging
 import sys
 from pathlib import Path
 
-import yaml
 from google.cloud import bigquery, storage
+
+# Add _shared to path for shared utilities
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "_shared"))
+from setup_utils import load_config
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 ALL_RESOURCE_TYPES = ["bigquery", "gcs", "vectorsearch", "pubsub", "cloudrun", "cloudfunctions"]
-
-
-def load_config(config_path: str) -> dict:
-    """Load design-spec.md (or config.yaml) and return as dict."""
-    path = Path(config_path)
-    if not path.exists():
-        logger.error(f"Config file not found: {config_path}")
-        sys.exit(1)
-    text = path.read_text()
-    if text.startswith("---"):
-        parts = text.split("---", 2)
-        if len(parts) >= 3:
-            return yaml.safe_load(parts[1]) or {}
-    return yaml.safe_load(text) or {}
 
 
 def delete_bigquery(project_id: str, dataset_id: str, dry_run: bool) -> None:
@@ -272,6 +261,9 @@ def main():
     args = parser.parse_args()
 
     config = load_config(args.config)
+    if not config:
+        logger.error(f"Config file not found or empty: {args.config}")
+        sys.exit(1)
 
     dry_run = not args.confirm or args.dry_run
 

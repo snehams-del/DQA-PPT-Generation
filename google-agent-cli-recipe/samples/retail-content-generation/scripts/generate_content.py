@@ -28,10 +28,13 @@ import time
 from pathlib import Path
 from typing import Dict, List
 
-import yaml
 from google.cloud import bigquery
 from google import genai
 from google.genai import types
+
+# Add _shared to path for shared utilities
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "_shared"))
+from setup_utils import load_config
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -191,19 +194,6 @@ def save_to_file(results: List[Dict], output_path: str, fmt: str) -> None:
             writer.writerows(results)
 
     logger.info(f"Saved {len(results)} results to {path}")
-
-
-def load_config(config_path: str) -> dict:
-    """Load design-spec.md (or config.yaml) and return as dict."""
-    path = Path(config_path)
-    if path.exists():
-        text = path.read_text()
-        if text.startswith("---"):
-            parts = text.split("---", 2)
-            if len(parts) >= 3:
-                return yaml.safe_load(parts[1]) or {}
-        return yaml.safe_load(text) or {}
-    return {}
 
 
 def main():

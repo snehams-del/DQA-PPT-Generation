@@ -20,12 +20,15 @@ import sys
 import time
 from pathlib import Path
 
-import yaml
 from typing import Dict, List
 
 from google.api_core import exceptions
 from google.cloud import bigquery, vectorsearch
 from google.protobuf import struct_pb2
+
+# Add _shared to path for shared utilities
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "_shared"))
+from setup_utils import load_config
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -198,18 +201,6 @@ def ingest_products(
 
     logger.info(f"Ingestion complete: {created} created, {skipped} skipped, {errors} errors")
 
-
-def load_config(config_path: str) -> dict:
-    """Load design-spec.md (or config.yaml) and return as dict. Returns empty dict if not found."""
-    path = Path(config_path)
-    if path.exists():
-        text = path.read_text()
-        if text.startswith("---"):
-            parts = text.split("---", 2)
-            if len(parts) >= 3:
-                return yaml.safe_load(parts[1]) or {}
-        return yaml.safe_load(text) or {}
-    return {}
 
 
 def main():

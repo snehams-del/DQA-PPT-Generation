@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-
 from google.cloud import vectorsearch
 
 
@@ -38,7 +36,6 @@ def search_collection(
         Formatted string containing relevant document content.
     """
     client = _create_search_client()
-
 
     request = vectorsearch.SearchDataObjectsRequest(
         parent=collection_path,

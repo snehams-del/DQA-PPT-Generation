@@ -18,8 +18,11 @@ import logging
 import sys
 from pathlib import Path
 
-import yaml
 from google.cloud import bigquery
+
+# Add _shared to path for shared utilities
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "_shared"))
+from setup_utils import load_config
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -69,19 +72,6 @@ def export(
         path.write_text(json.dumps(rows, indent=2, default=str))
 
     logger.info(f"Exported {len(rows)} rows to {path}")
-
-
-def load_config(config_path: str) -> dict:
-    """Load design-spec.md (or config.yaml) and return as dict."""
-    path = Path(config_path)
-    if path.exists():
-        text = path.read_text()
-        if text.startswith("---"):
-            parts = text.split("---", 2)
-            if len(parts) >= 3:
-                return yaml.safe_load(parts[1]) or {}
-        return yaml.safe_load(text) or {}
-    return {}
 
 
 def main():

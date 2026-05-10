@@ -28,13 +28,17 @@ import json
 import logging
 import mimetypes
 import re
+import sys
 from pathlib import Path
 from typing import Dict, List
 from urllib.parse import urlparse
 
 import requests
-import yaml
 from google.cloud import storage
+
+# Add _shared to path for shared utilities
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "_shared"))
+from setup_utils import load_config
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -138,19 +142,6 @@ def write_manifest(manifest: Dict[str, List[str]], output_path: Path) -> None:
     ]
     output_path.write_text(json.dumps(data, indent=2))
     logger.info(f"Wrote manifest: {output_path} ({len(data)} products)")
-
-
-def load_config(config_path: str) -> dict:
-    """Load design-spec.md (or config.yaml) and return as dict. Returns empty dict if not found."""
-    path = Path(config_path)
-    if path.exists():
-        text = path.read_text()
-        if text.startswith("---"):
-            parts = text.split("---", 2)
-            if len(parts) >= 3:
-                return yaml.safe_load(parts[1]) or {}
-        return yaml.safe_load(text) or {}
-    return {}
 
 
 def main():

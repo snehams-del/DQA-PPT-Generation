@@ -16,8 +16,11 @@ import os
 import sys
 from pathlib import Path
 
-import yaml
 from google.cloud import storage
+
+# Add _shared to path for shared utilities
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "_shared"))
+from setup_utils import load_config
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -145,19 +148,6 @@ def setup(
     logger.info(f"  TRYON_UPLOAD_BUCKET={upload_bucket}")
     logger.info(f"  GEMINI_IMAGE_MODEL={model_id}")
     logger.info(f"  TRYON_SAFETY_LEVEL={safety_level}")
-
-
-def load_config(config_path: str) -> dict:
-    """Load design-spec.md (YAML frontmatter) and return as dict."""
-    path = Path(config_path)
-    if not path.exists():
-        return {}
-    text = path.read_text()
-    if text.startswith("---"):
-        parts = text.split("---", 2)
-        if len(parts) >= 3:
-            return yaml.safe_load(parts[1]) or {}
-    return yaml.safe_load(text) or {}
 
 
 def main():
