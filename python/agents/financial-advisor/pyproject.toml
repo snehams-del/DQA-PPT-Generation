@@ -15,13 +15,13 @@ dependencies = [
     "google-adk>=1.0.0",
 ]
 
-[dependency-groups]
+[project.optional-dependencies]
 dev = [
     "pytest>=8.3.2",
     "pytest-asyncio>=0.23.7",
     "google-adk[eval]>=1.0.0",
     "nest-asyncio>=1.6.0",
-    "agent-starter-pack>=0.14.1",
+    "agent-starter-pack>=0.32.0",
     "ruff>=0.4.6",
     "mypy>=1.15.0",
     "codespell>=2.2.0",
@@ -40,7 +40,7 @@ extend = "../../../pyproject.toml"
 ignore = ["C901"]
 
 [tool.ruff.lint.per-file-ignores]
-"__init__.py" = ["F401"]
+"__init__.py" = ["E402", "F401"]
 
 [tool.ruff.lint.isort]
 # CRITICAL: This tells Ruff that 'financial_advisor' is THIS sample's code
@@ -73,9 +73,7 @@ packages = ["financial_advisor"]
 
 [tool.agent-starter-pack]
 example_question = "Analyze AAPL"
-
-[tool.agent-starter-pack.settings]
-agent_directory = "financial_advisor"
+deployment_targets = ["agent_engine", "cloud_run"]
 
 [build-system]
 requires = ["hatchling"]
