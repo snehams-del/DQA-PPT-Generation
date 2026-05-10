@@ -65,10 +65,16 @@ Install dependencies:
 uv sync --dev
 ```
 
-### Running the Agent
+### Running the Agent Locally
 Run the agent locally:
 ```bash
 uv run adk web sdlc_user_story_refiner
+```
+
+### Deploying to Google Cloud
+You can deploy the agent to Google Cloud (Vertex AI Reasoning Engine) using the provided deployment script:
+```bash
+uv run deployment/deploy.py --create
 ```
 
 ### Alternative: Using Agent Starter Pack
