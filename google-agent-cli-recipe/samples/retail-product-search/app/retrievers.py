@@ -17,6 +17,11 @@ import os
 from google.cloud import vectorsearch
 
 
+def _create_search_client():
+    """Create a Vector Search client. Override in tests via dependency injection."""
+    return vectorsearch.DataObjectSearchServiceClient()
+
+
 def search_collection(
     query: str,
     collection_path: str,
@@ -32,11 +37,8 @@ def search_collection(
     Returns:
         Formatted string containing relevant document content.
     """
-    # For integration tests, return mock data instead of calling the real API
-    if os.getenv("INTEGRATION_TEST") == "TRUE":
-        return "## Context provided:\n<Product 0>\nMock product result for testing.\n</Product 0>"
+    client = _create_search_client()
 
-    client = vectorsearch.DataObjectSearchServiceClient()
 
     request = vectorsearch.SearchDataObjectsRequest(
         parent=collection_path,

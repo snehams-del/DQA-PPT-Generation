@@ -27,7 +27,10 @@ import time
 from pathlib import Path
 
 import requests
-import yaml
+
+# Add _shared to path for shared utilities
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "_shared"))
+from setup_utils import load_config
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -39,19 +42,6 @@ DEFAULT_SEARCH_ENDPOINT = "/products/search"
 DEFAULT_PAGINATION = "page_limit"
 DEFAULT_TIMEOUT = 10
 DEFAULT_MAX_RETRIES = 1
-
-
-def load_config(config_path: str) -> dict:
-    """Load design-spec.md (or config.yaml) and return as dict. Returns empty dict if not found."""
-    path = Path(config_path)
-    if path.exists():
-        text = path.read_text()
-        if text.startswith("---"):
-            parts = text.split("---", 2)
-            if len(parts) >= 3:
-                return yaml.safe_load(parts[1]) or {}
-        return yaml.safe_load(text) or {}
-    return {}
 
 
 def get_auth_headers(auth_method: str) -> dict:
@@ -69,14 +59,12 @@ def get_auth_headers(auth_method: str) -> dict:
         return {"Authorization": f"Bearer {credentials.token}"}
 
     elif auth_method == "bearer" or auth_method == "Bearer token":
-        import os
         token = os.environ.get("API_BEARER_TOKEN", "")
         if not token:
             logger.warning("API_BEARER_TOKEN env var not set")
         return {"Authorization": f"Bearer {token}"}
 
     elif auth_method == "api_key" or auth_method == "API key via API Gateway":
-        import os
         key = os.environ.get("API_KEY", "")
         if not key:
             logger.warning("API_KEY env var not set")
@@ -85,7 +73,6 @@ def get_auth_headers(auth_method: str) -> dict:
     elif auth_method == "iap" or auth_method == "Identity-Aware Proxy (IAP)":
         import google.auth
         import google.auth.transport.requests
-        from google.auth import impersonated_credentials
 
         credentials, _ = google.auth.default()
         auth_req = google.auth.transport.requests.Request()

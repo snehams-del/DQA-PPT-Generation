@@ -12,7 +12,7 @@
 
 set -euo pipefail
 
-bold=$'\033[1m'; green=$'\033[32m'; yellow=$'\033[33m'; red=$'\033[31m'; nc=$'\033[0m'
+bold=$'\033[1m'; green=$'\033[32m'; yellow=$'\033[33m'; red=$'\033[31m'; cyan=$'\033[36m'; nc=$'\033[0m'
 
 KNOWN_CONFLICTS=(
   "adk-scaffold"
@@ -84,7 +84,7 @@ fi
 case "$action" in
   detect)
     printf "\n${bold}Three ways to force precedence for the retail skill:${nc}\n"
-    printf "  1. ${cyan-}./scripts/check-skill-conflicts.sh --isolate${nc}\n"
+    printf "  1. ${cyan}./scripts/check-skill-conflicts.sh --isolate${nc}\n"
     printf "     (renames the conflicting skills out of the way; reverse with --restore)\n"
     printf "  2. Prefix your first message with: \"Use only the retail-product-search skill.\"\n"
     printf "  3. Run the demo from a project dir; project-scoped .gemini/skills/ usually wins.\n"

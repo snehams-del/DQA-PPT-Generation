@@ -247,9 +247,10 @@ def generate_tryon(
         if ("SAFETY" in str(e).upper() and product_is_cutout
                 and not is_vto_model(model_id) and safety_retry):
             logger.warning(
-                "SAFETY RETRY: Safety block on cutout product (model=%s). "
-                "Retrying with block_few because TRYON_SAFETY_RETRY=true.",
-                model_id,
+                "SAFETY RETRY: Safety block on cutout product (model=%s, "
+                "product_id=%s, original_safety=%s). Retrying with block_few "
+                "because TRYON_SAFETY_RETRY=true. Original error: %s",
+                model_id, product_id, adjusted_safety, e,
             )
             adjusted_safety = "block_few"
             output_image_bytes = _generate_with_gemini(

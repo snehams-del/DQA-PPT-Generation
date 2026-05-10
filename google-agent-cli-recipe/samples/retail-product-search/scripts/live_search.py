@@ -24,16 +24,16 @@ import argparse
 import asyncio
 import logging
 import os
-import struct
 import sys
-import wave
 from pathlib import Path
-from typing import Optional
 
-import yaml
 from google import genai
 from google.genai import types
 from google.cloud import vectorsearch
+
+# Add _shared to path for shared utilities
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "_shared"))
+from setup_utils import load_config
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -134,8 +134,11 @@ def search_products_in_collection(
                 entry += f" ({brand})"
             if rating:
                 entry += f" | {rating}/5"
-            if stock is not None and str(stock) != "" and int(float(str(stock))) == 0:
-                entry += " | OUT OF STOCK"
+            try:
+                if stock is not None and str(stock) != "" and int(float(str(stock))) == 0:
+                    entry += " | OUT OF STOCK"
+            except (ValueError, TypeError):
+                pass
             if description:
                 entry += f"\n   {description[:150]}"
             if category:
@@ -151,19 +154,6 @@ def search_products_in_collection(
     except Exception as e:
         logger.error(f"Search failed: {e}")
         return f"Search encountered an error: {e}. Please try again."
-
-
-def load_config(config_path: str) -> dict:
-    """Load design-spec.md or config.yaml."""
-    path = Path(config_path)
-    if not path.exists():
-        return {}
-    text = path.read_text()
-    if text.startswith("---"):
-        parts = text.split("---", 2)
-        if len(parts) >= 3:
-            return yaml.safe_load(parts[1]) or {}
-    return yaml.safe_load(text) or {}
 
 
 class LiveProductSearch:

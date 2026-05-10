@@ -27,18 +27,38 @@ LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
 LLM = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 LIVE_MODEL = "gemini-live-2.5-flash-native-audio"
 
-credentials, default_project = google.auth.default()
-project_id = os.getenv("GOOGLE_CLOUD_PROJECT", default_project)
-os.environ.setdefault("GOOGLE_CLOUD_PROJECT", project_id)
-os.environ.setdefault("GOOGLE_CLOUD_LOCATION", LOCATION)
-os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "True")
+_credentials = None
+_project_id = None
+_initialized = False
 
-vertexai.init(project=project_id, location=LOCATION)
 
-vector_search_collection = os.getenv(
-    "VECTOR_SEARCH_COLLECTION",
-    f"projects/{project_id}/locations/{LOCATION}/collections/retail-skill-products-collection",
-)
+def _ensure_initialized():
+    """Lazy initialization of GCP credentials and Vertex AI. Deferred from
+    module load so the module can be imported without valid credentials
+    (e.g. during testing or tooling)."""
+    global _credentials, _project_id, _initialized
+    if _initialized:
+        return
+    _credentials, default_project = google.auth.default()
+    _project_id = os.getenv("GOOGLE_CLOUD_PROJECT", default_project)
+    os.environ.setdefault("GOOGLE_CLOUD_PROJECT", _project_id)
+    os.environ.setdefault("GOOGLE_CLOUD_LOCATION", LOCATION)
+    os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "True")
+    vertexai.init(project=_project_id, location=LOCATION)
+    _initialized = True
+
+
+def _get_project_id() -> str:
+    _ensure_initialized()
+    return _project_id
+
+
+def _get_vector_search_collection() -> str:
+    pid = _get_project_id()
+    return os.getenv(
+        "VECTOR_SEARCH_COLLECTION",
+        f"projects/{pid}/locations/{LOCATION}/collections/retail-skill-products-collection",
+    )
 
 
 def retrieve_docs(query: str) -> str:
@@ -55,7 +75,7 @@ def retrieve_docs(query: str) -> str:
     try:
         return search_collection(
             query=query,
-            collection_path=vector_search_collection,
+            collection_path=_get_vector_search_collection(),
         )
     except Exception as e:
         return (
@@ -83,13 +103,6 @@ When users ask for recommendations ("you might also like", "similar products", "
 - Recommend based on the product category, price range, and use case.
 - Do NOT ask setup questions. Recommendations are already configured.
 
-## Virtual Try-On
-
-When users ask to try on a product ("try it on", "see how it looks on me"):
-- Use the try_on_product tool if available.
-- Ask for their photo URI and product ID if not provided.
-- Do NOT ask setup questions about categories or resolution.
-
 ## Content Generation
 
 When users ask for content ("write a description", "SEO title", "marketing copy"):
@@ -102,23 +115,25 @@ When users ask for content ("write a description", "SEO title", "marketing copy"
 - Do NOT ask setup questions. Just generate the content."""
 
 
-use_voice = os.getenv("ENABLE_VOICE", "").lower() in ("true", "1", "yes")
-
-if use_voice:
-    # Voice mode: uses the Live API with native audio model
-    agent_model = Gemini(
-        model=LIVE_MODEL,
-        speech_config=types.SpeechConfig(
-            voice_config=types.VoiceConfig(
-                prebuilt_voice_config=types.PrebuiltVoiceConfig(
-                    voice_name="Kore",
+def _build_agent_model():
+    """Build the agent model, triggering lazy GCP initialization."""
+    _ensure_initialized()
+    use_voice = os.getenv("ENABLE_VOICE", "").lower() in ("true", "1", "yes")
+    if use_voice:
+        return Gemini(
+            model=LIVE_MODEL,
+            speech_config=types.SpeechConfig(
+                voice_config=types.VoiceConfig(
+                    prebuilt_voice_config=types.PrebuiltVoiceConfig(
+                        voice_name="Kore",
+                    )
                 )
-            )
-        ),
-    )
-else:
-    # Text mode: uses generateContent API
-    agent_model = Gemini(model=LLM)
+            ),
+        )
+    return Gemini(model=LLM)
+
+
+agent_model = _build_agent_model()
 
 root_agent = Agent(
     name="root_agent",
