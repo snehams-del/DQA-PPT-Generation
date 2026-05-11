@@ -1,0 +1,11 @@
+product_id,name,price,description,category,brand,image_url,rating,stock
+elec-001,Wireless Noise-Cancelling Headphones,179.99,Over-ear Bluetooth headphones with active noise cancellation and 35-hour battery life,Audio,SoundMax,https://example.com/images/elec-001.jpg,4.6,45
+elec-002,USB-C Docking Station,89.99,12-in-1 USB-C hub with dual HDMI 4K 60Hz and 100W passthrough charging,Accessories,TechHub,,4.3,120
+elec-003,Mechanical Gaming Keyboard,149.99,Full-size RGB mechanical keyboard with Cherry MX Brown switches and wrist rest,Peripherals,KeyForce,https://example.com/images/elec-003.jpg,4.8,25
+elec-004,27-inch 4K Monitor,399.99,IPS panel with 99% sRGB and USB-C connectivity for creative professionals,Displays,ViewPro,https://example.com/images/elec-004.jpg,4.5,15
+elec-005,Portable Bluetooth Speaker,49.99,Waterproof IPX7 speaker with 12-hour battery and built-in microphone,Audio,SoundMax,,4.1,200
+elec-006,Wireless Charging Pad,29.99,15W fast wireless charger compatible with Qi-enabled devices,Accessories,ChargeTech,https://example.com/images/elec-006.jpg,4.0,300
+elec-007,Gaming Mouse,69.99,Ergonomic wireless gaming mouse with 25000 DPI sensor and 70-hour battery,Peripherals,KeyForce,https://example.com/images/elec-007.jpg,4.7,60
+elec-008,Webcam 4K,129.99,4K streaming webcam with auto-focus and built-in ring light,Video,StreamPro,,4.4,40
+elec-009,USB-C Cable 3-Pack,24.99,3ft 6ft and 10ft braided USB-C cables with 100W charging support,Cables,CableCraft,https://example.com/images/elec-009.jpg,4.6,500
+elec-010,Smart Power Strip,39.99,WiFi-enabled 6-outlet power strip with 4 USB ports and voice control,Smart Home,HomeSmart,https://example.com/images/elec-010.jpg,4.2,80

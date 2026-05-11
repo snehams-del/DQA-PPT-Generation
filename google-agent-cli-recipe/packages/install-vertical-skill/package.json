@@ -1,0 +1,14 @@
+{
+  "name": "install-vertical-skill",
+  "version": "1.0.0",
+  "description": "Install Google Cloud retail agent skills into your project",
+  "bin": {
+    "install-vertical-skill": "./bin/install.js"
+  },
+  "keywords": ["google-cloud", "agents", "gemini", "vertex-ai", "retail", "skills"],
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {}
+}

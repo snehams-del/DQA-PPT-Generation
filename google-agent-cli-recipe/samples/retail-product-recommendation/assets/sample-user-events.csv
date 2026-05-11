@@ -1,0 +1,13 @@
+event_id,user_id,product_id,event_type,timestamp,session_id,event_metadata
+evt-001,user-101,prod-001,detail-page-view,2026-04-01T10:00:00Z,sess-001,
+evt-002,user-101,prod-001,add-to-cart,2026-04-01T10:02:00Z,sess-001,
+evt-003,user-101,prod-001,purchase,2026-04-01T10:05:00Z,sess-001,"{""quantity"": 1}"
+evt-004,user-101,prod-003,detail-page-view,2026-04-01T10:06:00Z,sess-001,
+evt-005,user-102,prod-002,detail-page-view,2026-04-02T14:00:00Z,sess-002,
+evt-006,user-102,prod-004,detail-page-view,2026-04-02T14:03:00Z,sess-002,
+evt-007,user-102,prod-004,add-to-cart,2026-04-02T14:05:00Z,sess-002,
+evt-008,user-102,prod-004,purchase,2026-04-02T14:10:00Z,sess-002,"{""quantity"": 1}"
+evt-009,user-103,prod-001,detail-page-view,2026-04-03T09:00:00Z,sess-003,
+evt-010,user-103,prod-005,detail-page-view,2026-04-03T09:02:00Z,sess-003,
+evt-011,user-103,prod-001,purchase,2026-04-03T09:15:00Z,sess-003,"{""quantity"": 2}"
+evt-012,user-103,prod-005,add-to-cart,2026-04-03T09:16:00Z,sess-003,
