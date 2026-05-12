@@ -28,7 +28,7 @@ load_dotenv(dotenv_path=env_file_path)
 
 PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT")
 corpus_name = os.getenv("BQML_RAG_CORPUS_NAME")
-
+LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
 display_name = "bqml_referenceguide_corpus"
 
 paths = [
@@ -37,7 +37,7 @@ paths = [
 
 
 # Initialize Vertex AI API once per session
-vertexai.init(project=PROJECT_ID, location="us-central1")
+vertexai.init(project=PROJECT_ID, location=LOCATION)
 
 
 def create_RAG_corpus():
