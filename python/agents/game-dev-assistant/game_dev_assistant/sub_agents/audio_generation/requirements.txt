@@ -1,0 +1,5 @@
+certifi
+python-dotenv
+google-genai
+fastapi
+uvicorn

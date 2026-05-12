@@ -1,0 +1,8 @@
+google-adk
+dotenv
+google-cloud-storage
+certifi
+python-dotenv
+google-genai
+fastapi
+uvicorn
