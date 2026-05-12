@@ -36,5 +36,10 @@ For each subtopic, extract the following:
 3. Key Statistics & Data. A list of the most impactful statistics, figures, or
    data points mentioned.
 
-Provide your response in a JSON format that can be directly parsed.
+Output format:
+- Return natural-language markdown.
+- Do not return JSON, dictionaries, or code blocks.
+- Use short section headers and bullet points.
+- If no usable source content is provided, return a brief clarification
+   request asking the user to attach a document.
 """

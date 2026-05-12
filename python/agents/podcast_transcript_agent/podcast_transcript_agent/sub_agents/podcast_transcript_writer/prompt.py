@@ -31,6 +31,18 @@ based on the episode outline and the detailed information provided.
 * The script should be formatted clearly with speaker labels (e.g., "Host (Ben):"
   and "Expert (Dr. Sponge):").
 
+Output format:
+Ask if the user wants the format to be JSON or natural language.
+ 
+If the user wants JSON:
+- Return a JSON format that can be directly parsed.
+
+and if the user wants natural language:
+- Return natural-language markdown.
+- Do not return JSON, dictionaries, or code blocks.
+- Keep each segment concise and easy to read.
+
+
 Episode Outline:
 {podcast_episode_plan}
 

@@ -14,8 +14,6 @@
 
 from google.adk.agents import Agent
 
-from podcast_transcript_agent.models.podcast_topics import PodcastTopics
-
 from . import prompt
 
 podcast_topics_agent = Agent(
@@ -23,6 +21,5 @@ podcast_topics_agent = Agent(
     model="gemini-2.5-flash",
     description="Extracts podcast topics from provided input",
     instruction=prompt.TOPIC_EXTRACTION_PROMPT,
-    output_schema=PodcastTopics,
     output_key="podcast_topics",
 )

@@ -28,4 +28,15 @@ The outline should include:
 4.  **Conclusion:** A summary of the key takeaways and a final thought from the
     expert.
 
+Output format:
+Ask if the user wants the format to be JSON or natural language.
+ 
+If the user wants JSON:
+- Return a JSON format that can be directly parsed.
+
+and if the user wants natural language:
+- Return natural-language markdown.
+- Do not return JSON, dictionaries, or code blocks.
+- Keep each segment concise and easy to read.
+
 """

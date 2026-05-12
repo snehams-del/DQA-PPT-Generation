@@ -22,6 +22,8 @@ from google.genai import types
 
 from podcast_transcript_agent.agent import podcast_transcript_agent
 
+MIN_TRANSCRIPT_TEXT_LENGTH = 120
+
 
 @pytest.fixture(scope="session", autouse=True)
 def load_env():
@@ -69,12 +71,22 @@ async def test_run_with_txt():
             if event.content and event.content.parts:
                 for part in event.content.parts:
                     if part.text:
-                        data = json.loads(part.text)
-                        if (
-                            "metadata" in data
-                            and "duration_seconds" in data["metadata"]
-                        ):
-                            if data["metadata"]["duration_seconds"] > 0:
+                        text = part.text.strip()
+                        if not text:
+                            continue
+
+                        # Support both legacy JSON transcript output and the
+                        # newer human-readable transcript output.
+                        try:
+                            data = json.loads(text)
+                            if (
+                                "metadata" in data
+                                and "duration_seconds" in data["metadata"]
+                                and data["metadata"]["duration_seconds"] > 0
+                            ):
+                                found_valid_transcript = True
+                        except json.JSONDecodeError:
+                            if len(text) > MIN_TRANSCRIPT_TEXT_LENGTH:
                                 found_valid_transcript = True
 
     assert found_valid_transcript, (

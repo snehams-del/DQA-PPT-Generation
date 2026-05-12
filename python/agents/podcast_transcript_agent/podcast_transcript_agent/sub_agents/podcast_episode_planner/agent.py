@@ -14,8 +14,6 @@
 
 from google.adk.agents import Agent
 
-from podcast_transcript_agent.models.podcast_plan import PodcastEpisodePlan
-
 from . import prompt
 
 podcast_episode_planner_agent = Agent(
@@ -23,6 +21,5 @@ podcast_episode_planner_agent = Agent(
     model="gemini-2.5-flash",
     description="Plans the podcast episode based on extracted topics",
     instruction=prompt.PODCAST_EPISODE_PLANNER_PROMPT,
-    output_schema=PodcastEpisodePlan,
     output_key="podcast_episode_plan",
 )
