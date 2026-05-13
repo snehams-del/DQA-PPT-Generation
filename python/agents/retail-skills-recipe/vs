@@ -5,7 +5,6 @@
 # Commands:
 #   list                          Show all skills with descriptions
 #   eval <skill> [options]        Run spec-coverage check
-#   improve <skill> [options]     Run self-improvement loop
 
 set -euo pipefail
 
@@ -17,14 +16,11 @@ usage() {
     echo "Commands:"
     echo "  list                          Show all skills with descriptions"
     echo "  eval <skill> [options]        Run spec-coverage check"
-    echo "  improve <skill> [options]     Run self-improvement loop"
     echo ""
     echo "Examples:"
     echo "  ./vs list"
     echo "  ./vs eval retail-virtual-tryon --project-id \$PROJECT"
     echo "  ./vs eval retail-product-search --verbose"
-    echo "  ./vs improve retail-virtual-tryon --dry-run"
-    echo "  ./vs improve retail-virtual-tryon --rounds 5"
 }
 
 cmd_list() {
@@ -49,14 +45,6 @@ cmd_eval() {
     python "$SCRIPT_DIR/evals/run.py" --skill "$@"
 }
 
-cmd_improve() {
-    if [ $# -lt 1 ]; then
-        echo "Error: skill name required. Usage: ./vs improve <skill> [options]"
-        exit 1
-    fi
-    python "$SCRIPT_DIR/evals/improve.py" --skill "$@"
-}
-
 if [ $# -lt 1 ]; then
     usage
     exit 1
@@ -68,7 +56,6 @@ shift
 case "$command" in
     list)    cmd_list "$@" ;;
     eval)    cmd_eval "$@" ;;
-    improve) cmd_improve "$@" ;;
     help|-h|--help) usage ;;
     *)
         echo "Unknown command: $command"

@@ -108,8 +108,6 @@ You've cloned this repo and want to edit a SKILL.md, run quality checks, or cont
 ./vs list                                                # show all skills with descriptions
 ./vs eval retail-virtual-tryon --project-id $PROJECT     # run spec-coverage check, get score
 ./vs eval retail-virtual-tryon --verbose                 # per-assertion PASS/FAIL output
-./vs improve retail-virtual-tryon --dry-run              # propose mutations without writing
-./vs improve retail-virtual-tryon --rounds 5             # interactive: confirm each mutation
 ```
 
 `vs eval` measures SKILL.md spec completeness (does the spec cover expected topics, fields, and behaviors?), not deployed agent correctness. It sends simulated queries to Gemini with the SKILL.md as context and checks assertions against the responses.
@@ -138,21 +136,15 @@ The first agent message is the load-bearing test -- if it doesn't match the expe
 
 CI runs `./vs eval` on any PR that touches `skills/`. Spec-coverage score must stay >= 80%.
 
-### Experimental: self-improvement loop
-
-`./vs improve` runs a Karpathy-style three-agent loop (Analyst → Mutator → Executor) that mutates `skills/<skill>/SKILL.md` to maximize the spec-coverage score. History saved to `evals/history/`.
-
-> ⚠️ **Caveat:** the score is partially self-referential — `gotcha_mentioned`/`step_documented`/`skill_covers` check whether topics appear in SKILL.md itself. Treat the score as a regression signal, not an absolute quality measure. Always review diffs before merging optimizer-generated edits. Default behavior asks for confirmation per round; pass `--yes` only in CI.
-
 ### Repository layout
 
 ```
 skills/        SKILL.md files — agent knowledge (the entry point)
 samples/       Runnable code per skill — scripts, assets, tests
-evals/         Shared eval framework (run.py, improve.py, sets/)
+evals/         Shared eval framework (run.py, sets/)
 packages/      npx installer source
 scripts/       Test, quality, and helper scripts (smoke-test, conflict-check, ...)
-vs             Contributor CLI (list / eval / improve)
+vs             Contributor CLI (list / eval)
 ```
 
 ---

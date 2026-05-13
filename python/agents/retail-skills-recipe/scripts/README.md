@@ -102,7 +102,6 @@ retail-virtual-tryon:
 
 ```
 evals/baselines/<skill>.txt       # quality-check.sh per-skill verbose log
-evals/history/<skill>/round_*.json  # improve.py per-round optimization history
 evals/quality-log.csv             # quality-log.sh CSV history
 ```
 

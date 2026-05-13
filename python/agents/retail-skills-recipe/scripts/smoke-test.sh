@@ -31,7 +31,6 @@ check() {
 
 echo "${bold}1. Python syntax checks${nc}"
 check "evals/run.py"       python -c "import ast; ast.parse(open('evals/run.py').read())"
-check "evals/improve.py"   python -c "import ast; ast.parse(open('evals/improve.py').read())"
 check "tryon_processor.py" python -c "import ast; ast.parse(open('samples/retail-virtual-tryon/app/tryon_processor.py').read())"
 check "tryon_agent.py"     python -c "import ast; ast.parse(open('samples/retail-virtual-tryon/app/tryon_agent.py').read())"
 check "setup_tryon.py"     python -c "import ast; ast.parse(open('samples/retail-virtual-tryon/scripts/setup_tryon.py').read())"
@@ -62,12 +61,7 @@ for skill in retail-product-search retail-virtual-tryon retail-product-recommend
 done
 
 echo ""
-echo "${bold}6. Static catalog present${nc}"
-check "catalog/index.html"  test -f catalog/index.html
-check "catalog/style.css"   test -f catalog/style.css
-
-echo ""
-echo "${bold}7. CLI dispatches${nc}"
+echo "${bold}6. CLI dispatches${nc}"
 check "vs --help"   bash -c "./vs --help | grep -q 'Usage:'"
 check "vs list"     bash -c "./vs list | grep -q retail-product-search"
 check "npx --list"  bash -c "node packages/install-vertical-skill/bin/install.js --list | grep -q retail-product-search"

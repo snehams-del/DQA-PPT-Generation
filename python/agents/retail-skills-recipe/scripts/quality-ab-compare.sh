@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
 # quality-ab-compare.sh — Level 4: A/B compare two versions of a SKILL.md.
 #
-# Snapshots the current SKILL.md, lets you edit it (or runs improve.py), then
+# Snapshots the current SKILL.md, lets you edit it, then
 # diffs the eval results before vs after.
 #
 # Usage:
 #   ./scripts/quality-ab-compare.sh retail-virtual-tryon                  # interactive edit
-#   ./scripts/quality-ab-compare.sh retail-virtual-tryon --improve 3      # run optimizer
 #   ./scripts/quality-ab-compare.sh retail-virtual-tryon --apply path.md  # apply a draft
 
 set -uo pipefail
@@ -16,7 +15,7 @@ cd "$(dirname "$0")/.."
 bold=$'\033[1m'; green=$'\033[32m'; red=$'\033[31m'; cyan=$'\033[36m'; nc=$'\033[0m'
 
 if [ "$#" -lt 1 ]; then
-    echo "Usage: $0 <skill> [--improve <rounds>] [--apply <path-to-new-SKILL.md>]"
+    echo "Usage: $0 <skill> [--apply <path-to-new-SKILL.md>]"
     exit 1
 fi
 
@@ -28,7 +27,6 @@ DRAFT=""
 
 while [ "$#" -gt 0 ]; do
     case "$1" in
-        --improve) MODE="improve"; ROUNDS="$2"; shift 2 ;;
         --apply) MODE="apply"; DRAFT="$2"; shift 2 ;;
         *) echo "Unknown arg: $1"; exit 1 ;;
     esac
@@ -61,10 +59,6 @@ case "$MODE" in
     interactive)
         echo "  Opening $SKILL_PATH in \$EDITOR (${EDITOR:-vi})..."
         "${EDITOR:-vi}" "$SKILL_PATH"
-        ;;
-    improve)
-        echo "  Running ./vs improve $SKILL --rounds $ROUNDS"
-        ./vs improve "$SKILL" --rounds "$ROUNDS" --project-id "$GOOGLE_CLOUD_PROJECT"
         ;;
     apply)
         if [ ! -f "$DRAFT" ]; then echo "${red}Draft not found: $DRAFT${nc}"; exit 1; fi

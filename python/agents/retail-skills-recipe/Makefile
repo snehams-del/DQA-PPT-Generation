@@ -29,10 +29,6 @@ eval:
 	@if [ -z "$(SKILL)" ]; then echo "Usage: make eval SKILL=retail-product-search PROJECT_ID=your-project"; exit 1; fi
 	uv run python evals/run.py --skill $(SKILL) --project-id $(or $(PROJECT_ID),$(GOOGLE_CLOUD_PROJECT)) $(if $(VERBOSE),--verbose)
 
-improve:
-	@if [ -z "$(SKILL)" ]; then echo "Usage: make improve SKILL=retail-product-search PROJECT_ID=your-project"; exit 1; fi
-	uv run python evals/improve.py --skill $(SKILL) --project-id $(or $(PROJECT_ID),$(GOOGLE_CLOUD_PROJECT)) $(if $(DRY_RUN),--dry-run) $(if $(ROUNDS),--rounds $(ROUNDS))
-
 # ==============================================================================
 # Testing & Code Quality
 # ==============================================================================
