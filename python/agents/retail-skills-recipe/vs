@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+# Contributor CLI for retail agent skills.
+# Usage: ./vs <command> [options]
+#
+# Commands:
+#   list                          Show all skills with descriptions
+#   eval <skill> [options]        Run spec-coverage check
+#   improve <skill> [options]     Run self-improvement loop
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+usage() {
+    echo "Usage: ./vs <command> [options]"
+    echo ""
+    echo "Commands:"
+    echo "  list                          Show all skills with descriptions"
+    echo "  eval <skill> [options]        Run spec-coverage check"
+    echo "  improve <skill> [options]     Run self-improvement loop"
+    echo ""
+    echo "Examples:"
+    echo "  ./vs list"
+    echo "  ./vs eval retail-virtual-tryon --project-id \$PROJECT"
+    echo "  ./vs eval retail-product-search --verbose"
+    echo "  ./vs improve retail-virtual-tryon --dry-run"
+    echo "  ./vs improve retail-virtual-tryon --rounds 5"
+}
+
+cmd_list() {
+    echo "Available skills:"
+    echo ""
+    for skill_dir in "$SCRIPT_DIR"/skills/*/; do
+        skill_name="$(basename "$skill_dir")"
+        skill_md="$skill_dir/SKILL.md"
+        if [ -f "$skill_md" ]; then
+            # Extract first non-empty, non-heading line as description
+            desc=$(grep -m1 -v '^#\|^$\|^---' "$skill_md" | head -c 80)
+            printf "  %-35s %s\n" "$skill_name" "$desc"
+        fi
+    done
+}
+
+cmd_eval() {
+    if [ $# -lt 1 ]; then
+        echo "Error: skill name required. Usage: ./vs eval <skill> [options]"
+        exit 1
+    fi
+    python "$SCRIPT_DIR/evals/run.py" --skill "$@"
+}
+
+cmd_improve() {
+    if [ $# -lt 1 ]; then
+        echo "Error: skill name required. Usage: ./vs improve <skill> [options]"
+        exit 1
+    fi
+    python "$SCRIPT_DIR/evals/improve.py" --skill "$@"
+}
+
+if [ $# -lt 1 ]; then
+    usage
+    exit 1
+fi
+
+command="$1"
+shift
+
+case "$command" in
+    list)    cmd_list "$@" ;;
+    eval)    cmd_eval "$@" ;;
+    improve) cmd_improve "$@" ;;
+    help|-h|--help) usage ;;
+    *)
+        echo "Unknown command: $command"
+        usage
+        exit 1
+        ;;
+esac

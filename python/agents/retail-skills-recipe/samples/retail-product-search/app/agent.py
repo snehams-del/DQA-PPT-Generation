@@ -41,9 +41,6 @@ def _ensure_initialized():
         return
     _credentials, default_project = google.auth.default()
     _project_id = os.getenv("GOOGLE_CLOUD_PROJECT", default_project)
-    os.environ.setdefault("GOOGLE_CLOUD_PROJECT", _project_id)
-    os.environ.setdefault("GOOGLE_CLOUD_LOCATION", LOCATION)
-    os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "True")
     vertexai.init(project=_project_id, location=LOCATION)
     _initialized = True
 
@@ -133,16 +130,25 @@ def _build_agent_model():
     return Gemini(model=LLM)
 
 
-agent_model = _build_agent_model()
+def _build_app():
+    """Build the ADK app. Called lazily to avoid triggering GCP auth at import."""
+    agent_model = _build_agent_model()
+    root_agent = Agent(
+        name="root_agent",
+        model=agent_model,
+        instruction=instruction,
+        tools=[retrieve_docs],
+    )
+    return App(root_agent=root_agent, name="app")
 
-root_agent = Agent(
-    name="root_agent",
-    model=agent_model,
-    instruction=instruction,
-    tools=[retrieve_docs],
-)
 
-app = App(
-    root_agent=root_agent,
-    name="app",
-)
+# Lazy initialization: app is built on first access via ADK's module scanning.
+# For direct usage, call _build_app() explicitly.
+app = None
+
+
+def get_app():
+    global app
+    if app is None:
+        app = _build_app()
+    return app

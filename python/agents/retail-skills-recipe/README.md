@@ -132,9 +132,7 @@ The first agent message is the load-bearing test -- if it doesn't match the expe
 
 ### Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Quick paths:
-
-- **Share a gotcha** → markdown file in [contrib/learnings/](contrib/learnings/)
+- **Share a gotcha** → open a GitHub Discussion or PR
 - **Improve a skill** → edit `SKILL.md`, run `./vs eval` before/after, open PR with score delta
 - **Create a new skill** → see the [SKILL.md](skills/SKILL.md) skill-creator guide
 
@@ -152,8 +150,6 @@ CI runs `./vs eval` on any PR that touches `skills/`. Spec-coverage score must s
 skills/        SKILL.md files — agent knowledge (the entry point)
 samples/       Runnable code per skill — scripts, assets, tests
 evals/         Shared eval framework (run.py, improve.py, sets/)
-contrib/       Community gotchas, demo kit, contribution guide
-catalog/       Static HTML catalog (no build step, GitHub Pages-ready)
 packages/      npx installer source
 scripts/       Test, quality, and helper scripts (smoke-test, conflict-check, ...)
 vs             Contributor CLI (list / eval / improve)

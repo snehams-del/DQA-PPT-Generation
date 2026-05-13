@@ -218,7 +218,11 @@ def generate_tryon(
     try:
         product_is_cutout = is_product_cutout(product_bytes, project_id)
     except Exception as e:
-        logger.warning("Pre-flight classifier failed: %s. Proceeding without cutout detection.", e)
+        logger.warning(
+            "Pre-flight cutout classifier failed (model=%s, product_id=%s): %s. "
+            "Proceeding with product_is_cutout=False -- safety adjustments will not apply.",
+            model_id, product_id, e,
+        )
 
     adjusted_safety = effective_safety
     if product_is_cutout and effective_safety == "block_most" and not is_vto_model(model_id):
@@ -244,12 +248,15 @@ def generate_tryon(
             )
     except Exception as e:
         safety_retry = os.getenv("TRYON_SAFETY_RETRY", "").lower() in ("true", "1", "yes")
-        if ("SAFETY" in str(e).upper() and product_is_cutout
-                and not is_vto_model(model_id) and safety_retry):
+        is_safety_block = "SAFETY" in str(e).upper()
+        if is_safety_block and product_is_cutout and not is_vto_model(model_id) and safety_retry:
+            # OPT-IN RETRY: TRYON_SAFETY_RETRY=true was explicitly set.
+            # Relaxing safety from %s to block_few for a product cutout image.
+            # This is logged at WARNING level so it surfaces in monitoring.
             logger.warning(
-                "SAFETY RETRY: Safety block on cutout product (model=%s, "
-                "product_id=%s, original_safety=%s). Retrying with block_few "
-                "because TRYON_SAFETY_RETRY=true. Original error: %s",
+                "SAFETY RETRY [opt-in]: Safety block on cutout product. "
+                "model=%s, product_id=%s, original_safety=%s, new_safety=block_few. "
+                "Set TRYON_SAFETY_RETRY=false to disable. Original error: %s",
                 model_id, product_id, adjusted_safety, e,
             )
             adjusted_safety = "block_few"
@@ -265,7 +272,8 @@ def generate_tryon(
         raise RuntimeError(
             f"All {num_variations} try-on variations failed. "
             f"Model: {model_id}, safety: {adjusted_safety}. "
-            f"See contrib/learnings/virtual-tryon-safety-filter.md."
+            f"Tip: try the dedicated VTO model (virtual-try-on-001) which has fewer "
+            f"safety false-positives, or set TRYON_SAFETY_RETRY=true for cutout products."
         )
 
     # ── Upload all variations to GCS ──────────────────────────────────────────

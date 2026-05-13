@@ -241,7 +241,8 @@ def run_eval(skill: str, project_id: str, verbose: bool = False) -> float:
         status = "PASS" if r["passed"] == r["total"] else "PARTIAL" if r["passed"] > 0 else "FAIL"
         logger.info(f"  [{status}] {r['eval_id']}: {r['passed']}/{r['total']}")
 
-    logger.info(f"\nOverall: {passed}/{total} assertions passed ({rate:.1%})")
+    logger.info(f"\nSpec-coverage score: {passed}/{total} assertions passed ({rate:.1%})")
+    logger.info("NOTE: This measures SKILL.md spec completeness, not deployed agent correctness.")
     return rate
 
 

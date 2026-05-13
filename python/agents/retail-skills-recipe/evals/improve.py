@@ -203,15 +203,28 @@ def _confirm_mutation(current_md: str, new_md: str) -> bool:
 
 
 def improve(skill: str, project_id: str, max_rounds: int = 5, target_rate: float = 1.0, dry_run: bool = False, auto_confirm: bool = False):
-    """Run the Karpathy self-improvement loop on a skill's SKILL.md."""
+    """Run the Karpathy self-improvement loop on a skill's SKILL.md.
+
+    WARNING: This writes Gemini-generated content directly into SKILL.md files.
+    By default, each mutation requires interactive confirmation. Pass --yes only
+    in CI or when you have reviewed the evalset assertions carefully.
+    Use --dry-run to preview mutations without writing to disk.
+    """
     skill_path = SKILLS_DIR / skill / "SKILL.md"
     if not skill_path.exists():
         logger.error(f"Skill not found: {skill_path}")
         sys.exit(1)
 
+    if auto_confirm and not dry_run:
+        logger.warning(
+            "AUTO-CONFIRM enabled (--yes): mutations will be written to %s "
+            "without interactive review. Use --dry-run to preview instead.",
+            skill_path.relative_to(ROOT),
+        )
+
     original_md = skill_path.read_text()
 
-    # Backup
+    # Backup original before any mutations
     backup = skill_path.with_suffix(".md.backup")
     if not backup.exists():
         shutil.copy2(skill_path, backup)
