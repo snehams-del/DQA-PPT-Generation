@@ -61,13 +61,13 @@ ADK provides convenient ways to bring up agents locally and interact with them.
 You may talk to the agent using the CLI:
 
 ```bash
-adk run earth_engine_geospatial
+uv run adk run earth_engine_geospatial
 ```
 
 Or on a web interface:
 
 ```bash
-adk web
+uv run adk web
 ```
 
 Select `earth_engine_geospatial` from the dropdown.
