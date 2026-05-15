@@ -15,6 +15,7 @@ dependencies = [
     "google-cloud-logging~=3.11.4",
     "google-genai>=1.37.0",
     "opentelemetry-exporter-gcp-trace~=1.9.0",
+    "opentelemetry-instrumentation-google-genai",
     "pandas~=2.2.3",
     "pylint",
     "streamlit",
