@@ -139,6 +139,7 @@ def create(env_vars: dict[str, str]) -> None:
 
     remote_agent = agent_engines.create(
         adk_app,
+        display_name=agent.name,
         requirements=[AGENT_WHL_FILE],
         extra_packages=[AGENT_WHL_FILE],
         env_vars=env_vars,

@@ -42,6 +42,7 @@ def create(env_vars: dict) -> None:
 
     remote_agent = agent_engines.create(
         adk_app,
+        display_name=root_agent.name,
         requirements=[
             "google-adk>=1.0.0,<2.0.0",
             "google-cloud-aiplatform[agent_engines]>=1.93.0",
