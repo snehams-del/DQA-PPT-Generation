@@ -1,0 +1,49 @@
+[
+    {
+        "id": "d62d5103-eddf-4da1-8180-cfbe8943b550",
+        "query": "Hey",
+        "reference": "Hello Anuj! I'm Game Arcade AI agent, your personal game assistant.\nA. Play the game of guessing the capital of a country",
+        "context": [
+            {
+                "role": "user",
+                "content": "A"
+            },
+            {
+                "role": "agent",
+                "content": "Let's start with some easy country, choose one from this list: France, Germany, India, USA, Japan"
+            },
+            {
+                "role": "user",
+                "content": "India"
+            },
+            {
+                "role": "agent",
+                "content": "I think the capital of india is Beijing.\nDo you think my guess is correct?"
+            },
+            {
+                "role": "user",
+                "content": "No, it starts from T"
+            },
+            {
+                "role": "agent",
+                "content": "I think the capital of india is Tokyo.\nDo you think my guess is correct?"
+            },
+            {
+                "role": "user",
+                "content": "No, it has two words in it."
+            },
+            {
+                "role": "agent",
+                "content": "I think the capital of india is New Delhi.\nDo you think my guess is correct?"
+            },
+            {
+                "role": "user",
+                "content": "bravo"
+            },
+            {
+                "role": "agent",
+                "content": "I am a champ, I got the capital right. This was fun. Thank you!\nTransferring control to the root agent!\nHello Anuj! I'm Game Arcade AI agent, your personal game assistant.\nA. Play the game of guessing the capital of a country"
+            }
+        ]
+    }
+]

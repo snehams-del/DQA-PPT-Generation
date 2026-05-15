@@ -1,0 +1,42 @@
+[project]
+name = "capital_guess_game"
+version = "0.1.0"
+description = "A simple game to guess the capital of a country."
+authors = [{name = "Anuj Gupta", email = "anuj@dream11.com"}]
+license = "Apache License 2.0"
+readme = "README.md"
+
+[tool.poetry]
+name = "capital-guess-game"
+version = "0.1.0"
+description = ""
+authors = ["Anuj Gupta <anuj@dream11.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "~3.12"
+google-adk = "1.6.1"
+pydantic-settings = "2.8.1"
+python-dotenv = "1.0.0"
+deprecated = "1.2.14"
+cloudpickle = "3.1.1"
+pydantic = ">=2.10.6,<3.0.0"
+absl-py = ">=2.2.1,<3.0.0"
+pytz = "*"
+typing-extensions = ">=4.5.0"
+annotated-types = ">=0.5.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.5"
+pytest-mock = "^3.14.0"
+pytest-cov = "^6.0.0"
+pytest-asyncio = "^0.25.3"
+google-adk = { version = "^1.1.1", extras = ["eval"] }
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.deployment.dependencies]
+# This group can be removed or left empty as dependencies are now in the main list.
