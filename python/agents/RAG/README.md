@@ -56,10 +56,15 @@ This diagram outlines the agent's workflow, designed to provide informed and con
 
 2.  **Install Dependencies:**
 
+    If you have `uv` installed (recommended):
     ```bash
     uv sync
     ```
 
+    Alternatively, using standard `pip`:
+    ```bash
+    pip install .
+    ```
     This command reads the `pyproject.toml` file and installs all the necessary dependencies into a virtual environment.
 
 3.  **Set up Environment Variables:**
