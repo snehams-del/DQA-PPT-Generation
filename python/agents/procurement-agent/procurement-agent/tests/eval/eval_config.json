@@ -1,0 +1,29 @@
+{
+  "criteria": {
+    "tool_trajectory_avg_score": {
+      "threshold": 0.8,
+      "match_type": "IN_ORDER"
+    },
+    "rubric_based_final_response_quality_v1": {
+      "threshold": 0.8,
+      "judgeModelOptions": {
+        "judgeModel": "gemini-3-flash-preview",
+        "numSamples": 1
+      },
+      "rubrics": [
+        {
+          "rubricId": "relevance",
+          "rubricContent": { "textProperty": "The response directly addresses the user's query." }
+        },
+        {
+          "rubricId": "grounding",
+          "rubricContent": { "textProperty": "The response is grounded in the tool outputs and does not hallucinate information not provided by the tools." }
+        },
+        {
+          "rubricId": "helpfulness",
+          "rubricContent": { "textProperty": "The response is helpful and provides the requested information clearly." }
+        }
+      ]
+    }
+  }
+}

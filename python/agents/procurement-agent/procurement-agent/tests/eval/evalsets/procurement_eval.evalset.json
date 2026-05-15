@@ -1,0 +1,133 @@
+{
+  "eval_set_id": "procurement_eval",
+  "name": "Procurement Agent Core Evaluation",
+  "description": "Tests the core capabilities of the procurement agent: expiring contracts, listing contracts, and consumption checks.",
+  "eval_cases": [
+    {
+      "eval_id": "find_expiring_30",
+      "conversation": [
+        {
+          "invocation_id": "inv_1",
+          "user_content": {
+            "parts": [{"text": "Which contracts are expiring in the next 30 days?"}]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "find_expiring_contracts",
+                "args": {"days": 30}
+              }
+            ]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "app",
+        "user_id": "eval_user",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "list_all_contracts",
+      "conversation": [
+        {
+          "invocation_id": "inv_1",
+          "user_content": {
+            "parts": [{"text": "Show me all available contracts."}]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "get_all_contracts",
+                "args": {}
+              }
+            ]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "app",
+        "user_id": "eval_user",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "check_consumption_by_id",
+      "conversation": [
+        {
+          "invocation_id": "inv_1",
+          "user_content": {
+            "parts": [{"text": "What's the current spend for contract 'DOC-001'?"}]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "check_consumption",
+                "args": {"contract_id": "DOC-001"}
+              }
+            ]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "app",
+        "user_id": "eval_user",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "vertex_search_query",
+      "conversation": [
+        {
+          "invocation_id": "inv_1",
+          "user_content": {
+            "parts": [{"text": "What are the termination terms for the Acme Corp contract?"}]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "app",
+        "user_id": "eval_user",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "multi_turn_consumption",
+      "conversation": [
+        {
+          "invocation_id": "inv_1",
+          "user_content": {
+            "parts": [{"text": "List all contracts."}]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "get_all_contracts",
+                "args": {}
+              }
+            ]
+          }
+        },
+        {
+          "invocation_id": "inv_2",
+          "user_content": {
+            "parts": [{"text": "Check consumption for the contract with ID 'ABC-789'."}]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "check_consumption",
+                "args": {"contract_id": "ABC-789"}
+              }
+            ]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "app",
+        "user_id": "eval_user",
+        "state": {}
+      }
+    }
+  ]
+}

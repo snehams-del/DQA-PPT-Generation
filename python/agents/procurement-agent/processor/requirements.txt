@@ -1,0 +1,11 @@
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib
+google-genai
+google-cloud-firestore
+google-cloud-storage
+requests
+python-dotenv
+pydantic
+fastapi
+uvicorn

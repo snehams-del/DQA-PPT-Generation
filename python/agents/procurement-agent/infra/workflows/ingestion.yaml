@@ -1,0 +1,53 @@
+main:
+  params: [event]
+  steps:
+    - init:
+        assign:
+          - project_id: ${sys.get_env("GOOGLE_CLOUD_PROJECT_ID")}
+          - region: "us-central1" # Replace with target Cloud Run Job region
+          - drive_file_id: ${event.data.id} # Payload structure depends on Pub/Sub trigger format
+          - bucket_name: ${sys.get_env("GCS_BUCKET")}
+          - job_name: "contract-ingestion-job"
+
+    - copy_to_staging:
+        call: googleapis.run.v2.projects.locations.jobs.run
+        args:
+          name: ${"projects/" + project_id + "/locations/" + region + "/jobs/" + job_name}
+          body:
+            overrides:
+              containerOverrides:
+                - args:
+                    - "copy-to-staging"
+                    - ${drive_file_id}
+        result: job_status_1
+
+    - process_parallel:
+        parallel:
+          branches:
+            - metadata_extraction:
+                steps:
+                  - extract_metadata:
+                      call: googleapis.run.v2.projects.locations.jobs.run
+                      args:
+                        name: ${"projects/" + project_id + "/locations/" + region + "/jobs/" + job_name}
+                        body:
+                          overrides:
+                            containerOverrides:
+                              - args:
+                                  - "extract-metadata"
+                                  - ${"gs://" + bucket_name + "/staging/" + drive_file_id + "/*"}
+                                  - "--file-id"
+                                  - ${drive_file_id}
+                      result: job_status_2
+            - index_import:
+                steps:
+                  - run_import:
+                      call: googleapis.run.v2.projects.locations.jobs.run
+                      args:
+                        name: ${"projects/" + project_id + "/locations/" + region + "/jobs/" + job_name}
+                        body:
+                          overrides:
+                            containerOverrides:
+                              - args:
+                                  - "run-import"
+                      result: job_status_3
