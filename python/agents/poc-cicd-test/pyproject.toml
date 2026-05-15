@@ -1,0 +1,16 @@
+[project]
+name = "poc-cicd-test"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.agent-starter-pack]
+example_question = "POC CI/CD security testing"
+
+[tool.agent-starter-pack.settings]
+agent_directory = "rag"
+deployment_targets = ["agent_engine"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
