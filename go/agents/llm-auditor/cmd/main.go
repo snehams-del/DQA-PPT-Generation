@@ -16,14 +16,15 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"log"
+	"os"
+
 	"llmauditor/auditor"
 
 	"google.golang.org/adk/agent"
 	"google.golang.org/adk/artifact"
-	"google.golang.org/adk/cmd/launcher/adk"
-	"google.golang.org/adk/cmd/launcher/web"
-	"google.golang.org/adk/cmd/restapi/services"
+	"google.golang.org/adk/cmd/launcher"
+	"google.golang.org/adk/cmd/launcher/full"
 	"google.golang.org/adk/session"
 )
 
@@ -32,20 +33,23 @@ func main() {
 	llmAuditorAgent := auditor.GetLLmAuditorAgent(ctx)
 
 	sessionService := session.InMemoryService()
-	artifactservice := artifact.InMemoryService()
+	artifactService := artifact.InMemoryService()
 
-	agentLoader := services.NewStaticAgentLoader(
+	agentLoader, err := agent.NewMultiLoader(
 		llmAuditorAgent,
-		map[string]agent.Agent{
-			"llm_auditor": llmAuditorAgent,
-		},
 	)
+	if err != nil {
+		log.Fatalf("Failed to create agent loader: %v", err)
+	}
 
-	webConfig, _, _ := web.ParseArgs([]string{})
-	fmt.Println(webConfig)
-	web.Serve(webConfig, &adk.Config{
+	config := &launcher.Config{
 		SessionService:  sessionService,
 		AgentLoader:     agentLoader,
-		ArtifactService: artifactservice,
-	})
+		ArtifactService: artifactService,
+	}
+
+	l := full.NewLauncher()
+	if err = l.Execute(ctx, config, os.Args[1:]); err != nil {
+		log.Fatalf("Run failed: %v\n\n%s", err, l.CommandLineSyntax())
+	}
 }
