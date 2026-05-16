@@ -59,6 +59,13 @@ Follow these steps to set up and run the sample agents:
     *   Browse the folders in this repository. Each agent and tool have its own
         `README.md` file with detailed instructions.
 
+5. **Include your plugins (optional):**
+    *   If you want to use custom plugins in your agents, you can import them
+        from the `plugins/` directory.
+    *   Each agent can reference these plugins as needed. Refer to the
+        [ADK Plugins Guide](https://google.github.io/adk-docs/plugins/) for
+        details on creating and using plugins.
+
 **Notes:**
 
 These agents have been built and tested using
@@ -78,6 +85,9 @@ other models for these samples.
 │   │   │   └── README.md
 │   │   ├── ...
 │   │   └── README.md           # Overview and categorization of agents
+│   ├── plugins                   # Contains reusable plugins
+│   │   ├── plugin1             # Specific plugin directory
+│   │   │   └── README.md       # Plugin-specific instructions
 │   └── README.md               # This file (Repository overview)
 ```
 

@@ -1,0 +1,15 @@
+[project]
+name = "token-logger"
+version = "0.1.0"
+description = "Simple plugin that logs token usage for LLM requests."
+authors = [
+    { name = "Marcello Maugeri", email = "marcellomaugeriphd@gmail.com" }
+]
+license = "Apache License 2.0"
+readme = "README.md"
+requires-python = ">=3.11"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+google-genai = "^1.16.1"
+google-adk = "^1.9.0"
