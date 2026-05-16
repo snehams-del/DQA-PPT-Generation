@@ -86,8 +86,8 @@ registry.register_agent(AdkAgent, "adk_agent")
 uv run tau2 run \
   --domain airline \
   --agent adk_agent \
-  --agent-llm vertex_ai/gemini-2.5-pro \
-  --user-llm vertex_ai/gemini-2.5-pro \
+  --agent-llm vertex_ai/gemini-3.1-pro-preview \
+  --user-llm vertex_ai/gemini-3.1-pro-preview \
   --num-trials 1 \
   --num-tasks 1
 ```
@@ -99,10 +99,10 @@ uv run tau2 run \
 uv run tau2 run \
   --domain retail \
   --agent adk_agent \
-  --agent-llm vertex_ai/gemini-3-pro-preview \
-  --user-llm vertex_ai/gemini-3-pro-preview \
+  --agent-llm vertex_ai/gemini-3.1-pro-preview \
+  --user-llm vertex_ai/gemini-3.1-pro-preview \
   --num-trials 4 \
-  --save-to gemini_3_pro_retail \
+  --save-to gemini_3_1_pro_retail \
   --user-llm-args '{"temperature": 1, "reasoning_effort": "high"}' \
   --agent-llm-args '{"temperature": 1, "reasoning_effort": "high"}'
 
@@ -110,10 +110,10 @@ uv run tau2 run \
 uv run tau2 run \
   --domain airline \
   --agent adk_agent \
-  --agent-llm vertex_ai/gemini-3-pro-preview \
-  --user-llm vertex_ai/gemini-3-pro-preview \
+  --agent-llm vertex_ai/gemini-3.1-pro-preview \
+  --user-llm vertex_ai/gemini-3.1-pro-preview \
   --num-trials 4 \
-  --save-to gemini_3_pro_airline \
+  --save-to gemini_3_1_pro_airline \
   --user-llm-args '{"temperature": 1, "reasoning_effort": "high"}' \
   --agent-llm-args '{"temperature": 1, "reasoning_effort": "high"}'
 
@@ -121,10 +121,10 @@ uv run tau2 run \
 uv run tau2 run \
   --domain telecom \
   --agent adk_agent \
-  --agent-llm vertex_ai/gemini-3-pro-preview \
-  --user-llm vertex_ai/gemini-3-pro-preview \
+  --agent-llm vertex_ai/gemini-3.1-pro-preview \
+  --user-llm vertex_ai/gemini-3.1-pro-preview \
   --num-trials 4 \
-  --save-to gemini_3_pro_telecom \
+  --save-to gemini_3_1_pro_telecom \
   --user-llm-args '{"temperature": 1, "reasoning_effort": "high"}' \
   --agent-llm-args '{"temperature": 1, "reasoning_effort": "high"}'
 ```
@@ -138,8 +138,8 @@ uv run tau2 view
 #### Prepare submission package
 
 ```bash
-uv run tau2 submit prepare data/tau2/simulations/gemini_3_pro_*.json \
-  --output ./gemini_3_pro_submission
+uv run tau2 submit prepare data/tau2/simulations/gemini_3_1_pro_*.json \
+  --output ./gemini_3_1_pro_submission
 ```
 
 ### Running Tests
@@ -198,8 +198,8 @@ registry.register_agent(AdkAgent, "adk_agent")
 uv run tau2 run \
   --domain airline \
   --agent adk_agent \
-  --agent-llm vertex_ai/gemini-2.5-pro \
-  --user-llm vertex_ai/gemini-2.5-pro \
+  --agent-llm vertex_ai/gemini-3.1-pro-preview \
+  --user-llm vertex_ai/gemini-3.1-pro-preview \
   --num-trials 1 \
   --num-tasks 1
 ```
@@ -211,10 +211,10 @@ uv run tau2 run \
 uv run tau2 run \
   --domain retail \
   --agent adk_agent \
-  --agent-llm vertex_ai/gemini-3-pro-preview \
-  --user-llm vertex_ai/gemini-3-pro-preview \
+  --agent-llm vertex_ai/gemini-3.1-pro-preview \
+  --user-llm vertex_ai/gemini-3.1-pro-preview \
   --num-trials 4 \
-  --save-to gemini_3_pro_retail \
+  --save-to gemini_3_1_pro_retail \
   --user-llm-args '{"temperature": 1, "reasoning_effort": "high"}' \
   --agent-llm-args '{"temperature": 1, "reasoning_effort": "high"}'
 
@@ -222,10 +222,10 @@ uv run tau2 run \
 uv run tau2 run \
   --domain airline \
   --agent adk_agent \
-  --agent-llm vertex_ai/gemini-3-pro-preview \
-  --user-llm vertex_ai/gemini-3-pro-preview \
+  --agent-llm vertex_ai/gemini-3.1-pro-preview \
+  --user-llm vertex_ai/gemini-3.1-pro-preview \
   --num-trials 4 \
-  --save-to gemini_3_pro_airline \
+  --save-to gemini_3_1_pro_airline \
   --user-llm-args '{"temperature": 1, "reasoning_effort": "high"}' \
   --agent-llm-args '{"temperature": 1, "reasoning_effort": "high"}'
 
@@ -233,10 +233,10 @@ uv run tau2 run \
 uv run tau2 run \
   --domain telecom \
   --agent adk_agent \
-  --agent-llm vertex_ai/gemini-3-pro-preview \
-  --user-llm vertex_ai/gemini-3-pro-preview \
+  --agent-llm vertex_ai/gemini-3.1-pro-preview \
+  --user-llm vertex_ai/gemini-3.1-pro-preview \
   --num-trials 4 \
-  --save-to gemini_3_pro_telecom \
+  --save-to gemini_3_1_pro_telecom \
   --user-llm-args '{"temperature": 1, "reasoning_effort": "high"}' \
   --agent-llm-args '{"temperature": 1, "reasoning_effort": "high"}'
 ```
@@ -250,8 +250,8 @@ uv run tau2 view
 #### Prepare submission package
 
 ```bash
-uv run tau2 submit prepare data/tau2/simulations/gemini_3_pro_*.json \
-  --output ./gemini_3_pro_submission
+uv run tau2 submit prepare data/tau2/simulations/gemini_3_1_pro_*.json \
+  --output ./gemini_3_1_pro_submission
 ```
 
 ### Running Tests
@@ -294,8 +294,7 @@ def _create_agent(
 ## Notes
 
 - **Temperature**: When `adk_agent` is used, temperature defaults to `1`.
-- **Reasoning level**: Only applies to Gemini 3 Pro. Defaults to `high` for `adk_agent`.
-- **`This model isn't mapped yet` warnings**: These come from litellm's cost calculation and can be suppressed by using `--user-llm vertex_ai/gemini-2.5-pro` instead of the Gemini 3 Pro preview.
+- **Reasoning level**: Only applies to Gemini 3.x Pro. Defaults to `high` for `adk_agent`.
 
 ## Disclaimer
 
