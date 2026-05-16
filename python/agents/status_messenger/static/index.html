@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Status Messenger Example</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!--  The status-messenger.js script contains the applicaiton logic to display the published messages to the client -->
+    <script src="https://cdn.jsdelivr.net/npm/status-messenger/status-messenger.js" defer></script>
+    <link rel="stylesheet" type="text/css" href="/static/styles.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- For better mobile responsiveness -->
+  </head>
+
+  <body>
+    <div class="app-container">
+        <h1>Example Research Agent with Status Messenger</h1>
+        <div id="agent-status-area">
+            <h2>Agent Status:</h2>
+            <div id="status-container" class="status-messages-container">
+                <!-- Status messages will be managed by status-messenger.js here -->
+            </div>
+        </div>
+        <div id="messages">
+            <!-- Messages will be appended here -->
+        </div>
+        <form id="messageForm">
+          <label for="messageInput">Message:</label>
+          <input type="text" id="messageInput" name="message" placeholder="Type your message..."/>
+          <button type="submit" id="sendButton" disabled>Send</button>
+        </form>
+    </div>
+    <script src="/static/script.js" defer></script>
+  </body>
+</html>

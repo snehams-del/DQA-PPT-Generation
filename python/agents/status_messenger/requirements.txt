@@ -1,0 +1,9 @@
+fastapi
+jinja2
+uvicorn
+requests
+pydantic
+google-cloud-aiplatform
+google-api-core
+google-genai
+google-adk
