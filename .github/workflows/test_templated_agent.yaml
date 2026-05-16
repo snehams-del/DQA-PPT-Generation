@@ -70,7 +70,11 @@ jobs:
   test-agent-template:
     name: ${{ matrix.task }} | ${{ matrix.agent_path }} (${{ matrix.deployment_target }})
     needs: discover-changed-agents
-    if: needs.discover-changed-agents.outputs.matrix != '[]'
+    # Restrict to same-repo PRs only: pull_request_target runs with write permissions
+    # and access to secrets. Fork PRs must not reach this job to prevent credential theft.
+    if: |
+      needs.discover-changed-agents.outputs.matrix != '[]' &&
+      github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
 
     # --- PERMISSIONS BLOCK FOR OIDC AUTHENTICATION ---
