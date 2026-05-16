@@ -18,6 +18,7 @@ from google.adk.agents import LlmAgent
 from google.adk.tools.agent_tool import AgentTool
 
 from . import prompt
+from .callbacks import capture_seminal_paper_after_model
 from .sub_agents.academic_newresearch import academic_newresearch_agent
 from .sub_agents.academic_websearch import academic_websearch_agent
 
@@ -40,6 +41,7 @@ academic_coordinator = LlmAgent(
         AgentTool(agent=academic_websearch_agent),
         AgentTool(agent=academic_newresearch_agent),
     ],
+    after_model_callback=capture_seminal_paper_after_model,
 )
 
 root_agent = academic_coordinator
