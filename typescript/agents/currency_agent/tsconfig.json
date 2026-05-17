@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "es2020",
+    "module": "commonjs",
+    "outDir": "./dist",
+    "rootDir": "./currency_agent",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "sourceMap": true,
+    "resolveJsonModule": true
+  },
+  "include": [
+    "currency_agent/**/*"
+  ],
+  "exclude": ["node_modules"]
+}
