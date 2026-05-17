@@ -1,0 +1,94 @@
+{
+  "eval_set_id": "persona_ad_gen_evalset",
+  "name": "persona_ad_gen_evalset",
+  "description": null,
+  "eval_cases": [
+    {
+      "eval_id": "hello",
+      "conversation": [
+        {
+          "invocation_id": "e-ea7feda9-2e21-43c8-9149-97d4c48db2a3",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "hello"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "Great ads connect with a real person by solving a real problem. Instead of just filling out a form, we're going to build your ad's story step-by-step. First, let's get to know your ideal customer.\n\nDescribe the single person you want to reach. What is a key problem, need, or desire they are currently facing that your business can help with?"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1748011266.735581
+        }
+      ],
+      "session_input": {
+        "app_name": "persona_ad_gen",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1748011280.510737
+    },
+    {
+      "eval_id": "horse_helmet_safety",
+      "conversation": [
+        {
+          "invocation_id": "e-2d8c7b9f-3a1b-4e9f-9d3a-8c7b9f3a1b3e",
+          "user_content": {
+            "parts": [
+              {
+                "text": "I'm a 40 year old male, interested in horse back riding. I care about safety when riding and I want a new helmet that makes me feel safe. I live in paris"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "Great ads connect with a real person by solving a real problem. Instead of just filling out a form, we're going to build your ad's story step-by-step. First, let's get to know your ideal customer.\n\nI understand you're looking for a safe riding helmet, but let me help you create a compelling ad for your business. Let's start by identifying your ideal customer.\n\nDescribe the single person you want to reach. What is a key problem, need, or desire they are currently facing that your business can help with?"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1748011300.123456
+        }
+      ],
+      "session_input": {
+        "app_name": "persona_ad_gen",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1748011310.987654
+    }
+  ],
+  "creation_timestamp": 1748011130.5057902
+}
