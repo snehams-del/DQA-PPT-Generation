@@ -18,13 +18,13 @@ import string
 import time
 from collections import defaultdict
 
-import gym
+import gymnasium as gym
 import numpy as np
 import torch
 from bs4 import BeautifulSoup
 from bs4.element import Comment
 from flask import Flask
-from gym.envs.registration import register
+from gymnasium.envs.registration import register
 
 from ..engine.engine import (
     ACTION_TO_TEMPLATE,

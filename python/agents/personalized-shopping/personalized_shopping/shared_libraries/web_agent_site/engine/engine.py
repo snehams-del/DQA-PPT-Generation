@@ -14,6 +14,7 @@
 
 """ """
 
+import glob
 import json
 import os
 import random
@@ -23,7 +24,44 @@ from collections import defaultdict
 from decimal import Decimal
 
 from flask import render_template_string
-from pyserini.search.lucene import LuceneSearcher
+
+
+def _ensure_java_home() -> None:
+    """Best-effort JAVA_HOME setup for local Windows runs (e.g., ADK Web)."""
+    if os.environ.get("JAVA_HOME"):
+        return
+
+    if os.name != "nt":
+        return
+
+    candidate_paths = []
+    for pattern in [
+        r"C:\Program Files\Eclipse Adoptium\jdk-*-hotspot",
+        r"C:\Program Files\Java\jdk-*",
+        r"C:\Program Files\Microsoft\jdk-*",
+    ]:
+        candidate_paths.extend(glob.glob(pattern))
+
+    valid_jdks = [
+        path
+        for path in candidate_paths
+        if os.path.exists(os.path.join(path, "bin", "java.exe"))
+    ]
+    if not valid_jdks:
+        return
+
+    valid_jdks.sort()
+    java_home = valid_jdks[-1]
+    os.environ["JAVA_HOME"] = java_home
+
+    java_bin = os.path.join(java_home, "bin")
+    path_entries = os.environ.get("PATH", "").split(os.pathsep)
+    if java_bin not in path_entries:
+        os.environ["PATH"] = java_bin + os.pathsep + os.environ.get("PATH", "")
+
+
+_ensure_java_home()
+
 from rich import print
 from tqdm import tqdm
 
@@ -226,9 +264,16 @@ def init_search_engine(num_products=None):
         raise NotImplementedError(
             f"num_products being {num_products} is not supported yet."
         )
-    search_engine = LuceneSearcher(
-        os.path.join(BASE_DIR, f"../search_engine/{indexes}")
-    )
+
+    index_path = os.path.join(BASE_DIR, f"../search_engine/{indexes}")
+    if not os.path.isdir(index_path) or not os.listdir(index_path):
+        raise FileNotFoundError(
+            f"Missing search index at '{index_path}'. Build indexes first."
+        )
+
+    from pyserini.search.lucene import LuceneSearcher
+
+    search_engine = LuceneSearcher(index_path)
     return search_engine
 
 
@@ -283,7 +328,9 @@ def load_products(filepath, num_products=None, human_goals=True):
         # using item_shuffle.json, we assume products already shuffled
         products = products[:num_products]
     for i, p in tqdm(enumerate(products), total=len(products)):
-        asin = p["asin"]
+        asin = p.get("asin")
+        if not isinstance(asin, str):
+            continue
         if asin == "nan" or len(asin) > ASIN_MAX_LEN:
             continue
 

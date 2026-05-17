@@ -24,7 +24,20 @@ from thefuzz import fuzz
 
 from .normalize import normalize_color
 
-nlp = spacy.load("en_core_web_sm")
+
+def _load_nlp_model():
+    """Load spaCy model with a safe fallback for local/dev environments."""
+    try:
+        return spacy.load("en_core_web_sm")
+    except OSError:
+        print(
+            "[yellow]spaCy model 'en_core_web_sm' not found; "
+            "falling back to blank English tokenizer.[/yellow]"
+        )
+        return spacy.blank("en")
+
+
+nlp = _load_nlp_model()
 
 PRICE_RANGE = [10.0 * i for i in range(1, 100)]
 MIN_PRICE_RANGE = 2
@@ -194,6 +207,15 @@ def get_type_reward(purchased_product, goal):
         for t in desired_type_parse
         if t.pos_ in ("PNOUN", "NOUN", "PROPN")
     ]
+
+    if not purchased_type_parse:
+        purchased_type_parse = [
+            t.text.lower() for t in nlp(purchased_type) if t.is_alpha
+        ]
+    if not desired_type_parse:
+        desired_type_parse = [
+            t.text.lower() for t in nlp(desired_type) if t.is_alpha
+        ]
 
     n_intersect_type = len(set(purchased_type_parse) & set(desired_type_parse))
     if len(desired_type_parse) == 0:
