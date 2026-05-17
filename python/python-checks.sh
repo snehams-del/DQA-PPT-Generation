@@ -15,7 +15,7 @@ on a specified relative path.
 
 Arguments:
   1. <FLAG>      : The action to perform (--run-black, --run-isort, --run-lint, --run-all).
-  2. <PATH>      : Relative path to the folder (Must start with agents/ or notebooks/).
+  2. <PATH>      : Relative path to the folder (Must start with agents/, notebooks/, or deployment/).
 
 Examples:
   ./python-checks.sh --run-black agents/academic-research
@@ -118,8 +118,8 @@ if [[ -z "$TARGET_PATH" ]]; then
     exit 1
 fi
 
-if ! [[ "$TARGET_PATH" =~ ^(agents/|notebooks/).* ]]; then
-    echo "Error: Path '$TARGET_PATH' must start with 'agents/' or 'notebooks/'."
+if ! [[ "$TARGET_PATH" =~ ^(agents/|notebooks/|deployment/).* ]]; then
+    echo "Error: Path '$TARGET_PATH' must start with 'agents/', 'notebooks/', or 'deployment/'."
     exit 1
 fi
 

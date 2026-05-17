@@ -1,0 +1,16 @@
+{
+  "project_id": "YOUR_PROJECT_ID",
+  "project_number": "YOUR_PROJECT_NUMBER",
+  "reasoning_engine_location": "us-central1",
+  "agent_path": "agents/my_agent",
+  "agent_module": "my_agent",
+  "reasoning_engine_agent_name": "my-agent-name",
+  "reasoning_engine_agent_sa": "YOUR_SERVICE_ACCOUNT@YOUR_PROJECT.iam.gserviceaccount.com",
+  "bucket": "YOUR_STAGING_BUCKET",
+  "reasoning_engine_id": "",
+  "datastore_id": "YOUR_DATASTORE_ID",
+  "agent_space_app": "YOUR_APP_ID",
+  "agent_space_location": "global",
+  "agent_space_agent_description": "Description of your agent",
+  "agent_space_agent_id": ""
+}
