@@ -1,0 +1,9 @@
+[project]
+name = "receipt-signing-agent"
+version = "0.1.0"
+description = "ADK agent with Ed25519 receipt signing for every tool call"
+requires-python = ">=3.10"
+dependencies = [
+    "google-adk>=1.0.0",
+    "protect-mcp-adk>=0.1.0",
+]
