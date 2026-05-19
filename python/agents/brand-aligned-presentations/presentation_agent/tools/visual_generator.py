@@ -13,59 +13,57 @@
 # limitations under the License.
 
 import asyncio
+import os
 import tempfile
 import uuid
 
-from google import genai
 from google.genai import types
 
 from ..shared_libraries.config import (
-    GCS_BUCKET_NAME,
     GOOGLE_CLOUD_LOCATION,
     GOOGLE_CLOUD_PROJECT,
-    _genai_client,
+    OUTPUT_BUCKET,
+    OUTPUT_PREFIX,
     get_gcs_client,
     get_logger,
+    initialize_genai_client,
 )
 
 
 async def generate_visual(prompt: str) -> str:
     """
     Generates a visual from a single string prompt using a multi-modal model.
-    Returns the GCS URI of the generated image or a temp local path if GCS is unconfigured.
+    Returns the GCS URI of the generated image (in OUTPUT_BUCKET),
+    or a temp local path if OUTPUT_BUCKET is not configured.
     """
     log = get_logger("generate_visual_tool")
+
     if not prompt:
         return "Error: Prompt cannot be empty."
 
     # Strip any prefixes like "chart:" or "image:" as the model understands context
     prompt = prompt.strip()
     if prompt.lower().startswith("chart:"):
-        # Re-frame the chart prompt as a request for a visual representation
         chart_description = prompt[len("chart:") :]
-        prompt = f"A professional data visualization representing a {chart_description}"
+        prompt = f"A professional data visualization representing: {chart_description}"
     elif prompt.lower().startswith("image:"):
         prompt = prompt[len("image:") :]
+
     prompt = prompt.strip()
 
-    log.info(f"Dispatching to multi-modal model for prompt: '{prompt}'")
+    log.info(f"Generating visual for prompt: '{prompt}'")
 
     try:
-        log.info("Attempting to generate image...")
-        # Step 1: Generate the image bytes (same as before)
-        global _genai_client
-        if _genai_client is None:
-            log.warning(
-                "Global genai client was None. Re-initializing for Vertex AI."
-            )
-            _genai_client = genai.Client(
-                vertexai=True, project=GOOGLE_CLOUD_PROJECT, location=GOOGLE_CLOUD_LOCATION
-            )
+        # Initialize / get Vertex AI GenAI client
+        client = initialize_genai_client()
+        if client is None:
+            return "Error: Vertex AI client is not initialized. Check GOOGLE_CLOUD_PROJECT and GOOGLE_CLOUD_LOCATION."
 
-        model_name = "gemini-2.5-flash-image"
-        log.info(f"Calling {model_name} to generate visual...")
+        # You can override the image model by env var if needed
+        model_name = os.getenv("IMAGE_CONTENT_MODEL_NAME", "gemini-2.5-flash-image")
+
         response = await asyncio.to_thread(
-            _genai_client.models.generate_content,
+            client.models.generate_content,
             model=model_name,
             contents=[prompt],
             config=types.GenerateContentConfig(
@@ -74,39 +72,39 @@ async def generate_visual(prompt: str) -> str:
             ),
         )
 
-        # Safely extract the image data from the response
-        if (
-            response.candidates
-            and response.candidates[0].content
-            and response.candidates[0].content.parts
-            and response.candidates[0].content.parts[0].inline_data
-            and response.candidates[0].content.parts[0].inline_data.data
-        ):
-            image_bytes = (
-                response.candidates[0].content.parts[0].inline_data.data
-            )
-            log.info(f"Successfully generated visual using {model_name}.")
-        else:
-            raise RuntimeError(
-                "Multi-modal model did not return valid image data."
-            )
+        # Extract image bytes safely
+        image_bytes = None
+        try:
+            if (
+                response.candidates
+                and response.candidates[0].content
+                and response.candidates[0].content.parts
+                and response.candidates[0].content.parts[0].inline_data
+                and response.candidates[0].content.parts[0].inline_data.data
+            ):
+                image_bytes = response.candidates[0].content.parts[0].inline_data.data
+        except Exception:
+            image_bytes = None
 
-        # If GCS_BUCKET_NAME is set, upload to GCS. Otherwise, save to temp storage
-        if GCS_BUCKET_NAME:
-            # Step 2: Upload the image bytes to GCS
-            log.info(
-                f"Uploading generated image to GCS bucket: {GCS_BUCKET_NAME}"
-            )
+        if not image_bytes:
+            raise RuntimeError("Model did not return valid image bytes.")
+
+        # If OUTPUT_BUCKET is set, upload there (DQA requirement)
+        if OUTPUT_BUCKET:
             storage_client = get_gcs_client()
             if storage_client is None:
                 raise RuntimeError("GCS client could not be initialized.")
-            bucket = storage_client.bucket(GCS_BUCKET_NAME)
-            # Create a unique name for the image file
-            image_filename = f"generated_images/{uuid.uuid4().hex}.png"
+
+            bucket = storage_client.bucket(OUTPUT_BUCKET)
+
+            # Store images under output prefix + generated_images/
+            prefix = (OUTPUT_PREFIX or "").strip().strip("/")
+            if prefix:
+                prefix = prefix + "/"
+            image_filename = f"{prefix}generated_images/{uuid.uuid4().hex}.png"
+
             blob = bucket.blob(image_filename)
 
-            # Upload from the in-memory bytes
-            # #blob.upload_from_string(image_bytes, content_type='image/png')
             await asyncio.to_thread(
                 blob.upload_from_string,
                 image_bytes,
@@ -114,28 +112,22 @@ async def generate_visual(prompt: str) -> str:
                 timeout=60,
             )
 
-            # --- Step 3: Return the GCS URI instead of Base64 data ---
-            gcs_uri = f"gs://{GCS_BUCKET_NAME}/{image_filename}"
-            log.info(
-                f"Visual generated and saved successfully. Returning GCS URI: {gcs_uri}"
-            )
+            gcs_uri = f"gs://{OUTPUT_BUCKET}/{image_filename}"
+            log.info(f"Visual saved to OUTPUT_BUCKET. URI: {gcs_uri}")
             return gcs_uri
-        else:
-            # Fallback for local / InMemory testing using OS temp directory
-            with tempfile.NamedTemporaryFile(
-                suffix=".png", delete=False
-            ) as tmp:
-                tmp.write(image_bytes)
-                local_filepath = tmp.name
 
-            log.info(
-                f"No GCS Bucket configured. Saved visual to temp file: {local_filepath}"
-            )
-            return local_filepath
+        # Otherwise fallback to local temp file
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+            tmp.write(image_bytes)
+            local_filepath = tmp.name
+
+        log.info(f"OUTPUT_BUCKET not set. Saved visual locally: {local_filepath}")
+        return local_filepath
 
     except Exception as e:
         log.error(
-            f"Visual generation or upload FAILED for prompt '{prompt}': {e}",
+            f"Visual generation FAILED for prompt '{prompt}': {e}",
             exc_info=True,
         )
         return f"Error: Visual generation failed. Details: {e}"
+``
